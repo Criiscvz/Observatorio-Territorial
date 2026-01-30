@@ -1,9 +1,10 @@
-import { Component, signal, ViewChild } from '@angular/core';
+import { Component, signal, ViewChild, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { HeaderComponent } from './header.component';
 import { SidebarComponent } from './sidebar.component';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -16,16 +17,30 @@ import { SidebarComponent } from './sidebar.component';
     SidebarComponent,
   ],
   template: `
-    <div class="h-screen flex flex-col">
-      <app-header (toggleSidenav)="sidenav.toggle()"></app-header>
+    <div class="layout-container">
+      <!-- Header fijo -->
+      <app-header 
+        (toggleSidenav)="toggleSidenav()"
+        class="layout-header"
+      ></app-header>
 
-      <mat-sidenav-container class="flex-1">
-        <mat-sidenav #sidenav mode="side" [opened]="sidenavOpen()" class="w-64">
-          <app-sidebar></app-sidebar>
+      <!-- Container principal -->
+      <mat-sidenav-container class="layout-body">
+        <!-- Sidebar -->
+        <mat-sidenav 
+          #sidenav 
+          [mode]="isMobile() ? 'over' : 'side'" 
+          [opened]="!isMobile() && sidenavOpen()"
+          class="layout-sidenav"
+          [fixedInViewport]="true"
+          [fixedTopGap]="64"
+        >
+          <app-sidebar (navigate)="onNavigate()"></app-sidebar>
         </mat-sidenav>
 
-        <mat-sidenav-content class="bg-gray-100">
-          <main class="p-6">
+        <!-- Contenido principal -->
+        <mat-sidenav-content class="layout-content">
+          <main class="layout-main animate-fade-in">
             <router-outlet></router-outlet>
           </main>
         </mat-sidenav-content>
@@ -33,12 +48,88 @@ import { SidebarComponent } from './sidebar.component';
     </div>
   `,
   styles: [`
-    mat-sidenav-container {
+    .layout-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-primary);
+    }
+
+    .layout-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+
+    .layout-body {
+      flex: 1;
       height: calc(100vh - 64px);
+    }
+
+    .layout-sidenav {
+      width: 280px;
+      background: var(--bg-secondary) !important;
+      border-right: 1px solid var(--border-color) !important;
+    }
+
+    .layout-content {
+      background-color: var(--bg-primary) !important;
+      overflow-y: auto;
+    }
+
+    .layout-main {
+      padding: 1.5rem;
+      min-height: 100%;
+    }
+
+    @media (min-width: 1024px) {
+      .layout-main {
+        padding: 2rem;
+      }
+    }
+
+    @media (max-width: 1023px) {
+      .layout-sidenav {
+        width: 280px;
+      }
     }
   `]
 })
 export class MainLayoutComponent {
   @ViewChild('sidenav') sidenav!: MatSidenav;
+  
+  private themeService = inject(ThemeService);
+  
   sidenavOpen = signal(true);
+  isMobile = signal(false);
+
+  constructor() {
+    this.checkScreenSize();
+  }
+
+  @HostListener('window:resize')
+  onResize() {
+    this.checkScreenSize();
+  }
+
+  private checkScreenSize(): void {
+    if (typeof window !== 'undefined') {
+      this.isMobile.set(window.innerWidth < 1024);
+    }
+  }
+
+  toggleSidenav(): void {
+    if (this.isMobile()) {
+      this.sidenav.toggle();
+    } else {
+      this.sidenavOpen.update(v => !v);
+    }
+  }
+
+  onNavigate(): void {
+    if (this.isMobile()) {
+      this.sidenav.close();
+    }
+  }
 }
