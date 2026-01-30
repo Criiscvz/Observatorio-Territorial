@@ -1,0 +1,83 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import "tailwindcss";
+
+/* Angular Material Theme */
+@import "@angular/material/prebuilt-themes/indigo-pink.css";
+
+/* Custom ULEAM Theme Colors */
+:root {
+  --uleam-red: #C8102E;
+  --uleam-gray: #5C5C5C;
+  --uleam-green: #8BC53F;
+}
+
+/* Override Material primary color */
+.mat-mdc-raised-button.mat-primary {
+  --mdc-filled-button-container-color: #C8102E;
+}
+
+.mat-mdc-unelevated-button.mat-primary {
+  --mdc-filled-button-container-color: #C8102E;
+}
+
+/* Global styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Form field improvements */
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+/* Card improvements */
+.mat-mdc-card {
+  border-radius: 12px !important;
+}
+
+/* Table improvements */
+.mat-mdc-table {
+  width: 100%;
+}
+
+.mat-mdc-row:hover {
+  background-color: #f5f5f5;
+}
+
+/* Chip colors */
+.mat-mdc-chip.mat-primary {
+  --mdc-chip-elevated-container-color: #e3f2fd;
+  --mdc-chip-label-text-color: #1565c0;
+}
+
+.mat-mdc-chip.mat-accent {
+  --mdc-chip-elevated-container-color: #f3e5f5;
+  --mdc-chip-label-text-color: #7b1fa2;
+}
+
+.mat-mdc-chip.mat-warn {
+  --mdc-chip-elevated-container-color: #ffebee;
+  --mdc-chip-label-text-color: #c62828;
+}
