@@ -58,28 +58,9 @@ class VariableMetadatoController extends Controller
         ]);
     }
 
-    #[OA\Put(
-        path: '/variables-metadatos/{id}',
-        summary: 'Actualizar variable',
-        description: 'Actualiza una variable metadato (tipo, visibilidad, orden)',
-        tags: ['Variables Metadatos'],
-        security: [['sanctum' => []]],
-        parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
-        ],
-        requestBody: new OA\RequestBody(
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(property: 'tipo_dato', type: 'string', enum: ['NUMERICO', 'CATEGORICO', 'FECHA', 'TEXTO']),
-                    new OA\Property(property: 'es_visible', type: 'boolean'),
-                    new OA\Property(property: 'orden', type: 'integer'),
-                ]
-            )
-        ),
-        responses: [
-            new OA\Response(response: 200, description: 'Variable actualizada'),
-        ]
-    )]
+    /**
+     * Actualizar variable (método legacy - usar DashboardController::updateVariable)
+     */
     public function update(Request $request, VariableMetadato $variableMetadato): JsonResponse
     {
         $validated = $request->validate([

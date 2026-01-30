@@ -398,18 +398,20 @@ export class DatasetViewComponent implements OnInit {
   private readonly dashboardService = inject(DashboardService);
   private readonly snackBar = inject(MatSnackBar);
 
-  // Tipos de gráficos disponibles
+  // Tipos de gráficos disponibles - organizados por complejidad
   readonly chartTypes: ChartType[] = [
-    { id: 'bar', name: 'Barras', icon: 'bar_chart', description: 'Comparar categorías', forTypes: ['CATEGORICO', 'TEXTO'] },
-    { id: 'pie', name: 'Pastel', icon: 'pie_chart', description: 'Proporciones', forTypes: ['CATEGORICO'] },
-    { id: 'donut', name: 'Donut', icon: 'donut_large', description: 'Proporciones con total', forTypes: ['CATEGORICO'] },
-    { id: 'histogram', name: 'Histograma', icon: 'equalizer', description: 'Distribución numérica', forTypes: ['NUMERICO'] },
-    { id: 'line', name: 'Líneas', icon: 'show_chart', description: 'Tendencias', forTypes: ['FECHA', 'NUMERICO'] },
-    { id: 'area', name: 'Área', icon: 'area_chart', description: 'Tendencias con área', forTypes: ['FECHA', 'NUMERICO'] },
-    { id: 'scatter', name: 'Dispersión', icon: 'scatter_plot', description: 'Correlación 2 numéricas', forTypes: ['NUMERICO'], bivariable: true },
-    { id: 'grouped_bar', name: 'Barras Agrupadas', icon: 'stacked_bar_chart', description: '2 categóricas', forTypes: ['CATEGORICO'], bivariable: true },
-    { id: 'heatmap', name: 'Mapa de Calor', icon: 'grid_on', description: 'Matriz de frecuencias', forTypes: ['CATEGORICO'], bivariable: true },
-    { id: 'box_compare', name: 'Comparar Promedios', icon: 'leaderboard', description: 'Categórica vs Numérica', forTypes: ['CATEGORICO'], bivariable: true },
+    // === UNIVARIABLES ===
+    { id: 'bar', name: 'Barras Verticales', icon: 'bar_chart', description: 'Comparar frecuencias por categoría', forTypes: ['CATEGORICO', 'TEXTO'] },
+    { id: 'pie', name: 'Pastel (Torta)', icon: 'pie_chart', description: 'Mostrar proporciones del total', forTypes: ['CATEGORICO'] },
+    { id: 'donut', name: 'Anillo (Donut)', icon: 'donut_large', description: 'Proporciones con total central', forTypes: ['CATEGORICO'] },
+    { id: 'histogram', name: 'Histograma', icon: 'equalizer', description: 'Distribución de valores numéricos', forTypes: ['NUMERICO'] },
+    { id: 'line', name: 'Líneas', icon: 'show_chart', description: 'Tendencias y evolución temporal', forTypes: ['FECHA', 'NUMERICO', 'CATEGORICO'] },
+    { id: 'area', name: 'Área', icon: 'area_chart', description: 'Tendencias con área sombreada', forTypes: ['FECHA', 'NUMERICO', 'CATEGORICO'] },
+    // === BIVARIABLES ===
+    { id: 'scatter', name: 'Dispersión (Scatter)', icon: 'scatter_plot', description: 'Correlación entre 2 numéricas', forTypes: ['NUMERICO'], bivariable: true },
+    { id: 'grouped_bar', name: 'Barras Agrupadas', icon: 'stacked_bar_chart', description: 'Comparar grupos por categoría', forTypes: ['CATEGORICO'], bivariable: true },
+    { id: 'heatmap', name: 'Mapa de Calor', icon: 'grid_on', description: 'Matriz de frecuencias cruzadas', forTypes: ['CATEGORICO'], bivariable: true },
+    { id: 'box_compare', name: 'Comparar Promedios', icon: 'leaderboard', description: 'Promedio numérico por categoría', forTypes: ['CATEGORICO', 'NUMERICO'], bivariable: true },
   ];
 
   // Estado
@@ -445,10 +447,20 @@ export class DatasetViewComponent implements OnInit {
   columnNames = computed(() => this.visibleColumns().map(v => v._uniqueId));
   analysableVariables = computed(() => this.variables().filter(v => v.tipo_dato !== 'TEXTO'));
 
-  // Colores
+  // Paleta de colores moderna y vibrante
   private readonly colors = [
-    '#C8102E', '#1E3A5F', '#3B82F6', '#10B981', '#F59E0B', 
-    '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16', '#F97316'
+    '#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#EF4444',
+    '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#3B82F6',
+    '#10B981', '#E11D48', '#7C3AED', '#0EA5E9', '#22C55E'
+  ];
+  
+  // Gradientes para gráficos
+  private readonly gradients = [
+    { start: '#6366F1', end: '#4F46E5' },
+    { start: '#EC4899', end: '#DB2777' },
+    { start: '#14B8A6', end: '#0D9488' },
+    { start: '#F59E0B', end: '#D97706' },
+    { start: '#EF4444', end: '#DC2626' },
   ];
 
   ngOnInit(): void {
@@ -668,66 +680,327 @@ export class DatasetViewComponent implements OnInit {
   private getUnivariableChartOptions(data: ChartData, type: string): EChartsOption {
     const labels = data.data?.labels || [];
     const values = data.data?.values || [];
+    const variableName = data.variable || 'Variable';
+    const total = values.reduce((a, b) => a + b, 0);
+    const maxValue = Math.max(...values, 1);
+
+    // Estilos comunes mejorados
+    const titleStyle = { 
+      text: variableName, 
+      left: 'center', 
+      top: 10, 
+      textStyle: { 
+        fontSize: 16, 
+        fontWeight: 'bold' as const,
+        color: '#1F2937'
+      },
+      subtextStyle: { fontSize: 12, color: '#6B7280' }
+    };
+
+    const tooltipStyle = {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E5E7EB',
+      borderWidth: 1,
+      textStyle: { color: '#1F2937' },
+      extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px;'
+    };
 
     switch (type) {
       case 'bar':
         return {
-          tooltip: { trigger: 'axis' },
-          xAxis: { type: 'category', data: labels, axisLabel: { rotate: 45, interval: 0 } },
-          yAxis: { type: 'value' },
-          series: [{ type: 'bar', data: values.map((v, i) => ({ value: v, itemStyle: { color: this.colors[i % this.colors.length] } })) }],
-          grid: { bottom: 80, left: 50, right: 20 }
+          title: { ...titleStyle, subtext: `Total: ${total.toLocaleString()} registros` },
+          tooltip: { 
+            ...tooltipStyle,
+            trigger: 'axis' as const,
+            axisPointer: { type: 'shadow' as const, shadowStyle: { color: 'rgba(99, 102, 241, 0.1)' } },
+            formatter: (params: any) => {
+              const p = Array.isArray(params) ? params[0] : params;
+              const percent = total > 0 ? ((p.value / total) * 100).toFixed(1) : 0;
+              return `<div style="font-weight:600;margin-bottom:8px;color:#6366F1">${variableName}</div>` +
+                     `<div style="display:flex;align-items:center;gap:8px;">` +
+                     `<span style="width:12px;height:12px;background:${p.color};border-radius:3px;"></span>` +
+                     `<span>${p.name}</span></div>` +
+                     `<div style="font-size:18px;font-weight:700;margin-top:4px;">${p.value.toLocaleString()}</div>` +
+                     `<div style="color:#6B7280;font-size:12px;">${percent}% del total</div>`;
+            }
+          },
+          legend: { show: false },
+          xAxis: { 
+            type: 'category' as const, 
+            data: labels, 
+            axisLabel: { rotate: labels.length > 6 ? 45 : 0, interval: 0, color: '#4B5563', fontSize: 11 },
+            axisLine: { lineStyle: { color: '#E5E7EB' } },
+            axisTick: { show: false }
+          },
+          yAxis: { 
+            type: 'value' as const, 
+            name: 'Cantidad',
+            nameTextStyle: { color: '#6B7280', padding: [0, 0, 0, 40] },
+            axisLine: { show: false },
+            axisTick: { show: false },
+            splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+          },
+          series: [{ 
+            type: 'bar' as const, 
+            name: variableName,
+            data: values.map((v, i) => ({ 
+              value: v, 
+              name: labels[i],
+              itemStyle: { 
+                color: {
+                  type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1,
+                  colorStops: [
+                    { offset: 0, color: this.colors[i % this.colors.length] },
+                    { offset: 1, color: this.adjustColor(this.colors[i % this.colors.length], -30) }
+                  ]
+                },
+                borderRadius: [6, 6, 0, 0]
+              }
+            })),
+            barWidth: '60%',
+            label: { 
+              show: values.length <= 12, 
+              position: 'top' as const, 
+              formatter: '{c}',
+              color: '#374151',
+              fontWeight: 'bold' as const
+            },
+            emphasis: {
+              itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.2)' }
+            },
+            animationDelay: (idx: number) => idx * 50
+          }],
+          grid: { bottom: labels.length > 6 ? 100 : 60, left: 70, right: 30, top: 80 },
+          animationEasing: 'elasticOut' as const
         };
 
       case 'pie':
         return {
-          tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+          title: { ...titleStyle, subtext: `${labels.length} categorías | ${total.toLocaleString()} registros` },
+          tooltip: { 
+            ...tooltipStyle,
+            trigger: 'item' as const,
+            formatter: (params: any) => {
+              return `<div style="font-weight:600;margin-bottom:8px;color:#6366F1">${variableName}</div>` +
+                     `<div style="display:flex;align-items:center;gap:8px;">` +
+                     `<span style="width:14px;height:14px;background:${params.color};border-radius:50%;"></span>` +
+                     `<span style="font-weight:500">${params.name}</span></div>` +
+                     `<div style="font-size:22px;font-weight:700;margin:8px 0;">${params.value.toLocaleString()}</div>` +
+                     `<div style="background:#F3F4F6;padding:4px 8px;border-radius:4px;font-weight:600;color:#6366F1;">` +
+                     `${params.percent}% del total</div>`;
+            }
+          },
+          legend: { 
+            orient: 'vertical' as const, 
+            right: 20, 
+            top: 'middle' as const,
+            type: 'scroll' as const,
+            textStyle: { color: '#4B5563' },
+            formatter: (name: string) => {
+              const idx = labels.indexOf(name);
+              const val = idx >= 0 ? values[idx] : 0;
+              const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+              return name.length > 15 ? `${name.substring(0, 15)}... (${pct}%)` : `${name} (${pct}%)`;
+            }
+          },
           series: [{
-            type: 'pie',
-            radius: '70%',
-            data: labels.map((l, i) => ({ name: l, value: values[i], itemStyle: { color: this.colors[i % this.colors.length] } }))
+            type: 'pie' as const,
+            radius: ['0%', '70%'],
+            center: ['35%', '55%'],
+            roseType: 'radius' as const,
+            data: labels.map((l, i) => ({ 
+              name: l, 
+              value: values[i], 
+              itemStyle: { 
+                color: this.colors[i % this.colors.length],
+                borderColor: '#fff',
+                borderWidth: 2
+              }
+            })),
+            label: { 
+              show: labels.length <= 8, 
+              formatter: '{b}\n{d}%',
+              fontSize: 11,
+              color: '#374151'
+            },
+            labelLine: { length: 15, length2: 10 },
+            emphasis: {
+              label: { show: true, fontSize: 14, fontWeight: 'bold' as const },
+              itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.3)' },
+              scaleSize: 10
+            },
+            animationType: 'scale' as const,
+            animationEasing: 'elasticOut' as const
           }]
         };
 
       case 'donut':
-        const total = values.reduce((a, b) => a + b, 0);
         return {
-          tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+          title: { ...titleStyle },
+          tooltip: { 
+            ...tooltipStyle,
+            trigger: 'item' as const,
+            formatter: (params: any) => {
+              return `<div style="font-weight:600;margin-bottom:8px;color:#EC4899">${variableName}</div>` +
+                     `<div style="display:flex;align-items:center;gap:8px;">` +
+                     `<span style="width:14px;height:14px;background:${params.color};border-radius:50%;"></span>` +
+                     `<span style="font-weight:500">${params.name}</span></div>` +
+                     `<div style="font-size:22px;font-weight:700;margin:8px 0;">${params.value.toLocaleString()}</div>` +
+                     `<div style="background:#FDF2F8;padding:4px 8px;border-radius:4px;font-weight:600;color:#EC4899;">` +
+                     `${params.percent}%</div>`;
+            }
+          },
+          legend: { 
+            orient: 'vertical' as const, 
+            right: 20, 
+            top: 'middle' as const,
+            type: 'scroll' as const,
+            textStyle: { color: '#4B5563' }
+          },
           graphic: [
-            { type: 'text', left: 'center', top: '40%', style: { text: total.toLocaleString(), fontSize: 20, fontWeight: 'bold' } },
-            { type: 'text', left: 'center', top: '50%', style: { text: 'Total', fontSize: 12, fill: '#666' } }
+            { type: 'text' as const, left: '28%', top: '42%', style: { text: total.toLocaleString(), fontSize: 28, fontWeight: 'bold' as const, fill: '#1F2937' } },
+            { type: 'text' as const, left: '28%', top: '52%', style: { text: 'Total', fontSize: 14, fill: '#6B7280' } }
           ],
           series: [{
-            type: 'pie',
-            radius: ['45%', '70%'],
-            data: labels.map((l, i) => ({ name: l, value: values[i], itemStyle: { color: this.colors[i % this.colors.length] } }))
+            type: 'pie' as const,
+            radius: ['50%', '75%'],
+            center: ['32%', '50%'],
+            avoidLabelOverlap: true,
+            itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 3 },
+            data: labels.map((l, i) => ({ 
+              name: l, 
+              value: values[i], 
+              itemStyle: { color: this.colors[i % this.colors.length] }
+            })),
+            label: { show: labels.length <= 6, formatter: '{b}: {d}%', fontSize: 11 },
+            emphasis: {
+              label: { show: true, fontSize: 14, fontWeight: 'bold' as const },
+              itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.2)' }
+            },
+            animationType: 'scale' as const,
+            animationEasing: 'elasticOut' as const
           }]
         };
 
       case 'histogram':
         return {
-          tooltip: { trigger: 'axis' },
-          xAxis: { type: 'category', data: labels, axisLabel: { rotate: 45 } },
-          yAxis: { type: 'value', name: 'Frecuencia' },
-          series: [{ type: 'bar', data: values, itemStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: '#3B82F6' }, { offset: 1, color: '#1E40AF' }] } } }],
-          grid: { bottom: 80, left: 60, right: 20 }
+          title: { ...titleStyle, text: `Distribución de ${variableName}`, subtext: `${values.length} rangos | ${total.toLocaleString()} registros` },
+          tooltip: { 
+            ...tooltipStyle,
+            trigger: 'axis' as const,
+            axisPointer: { type: 'shadow' as const },
+            formatter: (params: any) => {
+              const p = Array.isArray(params) ? params[0] : params;
+              const percent = total > 0 ? ((p.value / total) * 100).toFixed(1) : 0;
+              return `<div style="font-weight:600;margin-bottom:8px;color:#14B8A6">${variableName}</div>` +
+                     `<div style="color:#6B7280;font-size:12px;">Rango</div>` +
+                     `<div style="font-weight:500;margin-bottom:8px;">${p.name}</div>` +
+                     `<div style="font-size:20px;font-weight:700;">${p.value.toLocaleString()}</div>` +
+                     `<div style="color:#6B7280;font-size:12px;">${percent}% de los datos</div>`;
+            }
+          },
+          xAxis: { 
+            type: 'category' as const, 
+            data: labels, 
+            axisLabel: { rotate: 45, color: '#4B5563', fontSize: 10 },
+            axisLine: { lineStyle: { color: '#E5E7EB' } },
+            axisTick: { show: false }
+          },
+          yAxis: { 
+            type: 'value' as const, 
+            name: 'Frecuencia',
+            nameTextStyle: { color: '#6B7280' },
+            axisLine: { show: false },
+            splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+          },
+          series: [{ 
+            type: 'bar' as const, 
+            name: 'Frecuencia',
+            data: values, 
+            barWidth: '85%',
+            itemStyle: { 
+              color: { 
+                type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1, 
+                colorStops: [{ offset: 0, color: '#14B8A6' }, { offset: 1, color: '#0D9488' }] 
+              },
+              borderRadius: [4, 4, 0, 0]
+            },
+            emphasis: { itemStyle: { color: '#0F766E' } },
+            label: { show: values.length <= 15, position: 'top' as const, formatter: '{c}', fontSize: 10, color: '#374151' }
+          }],
+          grid: { bottom: 90, left: 70, right: 30, top: 80 },
+          dataZoom: [{ type: 'inside' as const, start: 0, end: 100 }]
         };
 
       case 'line':
       case 'area':
+        const isArea = type === 'area';
         return {
-          tooltip: { trigger: 'axis' },
-          xAxis: { type: 'category', data: labels, axisLabel: { rotate: 45 } },
-          yAxis: { type: 'value' },
+          title: { ...titleStyle, text: `Tendencia de ${variableName}`, subtext: `${labels.length} puntos de datos` },
+          tooltip: { 
+            ...tooltipStyle,
+            trigger: 'axis' as const,
+            formatter: (params: any) => {
+              const p = Array.isArray(params) ? params[0] : params;
+              return `<div style="font-weight:600;margin-bottom:8px;color:#F59E0B">${variableName}</div>` +
+                     `<div style="color:#6B7280;font-size:12px;">${p.name}</div>` +
+                     `<div style="font-size:24px;font-weight:700;color:#1F2937;">${p.value.toLocaleString()}</div>`;
+            }
+          },
+          xAxis: { 
+            type: 'category' as const, 
+            data: labels,
+            boundaryGap: false,
+            axisLabel: { rotate: labels.length > 10 ? 45 : 0, color: '#4B5563', fontSize: 11 },
+            axisLine: { lineStyle: { color: '#E5E7EB' } },
+            axisTick: { show: false }
+          },
+          yAxis: { 
+            type: 'value' as const,
+            axisLine: { show: false },
+            splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+          },
           series: [{
-            type: 'line',
+            type: 'line' as const,
+            name: variableName,
             data: values,
             smooth: true,
-            lineStyle: { color: '#C8102E', width: 2 },
-            areaStyle: type === 'area' ? { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(200,16,46,0.5)' }, { offset: 1, color: 'rgba(200,16,46,0.05)' }] } } : undefined
+            symbol: 'circle',
+            symbolSize: values.length <= 20 ? 10 : 6,
+            lineStyle: { 
+              color: '#F59E0B', 
+              width: 4,
+              shadowColor: 'rgba(245, 158, 11, 0.3)',
+              shadowBlur: 10,
+              shadowOffsetY: 8
+            },
+            itemStyle: { 
+              color: '#F59E0B',
+              borderColor: '#fff',
+              borderWidth: 2
+            },
+            areaStyle: isArea ? { 
+              color: { 
+                type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1, 
+                colorStops: [
+                  { offset: 0, color: 'rgba(245, 158, 11, 0.4)' }, 
+                  { offset: 1, color: 'rgba(245, 158, 11, 0.02)' }
+                ] 
+              }
+            } : undefined,
+            emphasis: {
+              itemStyle: { 
+                color: '#D97706',
+                borderColor: '#F59E0B',
+                borderWidth: 3,
+                shadowBlur: 15,
+                shadowColor: 'rgba(245, 158, 11, 0.5)'
+              }
+            },
+            label: { show: values.length <= 10, position: 'top' as const, formatter: '{c}', fontWeight: 'bold' as const }
           }],
-          grid: { bottom: 80, left: 50, right: 20 },
-          dataZoom: [{ type: 'inside' }]
+          grid: { bottom: labels.length > 10 ? 90 : 50, left: 60, right: 30, top: 80 },
+          dataZoom: [{ type: 'inside' as const }, { type: 'slider' as const, show: labels.length > 15, bottom: 10, height: 20 }]
         };
 
       default:
@@ -735,60 +1008,381 @@ export class DatasetViewComponent implements OnInit {
     }
   }
 
+  // Función auxiliar para ajustar colores
+  private adjustColor(hex: string, amount: number): string {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
+    const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
+    return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+  }
+
   private getBivariableChartOptions(data: BivariableResponse, type: string): EChartsOption {
     const d = data.data;
-    const varX = data.nombre_variable_x || data.variable_x || '';
-    const varY = data.nombre_variable_y || data.variable_y || '';
+    const varX = data.nombre_variable_x || data.variable_x || 'Variable X';
+    const varY = data.nombre_variable_y || data.variable_y || 'Variable Y';
+    const correlation = d.correlation ?? data.stats?.correlation;
+    
+    // Normalizar datos - el backend puede enviar categories o labels
+    const categories = d.categories || d.labels || d.labels_x || [];
+    const values = d.values || [];
+    const counts = d.counts || [];
 
-    // Scatter
+    // Estilos comunes
+    const tooltipStyle = {
+      backgroundColor: 'rgba(255, 255, 255, 0.98)',
+      borderColor: '#E5E7EB',
+      borderWidth: 1,
+      textStyle: { color: '#1F2937' },
+      extraCssText: 'box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-radius: 12px; padding: 12px;'
+    };
+
+    // ========== SCATTER (2 numéricas) ==========
     if (d.points && d.points.length > 0) {
+      const correlationColor = correlation !== undefined 
+        ? (Math.abs(correlation) >= 0.7 ? '#10B981' : Math.abs(correlation) >= 0.4 ? '#F59E0B' : '#EF4444')
+        : '#6366F1';
+      const correlationText = correlation !== undefined ? correlation.toFixed(3) : 'N/A';
+      
       return {
-        tooltip: { trigger: 'item', formatter: (p: any) => `X: ${p.value[0]}<br>Y: ${p.value[1]}` },
-        xAxis: { type: 'value', name: varX, scale: true },
-        yAxis: { type: 'value', name: varY, scale: true },
-        series: [{ type: 'scatter', data: d.points, symbolSize: 8, itemStyle: { color: '#C8102E', opacity: 0.7 } }],
-        dataZoom: [{ type: 'inside', xAxisIndex: 0 }, { type: 'inside', yAxisIndex: 0 }]
+        title: { 
+          text: `Relación: ${varX} vs ${varY}`,
+          subtext: `Correlación: ${correlationText} | ${d.points.length} puntos`,
+          left: 'center', 
+          top: 10,
+          textStyle: { fontSize: 16, fontWeight: 'bold' as const, color: '#1F2937' },
+          subtextStyle: { fontSize: 12, color: correlationColor }
+        },
+        tooltip: { 
+          ...tooltipStyle,
+          trigger: 'item' as const,
+          formatter: (p: any) => {
+            return `<div style="font-weight:600;color:#8B5CF6;margin-bottom:8px;">Punto de Datos</div>` +
+                   `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">` +
+                   `<div><span style="color:#6B7280;font-size:11px;">${varX}</span><br/>` +
+                   `<span style="font-size:18px;font-weight:700;">${p.value[0].toLocaleString()}</span></div>` +
+                   `<div><span style="color:#6B7280;font-size:11px;">${varY}</span><br/>` +
+                   `<span style="font-size:18px;font-weight:700;">${p.value[1].toLocaleString()}</span></div></div>`;
+          }
+        },
+        xAxis: { 
+          type: 'value' as const, 
+          name: varX, 
+          nameLocation: 'middle' as const, 
+          nameGap: 35,
+          nameTextStyle: { fontWeight: 'bold' as const, color: '#374151' },
+          scale: true,
+          axisLine: { lineStyle: { color: '#D1D5DB' } },
+          splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+        },
+        yAxis: { 
+          type: 'value' as const, 
+          name: varY, 
+          nameLocation: 'middle' as const, 
+          nameGap: 50,
+          nameTextStyle: { fontWeight: 'bold' as const, color: '#374151' },
+          scale: true,
+          axisLine: { lineStyle: { color: '#D1D5DB' } },
+          splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+        },
+        series: [{ 
+          type: 'scatter' as const, 
+          name: `${varX} vs ${varY}`,
+          data: d.points,
+          symbolSize: (val: number[]) => Math.min(20, Math.max(8, 10)),
+          itemStyle: { 
+            color: {
+              type: 'radial' as const,
+              x: 0.5, y: 0.5, r: 0.5,
+              colorStops: [
+                { offset: 0, color: '#8B5CF6' },
+                { offset: 0.7, color: '#7C3AED' },
+                { offset: 1, color: '#6D28D9' }
+              ]
+            },
+            opacity: 0.75,
+            shadowBlur: 3,
+            shadowColor: 'rgba(139, 92, 246, 0.3)'
+          },
+          emphasis: { 
+            itemStyle: { 
+              opacity: 1,
+              shadowBlur: 20, 
+              shadowColor: 'rgba(139, 92, 246, 0.5)',
+              borderColor: '#fff',
+              borderWidth: 2
+            },
+            scale: 1.5
+          }
+        }],
+        grid: { bottom: 70, left: 80, right: 40, top: 90 },
+        dataZoom: [
+          { type: 'inside' as const, xAxisIndex: 0 }, 
+          { type: 'inside' as const, yAxisIndex: 0 },
+          { type: 'slider' as const, xAxisIndex: 0, bottom: 10, height: 20 }
+        ]
       };
     }
 
-    // Heatmap
+    // ========== HEATMAP (2 categóricas) ==========
     if (d.heatmap && d.labels_x && d.labels_y) {
-      const maxVal = Math.max(...d.heatmap.map((h: [number, number, number]) => h[2]));
+      const maxVal = Math.max(...d.heatmap.map((h: [number, number, number]) => h[2]), 1);
+      const totalCells = d.heatmap.reduce((sum: number, h: [number, number, number]) => sum + h[2], 0);
+      
       return {
-        tooltip: { position: 'top' },
-        xAxis: { type: 'category', data: d.labels_x, splitArea: { show: true }, axisLabel: { rotate: 45 } },
-        yAxis: { type: 'category', data: d.labels_y, splitArea: { show: true } },
-        visualMap: { min: 0, max: maxVal, calculable: true, orient: 'horizontal', left: 'center', bottom: 0, inRange: { color: ['#f5f5f5', '#C8102E'] } },
-        series: [{ type: 'heatmap', data: d.heatmap, label: { show: true } }],
-        grid: { bottom: 80, top: 20 }
+        title: { 
+          text: `Mapa de Calor: ${varX} × ${varY}`,
+          subtext: `${d.labels_x.length} × ${d.labels_y.length} celdas | ${totalCells.toLocaleString()} registros`,
+          left: 'center', 
+          top: 10,
+          textStyle: { fontSize: 16, fontWeight: 'bold' as const, color: '#1F2937' },
+          subtextStyle: { fontSize: 12, color: '#6B7280' }
+        },
+        tooltip: { 
+          ...tooltipStyle,
+          position: 'top' as const,
+          formatter: (p: any) => {
+            const xLabel = d.labels_x![p.value[0]];
+            const yLabel = d.labels_y![p.value[1]];
+            const freq = p.value[2];
+            const pct = totalCells > 0 ? ((freq / totalCells) * 100).toFixed(1) : 0;
+            return `<div style="font-weight:600;color:#EC4899;margin-bottom:8px;">Cruce de Variables</div>` +
+                   `<div style="display:grid;gap:4px;font-size:13px;">` +
+                   `<div><span style="color:#6B7280">${varX}:</span> <strong>${xLabel}</strong></div>` +
+                   `<div><span style="color:#6B7280">${varY}:</span> <strong>${yLabel}</strong></div>` +
+                   `</div>` +
+                   `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #E5E7EB;">` +
+                   `<div style="font-size:24px;font-weight:700;color:#EC4899;">${freq.toLocaleString()}</div>` +
+                   `<div style="font-size:12px;color:#6B7280;">${pct}% del total</div></div>`;
+          }
+        },
+        xAxis: { 
+          type: 'category' as const, 
+          data: d.labels_x, 
+          name: varX,
+          nameLocation: 'middle' as const,
+          nameGap: 45,
+          splitArea: { show: true },
+          axisLabel: { rotate: 45, fontSize: 10, color: '#4B5563' },
+          axisLine: { lineStyle: { color: '#E5E7EB' } }
+        },
+        yAxis: { 
+          type: 'category' as const, 
+          data: d.labels_y, 
+          name: varY,
+          splitArea: { show: true },
+          axisLabel: { fontSize: 10, color: '#4B5563' },
+          axisLine: { lineStyle: { color: '#E5E7EB' } }
+        },
+        visualMap: { 
+          min: 0, 
+          max: maxVal, 
+          calculable: true, 
+          orient: 'horizontal' as const, 
+          left: 'center', 
+          bottom: 10,
+          itemWidth: 20,
+          itemHeight: 140,
+          text: ['Alto', 'Bajo'],
+          textStyle: { color: '#6B7280' },
+          inRange: { 
+            color: ['#FDF2F8', '#FBCFE8', '#F9A8D4', '#F472B6', '#EC4899', '#DB2777', '#BE185D'] 
+          }
+        },
+        series: [{ 
+          type: 'heatmap' as const, 
+          data: d.heatmap, 
+          label: { 
+            show: d.labels_x!.length <= 10 && d.labels_y!.length <= 10, 
+            fontSize: 11,
+            fontWeight: 'bold' as const,
+            formatter: (p: any) => p.value[2] > 0 ? p.value[2] : ''
+          },
+          emphasis: {
+            itemStyle: { 
+              shadowBlur: 15, 
+              shadowColor: 'rgba(236, 72, 153, 0.4)',
+              borderColor: '#fff',
+              borderWidth: 2
+            }
+          },
+          itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 1 }
+        }],
+        grid: { bottom: 80, top: 80, left: 100, right: 30 }
       };
     }
 
-    // Grouped bar / stacked
+    // ========== GROUPED/STACKED BAR (series) ==========
     if (d.series && Array.isArray(d.series) && d.labels_x) {
+      const seriesNames = d.series.map((s: { name: string }) => s.name);
+      const totalValues = d.series.reduce((sum: number, s: { data: number[] }) => 
+        sum + s.data.reduce((a: number, b: number) => a + b, 0), 0);
+      
       return {
-        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-        legend: { bottom: 0, type: 'scroll' },
-        xAxis: { type: 'category', data: d.labels_x, axisLabel: { rotate: 45 } },
-        yAxis: { type: 'value' },
+        title: { 
+          text: `${varY} por ${varX}`,
+          subtext: `${seriesNames.length} grupos | ${totalValues.toLocaleString()} registros totales`,
+          left: 'center', 
+          top: 10,
+          textStyle: { fontSize: 16, fontWeight: 'bold' as const, color: '#1F2937' },
+          subtextStyle: { fontSize: 12, color: '#6B7280' }
+        },
+        tooltip: { 
+          ...tooltipStyle,
+          trigger: 'axis' as const, 
+          axisPointer: { type: 'shadow' as const, shadowStyle: { color: 'rgba(99, 102, 241, 0.08)' } },
+          formatter: (params: any) => {
+            if (!Array.isArray(params)) return '';
+            const total = params.reduce((sum: number, p: any) => sum + (p.value || 0), 0);
+            let tooltip = `<div style="font-weight:600;color:#6366F1;margin-bottom:10px;font-size:14px;">${varX}: ${params[0].axisValue}</div>`;
+            tooltip += `<div style="display:grid;gap:6px;">`;
+            params.forEach((p: any) => {
+              const pct = total > 0 ? ((p.value / total) * 100).toFixed(1) : 0;
+              tooltip += `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">` +
+                `<div style="display:flex;align-items:center;gap:6px;">` +
+                `<span style="width:12px;height:12px;background:${p.color};border-radius:3px;"></span>` +
+                `<span style="color:#4B5563">${p.seriesName}</span></div>` +
+                `<div><strong style="font-size:14px;">${p.value.toLocaleString()}</strong> <span style="color:#9CA3AF;font-size:11px;">(${pct}%)</span></div></div>`;
+            });
+            tooltip += `</div>`;
+            tooltip += `<div style="margin-top:10px;padding-top:8px;border-top:1px solid #E5E7EB;text-align:right;">` +
+                       `<span style="color:#6B7280">Total:</span> <strong style="font-size:16px;">${total.toLocaleString()}</strong></div>`;
+            return tooltip;
+          }
+        },
+        legend: { 
+          bottom: 10, 
+          type: 'scroll' as const,
+          textStyle: { color: '#4B5563' },
+          data: seriesNames
+        },
+        xAxis: { 
+          type: 'category' as const, 
+          data: d.labels_x, 
+          axisLabel: { rotate: d.labels_x.length > 6 ? 45 : 0, color: '#4B5563', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#E5E7EB' } },
+          axisTick: { show: false }
+        },
+        yAxis: { 
+          type: 'value' as const, 
+          name: 'Cantidad',
+          nameTextStyle: { color: '#6B7280' },
+          axisLine: { show: false },
+          splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+        },
         series: d.series.map((s: { name: string; data: number[] }, i: number) => ({ 
           name: s.name, 
           type: 'bar' as const, 
-          data: s.data, 
-          itemStyle: { color: this.colors[i % this.colors.length] } 
+          data: s.data,
+          barGap: '10%',
+          itemStyle: { 
+            color: this.colors[i % this.colors.length],
+            borderRadius: [4, 4, 0, 0]
+          },
+          emphasis: {
+            itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' }
+          },
+          label: { 
+            show: d.series!.length <= 2 && d.labels_x!.length <= 6, 
+            position: 'top' as const, 
+            formatter: '{c}',
+            fontSize: 10,
+            fontWeight: 'bold' as const
+          }
         })),
-        grid: { bottom: 100, left: 50, right: 20 }
+        grid: { bottom: 80, left: 60, right: 30, top: 80 }
       };
     }
 
-    // Bar simple (categórica vs numérica)
-    if (d.labels && d.values) {
+    // ========== BAR COMPARATIVO (categórica vs numérica - promedios) ==========
+    if (categories.length > 0 && values.length > 0) {
+      const total = values.reduce((a: number, b: number) => a + b, 0);
+      const avg = total / values.length;
+      
       return {
-        tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: d.labels, axisLabel: { rotate: 45, interval: 0 } },
-        yAxis: { type: 'value', name: varY },
-        series: [{ type: 'bar', data: d.values.map((v: number, i: number) => ({ value: v, itemStyle: { color: this.colors[i % this.colors.length] } })) }],
-        grid: { bottom: 80, left: 60, right: 20 }
+        title: { 
+          text: `Promedio de ${varY} por ${varX}`,
+          subtext: `${categories.length} categorías | Promedio general: ${avg.toFixed(2)}`,
+          left: 'center', 
+          top: 10,
+          textStyle: { fontSize: 16, fontWeight: 'bold' as const, color: '#1F2937' },
+          subtextStyle: { fontSize: 12, color: '#6B7280' }
+        },
+        tooltip: { 
+          ...tooltipStyle,
+          trigger: 'axis' as const,
+          axisPointer: { type: 'shadow' as const },
+          formatter: (params: any) => {
+            const p = Array.isArray(params) ? params[0] : params;
+            const count = counts[p.dataIndex] || 0;
+            const diff = avg > 0 ? (((p.value - avg) / avg) * 100).toFixed(1) : 0;
+            const diffColor = p.value >= avg ? '#10B981' : '#EF4444';
+            const diffSign = p.value >= avg ? '+' : '';
+            return `<div style="font-weight:600;color:#14B8A6;margin-bottom:8px;">${varX}</div>` +
+                   `<div style="font-size:14px;font-weight:500;margin-bottom:10px;">${p.name}</div>` +
+                   `<div style="display:grid;gap:8px;">` +
+                   `<div><span style="color:#6B7280;font-size:11px;">Promedio de ${varY}</span><br/>` +
+                   `<span style="font-size:24px;font-weight:700;color:#14B8A6;">${p.value.toLocaleString()}</span></div>` +
+                   (count > 0 ? `<div><span style="color:#6B7280;font-size:11px;">Cantidad de registros</span><br/>` +
+                   `<span style="font-size:16px;font-weight:600;">${count.toLocaleString()}</span></div>` : '') +
+                   `<div style="background:#F3F4F6;padding:6px 10px;border-radius:6px;margin-top:4px;">` +
+                   `<span style="color:${diffColor};font-weight:600;">${diffSign}${diff}%</span>` +
+                   `<span style="color:#6B7280;font-size:11px;"> vs promedio general</span></div></div>`;
+          }
+        },
+        legend: { show: false },
+        xAxis: { 
+          type: 'category' as const, 
+          data: categories,
+          axisLabel: { rotate: categories.length > 5 ? 45 : 0, color: '#4B5563', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#E5E7EB' } },
+          axisTick: { show: false }
+        },
+        yAxis: { 
+          type: 'value' as const, 
+          name: `Promedio de ${varY}`,
+          nameTextStyle: { color: '#6B7280', padding: [0, 0, 0, 50] },
+          axisLine: { show: false },
+          splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+        },
+        series: [
+          { 
+            type: 'bar' as const, 
+            name: varY,
+            data: values.map((v: number, i: number) => ({ 
+              value: v, 
+              name: categories[i],
+              itemStyle: { 
+                color: {
+                  type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1,
+                  colorStops: [
+                    { offset: 0, color: this.colors[i % this.colors.length] },
+                    { offset: 1, color: this.adjustColor(this.colors[i % this.colors.length], -40) }
+                  ]
+                },
+                borderRadius: [8, 8, 0, 0]
+              }
+            })),
+            barWidth: '60%',
+            label: { 
+              show: categories.length <= 10, 
+              position: 'top' as const, 
+              formatter: (p: any) => p.value.toFixed(1),
+              fontWeight: 'bold' as const,
+              color: '#374151'
+            },
+            emphasis: {
+              itemStyle: { shadowBlur: 15, shadowColor: 'rgba(0,0,0,0.2)' }
+            },
+            markLine: {
+              silent: true,
+              symbol: 'none',
+              lineStyle: { color: '#EF4444', type: 'dashed' as const, width: 2 },
+              data: [{ yAxis: avg, label: { formatter: `Prom: ${avg.toFixed(1)}`, position: 'end' as const } }]
+            }
+          }
+        ],
+        grid: { bottom: categories.length > 5 ? 100 : 60, left: 80, right: 30, top: 80 }
       };
     }
 
