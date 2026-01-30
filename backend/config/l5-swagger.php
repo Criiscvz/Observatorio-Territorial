@@ -52,9 +52,9 @@ return [
     'defaults' => [
         'routes' => [
             /*
-             * Route for accessing parsed swagger annotations.
+             * Route for accessing parsed swagger annotations (JSON file).
              */
-            'docs' => 'api/docs',
+            'docs' => 'api/docs-json',
 
             /*
              * Route for Oauth2 authentication callback.
