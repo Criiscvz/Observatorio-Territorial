@@ -368,6 +368,206 @@
                 ]
             }
         },
+        "/datasets/{dataset}/data": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Obtener datos del dataset",
+                "description": "Obtiene los registros del dataset con paginación",
+                "operationId": "f7dc16b98753907b6c8a2a997a043417",
+                "parameters": [
+                    {
+                        "name": "dataset",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos del dataset"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/variables-metadatos/{id}": {
+            "get": {
+                "tags": [
+                    "Variables Metadatos"
+                ],
+                "summary": "Obtener variable",
+                "description": "Obtiene una variable específica",
+                "operationId": "040b26c7c1f3d7f9071c23a5380d20b6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Variable encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Actualizar metadatos de variable",
+                "description": "Actualiza el tipo o visibilidad de una variable",
+                "operationId": "806fe222653e1a777968b5de6cc8af41",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "tipo_dato": {
+                                        "type": "string",
+                                        "enum": [
+                                            "NUMERICO",
+                                            "CATEGORICO",
+                                            "FECHA",
+                                            "TEXTO"
+                                        ]
+                                    },
+                                    "es_visible": {
+                                        "type": "boolean"
+                                    },
+                                    "nombre_columna": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Variable actualizada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/dashboard/{departamento}/bivariable": {
+            "post": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Análisis bivariable",
+                "description": "Obtiene análisis de correlación entre dos variables",
+                "operationId": "13bdb85b913caa94ab941fef6d0bc80d",
+                "parameters": [
+                    {
+                        "name": "departamento",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dataset_id",
+                                    "variable_x",
+                                    "variable_y"
+                                ],
+                                "properties": {
+                                    "dataset_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_x": {
+                                        "type": "string"
+                                    },
+                                    "variable_y": {
+                                        "type": "string"
+                                    },
+                                    "chart_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "bar",
+                                            "scatter",
+                                            "heatmap",
+                                            "grouped_bar"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Análisis bivariable"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/datasets": {
             "get": {
                 "tags": [
@@ -957,92 +1157,6 @@
                 "responses": {
                     "200": {
                         "description": "Lista de variables"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/variables-metadatos/{id}": {
-            "get": {
-                "tags": [
-                    "Variables Metadatos"
-                ],
-                "summary": "Obtener variable",
-                "description": "Obtiene una variable específica",
-                "operationId": "040b26c7c1f3d7f9071c23a5380d20b6",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Variable encontrada"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Variables Metadatos"
-                ],
-                "summary": "Actualizar variable",
-                "description": "Actualiza una variable metadato (tipo, visibilidad, orden)",
-                "operationId": "6ad17a2add27a8564f0938349aa8e167",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "tipo_dato": {
-                                        "type": "string",
-                                        "enum": [
-                                            "NUMERICO",
-                                            "CATEGORICO",
-                                            "FECHA",
-                                            "TEXTO"
-                                        ]
-                                    },
-                                    "es_visible": {
-                                        "type": "boolean"
-                                    },
-                                    "orden": {
-                                        "type": "integer"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Variable actualizada"
                     }
                 },
                 "security": [

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ApiService } from './api.service';
 import { VariableMetadato } from '../models';
 
@@ -35,6 +35,7 @@ export interface UnivariableResponse {
   data: {
     labels?: string[];
     values?: number[];
+    categories?: string[];
   };
   stats?: {
     count?: number;
@@ -65,13 +66,14 @@ export interface BivariableResponse {
   variable_y_id: string;
   nombre_variable_x: string;
   nombre_variable_y: string;
-  variable_x: string; // Alias for compatibility
-  variable_y: string; // Alias for compatibility
+  variable_x: string;
+  variable_y: string;
   chart_type: string;
   data: {
     labels?: string[];
     labels_x?: string[];
     labels_y?: string[];
+    categories?: string[];
     values?: number[];
     points?: [number, number][];
     counts?: number[];
@@ -95,11 +97,34 @@ export class DashboardService {
   private api = inject(ApiService);
 
   getUnivariableStats(request: UnivariableRequest): Observable<UnivariableResponse> {
-    return this.api.post<UnivariableResponse>('/stats/univariable', request);
+    return this.api.post<UnivariableResponse>('/stats/univariable', request).pipe(
+      map(res => ({
+        ...res,
+        // Normalizar: convertir categories a labels si existe
+        data: {
+          ...res.data,
+          labels: res.data.labels || res.data.categories || [],
+          values: res.data.values || []
+        }
+      }))
+    );
   }
 
   getBivariableStats(request: BivariableRequest): Observable<BivariableResponse> {
-    return this.api.post<BivariableResponse>('/stats/bivariable', request);
+    return this.api.post<BivariableResponse>('/stats/bivariable', request).pipe(
+      map(res => ({
+        ...res,
+        // Añadir aliases para compatibilidad
+        variable_x: res.nombre_variable_x || res.variable_x,
+        variable_y: res.nombre_variable_y || res.variable_y,
+        data: {
+          ...res.data,
+          // Normalizar: categories -> labels
+          labels: res.data.labels || res.data.categories || [],
+          labels_x: res.data.labels_x || res.data.categories || [],
+        }
+      }))
+    );
   }
 
   getDatasetData(datasetId: string, page: number = 1, perPage: number = 50): Observable<DatasetDataResponse> {
