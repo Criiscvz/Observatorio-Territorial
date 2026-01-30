@@ -1,59 +1,105 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# Observatorio - Backend
 
-## About Laravel
+Este es el backend del proyecto **Observatorio**, una plataforma para la gestión, análisis y visualización de datos institucionales y académicos. El backend expone una API y administra la lógica de negocio, autenticación, usuarios, datasets, variables y más.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Características principales
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- Gestión de usuarios, perfiles y departamentos
+- Administración y consulta de datasets y variables
+- Importación de datos desde archivos Excel
+- API RESTful para integración con el frontend
+- Autenticación y autorización
+- Migraciones y seeders para la base de datos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Estructura del proyecto
 
-## Learning Laravel
+```
+backend/
+├── app/                # Lógica de aplicación y modelos
+├── config/             # Configuración de la aplicación
+├── database/           # Migraciones, seeders y factories
+├── public/             # Punto de entrada público
+├── resources/          # Vistas y recursos estáticos
+├── routes/             # Definición de rutas (API, web)
+├── tests/              # Pruebas unitarias y funcionales
+├── ...
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Requisitos previos
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP >= 8.1
+- Composer
+- Docker y Docker Compose (opcional, recomendado)
+- MySQL o MariaDB (si no usas Docker)
 
-## Laravel Sponsors
+## Instalación y puesta en marcha
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1. **Clona el repositorio y entra al backend:**
+ ```sh
+ git clone <REPO_URL>
+ cd Observatorio/backend
+ ```
 
-### Premium Partners
+2. **Instala dependencias:**
+ ```sh
+ composer install
+ ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+3. **Configura el entorno:**
+ ```sh
+ cp .env.example .env
+ php artisan key:generate
+ ```
 
-## Contributing
+	Edita `.env` para los datos de tu base de datos y otros parámetros.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. **Ejecuta migraciones y seeders:**
+ ```sh
+ php artisan migrate --seed
+ ```
 
-## Code of Conduct
+5. **Levanta el servidor de desarrollo:**
+ ```sh
+ php artisan serve
+ ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+	El backend estará disponible en `http://localhost:8000`.
 
-## Security Vulnerabilities
+## Uso con Docker
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Desde la raíz del proyecto (donde está `docker-compose.yml`):
 
-## License
+```sh
+docker-compose up --build
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Esto levantará los servicios definidos en el archivo docker-compose. Si solo tienes la base de datos en Docker, ejecuta los siguientes comandos en tu máquina local (no dentro de un contenedor):
+
+```sh
+composer install
+php artisan migrate --seed
+```
+
+Si tienes un contenedor para la aplicación (por ejemplo, un servicio llamado `app` en tu docker-compose), entonces puedes ejecutar los comandos dentro del contenedor así:
+
+```sh
+docker-compose exec app bash
+# Dentro del contenedor:
+composer install
+php artisan migrate --seed
+```
+
+> **Nota:** Ajusta estos pasos según los servicios definidos en tu archivo `docker-compose.yml`.
+
+## Notas
+
+- El frontend se encuentra en la carpeta `frontend/`.
+- Puedes personalizar los seeders y migraciones según tus necesidades.
+- Si tienes dudas, revisa los archivos de configuración y la estructura del proyecto.
+
+---
+
+## Licencia
+
+Este proyecto es software de código abierto bajo la [licencia MIT](https://opensource.org/licenses/MIT).
