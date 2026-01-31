@@ -2,77 +2,102 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Iniciar BD (docker-compose)",
+      "label": "🐳 BD (Docker)",
       "type": "shell",
-      "command": "docker-compose up -d postgres",
+      "command": "docker-compose up -d postgres && docker-compose logs -f postgres",
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
     },
     {
-      "label": "Detener BD (docker-compose)",
+      "label": "⏹️ Detener BD (Docker)",
       "type": "shell",
       "command": "docker-compose down",
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
     },
     {
-      "label": "Instalar dependencias backend",
+      "label": "⚙️ Instalar dependencias backend",
       "type": "shell",
       "command": "composer install",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
     },
     {
-      "label": "Iniciar backend",
+      "label": "🔐 Iniciar backend (Laravel)",
       "type": "shell",
-      "command": "php artisan serve --host=127.0.0.1 --port=8000",
+      "command": "php artisan serve --host=127.0.0.1 --port=8000 --no-reload",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
       "isBackground": true,
+      "problemMatcher": [],
       "presentation": {
-        "panel": "shared"
-      },
-      "problemMatcher": []
+        "reveal": "always",
+        "panel": "new"
+      }
     },
     {
-      "label": "Instalar dependencias frontend",
+      "label": "⚙️ Instalar dependencias frontend",
       "type": "shell",
       "command": "npm install",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
     },
     {
-      "label": "Iniciar frontend",
+      "label": "🎨 Iniciar frontend (Angular)",
       "type": "shell",
       "command": "npm run start",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
       "isBackground": true,
+      "problemMatcher": [],
       "presentation": {
-        "panel": "shared"
-      },
-      "problemMatcher": []
+        "reveal": "always",
+        "panel": "new"
+      }
     },
     {
-      "label": "Iniciar todos los servicios",
-      "type": "shell",
+      "label": "🚀 Iniciar TODOS los servicios",
       "dependsOn": [
-        "Iniciar BD (docker-compose)",
-        "Iniciar backend",
-        "Iniciar frontend"
+        "🐳 BD (Docker)",
+        "🔐 Iniciar backend (Laravel)",
+        "🎨 Iniciar frontend (Angular)"
       ],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "default"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
     }
   ]
 }
