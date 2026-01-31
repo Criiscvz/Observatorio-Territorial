@@ -2,31 +2,76 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Iniciar BD (docker-compose)",
+      "type": "shell",
+      "command": "docker-compose up -d postgres",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Detener BD (docker-compose)",
+      "type": "shell",
+      "command": "docker-compose down",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Instalar dependencias backend",
+      "type": "shell",
+      "command": "composer install",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Iniciar backend",
       "type": "shell",
-      "command": "docker-compose up backend",
-      "group": "build",
+      "command": "php artisan serve --host=127.0.0.1 --port=8000",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "presentation": {
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Instalar dependencias frontend",
+      "type": "shell",
+      "command": "npm install",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "problemMatcher": []
     },
     {
       "label": "Iniciar frontend",
       "type": "shell",
-      "command": "docker-compose up frontend",
-      "group": "build",
+      "command": "npm run start",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "isBackground": true,
+      "presentation": {
+        "panel": "shared"
+      },
       "problemMatcher": []
     },
     {
       "label": "Iniciar todos los servicios",
       "type": "shell",
-      "command": "docker-compose up",
-      "group": "build",
-      "problemMatcher": []
-    },
-    {
-      "label": "Detener todos los servicios",
-      "type": "shell",
-      "command": "docker-compose down",
-      "group": "build",
+      "dependsOn": [
+        "Iniciar BD (docker-compose)",
+        "Iniciar backend",
+        "Iniciar frontend"
+      ],
+      "dependsOrder": "sequence",
       "problemMatcher": []
     }
   ]
