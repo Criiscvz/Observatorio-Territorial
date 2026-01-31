@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Iniciar backend",
+      "type": "shell",
+      "command": "docker-compose up backend",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Iniciar frontend",
+      "type": "shell",
+      "command": "docker-compose up frontend",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Iniciar todos los servicios",
+      "type": "shell",
+      "command": "docker-compose up",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Detener todos los servicios",
+      "type": "shell",
+      "command": "docker-compose down",
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}
