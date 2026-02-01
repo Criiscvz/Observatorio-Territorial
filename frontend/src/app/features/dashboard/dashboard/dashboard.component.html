@@ -5,16 +5,16 @@
       <div class="welcome-section">
         <span class="greeting">{{ getGreeting() }}</span>
         <h1 class="welcome-title">{{ authService.user()?.name || 'Usuario' }}</h1>
-        <p class="welcome-subtitle">Bienvenido al Observatorio de Datos ULEAM</p>
+        <p class="welcome-subtitle">{{ 'dashboard.welcomeMessage' | translate }}</p>
       </div>
       <div class="header-actions">
         <a class="action-btn secondary" routerLink="/admin/datasets/nuevo">
           <mat-icon>cloud_upload</mat-icon>
-          <span>Importar</span>
+          <span>{{ 'common.buttons.import' | translate }}</span>
         </a>
         <a class="action-btn primary" routerLink="/admin/departamentos/nuevo">
           <mat-icon>add</mat-icon>
-          <span>Nuevo Departamento</span>
+          <span>{{ 'dashboard.quickActions.newDepartment' | translate }}</span>
         </a>
       </div>
     </div>
@@ -23,7 +23,7 @@
   @if (loading()) {
     <div class="loading-state">
       <mat-spinner diameter="48"></mat-spinner>
-      <p>Cargando datos...</p>
+      <p>{{ 'common.messages.loading' | translate }}</p>
     </div>
   } @else {
     <!-- Stats Grid -->
@@ -35,12 +35,12 @@
             <mat-icon>folder</mat-icon>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Departamentos</span>
+            <span class="stat-label">{{ 'dashboard.stats.totalDepartments' | translate }}</span>
             <span class="stat-value">{{ departamentos().length }}</span>
           </div>
           <div class="stat-trend positive">
             <mat-icon>trending_up</mat-icon>
-            <span>Activos</span>
+            <span>{{ 'common.labels.public' | translate }}</span>
           </div>
         </div>
 
@@ -50,12 +50,12 @@
             <mat-icon>table_chart</mat-icon>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Datasets</span>
+            <span class="stat-label">{{ 'dashboard.stats.totalDatasets' | translate }}</span>
             <span class="stat-value">{{ totalDatasets() }}</span>
           </div>
           <div class="stat-trend">
             <mat-icon>storage</mat-icon>
-            <span>Archivos</span>
+            <span>{{ 'common.units.datasets' | translate }}</span>
           </div>
         </div>
 
@@ -65,12 +65,12 @@
             <mat-icon>analytics</mat-icon>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Registros</span>
+            <span class="stat-label">{{ 'dashboard.stats.totalRecords' | translate }}</span>
             <span class="stat-value">{{ formatNumber(totalRegistros()) }}</span>
           </div>
           <div class="stat-trend">
             <mat-icon>data_usage</mat-icon>
-            <span>Total</span>
+            <span>{{ 'common.labels.total' | translate }}</span>
           </div>
         </div>
 
@@ -80,12 +80,12 @@
             <mat-icon>public</mat-icon>
           </div>
           <div class="stat-content">
-            <span class="stat-label">Públicos</span>
+            <span class="stat-label">{{ 'dashboard.stats.publicDepartments' | translate }}</span>
             <span class="stat-value">{{ departamentosPublicos() }}</span>
           </div>
           <div class="stat-trend">
             <mat-icon>visibility</mat-icon>
-            <span>Visibles</span>
+            <span>{{ 'common.labels.visible' | translate }}</span>
           </div>
         </div>
       </div>
@@ -101,12 +101,12 @@
               <mat-icon>folder</mat-icon>
             </div>
             <div>
-              <h3 class="card-title">Departamentos</h3>
-              <p class="card-subtitle">Últimos agregados</p>
+              <h3 class="card-title">{{ 'dashboard.recentDepartments.title' | translate }}</h3>
+              <p class="card-subtitle">{{ 'dashboard.recentDepartments.viewAll' | translate }}</p>
             </div>
           </div>
           <a class="view-all" routerLink="/admin/dashboard">
-            Ver todos
+            {{ 'dashboard.recentDepartments.viewAll' | translate }}
             <mat-icon>arrow_forward</mat-icon>
           </a>
         </div>
@@ -122,9 +122,9 @@
                   <div class="item-content">
                     <span class="item-title">{{ depto.nombre }}</span>
                     <span class="item-meta">
-                      {{ depto.datasets?.length || 0 }} datasets
+                      {{ depto.datasets?.length || 0 }} {{ 'common.units.datasets' | translate }}
                       @if (depto.publico) {
-                        <span class="badge success">Público</span>
+                        <span class="badge success">{{ 'common.labels.public' | translate }}</span>
                       }
                     </span>
                   </div>
@@ -135,8 +135,8 @@
           } @else {
             <div class="empty-state">
               <mat-icon>folder_off</mat-icon>
-              <p>No hay departamentos</p>
-              <a routerLink="/admin/departamentos/nuevo" class="empty-action">Crear uno</a>
+              <p>{{ 'dashboard.recentDepartments.empty' | translate }}</p>
+              <a routerLink="/admin/departamentos/nuevo" class="empty-action">{{ 'layout.sidebar.createOne' | translate }}</a>
             </div>
           }
         </div>
@@ -150,12 +150,12 @@
               <mat-icon>description</mat-icon>
             </div>
             <div>
-              <h3 class="card-title">Datasets</h3>
-              <p class="card-subtitle">Últimos importados</p>
+              <h3 class="card-title">{{ 'dashboard.recentDatasets.title' | translate }}</h3>
+              <p class="card-subtitle">{{ 'dashboard.recentDatasets.viewAll' | translate }}</p>
             </div>
           </div>
           <a class="view-all" routerLink="/admin/datasets">
-            Ver todos
+            {{ 'dashboard.recentDatasets.viewAll' | translate }}
             <mat-icon>arrow_forward</mat-icon>
           </a>
         </div>
@@ -171,7 +171,7 @@
                   <div class="item-content">
                     <span class="item-title">{{ ds.nombre }}</span>
                     <span class="item-meta">
-                      {{ ds.total_registros | number }} registros
+                      {{ ds.total_registros | number }} {{ 'common.units.records' | translate }}
                       <span class="badge" [class]="getEstadoBadgeClass(ds.estado)">{{
                         ds.estado
                       }}</span>
@@ -184,8 +184,8 @@
           } @else {
             <div class="empty-state">
               <mat-icon>description</mat-icon>
-              <p>No hay datasets</p>
-              <a routerLink="/admin/datasets/nuevo" class="empty-action">Importar uno</a>
+              <p>{{ 'dashboard.recentDatasets.empty' | translate }}</p>
+              <a routerLink="/admin/datasets/nuevo" class="empty-action">{{ 'common.buttons.import' | translate }}</a>
             </div>
           }
         </div>
@@ -194,30 +194,30 @@
 
     <!-- Quick Actions -->
     <section class="quick-actions">
-      <h3 class="section-title">Acciones Rápidas</h3>
+      <h3 class="section-title">{{ 'dashboard.quickActions.title' | translate }}</h3>
       <div class="actions-grid">
         <a class="quick-action" routerLink="/admin/departamentos/nuevo" matRipple>
           <div class="action-icon purple">
             <mat-icon>add_business</mat-icon>
           </div>
-          <span class="action-label">Nuevo Departamento</span>
-          <p class="action-desc">Crear una nueva área de trabajo</p>
+          <span class="action-label">{{ 'dashboard.quickActions.newDepartment' | translate }}</span>
+          <p class="action-desc">{{ 'dashboard.quickActions.newDepartmentDesc' | translate }}</p>
         </a>
 
         <a class="quick-action" routerLink="/admin/datasets/nuevo" matRipple>
           <div class="action-icon blue">
             <mat-icon>cloud_upload</mat-icon>
           </div>
-          <span class="action-label">Importar Excel</span>
-          <p class="action-desc">Subir datos desde archivo</p>
+          <span class="action-label">{{ 'dashboard.quickActions.uploadDataset' | translate }}</span>
+          <p class="action-desc">{{ 'dashboard.quickActions.uploadDatasetDesc' | translate }}</p>
         </a>
 
         <a class="quick-action" routerLink="/admin/datasets" matRipple>
           <div class="action-icon teal">
             <mat-icon>folder_open</mat-icon>
           </div>
-          <span class="action-label">Ver Datasets</span>
-          <p class="action-desc">Explorar todos los datos</p>
+          <span class="action-label">{{ 'dashboard.quickActions.viewAll' | translate }}</span>
+          <p class="action-desc">{{ 'dashboard.quickActions.viewAllDesc' | translate }}</p>
         </a>
 
         @if (datasetsRecientes().length > 0) {
@@ -229,16 +229,16 @@
             <div class="action-icon orange">
               <mat-icon>analytics</mat-icon>
             </div>
-            <span class="action-label">Último Análisis</span>
-            <p class="action-desc">Continuar analizando</p>
+            <span class="action-label">{{ 'datasets.view.tabs.analysis' | translate }}</span>
+            <p class="action-desc">{{ 'common.messages.processing' | translate }}</p>
           </a>
         } @else {
           <div class="quick-action disabled">
             <div class="action-icon gray">
               <mat-icon>analytics</mat-icon>
             </div>
-            <span class="action-label">Sin análisis</span>
-            <p class="action-desc">Importa datos primero</p>
+            <span class="action-label">{{ 'datasets.view.analysis.noCharts' | translate }}</span>
+            <p class="action-desc">{{ 'datasets.list.emptyDescription' | translate }}</p>
           </div>
         }
       </div>
