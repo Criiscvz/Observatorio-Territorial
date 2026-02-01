@@ -1,4 +1,4 @@
-import { User, UserRole } from './user.model';
+import { User, UserRole } from '../models/user.model';
 
 export interface UsersListResponse {
   data: User[];
