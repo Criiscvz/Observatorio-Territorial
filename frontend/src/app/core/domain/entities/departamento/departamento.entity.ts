@@ -1,4 +1,4 @@
-import { DatasetEntity } from './dataset.entity';
+import { DatasetEntity } from '../dataset/dataset.entity';
 
 export interface DepartamentoEntity {
   id: string;

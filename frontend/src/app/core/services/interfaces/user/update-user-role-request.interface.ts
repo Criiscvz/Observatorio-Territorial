@@ -1,4 +1,4 @@
-import { UserRole } from '../models/user-role.type';
+import { UserRole } from '../../../models';
 
 export interface UpdateUserRoleRequest {
   rol: UserRole;

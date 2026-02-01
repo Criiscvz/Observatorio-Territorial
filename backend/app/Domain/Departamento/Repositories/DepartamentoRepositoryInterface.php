@@ -15,6 +15,8 @@ interface DepartamentoRepositoryInterface
 
     public function findByCodigoInterno(string $codigo): ?Departamento;
 
+    public function findAll(): Collection;
+
     public function findAllByUserId(int $userId): Collection;
 
     public function findPublicos(): Collection;

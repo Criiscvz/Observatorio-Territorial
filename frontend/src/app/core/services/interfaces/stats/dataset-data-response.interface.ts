@@ -1,4 +1,4 @@
-import { VariableMetadato } from '../models';
+import { VariableMetadato } from '../../../models';
 
 export interface DatasetDataResponse {
   dataset: {

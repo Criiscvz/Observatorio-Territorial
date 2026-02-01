@@ -2,18 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { VariableMetadato } from '../models';
 import { ApiService } from './api.service';
-import { BivariableRequest } from './bivariable-request.interface';
-import { BivariableResponse } from './bivariable-response.interface';
-import { DatasetDataResponse } from './dataset-data-response.interface';
-import { UnivariableRequest } from './univariable-request.interface';
-import { UnivariableResponse } from './univariable-response.interface';
-
-// Re-export interfaces for convenience
-export * from './bivariable-request.interface';
-export * from './bivariable-response.interface';
-export * from './dataset-data-response.interface';
-export * from './univariable-request.interface';
-export * from './univariable-response.interface';
+import {
+  BivariableRequest,
+  BivariableResponse,
+  DatasetDataResponse,
+  UnivariableRequest,
+  UnivariableResponse,
+} from './interfaces';
 
 @Injectable({
   providedIn: 'root',
