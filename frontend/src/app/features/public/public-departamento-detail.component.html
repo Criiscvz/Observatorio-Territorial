@@ -1,0 +1,102 @@
+<div class="page-container">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Cargando departamento...</p>
+    </div>
+  } @else if (departamento()) {
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a routerLink="/publico/departamentos">
+        <mat-icon>arrow_back</mat-icon>
+        Departamentos
+      </a>
+    </nav>
+
+    <!-- Department Header -->
+    <div class="department-header">
+      <div class="header-avatar" [style.background]="deptoGradient">
+        {{ departamento()!.nombre.charAt(0).toUpperCase() }}
+      </div>
+      <div class="header-info">
+        <h1>{{ departamento()!.nombre }}</h1>
+        <p class="description">{{ departamento()!.descripcion || 'Sin descripción' }}</p>
+        <div class="header-stats">
+          <span class="stat">
+            <mat-icon>table_chart</mat-icon>
+            {{ departamento()!.datasets?.length || 0 }} datasets
+          </span>
+          <span class="stat">
+            <mat-icon>storage</mat-icon>
+            {{ totalRegistros | number }} registros
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datasets Section -->
+    <section class="datasets-section">
+      <h2 class="section-title">
+        <mat-icon>folder_open</mat-icon>
+        Datasets Disponibles
+      </h2>
+
+      @if (datasets.length > 0) {
+        <div class="datasets-grid">
+          @for (ds of datasets; track ds.id; let i = $index) {
+            <a [routerLink]="['/publico/datasets', ds.id]" class="dataset-card">
+              <div class="card-icon" [style.background]="getDatasetColor(i)">
+                <mat-icon>description</mat-icon>
+              </div>
+              <div class="card-content">
+                <h3>{{ ds.nombre }}</h3>
+                <div class="dataset-meta">
+                  <span class="meta-item">
+                    <mat-icon>grid_on</mat-icon>
+                    {{ ds.total_registros | number }} registros
+                  </span>
+                  @if (ds.created_at) {
+                    <span class="meta-item">
+                      <mat-icon>calendar_today</mat-icon>
+                      {{ ds.created_at | date:'dd/MM/yyyy' }}
+                    </span>
+                  }
+                </div>
+                <div class="variables-preview">
+                  @if (ds.variables && ds.variables.length > 0) {
+                    @for (v of ds.variables.slice(0, 4); track v.id) {
+                      <span class="variable-chip" [class]="getTypeClass(v.tipo_dato)">
+                        {{ v.nombre_original }}
+                      </span>
+                    }
+                    @if (ds.variables.length > 4) {
+                      <span class="more-chip">+{{ ds.variables.length - 4 }}</span>
+                    }
+                  }
+                </div>
+              </div>
+              <mat-icon class="card-arrow">chevron_right</mat-icon>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <mat-icon>folder_off</mat-icon>
+          <h3>Sin datasets</h3>
+          <p>Este departamento aún no tiene datasets públicos disponibles</p>
+        </div>
+      }
+    </section>
+  } @else {
+    <!-- Error state -->
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <h2>Departamento no encontrado</h2>
+      <p>El departamento que buscas no existe o no está disponible públicamente</p>
+      <a mat-stroked-button routerLink="/publico/departamentos">
+        <mat-icon>arrow_back</mat-icon>
+        Volver a departamentos
+      </a>
+    </div>
+  }
+</div>

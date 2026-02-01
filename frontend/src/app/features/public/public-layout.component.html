@@ -1,0 +1,50 @@
+<!-- Header público -->
+<header class="public-header">
+  <div class="header-container">
+    <a routerLink="/" class="logo-link">
+      <img src="ULEAM.png" alt="ULEAM" class="logo">
+      <span class="logo-text">Observatorio ULEAM</span>
+    </a>
+    
+    <nav class="nav-links">
+      <a routerLink="/publico/departamentos" routerLinkActive="active">
+        <mat-icon>business</mat-icon>
+        Departamentos
+      </a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="theme-toggle" (click)="themeService.toggleTheme()">
+        <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+      <a mat-stroked-button routerLink="/auth/login">Iniciar Sesión</a>
+      <a mat-raised-button color="primary" routerLink="/auth/register">Registrarse</a>
+    </div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main class="public-main">
+  <router-outlet></router-outlet>
+</main>
+
+<!-- Footer -->
+<footer class="public-footer">
+  <div class="footer-content">
+    <div class="footer-brand">
+      <img src="ULEAM.png" alt="ULEAM" class="footer-logo">
+      <div>
+        <p class="brand-name">Observatorio ULEAM</p>
+        <p class="brand-desc">Universidad Laica Eloy Alfaro de Manabí</p>
+      </div>
+    </div>
+    <div class="footer-links">
+      <a href="https://www.uleam.edu.ec" target="_blank">Sitio Web ULEAM</a>
+      <a routerLink="/">Inicio</a>
+      <a routerLink="/publico/departamentos">Departamentos</a>
+    </div>
+    <div class="footer-copy">
+      <p>© {{ currentYear }} Observatorio ULEAM. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</footer>
