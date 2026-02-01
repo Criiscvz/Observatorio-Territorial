@@ -7,12 +7,12 @@
     <!-- Header -->
     <div class="dataset-header">
       <div class="flex items-center gap-4">
-        <a mat-icon-button [routerLink]="['/departamentos', departamentoId()]" matTooltip="Volver">
+        <a mat-icon-button [routerLink]="['/departamentos', departamentoId()]" [matTooltip]="'common.buttons.back' | translate">
           <mat-icon>arrow_back</mat-icon>
         </a>
         <div>
           <h1 class="dataset-title">{{ datasetInfo()?.nombre }}</h1>
-          <p class="dataset-subtitle">{{ datasetInfo()?.total_registros | number }} registros</p>
+          <p class="dataset-subtitle">{{ datasetInfo()?.total_registros | number }} {{ 'common.units.records' | translate }}</p>
         </div>
       </div>
     </div>
@@ -23,7 +23,7 @@
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="mr-2">table_chart</mat-icon>
-          Datos
+          {{ 'datasets.view.tabs.data' | translate }}
         </ng-template>
         <div class="py-4">
           <mat-card>
@@ -48,7 +48,7 @@
                 } @else if (!loading()) {
                   <div class="empty-state">
                     <mat-icon>table_rows</mat-icon>
-                    <p>No hay datos disponibles</p>
+                    <p>{{ 'datasets.view.data.noData' | translate }}</p>
                   </div>
                 }
               </div>
@@ -70,39 +70,37 @@
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="mr-2">settings</mat-icon>
-          Variables
+          {{ 'datasets.view.tabs.variables' | translate }}
         </ng-template>
         <div class="py-4">
           <mat-card>
             <mat-card-header>
-              <mat-card-title>Configuración de Variables</mat-card-title>
-              <mat-card-subtitle
-                >Cambia el tipo de dato o visibilidad de cada columna</mat-card-subtitle
-              >
+              <mat-card-title>{{ 'datasets.view.variables.title' | translate }}</mat-card-title>
+              <mat-card-subtitle>{{ 'datasets.view.variables.subtitle' | translate }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
               <table mat-table [dataSource]="variables()" class="w-full">
                 <ng-container matColumnDef="nombre">
-                  <th mat-header-cell *matHeaderCellDef>Columna</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'datasets.view.variables.column' | translate }}</th>
                   <td mat-cell *matCellDef="let v">
                     <span class="font-medium">{{ v.nombre_original }}</span>
                   </td>
                 </ng-container>
                 <ng-container matColumnDef="tipo_dato">
-                  <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'datasets.view.variables.type' | translate }}</th>
                   <td mat-cell *matCellDef="let v">
                     <mat-form-field appearance="outline" class="!w-36 !text-sm">
                       <mat-select [(value)]="v.tipo_dato" (selectionChange)="updateVariable(v)">
-                        <mat-option value="NUMERICO">Numérico</mat-option>
-                        <mat-option value="CATEGORICO">Categórico</mat-option>
-                        <mat-option value="FECHA">Fecha</mat-option>
-                        <mat-option value="TEXTO">Texto</mat-option>
+                        <mat-option value="NUMERICO">{{ 'dataTypes.numeric' | translate }}</mat-option>
+                        <mat-option value="CATEGORICO">{{ 'dataTypes.categorical' | translate }}</mat-option>
+                        <mat-option value="FECHA">{{ 'dataTypes.date' | translate }}</mat-option>
+                        <mat-option value="TEXTO">{{ 'dataTypes.text' | translate }}</mat-option>
                       </mat-select>
                     </mat-form-field>
                   </td>
                 </ng-container>
                 <ng-container matColumnDef="es_visible">
-                  <th mat-header-cell *matHeaderCellDef>Visible</th>
+                  <th mat-header-cell *matHeaderCellDef>{{ 'datasets.view.variables.visible' | translate }}</th>
                   <td mat-cell *matCellDef="let v">
                     <mat-checkbox
                       [(ngModel)]="v.es_visible"
@@ -127,21 +125,19 @@
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="mr-2">analytics</mat-icon>
-          Análisis
+          {{ 'datasets.view.tabs.analysis' | translate }}
         </ng-template>
         <div class="py-4 space-y-4">
           <!-- Panel de creación de gráficos -->
           <mat-card>
             <mat-card-header>
-              <mat-card-title>Crear Gráfico</mat-card-title>
-              <mat-card-subtitle
-                >Selecciona el tipo de gráfico y las variables a analizar</mat-card-subtitle
-              >
+              <mat-card-title>{{ 'datasets.view.analysis.title' | translate }}</mat-card-title>
+              <mat-card-subtitle>{{ 'datasets.view.analysis.subtitle' | translate }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content class="!pt-4">
               <!-- Selector de tipo de gráfico visual -->
               <div class="mb-4">
-                <p class="section-label">Tipo de Gráfico:</p>
+                <p class="section-label">{{ 'datasets.view.analysis.chartType' | translate }}</p>
                 <div class="chart-type-grid">
                   @for (type of chartTypes; track type.id) {
                     <div
@@ -175,7 +171,7 @@
               <!-- Selección de variables -->
               <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <mat-form-field appearance="outline">
-                  <mat-label>Variable Principal (X)</mat-label>
+                  <mat-label>{{ 'datasets.view.analysis.variableX' | translate }}</mat-label>
                   <mat-select [(value)]="selectedVariableX" (selectionChange)="onVariableXChange()">
                     @for (v of compatibleVariablesX(); track v.id) {
                       <mat-option [value]="v">
@@ -188,7 +184,7 @@
                       </mat-option>
                     }
                     @if (compatibleVariablesX().length === 0) {
-                      <mat-option disabled>No hay variables compatibles</mat-option>
+                      <mat-option disabled>{{ 'datasets.view.analysis.noCompatibleVariables' | translate }}</mat-option>
                     }
                   </mat-select>
                   <mat-hint *ngIf="selectedChartType()">
@@ -198,7 +194,7 @@
 
                 @if (selectedChartType()?.bivariable) {
                   <mat-form-field appearance="outline">
-                    <mat-label>Variable Secundaria (Y)</mat-label>
+                    <mat-label>{{ 'datasets.view.analysis.variableY' | translate }}</mat-label>
                     <mat-select [(value)]="selectedVariableY" [disabled]="!selectedVariableX">
                       @for (v of compatibleVariablesY(); track v.id) {
                         <mat-option [value]="v">
@@ -211,7 +207,7 @@
                         </mat-option>
                       }
                       @if (compatibleVariablesY().length === 0 && selectedVariableX) {
-                        <mat-option disabled>No hay variables compatibles</mat-option>
+                        <mat-option disabled>{{ 'datasets.view.analysis.noCompatibleVariables' | translate }}</mat-option>
                       }
                     </mat-select>
                     <mat-hint>{{ getVariableHint('y') }}</mat-hint>
@@ -221,13 +217,13 @@
                 <!-- Filtros opcionales -->
                 @if (selectedChartType() && selectedVariableX) {
                   <mat-form-field appearance="outline">
-                    <mat-label>Límite de resultados</mat-label>
+                    <mat-label>{{ 'datasets.view.analysis.limit' | translate }}</mat-label>
                     <mat-select [(value)]="chartLimit">
-                      <mat-option [value]="10">Top 10</mat-option>
-                      <mat-option [value]="20">Top 20</mat-option>
-                      <mat-option [value]="50">Top 50</mat-option>
-                      <mat-option [value]="100">Top 100</mat-option>
-                      <mat-option [value]="null">Sin límite</mat-option>
+                      <mat-option [value]="10">{{ 'datasets.view.analysis.limitOptions.top10' | translate }}</mat-option>
+                      <mat-option [value]="20">{{ 'datasets.view.analysis.limitOptions.top20' | translate }}</mat-option>
+                      <mat-option [value]="50">{{ 'datasets.view.analysis.limitOptions.top50' | translate }}</mat-option>
+                      <mat-option [value]="100">{{ 'datasets.view.analysis.limitOptions.top100' | translate }}</mat-option>
+                      <mat-option [value]="null">{{ 'datasets.view.analysis.limitOptions.noLimit' | translate }}</mat-option>
                     </mat-select>
                   </mat-form-field>
 
@@ -243,7 +239,7 @@
                       } @else {
                         <mat-icon>add_chart</mat-icon>
                       }
-                      Agregar Gráfico
+                      {{ 'datasets.view.analysis.addChart' | translate }}
                     </button>
                   </div>
                 }
@@ -255,7 +251,7 @@
           <div class="actions-bar">
             <button mat-stroked-button (click)="addAllUnivariate()" [disabled]="addingChart()">
               <mat-icon>auto_graph</mat-icon>
-              Generar Todos (Univariable)
+              {{ 'datasets.view.analysis.generateAll' | translate }}
             </button>
             <button
               mat-stroked-button
@@ -264,10 +260,10 @@
               [disabled]="activeCharts().length === 0"
             >
               <mat-icon>delete_sweep</mat-icon>
-              Limpiar Todo
+              {{ 'datasets.view.analysis.clearAll' | translate }}
             </button>
             <span class="flex-grow"></span>
-            <span class="charts-count"> {{ activeCharts().length }} gráfico(s) activo(s) </span>
+            <span class="charts-count">{{ 'datasets.view.analysis.chartsCount' | translate:{ count: activeCharts().length } }}</span>
           </div>
 
           <!-- Grilla de gráficos activos -->
@@ -280,7 +276,7 @@
                     mat-icon-button
                     class="!absolute top-2 right-2 z-10"
                     (click)="removeChart(chart.id)"
-                    matTooltip="Eliminar gráfico"
+                    [matTooltip]="'common.buttons.delete' | translate"
                   >
                     <mat-icon>close</mat-icon>
                   </button>
@@ -304,7 +300,7 @@
                         <p class="error-message">{{ chart.error }}</p>
                         <button mat-stroked-button color="primary" (click)="retryChart(chart)">
                           <mat-icon>refresh</mat-icon>
-                          Reintentar
+                          {{ 'common.buttons.retry' | translate }}
                         </button>
                       </div>
                     } @else if (chart.data) {
@@ -313,7 +309,7 @@
                         <div class="stats-grid">
                           @if (getChartStats(chart)?.mean !== undefined) {
                             <div class="stat-box stat-info">
-                              <span class="stat-label">Promedio</span>
+                              <span class="stat-label">{{ 'charts.stats.mean' | translate }}</span>
                               <span class="stat-value">{{
                                 formatNumber(getChartStats(chart)?.mean)
                               }}</span>
@@ -321,7 +317,7 @@
                           }
                           @if (getChartStats(chart)?.count !== undefined) {
                             <div class="stat-box stat-success">
-                              <span class="stat-label">Total</span>
+                              <span class="stat-label">{{ 'charts.stats.total' | translate }}</span>
                               <span class="stat-value">{{
                                 getChartStats(chart)?.count | number
                               }}</span>
@@ -332,7 +328,7 @@
                               class="stat-box"
                               [class]="getCorrelationBoxClass(getChartStats(chart)?.correlation)"
                             >
-                              <span class="stat-label">Correlación</span>
+                              <span class="stat-label">{{ 'charts.stats.correlation' | translate }}</span>
                               <span class="stat-value">{{
                                 getChartStats(chart)?.correlation
                               }}</span>
@@ -344,7 +340,7 @@
                     } @else {
                       <div class="chart-empty">
                         <mat-icon>insert_chart_outlined</mat-icon>
-                        <p>No hay datos disponibles</p>
+                        <p>{{ 'datasets.view.data.noData' | translate }}</p>
                       </div>
                     }
                   </mat-card-content>
@@ -355,8 +351,8 @@
             <mat-card>
               <mat-card-content class="charts-empty-state">
                 <mat-icon>insert_chart</mat-icon>
-                <h3>Sin gráficos</h3>
-                <p>Selecciona un tipo de gráfico y una variable para comenzar</p>
+                <h3>{{ 'datasets.view.analysis.noCharts' | translate }}</h3>
+                <p>{{ 'datasets.view.analysis.noChartsMessage' | translate }}</p>
               </mat-card-content>
             </mat-card>
           }

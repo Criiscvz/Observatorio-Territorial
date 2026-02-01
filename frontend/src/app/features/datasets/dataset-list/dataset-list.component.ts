@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Dataset } from '@core/models';
 import { DatasetService } from '@core/services/dataset.service';
 
@@ -24,12 +25,14 @@ import { DatasetService } from '@core/services/dataset.service';
     MatChipsModule,
     MatMenuModule,
     MatProgressSpinnerModule,
+    TranslateModule,
   ],
   templateUrl: './dataset-list.component.html',
   styleUrl: './dataset-list.component.scss',
 })
 export class DatasetListComponent implements OnInit {
   private datasetService = inject(DatasetService);
+  private translate = inject(TranslateService);
 
   datasets = signal<Dataset[]>([]);
   loading = signal(true);
@@ -66,7 +69,8 @@ export class DatasetListComponent implements OnInit {
   }
 
   deleteDataset(dataset: Dataset): void {
-    if (confirm(`¿Eliminar el dataset "${dataset.nombre}"?`)) {
+    const message = this.translate.instant('datasets.list.confirmDelete', { name: dataset.nombre });
+    if (confirm(message)) {
       this.datasetService.delete(dataset.id).subscribe({
         next: () => this.loadDatasets(),
       });

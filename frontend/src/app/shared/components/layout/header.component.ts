@@ -7,7 +7,9 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '@core/services/auth.service';
+import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
 
 @Component({
@@ -22,13 +24,14 @@ import { ThemeService } from '@core/services/theme.service';
     MatMenuModule,
     MatTooltipModule,
     MatDividerModule,
+    TranslateModule,
   ],
   template: `
     <header class="header">
       <div class="header-content">
         <!-- Left section -->
         <div class="header-left">
-          <button class="menu-btn" (click)="toggleSidenav.emit()" matTooltip="Menú">
+          <button class="menu-btn" (click)="toggleSidenav.emit()" [matTooltip]="'layout.header.menu' | translate">
             <mat-icon>menu</mat-icon>
           </button>
 
@@ -37,19 +40,41 @@ import { ThemeService } from '@core/services/theme.service';
               <img src="ULEAM.png" alt="ULEAM" class="brand-img" />
             </div>
             <div class="brand-text">
-              <span class="brand-name">Observatorio</span>
-              <span class="brand-subtitle">ULEAM</span>
+              <span class="brand-name">{{ 'layout.header.brand' | translate }}</span>
+              <span class="brand-subtitle">{{ 'layout.header.brandSubtitle' | translate }}</span>
             </div>
           </a>
         </div>
 
         <!-- Right section -->
         <div class="header-right">
+          <!-- Language selector -->
+          <button
+            class="lang-btn"
+            [matMenuTriggerFor]="langMenu"
+            [matTooltip]="'language.select' | translate"
+          >
+            <mat-icon>language</mat-icon>
+            <span class="lang-code">{{ languageService.currentLang().toUpperCase() }}</span>
+          </button>
+
+          <mat-menu #langMenu="matMenu">
+            @for (lang of languageService.availableLanguages; track lang.code) {
+              <button mat-menu-item (click)="languageService.setLanguage(lang.code)" [class.active]="languageService.currentLang() === lang.code">
+                <span class="lang-flag">{{ lang.flag }}</span>
+                <span>{{ lang.name }}</span>
+                @if (languageService.currentLang() === lang.code) {
+                  <mat-icon class="check-icon">check</mat-icon>
+                }
+              </button>
+            }
+          </mat-menu>
+
           <!-- Theme toggle -->
           <button
             class="theme-btn"
             (click)="themeService.toggleTheme()"
-            [matTooltip]="themeService.isDark() ? 'Modo claro' : 'Modo oscuro'"
+            [matTooltip]="(themeService.isDark() ? 'layout.header.themeLight' : 'layout.header.themeDark') | translate"
           >
             <mat-icon class="theme-icon">
               {{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}
@@ -64,7 +89,7 @@ import { ThemeService } from '@core/services/theme.service';
               </div>
               <div class="user-info">
                 <span class="user-name">{{ user.name }}</span>
-                <span class="user-role">Administrador</span>
+                <span class="user-role">{{ 'layout.header.administrator' | translate }}</span>
               </div>
               <mat-icon class="dropdown-icon">expand_more</mat-icon>
             </button>
@@ -84,19 +109,19 @@ import { ThemeService } from '@core/services/theme.service';
 
               <button mat-menu-item routerLink="/perfil" class="menu-item">
                 <mat-icon>person_outline</mat-icon>
-                <span>Mi Perfil</span>
+                <span>{{ 'layout.header.profile' | translate }}</span>
               </button>
 
               <button mat-menu-item routerLink="/configuracion" class="menu-item">
                 <mat-icon>settings</mat-icon>
-                <span>Configuración</span>
+                <span>{{ 'layout.header.settings' | translate }}</span>
               </button>
 
               <mat-divider></mat-divider>
 
               <button mat-menu-item (click)="logout()" class="menu-item logout">
                 <mat-icon>logout</mat-icon>
-                <span>Cerrar Sesión</span>
+                <span>{{ 'auth.logout' | translate }}</span>
               </button>
             </mat-menu>
           }
@@ -205,6 +230,43 @@ import { ThemeService } from '@core/services/theme.service';
         display: flex;
         align-items: center;
         gap: 0.5rem;
+      }
+
+      .lang-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.5rem;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: all var(--transition-fast);
+      }
+
+      .lang-btn:hover {
+        background: var(--hover-bg);
+        color: var(--primary-600);
+      }
+
+      .lang-code {
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .lang-flag {
+        font-size: 1.25rem;
+        margin-right: 0.5rem;
+      }
+
+      ::ng-deep .mat-mdc-menu-item.active {
+        background: var(--hover-bg);
+      }
+
+      .check-icon {
+        margin-left: auto;
+        color: var(--primary-600);
       }
 
       .theme-btn {
@@ -365,6 +427,7 @@ import { ThemeService } from '@core/services/theme.service';
 export class HeaderComponent {
   authService = inject(AuthService);
   themeService = inject(ThemeService);
+  languageService = inject(LanguageService);
   toggleSidenav = output<void>();
 
   logout(): void {

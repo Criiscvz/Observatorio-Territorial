@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject, signal, ViewChild } from '@angular/core';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { RouterOutlet } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { ThemeService } from '@core/services/theme.service';
 import { HeaderComponent } from './header.component';
 import { SidebarComponent } from './sidebar.component';
@@ -9,7 +10,7 @@ import { SidebarComponent } from './sidebar.component';
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MatSidenavModule, HeaderComponent, SidebarComponent],
+  imports: [CommonModule, RouterOutlet, MatSidenavModule, HeaderComponent, SidebarComponent, TranslateModule],
   template: `
     <div class="layout-container">
       <!-- Header fijo -->

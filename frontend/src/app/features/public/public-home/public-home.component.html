@@ -3,14 +3,39 @@
   <div class="header-container">
     <a routerLink="/" class="logo-link">
       <img src="ULEAM.png" alt="ULEAM" class="logo" />
-      <span class="logo-text">Observatorio ULEAM</span>
+      <span class="logo-text">{{ 'layout.header.brand' | translate }} {{ 'layout.header.brandSubtitle' | translate }}</span>
     </a>
+
+    <nav class="nav-links">
+      <a routerLink="/publico/departamentos" routerLinkActive="active">
+        <mat-icon>business</mat-icon>
+        {{ 'public.home.footer.departmentsLink' | translate }}
+      </a>
+    </nav>
+
     <div class="header-actions">
+      <!-- Language selector -->
+      <button class="lang-toggle" [matMenuTriggerFor]="langMenu" [matTooltip]="'language.select' | translate">
+        <mat-icon>language</mat-icon>
+        <span class="lang-code">{{ languageService.currentLang().toUpperCase() }}</span>
+      </button>
+      <mat-menu #langMenu="matMenu">
+        @for (lang of languageService.availableLanguages; track lang.code) {
+          <button mat-menu-item (click)="languageService.setLanguage(lang.code)" [class.active]="languageService.currentLang() === lang.code">
+            <span class="lang-flag">{{ lang.flag }}</span>
+            <span>{{ lang.name }}</span>
+            @if (languageService.currentLang() === lang.code) {
+              <mat-icon class="check-icon">check</mat-icon>
+            }
+          </button>
+        }
+      </mat-menu>
+
       <button class="theme-toggle" (click)="themeService.toggleTheme()">
         <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
-      <a mat-stroked-button routerLink="/auth/login">Iniciar Sesión</a>
-      <a mat-raised-button color="primary" routerLink="/auth/register">Registrarse</a>
+      <a mat-stroked-button routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
+      <a mat-raised-button color="primary" routerLink="/auth/register">{{ 'public.header.register' | translate }}</a>
     </div>
   </div>
 </header>
@@ -20,11 +45,10 @@
   <div class="hero-bg"></div>
   <div class="hero-content">
     <h1 class="hero-title">
-      <span class="hero-highlight">Observatorio</span> de Datos <br />Universitarios ULEAM
+      <span class="hero-highlight">{{ 'public.home.hero.title' | translate }}</span> <br />{{ 'public.home.hero.titleHighlight' | translate }}
     </h1>
     <p class="hero-subtitle">
-      Transforma tus archivos Excel en dashboards interactivos de manera automática. Analiza,
-      visualiza y comparte datos de forma inteligente.
+      {{ 'public.home.hero.subtitle' | translate }}
     </p>
     <div class="hero-actions">
       <a
@@ -34,26 +58,26 @@
         class="hero-btn primary"
       >
         <mat-icon>explore</mat-icon>
-        Explorar Datos Públicos
+        {{ 'public.home.hero.exploreData' | translate }}
       </a>
       <a mat-stroked-button routerLink="/auth/register" class="hero-btn">
         <mat-icon>person_add</mat-icon>
-        Crear Cuenta Gratis
+        {{ 'public.home.hero.createAccount' | translate }}
       </a>
     </div>
   </div>
   <div class="hero-illustration">
     <div class="floating-card card-1">
       <mat-icon>bar_chart</mat-icon>
-      <span>Gráficos Dinámicos</span>
+      <span>{{ 'public.home.floatingCards.dynamicCharts' | translate }}</span>
     </div>
     <div class="floating-card card-2">
       <mat-icon>pie_chart</mat-icon>
-      <span>Análisis Visual</span>
+      <span>{{ 'public.home.floatingCards.visualAnalysis' | translate }}</span>
     </div>
     <div class="floating-card card-3">
       <mat-icon>analytics</mat-icon>
-      <span>Correlaciones</span>
+      <span>{{ 'public.home.floatingCards.correlations' | translate }}</span>
     </div>
   </div>
 </section>
@@ -63,15 +87,15 @@
   <div class="stats-container">
     <div class="stat-item">
       <span class="stat-number">{{ departamentos().length }}</span>
-      <span class="stat-label">Departamentos Públicos</span>
+      <span class="stat-label">{{ 'public.home.stats.publicDepartments' | translate }}</span>
     </div>
     <div class="stat-item">
       <span class="stat-number">{{ totalDatasets }}</span>
-      <span class="stat-label">Datasets Disponibles</span>
+      <span class="stat-label">{{ 'public.home.stats.availableDatasets' | translate }}</span>
     </div>
     <div class="stat-item">
       <span class="stat-number">{{ formatNumber(totalRegistros) }}</span>
-      <span class="stat-label">Registros Analizados</span>
+      <span class="stat-label">{{ 'public.home.stats.analyzedRecords' | translate }}</span>
     </div>
   </div>
 </section>
@@ -79,37 +103,37 @@
 <!-- Features Section -->
 <section class="features-section">
   <div class="section-header">
-    <h2 class="section-title">Potentes Herramientas de Análisis</h2>
-    <p class="section-subtitle">Todo lo que necesitas para convertir datos en conocimiento</p>
+    <h2 class="section-title">{{ 'public.home.features.title' | translate }}</h2>
+    <p class="section-subtitle">{{ 'public.home.features.subtitle' | translate }}</p>
   </div>
   <div class="features-grid">
     <div class="feature-card">
       <div class="feature-icon">
         <mat-icon>cloud_upload</mat-icon>
       </div>
-      <h3>Importación Inteligente</h3>
-      <p>Sube archivos Excel o CSV y el sistema detectará automáticamente los tipos de datos</p>
+      <h3>{{ 'public.home.features.smartImport.title' | translate }}</h3>
+      <p>{{ 'public.home.features.smartImport.description' | translate }}</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">
         <mat-icon>auto_graph</mat-icon>
       </div>
-      <h3>Gráficos Automáticos</h3>
-      <p>Genera visualizaciones instantáneas: barras, pastel, líneas, dispersión y más</p>
+      <h3>{{ 'public.home.features.autoCharts.title' | translate }}</h3>
+      <p>{{ 'public.home.features.autoCharts.description' | translate }}</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">
         <mat-icon>compare_arrows</mat-icon>
       </div>
-      <h3>Análisis Bivariable</h3>
-      <p>Descubre correlaciones y relaciones entre variables con un clic</p>
+      <h3>{{ 'public.home.features.bivariable.title' | translate }}</h3>
+      <p>{{ 'public.home.features.bivariable.description' | translate }}</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">
         <mat-icon>share</mat-icon>
       </div>
-      <h3>Comparte Públicamente</h3>
-      <p>Haz públicos tus análisis para que cualquiera pueda verlos</p>
+      <h3>{{ 'public.home.features.sharePublic.title' | translate }}</h3>
+      <p>{{ 'public.home.features.sharePublic.description' | translate }}</p>
     </div>
   </div>
 </section>
@@ -117,14 +141,14 @@
 <!-- Public Departments Preview -->
 <section class="departments-section">
   <div class="section-header">
-    <h2 class="section-title">Departamentos Públicos</h2>
-    <p class="section-subtitle">Explora los datos compartidos por la comunidad universitaria</p>
+    <h2 class="section-title">{{ 'public.home.departments.title' | translate }}</h2>
+    <p class="section-subtitle">{{ 'public.home.departments.subtitle' | translate }}</p>
   </div>
 
   @if (loading()) {
     <div class="loading-container">
       <mat-spinner diameter="40"></mat-spinner>
-      <p>Cargando departamentos...</p>
+      <p>{{ 'public.home.departments.loading' | translate }}</p>
     </div>
   } @else if (departamentos().length > 0) {
     <div class="departments-grid">
@@ -135,10 +159,10 @@
           </div>
           <div class="department-info">
             <h4>{{ depto.nombre }}</h4>
-            <p>{{ depto.descripcion || 'Sin descripción' }}</p>
+            <p>{{ depto.descripcion || ('public.home.departments.noDescription' | translate) }}</p>
             <span class="dataset-count">
               <mat-icon>table_chart</mat-icon>
-              {{ depto.datasets_count || 0 }} datasets
+              {{ depto.datasets_count || 0 }} {{ 'common.units.datasets' | translate }}
             </span>
           </div>
         </a>
@@ -147,7 +171,7 @@
     @if (departamentos().length > 6) {
       <div class="view-all-container">
         <a mat-stroked-button routerLink="/publico/departamentos">
-          Ver todos los departamentos
+          {{ 'public.home.departments.viewAll' | translate }}
           <mat-icon>arrow_forward</mat-icon>
         </a>
       </div>
@@ -155,7 +179,7 @@
   } @else {
     <div class="empty-departments">
       <mat-icon>folder_off</mat-icon>
-      <p>No hay departamentos públicos disponibles</p>
+      <p>{{ 'public.home.departments.empty' | translate }}</p>
     </div>
   }
 </section>
@@ -163,10 +187,10 @@
 <!-- CTA Section -->
 <section class="cta-section">
   <div class="cta-content">
-    <h2>¿Listo para analizar tus datos?</h2>
-    <p>Únete a la comunidad de investigadores y analistas de ULEAM</p>
+    <h2>{{ 'public.home.cta.title' | translate }}</h2>
+    <p>{{ 'public.home.cta.subtitle' | translate }}</p>
     <a mat-raised-button color="primary" routerLink="/auth/register" class="cta-btn">
-      Comenzar Ahora
+      {{ 'public.home.cta.button' | translate }}
       <mat-icon>arrow_forward</mat-icon>
     </a>
   </div>
@@ -177,15 +201,15 @@
   <div class="footer-content">
     <div class="footer-brand">
       <img src="ULEAM.png" alt="ULEAM" class="footer-logo" />
-      <p>Universidad Laica Eloy Alfaro de Manabí</p>
+      <p>{{ 'layout.footer.university' | translate }}</p>
     </div>
     <div class="footer-links">
-      <a href="https://www.uleam.edu.ec" target="_blank">Sitio Web ULEAM</a>
-      <a routerLink="/publico/departamentos">Departamentos</a>
-      <a routerLink="/auth/login">Iniciar Sesión</a>
+      <a href="https://www.uleam.edu.ec" target="_blank">{{ 'public.home.footer.websiteLink' | translate }}</a>
+      <a routerLink="/publico/departamentos">{{ 'public.home.footer.departmentsLink' | translate }}</a>
+      <a routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
     </div>
     <div class="footer-copy">
-      <p>© {{ currentYear }} Observatorio ULEAM. Todos los derechos reservados.</p>
+      <p>{{ 'layout.footer.copyright' | translate: { year: currentYear } }}</p>
     </div>
   </div>
 </footer>

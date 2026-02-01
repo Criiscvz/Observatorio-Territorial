@@ -2,21 +2,21 @@
   <!-- Page Header -->
   <div class="page-header">
     <div class="header-content">
-      <h1 class="page-title">Departamentos Públicos</h1>
+      <h1 class="page-title">{{ 'public.departments.title' | translate }}</h1>
       <p class="page-subtitle">
-        Explora los datasets y análisis compartidos por la comunidad universitaria
+        {{ 'public.departments.subtitle' | translate }}
       </p>
     </div>
 
     <!-- Search -->
     <div class="search-container">
       <mat-form-field appearance="outline" class="search-field">
-        <mat-label>Buscar departamento</mat-label>
+        <mat-label>{{ 'common.buttons.search' | translate }}</mat-label>
         <input
           matInput
           [(ngModel)]="searchTerm"
           (ngModelChange)="filterDepartamentos()"
-          placeholder="Escribe para buscar..."
+          [placeholder]="'public.departments.search' | translate"
         />
         <mat-icon matPrefix>search</mat-icon>
         @if (searchTerm) {
@@ -31,14 +31,14 @@
   <!-- Results info -->
   <div class="results-info">
     <span class="results-count">
-      {{ filteredDepartamentos().length }} departamento(s) encontrado(s)
+      {{ 'public.departments.resultsCount' | translate: { count: filteredDepartamentos().length } }}
     </span>
   </div>
 
   @if (loading()) {
     <div class="loading-container">
       <mat-spinner diameter="48"></mat-spinner>
-      <p>Cargando departamentos...</p>
+      <p>{{ 'public.departments.loading' | translate }}</p>
     </div>
   } @else if (filteredDepartamentos().length > 0) {
     <div class="departments-grid">
@@ -52,18 +52,18 @@
               <h3>{{ depto.nombre }}</h3>
               <span class="meta-badge">
                 <mat-icon>folder</mat-icon>
-                {{ depto.datasets_count || 0 }} datasets
+                {{ depto.datasets_count || 0 }} {{ 'common.units.datasets' | translate }}
               </span>
             </div>
           </div>
 
           <p class="department-desc">
-            {{ depto.descripcion || 'Sin descripción disponible' }}
+            {{ depto.descripcion || ('public.departmentDetail.noDescription' | translate) }}
           </p>
 
           @if (depto.datasets && depto.datasets.length > 0) {
             <div class="datasets-preview">
-              <span class="preview-label">Datasets recientes:</span>
+              <span class="preview-label">{{ 'dashboard.recentDatasets.title' | translate }}:</span>
               <div class="dataset-chips">
                 @for (ds of depto.datasets.slice(0, 3); track ds.id) {
                   <span class="dataset-chip">{{ ds.nombre }}</span>
@@ -77,7 +77,7 @@
 
           <div class="card-footer">
             <span class="view-link">
-              Ver departamento
+              {{ 'public.departments.viewDetails' | translate }}
               <mat-icon>arrow_forward</mat-icon>
             </span>
           </div>
@@ -87,12 +87,12 @@
   } @else {
     <div class="empty-state">
       <mat-icon>search_off</mat-icon>
-      <h3>No se encontraron departamentos</h3>
+      <h3>{{ 'common.messages.noResults' | translate }}</h3>
       @if (searchTerm) {
         <p>No hay resultados para "{{ searchTerm }}"</p>
-        <button mat-stroked-button (click)="clearSearch()">Limpiar búsqueda</button>
+        <button mat-stroked-button (click)="clearSearch()">{{ 'common.buttons.clear' | translate }}</button>
       } @else {
-        <p>No hay departamentos públicos disponibles en este momento</p>
+        <p>{{ 'public.departments.empty' | translate }}</p>
       }
     </div>
   }

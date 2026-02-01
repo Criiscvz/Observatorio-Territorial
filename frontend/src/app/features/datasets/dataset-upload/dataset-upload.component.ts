@@ -20,6 +20,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ColumnaAnalizada, Departamento } from '@core/models';
 import { DatasetService } from '@core/services/dataset.service';
 import { DepartamentoService } from '@core/services/departamento.service';
@@ -49,6 +50,7 @@ interface ColumnaExtendida extends ColumnaAnalizada {
     MatChipsModule,
     MatTooltipModule,
     MatExpansionModule,
+    TranslateModule,
   ],
   templateUrl: './dataset-upload.component.html',
   styleUrl: './dataset-upload.component.scss',
@@ -59,6 +61,7 @@ export class DatasetUploadComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly datasetService = inject(DatasetService);
   private readonly deptoService = inject(DepartamentoService);
+  private readonly translate = inject(TranslateService);
 
   uploadForm: FormGroup = this.fb.group({
     departamento_id: ['', Validators.required],
@@ -160,13 +163,13 @@ export class DatasetUploadComponent implements OnInit {
             },
             error: (err) => {
               this.uploading.set(false);
-              this.error.set(err.error?.message || 'Error al analizar el archivo');
+              this.error.set(err.error?.message || this.translate.instant('datasets.upload.errors.analyzeFailed'));
             },
           });
         },
         error: (err) => {
           this.uploading.set(false);
-          this.error.set(err.error?.message || 'Error al subir el archivo');
+          this.error.set(err.error?.message || this.translate.instant('datasets.upload.errors.uploadFailed'));
         },
       });
   }
@@ -183,7 +186,7 @@ export class DatasetUploadComponent implements OnInit {
     const columnasAImportar = this.columnasActivas();
 
     if (columnasAImportar.length === 0) {
-      this.error.set('Debes incluir al menos una columna');
+      this.error.set(this.translate.instant('datasets.upload.errors.noColumns'));
       return;
     }
 
@@ -198,7 +201,7 @@ export class DatasetUploadComponent implements OnInit {
       },
       error: (err) => {
         this.processing.set(false);
-        this.error.set(err.error?.message || 'Error al importar');
+        this.error.set(err.error?.message || this.translate.instant('datasets.upload.errors.importFailed'));
       },
     });
   }

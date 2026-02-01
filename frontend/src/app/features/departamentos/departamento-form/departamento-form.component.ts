@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { DepartamentoService } from '@core/services/departamento.service';
 
 @Component({
@@ -27,6 +28,7 @@ import { DepartamentoService } from '@core/services/departamento.service';
     MatSlideToggleModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    TranslateModule,
   ],
   templateUrl: './departamento-form.component.html',
   styleUrl: './departamento-form.component.scss',
@@ -36,6 +38,7 @@ export class DepartamentoFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private deptoService = inject(DepartamentoService);
+  private translate = inject(TranslateService);
 
   form: FormGroup = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],
@@ -47,26 +50,26 @@ export class DepartamentoFormComponent implements OnInit {
 
   // Lista de iconos disponibles de Material Icons
   availableIcons = [
-    { value: 'groups', label: 'Social / Grupos' },
-    { value: 'work', label: 'Laboral / Trabajo' },
-    { value: 'how_to_vote', label: 'Electoral / Voto' },
-    { value: 'flight_takeoff', label: 'Turístico / Viajes' },
-    { value: 'school', label: 'Educación' },
-    { value: 'health_and_safety', label: 'Salud' },
-    { value: 'agriculture', label: 'Agricultura' },
-    { value: 'engineering', label: 'Ingeniería' },
-    { value: 'account_balance', label: 'Finanzas / Gobierno' },
-    { value: 'eco', label: 'Medio Ambiente' },
-    { value: 'local_hospital', label: 'Hospital / Médico' },
-    { value: 'science', label: 'Ciencia' },
-    { value: 'sports', label: 'Deportes' },
-    { value: 'construction', label: 'Construcción' },
-    { value: 'storefront', label: 'Comercio' },
-    { value: 'directions_car', label: 'Transporte' },
-    { value: 'public', label: 'Público / Global' },
-    { value: 'security', label: 'Seguridad' },
-    { value: 'gavel', label: 'Legal / Justicia' },
-    { value: 'family_restroom', label: 'Familia' },
+    { value: 'groups', labelKey: 'departamentos.icons.social' },
+    { value: 'work', labelKey: 'departamentos.icons.work' },
+    { value: 'how_to_vote', labelKey: 'departamentos.icons.electoral' },
+    { value: 'flight_takeoff', labelKey: 'departamentos.icons.tourism' },
+    { value: 'school', labelKey: 'departamentos.icons.education' },
+    { value: 'health_and_safety', labelKey: 'departamentos.icons.health' },
+    { value: 'agriculture', labelKey: 'departamentos.icons.agriculture' },
+    { value: 'engineering', labelKey: 'departamentos.icons.infrastructure' },
+    { value: 'account_balance', labelKey: 'departamentos.icons.finance' },
+    { value: 'eco', labelKey: 'departamentos.icons.environment' },
+    { value: 'local_hospital', labelKey: 'departamentos.icons.health' },
+    { value: 'science', labelKey: 'departamentos.icons.research' },
+    { value: 'sports', labelKey: 'departamentos.icons.sports' },
+    { value: 'construction', labelKey: 'departamentos.icons.infrastructure' },
+    { value: 'storefront', labelKey: 'departamentos.icons.generic' },
+    { value: 'directions_car', labelKey: 'departamentos.icons.generic' },
+    { value: 'public', labelKey: 'departamentos.icons.generic' },
+    { value: 'security', labelKey: 'departamentos.icons.security' },
+    { value: 'gavel', labelKey: 'departamentos.icons.generic' },
+    { value: 'family_restroom', labelKey: 'departamentos.icons.social' },
   ];
 
   isEdit = signal(false);
@@ -99,7 +102,7 @@ export class DepartamentoFormComponent implements OnInit {
 
   getIconLabel(value: string): string {
     const icon = this.availableIcons.find((i) => i.value === value);
-    return icon?.label || value;
+    return icon ? this.translate.instant(icon.labelKey) : value;
   }
 
   onSubmit(): void {
@@ -112,7 +115,7 @@ export class DepartamentoFormComponent implements OnInit {
       : this.form.valid;
 
     if (!isValid) {
-      this.error.set('Por favor, corrige los errores en el formulario');
+      this.error.set(this.translate.instant('departamentos.form.errors.formInvalid'));
       return;
     }
 
@@ -130,7 +133,7 @@ export class DepartamentoFormComponent implements OnInit {
 
       this.deptoService.update(this.departamentoId()!, updateData).subscribe({
         next: () => {
-          this.success.set('Departamento actualizado exitosamente');
+          this.success.set(this.translate.instant('departamentos.form.success.updated'));
           setTimeout(() => {
             this.router.navigate(['/admin/departamentos', this.departamentoId()]);
           }, 1000);
@@ -151,7 +154,7 @@ export class DepartamentoFormComponent implements OnInit {
 
       this.deptoService.create(createData).subscribe({
         next: (departamento) => {
-          this.success.set('Departamento creado exitosamente');
+          this.success.set(this.translate.instant('departamentos.form.success.created'));
           setTimeout(() => {
             this.router.navigate(['/admin/departamentos', departamento.id]);
           }, 1000);
@@ -173,14 +176,14 @@ export class DepartamentoFormComponent implements OnInit {
       return errors.join('. ');
     }
     if (err.status === 422) {
-      return 'Error de validación. Verifica los datos ingresados.';
+      return this.translate.instant('departamentos.form.errors.validationError');
     }
     if (err.status === 403) {
-      return 'No tienes permisos para realizar esta acción.';
+      return this.translate.instant('departamentos.form.errors.permissionDenied');
     }
     if (err.status === 0) {
-      return 'Error de conexión. Verifica que el servidor esté funcionando.';
+      return this.translate.instant('departamentos.form.errors.connectionError');
     }
-    return 'Ocurrió un error inesperado. Intenta de nuevo.';
+    return this.translate.instant('departamentos.form.errors.unexpectedError');
   }
 }

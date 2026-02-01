@@ -2,6 +2,8 @@ import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideTranslateService } from '@ngx-translate/core';
+import { provideTranslateBrowserLoader } from './core/loaders/translate-browser.loader';
 import { provideEchartsCore } from 'ngx-echarts';
 import * as echarts from 'echarts/core';
 import { 
@@ -72,5 +74,13 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideEchartsCore({ echarts }),
     ...repositoryProviders,
+    // Configuración de ngx-translate para internacionalización
+    provideTranslateService({
+      fallbackLang: 'es',
+      loader: provideTranslateBrowserLoader({
+        prefix: '/assets/i18n/',
+        suffix: '.json'
+      })
+    }),
   ]
 };

@@ -3,10 +3,14 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { RouterLink } from '@angular/router';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
 
 @Component({
@@ -15,10 +19,14 @@ import { ThemeService } from '@core/services/theme.service';
   imports: [
     CommonModule,
     RouterLink,
+    RouterLinkActive,
     MatButtonModule,
     MatIconModule,
     MatCardModule,
+    MatMenuModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
+    TranslateModule,
   ],
   templateUrl: './public-home.component.html',
   styleUrl: './public-home.component.scss',
@@ -26,6 +34,7 @@ import { ThemeService } from '@core/services/theme.service';
 export class PublicHomeComponent implements OnInit {
   private deptoService = inject(DepartamentoService);
   readonly themeService = inject(ThemeService);
+  readonly languageService = inject(LanguageService);
 
   departamentos = signal<Departamento[]>([]);
   loading = signal(true);

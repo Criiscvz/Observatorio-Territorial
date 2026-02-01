@@ -2,14 +2,14 @@
   @if (loading()) {
     <div class="loading-container">
       <mat-spinner diameter="48"></mat-spinner>
-      <p>Cargando dataset...</p>
+      <p>{{ 'public.datasetView.loading' | translate }}</p>
     </div>
   } @else if (datasetInfo()) {
     <!-- Breadcrumb -->
     <nav class="breadcrumb">
       <a [routerLink]="['/publico/departamentos', departamentoId()]">
         <mat-icon>arrow_back</mat-icon>
-        Volver al departamento
+        {{ 'public.datasetView.backToDepartment' | translate }}
       </a>
     </nav>
 
@@ -23,11 +23,11 @@
         <div class="header-stats">
           <span class="stat">
             <mat-icon>grid_on</mat-icon>
-            {{ datasetInfo()?.total_registros | number }} registros
+            {{ datasetInfo()?.total_registros | number }} {{ 'public.datasetView.stats.records' | translate }}
           </span>
           <span class="stat">
             <mat-icon>view_column</mat-icon>
-            {{ variables().length }} variables
+            {{ variables().length }} {{ 'public.datasetView.stats.variables' | translate }}
           </span>
         </div>
       </div>
@@ -39,7 +39,7 @@
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="tab-icon">table_chart</mat-icon>
-          Datos
+          {{ 'public.datasetView.tabs.data' | translate }}
         </ng-template>
         <div class="tab-content">
           <mat-card class="data-card">
@@ -65,7 +65,7 @@
               } @else {
                 <div class="empty-state">
                   <mat-icon>table_rows</mat-icon>
-                  <p>No hay datos disponibles</p>
+                  <p>{{ 'public.datasetView.noData' | translate }}</p>
                 </div>
               }
             </div>
@@ -86,14 +86,14 @@
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon class="tab-icon">analytics</mat-icon>
-          Análisis
+          {{ 'public.datasetView.tabs.analysis' | translate }}
         </ng-template>
         <div class="tab-content">
           <!-- Chart Creator -->
           <mat-card class="chart-creator-card">
             <mat-card-header>
-              <mat-card-title>Crear Visualización</mat-card-title>
-              <mat-card-subtitle>Selecciona el tipo de gráfico y las variables</mat-card-subtitle>
+              <mat-card-title>{{ 'public.datasetView.createChart.title' | translate }}</mat-card-title>
+              <mat-card-subtitle>{{ 'public.datasetView.createChart.subtitle' | translate }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
               <!-- Chart Types Grid -->
@@ -105,8 +105,8 @@
                     (click)="selectChartType(type)"
                   >
                     <mat-icon>{{ type.icon }}</mat-icon>
-                    <span class="type-name">{{ type.name }}</span>
-                    <span class="type-desc">{{ type.description }}</span>
+                    <span class="type-name">{{ 'charts.types.' + type.id + '.name' | translate }}</span>
+                    <span class="type-desc">{{ 'charts.types.' + type.id + '.description' | translate }}</span>
                   </div>
                 }
               </div>
@@ -116,7 +116,7 @@
               <!-- Variable Selection -->
               <div class="variable-selection">
                 <mat-form-field appearance="outline">
-                  <mat-label>Variable Principal</mat-label>
+                  <mat-label>{{ 'datasets.view.analysis.variableX' | translate }}</mat-label>
                   <mat-select [(value)]="selectedVariableX">
                     @for (v of compatibleVariablesX(); track v.id) {
                       <mat-option [value]="v">
@@ -128,13 +128,13 @@
                   @if (compatibleVariablesX().length === 0) {
                     <mat-hint class="hint-error">{{ getIncompatibilityMessage() }}</mat-hint>
                   } @else {
-                    <mat-hint>{{ compatibleVariablesX().length }} variables disponibles</mat-hint>
+                    <mat-hint>{{ 'datasets.view.analysis.variablesAvailable' | translate: { count: compatibleVariablesX().length } }}</mat-hint>
                   }
                 </mat-form-field>
 
                 @if (selectedChartType()?.bivariable) {
                   <mat-form-field appearance="outline">
-                    <mat-label>Variable Secundaria</mat-label>
+                    <mat-label>{{ 'datasets.view.analysis.variableY' | translate }}</mat-label>
                     <mat-select [(value)]="selectedVariableY">
                       @for (v of compatibleVariablesY(); track v.id) {
                         <mat-option [value]="v">
@@ -146,7 +146,7 @@
                     @if (selectedVariableX && compatibleVariablesY().length === 0) {
                       <mat-hint class="hint-error">{{ getIncompatibilityMessage() }}</mat-hint>
                     } @else if (compatibleVariablesY().length > 0) {
-                      <mat-hint>{{ compatibleVariablesY().length }} variables compatibles</mat-hint>
+                      <mat-hint>{{ 'datasets.view.analysis.variablesCompatible' | translate: { count: compatibleVariablesY().length } }}</mat-hint>
                     }
                   </mat-form-field>
                 }
@@ -158,7 +158,7 @@
                   (click)="addChart()"
                 >
                   <mat-icon>add_chart</mat-icon>
-                  Agregar Gráfico
+                  {{ 'datasets.view.analysis.addChart' | translate }}
                 </button>
               </div>
             </mat-card-content>
@@ -168,7 +168,7 @@
           <div class="quick-actions">
             <button mat-stroked-button (click)="addAllUnivariate()" [disabled]="addingChart()">
               <mat-icon>auto_graph</mat-icon>
-              Generar Todo Automático
+              {{ 'public.datasetView.quickActions.generateAll' | translate }}
             </button>
             <button
               mat-stroked-button
@@ -177,9 +177,9 @@
               [disabled]="activeCharts().length === 0"
             >
               <mat-icon>delete_sweep</mat-icon>
-              Limpiar
+              {{ 'public.datasetView.quickActions.clear' | translate }}
             </button>
-            <span class="charts-counter">{{ activeCharts().length }} gráfico(s)</span>
+            <span class="charts-counter">{{ 'public.datasetView.chartsCount' | translate: { count: activeCharts().length } }}</span>
           </div>
 
           <!-- Charts Grid -->
@@ -193,7 +193,7 @@
                   <mat-card-header>
                     <mat-icon mat-card-avatar>{{ chart.chartType.icon }}</mat-icon>
                     <mat-card-title>{{ chart.title }}</mat-card-title>
-                    <mat-card-subtitle>{{ chart.chartType.name }}</mat-card-subtitle>
+                    <mat-card-subtitle>{{ 'charts.types.' + chart.chartType.id + '.name' | translate }}</mat-card-subtitle>
                   </mat-card-header>
                   <mat-card-content>
                     @if (chart.loading) {
@@ -205,7 +205,7 @@
                     } @else {
                       <div class="chart-error">
                         <mat-icon>error_outline</mat-icon>
-                        <p>No se pudieron cargar los datos</p>
+                        <p>{{ 'charts.errors.loadFailed' | translate }}</p>
                       </div>
                     }
                   </mat-card-content>
@@ -215,8 +215,8 @@
           } @else {
             <div class="no-charts">
               <mat-icon>insert_chart</mat-icon>
-              <h3>Sin gráficos</h3>
-              <p>Selecciona un tipo de gráfico y variables para comenzar a analizar</p>
+              <h3>{{ 'public.datasetView.noCharts.title' | translate }}</h3>
+              <p>{{ 'public.datasetView.noCharts.message' | translate }}</p>
             </div>
           }
         </div>
@@ -225,11 +225,11 @@
   } @else {
     <div class="error-state">
       <mat-icon>error_outline</mat-icon>
-      <h2>Dataset no encontrado</h2>
-      <p>El dataset que buscas no existe o no está disponible públicamente</p>
+      <h2>{{ 'public.datasetView.notFound.title' | translate }}</h2>
+      <p>{{ 'public.datasetView.notFound.message' | translate }}</p>
       <a mat-stroked-button routerLink="/publico/departamentos">
         <mat-icon>arrow_back</mat-icon>
-        Volver a departamentos
+        {{ 'public.datasetView.notFound.backButton' | translate }}
       </a>
     </div>
   }

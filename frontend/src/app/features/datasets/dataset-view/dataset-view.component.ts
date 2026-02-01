@@ -19,6 +19,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
 
@@ -83,6 +84,7 @@ interface ColumnWithUniqueId extends VariableMetadato {
     MatExpansionModule,
     MatDividerModule,
     NgxEchartsDirective,
+    TranslateModule,
   ],
   templateUrl: './dataset-view.component.html',
   styleUrl: './dataset-view.component.scss',
@@ -93,6 +95,7 @@ export class DatasetViewComponent implements OnInit {
   private readonly dashboardService = inject(DashboardService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly chartTheme = inject(ChartThemeService);
+  private readonly translate = inject(TranslateService);
   readonly themeService = inject(ThemeService);
 
   // Tipos de gráficos disponibles - organizados por complejidad
@@ -761,8 +764,8 @@ export class DatasetViewComponent implements OnInit {
         es_visible: variable.es_visible,
       })
       .subscribe({
-        next: () => this.snackBar.open('Variable actualizada', 'OK', { duration: 2000 }),
-        error: () => this.snackBar.open('Error al actualizar', 'OK', { duration: 2000 }),
+        next: () => this.snackBar.open(this.translate.instant('common.messages.success'), 'OK', { duration: 2000 }),
+        error: () => this.snackBar.open(this.translate.instant('common.messages.error'), 'OK', { duration: 2000 }),
       });
   }
 
