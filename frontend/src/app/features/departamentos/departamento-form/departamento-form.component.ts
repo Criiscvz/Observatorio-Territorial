@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { DepartamentoService } from '@core/services/departamento.service';
 
 @Component({
@@ -27,6 +28,7 @@ import { DepartamentoService } from '@core/services/departamento.service';
     MatSlideToggleModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    TranslateModule,
   ],
   templateUrl: './departamento-form.component.html',
   styleUrl: './departamento-form.component.scss',
@@ -36,6 +38,7 @@ export class DepartamentoFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private deptoService = inject(DepartamentoService);
+  private translate = inject(TranslateService);
 
   form: FormGroup = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(255)]],

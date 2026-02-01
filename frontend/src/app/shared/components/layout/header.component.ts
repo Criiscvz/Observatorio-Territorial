@@ -30,7 +30,7 @@ import { ThemeService } from '@core/services/theme.service';
       <div class="header-content">
         <!-- Left section -->
         <div class="header-left">
-          <button class="menu-btn" (click)="toggleSidenav.emit()" matTooltip="Menú">
+          <button class="menu-btn" (click)="toggleSidenav.emit()" [matTooltip]="'layout.header.menu' | translate">
             <mat-icon>menu</mat-icon>
           </button>
 
@@ -39,8 +39,8 @@ import { ThemeService } from '@core/services/theme.service';
               <img src="ULEAM.png" alt="ULEAM" class="brand-img" />
             </div>
             <div class="brand-text">
-              <span class="brand-name">Observatorio</span>
-              <span class="brand-subtitle">ULEAM</span>
+              <span class="brand-name">{{ 'layout.header.brand' | translate }}</span>
+              <span class="brand-subtitle">{{ 'layout.header.brandSubtitle' | translate }}</span>
             </div>
           </a>
         </div>
@@ -51,7 +51,7 @@ import { ThemeService } from '@core/services/theme.service';
           <button
             class="theme-btn"
             (click)="themeService.toggleTheme()"
-            [matTooltip]="themeService.isDark() ? 'Modo claro' : 'Modo oscuro'"
+            [matTooltip]="(themeService.isDark() ? 'layout.header.themeLight' : 'layout.header.themeDark') | translate"
           >
             <mat-icon class="theme-icon">
               {{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}
@@ -66,7 +66,7 @@ import { ThemeService } from '@core/services/theme.service';
               </div>
               <div class="user-info">
                 <span class="user-name">{{ user.name }}</span>
-                <span class="user-role">Administrador</span>
+                <span class="user-role">{{ 'layout.header.administrator' | translate }}</span>
               </div>
               <mat-icon class="dropdown-icon">expand_more</mat-icon>
             </button>
@@ -86,19 +86,19 @@ import { ThemeService } from '@core/services/theme.service';
 
               <button mat-menu-item routerLink="/perfil" class="menu-item">
                 <mat-icon>person_outline</mat-icon>
-                <span>Mi Perfil</span>
+                <span>{{ 'layout.header.profile' | translate }}</span>
               </button>
 
               <button mat-menu-item routerLink="/configuracion" class="menu-item">
                 <mat-icon>settings</mat-icon>
-                <span>Configuración</span>
+                <span>{{ 'layout.header.settings' | translate }}</span>
               </button>
 
               <mat-divider></mat-divider>
 
               <button mat-menu-item (click)="logout()" class="menu-item logout">
                 <mat-icon>logout</mat-icon>
-                <span>Cerrar Sesión</span>
+                <span>{{ 'auth.logout' | translate }}</span>
               </button>
             </mat-menu>
           }

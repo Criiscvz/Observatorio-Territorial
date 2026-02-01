@@ -14,6 +14,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
 
@@ -64,6 +65,7 @@ interface ColumnWithUniqueId extends VariableMetadato {
     MatTooltipModule,
     MatDividerModule,
     NgxEchartsDirective,
+    TranslateModule,
   ],
   templateUrl: './public-dataset-view.component.html',
   styleUrl: './public-dataset-view.component.scss',
