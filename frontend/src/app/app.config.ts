@@ -76,7 +76,7 @@ export const appConfig: ApplicationConfig = {
     ...repositoryProviders,
     // Configuración de ngx-translate para internacionalización
     provideTranslateService({
-      defaultLanguage: 'es',
+      fallbackLang: 'es',
       loader: provideTranslateBrowserLoader({
         prefix: '/assets/i18n/',
         suffix: '.json'
