@@ -1,0 +1,328 @@
+<div class="space-y-6">
+  @if (loading()) {
+    <div class="flex justify-center py-12">
+      <mat-spinner></mat-spinner>
+    </div>
+  } @else if (datasetInfo()) {
+    <!-- Header -->
+    <div class="dataset-header">
+      <div class="flex items-center gap-4">
+        <a mat-icon-button [routerLink]="['/departamentos', departamentoId()]" matTooltip="Volver">
+          <mat-icon>arrow_back</mat-icon>
+        </a>
+        <div>
+          <h1 class="dataset-title">{{ datasetInfo()?.nombre }}</h1>
+          <p class="dataset-subtitle">{{ datasetInfo()?.total_registros | number }} registros</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs principales -->
+    <mat-tab-group animationDuration="200ms">
+      <!-- Tab: Datos -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">table_chart</mat-icon>
+          Datos
+        </ng-template>
+        <div class="py-4">
+          <mat-card>
+            <mat-card-content>
+              <div class="overflow-x-auto">
+                @if (visibleColumns().length > 0 && tableData().length > 0) {
+                  <table mat-table [dataSource]="tableData()" class="w-full">
+                    <ng-container *ngFor="let col of visibleColumns()" [matColumnDef]="col._uniqueId">
+                      <th mat-header-cell *matHeaderCellDef>
+                        <div class="flex items-center gap-1">
+                          <span>{{ col.nombre_original || col.nombre_columna }}</span>
+                        </div>
+                      </th>
+                      <td mat-cell *matCellDef="let row">{{ row.data[col.nombre_columna] }}</td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="columnNames()"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnNames();"></tr>
+                  </table>
+                } @else if (!loading()) {
+                  <div class="empty-state">
+                    <mat-icon>table_rows</mat-icon>
+                    <p>No hay datos disponibles</p>
+                  </div>
+                }
+              </div>
+              <mat-paginator
+                [length]="pagination().total"
+                [pageSize]="pagination().per_page"
+                [pageIndex]="pagination().current_page - 1"
+                [pageSizeOptions]="[25, 50, 100]"
+                (page)="onPageChange($event)"
+                showFirstLastButtons>
+              </mat-paginator>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Configurar Variables -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">settings</mat-icon>
+          Variables
+        </ng-template>
+        <div class="py-4">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Configuración de Variables</mat-card-title>
+              <mat-card-subtitle>Cambia el tipo de dato o visibilidad de cada columna</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <table mat-table [dataSource]="variables()" class="w-full">
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>Columna</th>
+                  <td mat-cell *matCellDef="let v">
+                    <span class="font-medium">{{ v.nombre_original }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="tipo_dato">
+                  <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                  <td mat-cell *matCellDef="let v">
+                    <mat-form-field appearance="outline" class="!w-36 !text-sm">
+                      <mat-select [(value)]="v.tipo_dato" (selectionChange)="updateVariable(v)">
+                        <mat-option value="NUMERICO">Numérico</mat-option>
+                        <mat-option value="CATEGORICO">Categórico</mat-option>
+                        <mat-option value="FECHA">Fecha</mat-option>
+                        <mat-option value="TEXTO">Texto</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="es_visible">
+                  <th mat-header-cell *matHeaderCellDef>Visible</th>
+                  <td mat-cell *matCellDef="let v">
+                    <mat-checkbox [(ngModel)]="v.es_visible" (change)="updateVariable(v)" color="primary">
+                    </mat-checkbox>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['nombre', 'tipo_dato', 'es_visible']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['nombre', 'tipo_dato', 'es_visible'];"></tr>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Análisis y Gráficos -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">analytics</mat-icon>
+          Análisis
+        </ng-template>
+        <div class="py-4 space-y-4">
+          <!-- Panel de creación de gráficos -->
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Crear Gráfico</mat-card-title>
+              <mat-card-subtitle>Selecciona el tipo de gráfico y las variables a analizar</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content class="!pt-4">
+              <!-- Selector de tipo de gráfico visual -->
+              <div class="mb-4">
+                <p class="section-label">Tipo de Gráfico:</p>
+                <div class="chart-type-grid">
+                  @for (type of chartTypes; track type.id) {
+                    <div 
+                      class="chart-type-card"
+                      [class.selected]="selectedChartType()?.id === type.id"
+                      (click)="selectChartType(type)">
+                      <mat-icon class="chart-type-icon" [class.selected]="selectedChartType()?.id === type.id">
+                        {{ type.icon }}
+                      </mat-icon>
+                      <p class="chart-type-name">{{ type.name }}</p>
+                      <p class="chart-type-desc">{{ type.description }}</p>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <mat-divider class="!my-4"></mat-divider>
+
+              <!-- Mensaje de incompatibilidad -->
+              @if (getIncompatibilityMessage()) {
+                <div class="alert alert-warning mb-4">
+                  <mat-icon>warning</mat-icon>
+                  <span>{{ getIncompatibilityMessage() }}</span>
+                </div>
+              }
+
+              <!-- Selección de variables -->
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <mat-form-field appearance="outline">
+                  <mat-label>Variable Principal (X)</mat-label>
+                  <mat-select [(value)]="selectedVariableX" (selectionChange)="onVariableXChange()">
+                    @for (v of compatibleVariablesX(); track v.id) {
+                      <mat-option [value]="v">
+                        <div class="flex items-center gap-2">
+                          <span>{{ v.nombre_original }}</span>
+                          <span class="type-badge" [class]="getTipoClass(v.tipo_dato)">
+                            {{ v.tipo_dato }}
+                          </span>
+                        </div>
+                      </mat-option>
+                    }
+                    @if (compatibleVariablesX().length === 0) {
+                      <mat-option disabled>No hay variables compatibles</mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint *ngIf="selectedChartType()">
+                    {{ getVariableHint('x') }}
+                  </mat-hint>
+                </mat-form-field>
+
+                @if (selectedChartType()?.bivariable) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Variable Secundaria (Y)</mat-label>
+                    <mat-select [(value)]="selectedVariableY" [disabled]="!selectedVariableX">
+                      @for (v of compatibleVariablesY(); track v.id) {
+                        <mat-option [value]="v">
+                          <div class="flex items-center gap-2">
+                            <span>{{ v.nombre_original }}</span>
+                            <span class="type-badge" [class]="getTipoClass(v.tipo_dato)">
+                              {{ v.tipo_dato }}
+                            </span>
+                          </div>
+                        </mat-option>
+                      }
+                      @if (compatibleVariablesY().length === 0 && selectedVariableX) {
+                        <mat-option disabled>No hay variables compatibles</mat-option>
+                      }
+                    </mat-select>
+                    <mat-hint>{{ getVariableHint('y') }}</mat-hint>
+                  </mat-form-field>
+                }
+
+                <!-- Filtros opcionales -->
+                @if (selectedChartType() && selectedVariableX) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Límite de resultados</mat-label>
+                    <mat-select [(value)]="chartLimit">
+                      <mat-option [value]="10">Top 10</mat-option>
+                      <mat-option [value]="20">Top 20</mat-option>
+                      <mat-option [value]="50">Top 50</mat-option>
+                      <mat-option [value]="100">Top 100</mat-option>
+                      <mat-option [value]="null">Sin límite</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <div class="flex items-end">
+                    <button mat-raised-button color="primary" 
+                            [disabled]="!canAddChart() || addingChart()"
+                            (click)="addChart()">
+                      @if (addingChart()) {
+                        <mat-icon class="animate-spin">refresh</mat-icon>
+                      } @else {
+                        <mat-icon>add_chart</mat-icon>
+                      }
+                      Agregar Gráfico
+                    </button>
+                  </div>
+                }
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Acciones rápidas -->
+          <div class="actions-bar">
+            <button mat-stroked-button (click)="addAllUnivariate()" [disabled]="addingChart()">
+              <mat-icon>auto_graph</mat-icon>
+              Generar Todos (Univariable)
+            </button>
+            <button mat-stroked-button color="warn" (click)="clearAllCharts()" 
+                    [disabled]="activeCharts().length === 0">
+              <mat-icon>delete_sweep</mat-icon>
+              Limpiar Todo
+            </button>
+            <span class="flex-grow"></span>
+            <span class="charts-count">
+              {{ activeCharts().length }} gráfico(s) activo(s)
+            </span>
+          </div>
+
+          <!-- Grilla de gráficos activos -->
+          @if (activeCharts().length > 0) {
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              @for (chart of activeCharts(); track chart.id) {
+                <mat-card class="relative">
+                  <!-- Botón eliminar -->
+                  <button mat-icon-button class="!absolute top-2 right-2 z-10" 
+                          (click)="removeChart(chart.id)" matTooltip="Eliminar gráfico">
+                    <mat-icon>close</mat-icon>
+                  </button>
+
+                  <mat-card-header>
+                    <mat-icon mat-card-avatar class="text-[var(--primary-600)]">{{ chart.chartType.icon }}</mat-icon>
+                    <mat-card-title>{{ chart.title }}</mat-card-title>
+                    <mat-card-subtitle>{{ chart.chartType.name }}</mat-card-subtitle>
+                  </mat-card-header>
+
+                  <mat-card-content>
+                    @if (chart.loading) {
+                      <div class="chart-loading">
+                        <mat-spinner diameter="40"></mat-spinner>
+                      </div>
+                    } @else if (chart.error) {
+                      <div class="chart-error">
+                        <mat-icon>error_outline</mat-icon>
+                        <p class="error-message">{{ chart.error }}</p>
+                        <button mat-stroked-button color="primary" (click)="retryChart(chart)">
+                          <mat-icon>refresh</mat-icon>
+                          Reintentar
+                        </button>
+                      </div>
+                    } @else if (chart.data) {
+                      <!-- Estadísticas si aplica -->
+                      @if (getChartStats(chart)) {
+                        <div class="stats-grid">
+                          @if (getChartStats(chart)?.mean !== undefined) {
+                            <div class="stat-box stat-info">
+                              <span class="stat-label">Promedio</span>
+                              <span class="stat-value">{{ formatNumber(getChartStats(chart)?.mean) }}</span>
+                            </div>
+                          }
+                          @if (getChartStats(chart)?.count !== undefined) {
+                            <div class="stat-box stat-success">
+                              <span class="stat-label">Total</span>
+                              <span class="stat-value">{{ getChartStats(chart)?.count | number }}</span>
+                            </div>
+                          }
+                          @if (getChartStats(chart)?.correlation !== undefined) {
+                            <div class="stat-box" [class]="getCorrelationBoxClass(getChartStats(chart)?.correlation)">
+                              <span class="stat-label">Correlación</span>
+                              <span class="stat-value">{{ getChartStats(chart)?.correlation }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+                      <div echarts [options]="getChartOptions(chart)" class="chart-container"></div>
+                    } @else {
+                      <div class="chart-empty">
+                        <mat-icon>insert_chart_outlined</mat-icon>
+                        <p>No hay datos disponibles</p>
+                      </div>
+                    }
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          } @else {
+            <mat-card>
+              <mat-card-content class="charts-empty-state">
+                <mat-icon>insert_chart</mat-icon>
+                <h3>Sin gráficos</h3>
+                <p>Selecciona un tipo de gráfico y una variable para comenzar</p>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

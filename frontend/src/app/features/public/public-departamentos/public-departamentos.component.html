@@ -1,0 +1,94 @@
+<div class="page-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Departamentos Públicos</h1>
+      <p class="page-subtitle">Explora los datasets y análisis compartidos por la comunidad universitaria</p>
+    </div>
+    
+    <!-- Search -->
+    <div class="search-container">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar departamento</mat-label>
+        <input matInput [(ngModel)]="searchTerm" (ngModelChange)="filterDepartamentos()" placeholder="Escribe para buscar...">
+        <mat-icon matPrefix>search</mat-icon>
+        @if (searchTerm) {
+          <button matSuffix mat-icon-button (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Results info -->
+  <div class="results-info">
+    <span class="results-count">
+      {{ filteredDepartamentos().length }} departamento(s) encontrado(s)
+    </span>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Cargando departamentos...</p>
+    </div>
+  } @else if (filteredDepartamentos().length > 0) {
+    <div class="departments-grid">
+      @for (depto of filteredDepartamentos(); track depto.id; let i = $index) {
+        <a [routerLink]="['/publico/departamentos', depto.id]" class="department-card">
+          <div class="card-header">
+            <div class="department-avatar" [style.background]="getDeptoGradient(i)">
+              {{ depto.nombre.charAt(0).toUpperCase() }}
+            </div>
+            <div class="department-meta">
+              <h3>{{ depto.nombre }}</h3>
+              <span class="meta-badge">
+                <mat-icon>folder</mat-icon>
+                {{ depto.datasets_count || 0 }} datasets
+              </span>
+            </div>
+          </div>
+          
+          <p class="department-desc">
+            {{ depto.descripcion || 'Sin descripción disponible' }}
+          </p>
+
+          @if (depto.datasets && depto.datasets.length > 0) {
+            <div class="datasets-preview">
+              <span class="preview-label">Datasets recientes:</span>
+              <div class="dataset-chips">
+                @for (ds of depto.datasets.slice(0, 3); track ds.id) {
+                  <span class="dataset-chip">{{ ds.nombre }}</span>
+                }
+                @if (depto.datasets.length > 3) {
+                  <span class="more-chip">+{{ depto.datasets.length - 3 }} más</span>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="card-footer">
+            <span class="view-link">
+              Ver departamento
+              <mat-icon>arrow_forward</mat-icon>
+            </span>
+          </div>
+        </a>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <mat-icon>search_off</mat-icon>
+      <h3>No se encontraron departamentos</h3>
+      @if (searchTerm) {
+        <p>No hay resultados para "{{ searchTerm }}"</p>
+        <button mat-stroked-button (click)="clearSearch()">
+          Limpiar búsqueda
+        </button>
+      } @else {
+        <p>No hay departamentos públicos disponibles en este momento</p>
+      }
+    </div>
+  }
+</div>

@@ -1,12 +1,12 @@
-import { Component, inject, OnInit, signal, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, computed, inject, OnInit, output, signal } from '@angular/core';
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatBadgeModule } from '@angular/material/badge';
-import { DepartamentoService } from '../../../core/services/departamento.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { Departamento } from '../../../core/models';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Departamento } from '@core/models';
+import { AuthService } from '@core/services/auth.service';
+import { DepartamentoService } from '@core/services/departamento.service';
 import { IsAdminDirective } from '../../directives/has-role.directive';
 
 interface NavItem {
@@ -33,9 +33,9 @@ interface NavItem {
       <!-- Main navigation -->
       <div class="nav-section">
         <span class="nav-label">Principal</span>
-        
+
         <!-- Dashboard - visible para todos -->
-        <a 
+        <a
           class="nav-item"
           routerLink="/admin/dashboard"
           routerLinkActive="active"
@@ -47,9 +47,9 @@ interface NavItem {
           </div>
           <span class="nav-text">Dashboard</span>
         </a>
-        
+
         <!-- Subir Dataset - solo admin -->
-        <a 
+        <a
           *isAdmin
           class="nav-item"
           routerLink="/admin/datasets/nuevo"
@@ -67,9 +67,9 @@ interface NavItem {
       <div class="nav-section">
         <div class="nav-label-row">
           <span class="nav-label">Departamentos</span>
-          <a 
+          <a
             *isAdmin
-            class="add-btn" 
+            class="add-btn"
             routerLink="/admin/departamentos/nuevo"
             matTooltip="Nuevo departamento"
             (click)="navigate.emit()"
@@ -77,10 +77,10 @@ interface NavItem {
             <mat-icon>add</mat-icon>
           </a>
         </div>
-        
+
         <div class="deptos-list">
           @for (depto of departamentos(); track depto.id) {
-            <a 
+            <a
               class="nav-item depto-item"
               [routerLink]="['/admin/departamentos', depto.id]"
               routerLinkActive="active"
@@ -103,9 +103,9 @@ interface NavItem {
             <div class="empty-state">
               <mat-icon>folder_off</mat-icon>
               <span>Sin departamentos</span>
-              <a 
+              <a
                 *isAdmin
-                routerLink="/admin/departamentos/nuevo" 
+                routerLink="/admin/departamentos/nuevo"
                 class="empty-action"
                 (click)="navigate.emit()"
               >
@@ -118,7 +118,7 @@ interface NavItem {
 
       <!-- Footer -->
       <div class="sidebar-footer">
-        <a 
+        <a
           class="nav-item"
           routerLink="/admin/datasets"
           routerLinkActive="active"
@@ -132,247 +132,257 @@ interface NavItem {
       </div>
     </nav>
   `,
-  styles: [`
-    .sidebar {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 1rem 0.75rem;
-      overflow-y: auto;
-    }
+  styles: [
+    `
+      .sidebar {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 0.75rem;
+        overflow-y: auto;
+      }
 
-    .nav-section {
-      margin-bottom: 1.5rem;
-    }
+      .nav-section {
+        margin-bottom: 1.5rem;
+      }
 
-    .nav-label {
-      display: block;
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-tertiary);
-      padding: 0 0.75rem;
-      margin-bottom: 0.5rem;
-    }
+      .nav-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-tertiary);
+        padding: 0 0.75rem;
+        margin-bottom: 0.5rem;
+      }
 
-    .nav-label-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-right: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
+      .nav-label-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-right: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
 
-    .add-btn {
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--hover-bg);
-      border-radius: var(--radius-md);
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      text-decoration: none;
-    }
+      .add-btn {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--hover-bg);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        text-decoration: none;
+      }
 
-    .add-btn:hover {
-      background: var(--primary-100);
-      color: var(--primary-600);
-    }
+      .add-btn:hover {
+        background: var(--primary-100);
+        color: var(--primary-600);
+      }
 
-    .add-btn mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
+      .add-btn mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
 
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.625rem 0.75rem;
-      border-radius: var(--radius-lg);
-      color: var(--text-secondary);
-      text-decoration: none;
-      cursor: pointer;
-      transition: all var(--transition-fast);
-      margin-bottom: 0.25rem;
-    }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: var(--radius-lg);
+        color: var(--text-secondary);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        margin-bottom: 0.25rem;
+      }
 
-    .nav-item:hover {
-      background: var(--hover-bg);
-      color: var(--text-primary);
-    }
+      .nav-item:hover {
+        background: var(--hover-bg);
+        color: var(--text-primary);
+      }
 
-    .nav-item.active {
-      background: var(--primary-50);
-      color: var(--primary-700);
-    }
+      .nav-item.active {
+        background: var(--primary-50);
+        color: var(--primary-700);
+      }
 
-    :host-context(.dark) .nav-item.active {
-      background: rgba(99, 102, 241, 0.15);
-      color: var(--primary-400);
-    }
+      :host-context(.dark) .nav-item.active {
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--primary-400);
+      }
 
-    .nav-icon-wrapper {
-      width: 36px;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-md);
-      transition: all var(--transition-fast);
-    }
+      .nav-icon-wrapper {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-md);
+        transition: all var(--transition-fast);
+      }
 
-    .nav-item:hover .nav-icon-wrapper {
-      background: var(--primary-100);
-    }
+      .nav-item:hover .nav-icon-wrapper {
+        background: var(--primary-100);
+      }
 
-    .nav-item.active .nav-icon-wrapper {
-      background: var(--primary-600);
-    }
+      .nav-item.active .nav-icon-wrapper {
+        background: var(--primary-600);
+      }
 
-    .nav-icon {
-      font-size: 20px;
-      color: var(--text-secondary);
-      transition: color var(--transition-fast);
-    }
+      .nav-icon {
+        font-size: 20px;
+        color: var(--text-secondary);
+        transition: color var(--transition-fast);
+      }
 
-    .nav-item:hover .nav-icon {
-      color: var(--primary-600);
-    }
+      .nav-item:hover .nav-icon {
+        color: var(--primary-600);
+      }
 
-    .nav-item.active .nav-icon {
-      color: white;
-    }
+      .nav-item.active .nav-icon {
+        color: white;
+      }
 
-    .nav-text {
-      flex: 1;
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
+      .nav-text {
+        flex: 1;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
 
-    .nav-badge {
-      padding: 0.125rem 0.5rem;
-      background: var(--primary-100);
-      color: var(--primary-700);
-      border-radius: var(--radius-full);
-      font-size: 0.75rem;
-      font-weight: 600;
-    }
+      .nav-badge {
+        padding: 0.125rem 0.5rem;
+        background: var(--primary-100);
+        color: var(--primary-700);
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
 
-    /* Departamentos list */
-    .deptos-list {
-      max-height: 300px;
-      overflow-y: auto;
-      padding-right: 0.25rem;
-    }
+      /* Departamentos list */
+      .deptos-list {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 0.25rem;
+      }
 
-    .depto-item {
-      padding: 0.5rem 0.75rem;
-    }
+      .depto-item {
+        padding: 0.5rem 0.75rem;
+      }
 
-    .depto-icon {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: var(--radius-md);
-      color: white;
-      font-weight: 600;
-      font-size: 0.875rem;
-      flex-shrink: 0;
-    }
+      .depto-icon {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-md);
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+      }
 
-    .depto-info {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
+      .depto-info {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
 
-    .depto-name {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .depto-name {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .depto-count {
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
-    }
+      .depto-count {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+      }
 
-    .public-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      color: var(--text-tertiary);
-    }
+      .public-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+        color: var(--text-tertiary);
+      }
 
-    /* Empty state */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1.5rem;
-      text-align: center;
-      color: var(--text-tertiary);
-    }
+      /* Empty state */
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--text-tertiary);
+      }
 
-    .empty-state mat-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-      margin-bottom: 0.5rem;
-      opacity: 0.5;
-    }
+      .empty-state mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        margin-bottom: 0.5rem;
+        opacity: 0.5;
+      }
 
-    .empty-state span {
-      font-size: 0.875rem;
-      margin-bottom: 0.5rem;
-    }
+      .empty-state span {
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+      }
 
-    .empty-action {
-      font-size: 0.875rem;
-      color: var(--primary-600);
-      text-decoration: none;
-      font-weight: 500;
-    }
+      .empty-action {
+        font-size: 0.875rem;
+        color: var(--primary-600);
+        text-decoration: none;
+        font-weight: 500;
+      }
 
-    .empty-action:hover {
-      text-decoration: underline;
-    }
+      .empty-action:hover {
+        text-decoration: underline;
+      }
 
-    /* Footer */
-    .sidebar-footer {
-      margin-top: auto;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border-color);
-    }
-  `]
+      /* Footer */
+      .sidebar-footer {
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+      }
+    `,
+  ],
 })
 export class SidebarComponent implements OnInit {
   private readonly deptoService = inject(DepartamentoService);
   private readonly authService = inject(AuthService);
-  
+
   departamentos = signal<Departamento[]>([]);
   navigate = output<void>();
-  
+
   // Computed para verificar si el usuario es admin
   isAdmin = computed(() => this.authService.isAdmin());
 
   // Colores para los departamentos
   private deptoColors = [
-    '#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#EF4444',
-    '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#3B82F6'
+    '#6366F1',
+    '#EC4899',
+    '#14B8A6',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#06B6D4',
+    '#84CC16',
+    '#F97316',
+    '#3B82F6',
   ];
 
   ngOnInit(): void {
@@ -382,7 +392,7 @@ export class SidebarComponent implements OnInit {
   loadDepartamentos(): void {
     this.deptoService.getAll().subscribe({
       next: (departamentos) => this.departamentos.set(departamentos || []),
-      error: () => this.departamentos.set([])
+      error: () => this.departamentos.set([]),
     });
   }
 

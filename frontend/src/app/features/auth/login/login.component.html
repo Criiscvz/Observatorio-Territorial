@@ -2,10 +2,8 @@
   <mat-card class="auth-card">
     <mat-card-header class="justify-center mb-6">
       <div class="text-center w-full">
-        <img src="ULEAM.png" alt="ULEAM" class="auth-logo">
-        <mat-card-title class="auth-title">
-          Observatorio ULEAM
-        </mat-card-title>
+        <img src="ULEAM.png" alt="ULEAM" class="auth-logo" />
+        <mat-card-title class="auth-title"> Observatorio ULEAM </mat-card-title>
         <mat-card-subtitle>Ingresa a tu cuenta</mat-card-subtitle>
       </div>
     </mat-card-header>
@@ -21,7 +19,7 @@
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <mat-form-field class="w-full" appearance="outline">
           <mat-label>Correo electrónico</mat-label>
-          <input matInput type="email" formControlName="email" placeholder="correo@uleam.edu.ec">
+          <input matInput type="email" formControlName="email" placeholder="correo@uleam.edu.ec" />
           <mat-icon matSuffix>email</mat-icon>
           @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
             <mat-error>El correo es requerido</mat-error>
@@ -33,8 +31,17 @@
 
         <mat-form-field class="w-full" appearance="outline">
           <mat-label>Contraseña</mat-label>
-          <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password">
-          <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())">
+          <input
+            matInput
+            [type]="hidePassword() ? 'password' : 'text'"
+            formControlName="password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hidePassword.set(!hidePassword())"
+          >
             <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
           </button>
           @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
@@ -42,8 +49,13 @@
           }
         </mat-form-field>
 
-        <button mat-raised-button color="primary" type="submit" class="w-full mt-4" 
-                [disabled]="form.invalid || loading()">
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="w-full mt-4"
+          [disabled]="form.invalid || loading()"
+        >
           @if (loading()) {
             <mat-spinner diameter="20" class="inline-block mr-2"></mat-spinner>
             Ingresando...
@@ -56,10 +68,8 @@
 
     <mat-card-actions class="justify-center">
       <p class="auth-footer-text">
-        ¿No tienes cuenta? 
-        <a routerLink="/auth/register" class="auth-link">
-          Regístrate aquí
-        </a>
+        ¿No tienes cuenta?
+        <a routerLink="/auth/register" class="auth-link"> Regístrate aquí </a>
       </p>
     </mat-card-actions>
   </mat-card>
