@@ -46,8 +46,8 @@
             <div class="table-container">
               @if (visibleColumns().length > 0 && tableData().length > 0) {
                 <table mat-table [dataSource]="tableData()" class="data-table">
-                  @for (col of visibleColumns(); track col.id) {
-                    <ng-container [matColumnDef]="col.nombre_columna">
+                  @for (col of visibleColumns(); track col._uniqueId) {
+                    <ng-container [matColumnDef]="col._uniqueId">
                       <th mat-header-cell *matHeaderCellDef>
                         <div class="header-cell">
                           <span>{{ col.nombre_original || col.nombre_columna }}</span>

@@ -40,6 +40,10 @@ interface ActiveChart {
   loading: boolean;
 }
 
+interface ColumnWithUniqueId extends VariableMetadato {
+  _uniqueId: string;
+}
+
 @Component({
   selector: 'app-public-dataset-view',
   standalone: true,
@@ -104,8 +108,16 @@ export class PublicDatasetViewComponent implements OnInit {
   activeCharts = signal<ActiveChart[]>([]);
   addingChart = signal(false);
 
-  visibleColumns = computed(() => this.variables().filter(v => v.es_visible));
-  columnNames = computed(() => this.visibleColumns().map(v => v.nombre_columna));
+  // Agregar _uniqueId a cada columna para evitar duplicados en mat-table
+  visibleColumns = computed<ColumnWithUniqueId[]>(() => {
+    const cols = this.variables().filter(v => v.es_visible);
+    // Asignar un identificador único basado en id o índice
+    return cols.map((v, index) => ({
+      ...v,
+      _uniqueId: v.id || `col_${index}_${v.nombre_columna}`
+    }));
+  });
+  columnNames = computed(() => this.visibleColumns().map(v => v._uniqueId));
   
   // Todas las variables visibles son analizables (TEXTO se trata como CATEGORICO)
   analysableVariables = computed(() => this.variables().filter(v => v.es_visible));

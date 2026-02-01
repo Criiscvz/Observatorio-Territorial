@@ -356,11 +356,11 @@ import { ThemeService } from '../../../core/services/theme.service';
     }
 
     ::ng-deep .menu-item.logout {
-      color: #EF4444;
+      color: var(--error-color) !important;
     }
 
     ::ng-deep .menu-item.logout mat-icon {
-      color: #EF4444;
+      color: var(--error-color) !important;
     }
   `]
 })

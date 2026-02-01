@@ -9,46 +9,148 @@ import { ChartData } from '../../../core/models';
   standalone: true,
   imports: [CommonModule, NgxEchartsDirective],
   template: `
-    <div class="bg-white rounded-lg shadow p-4 h-full">
-      <div class="flex justify-between items-start mb-2">
-        <h3 class="text-lg font-semibold text-gray-800">{{ chartData().variable }}</h3>
-        <span class="text-xs px-2 py-1 rounded" [class]="chartTypeClass()">
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">{{ chartData().variable }}</h3>
+        <span class="chart-type-badge" [class]="chartTypeClass()">
           {{ chartTypeLabel() }}
         </span>
       </div>
       
       @if (chartData().stats) {
-        <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4 text-sm">
-          <div class="bg-blue-50 p-2 rounded text-center">
-            <span class="block text-xs text-gray-500">Promedio</span>
-            <span class="font-bold text-blue-600">{{ formatNumber(chartData().stats?.mean) }}</span>
+        <div class="stats-grid">
+          <div class="stat-item stat-info">
+            <span class="stat-label">Promedio</span>
+            <span class="stat-value">{{ formatNumber(chartData().stats?.mean) }}</span>
           </div>
-          <div class="bg-green-50 p-2 rounded text-center">
-            <span class="block text-xs text-gray-500">Mediana</span>
-            <span class="font-bold text-green-600">{{ formatNumber(chartData().stats?.median) }}</span>
+          <div class="stat-item stat-success">
+            <span class="stat-label">Mediana</span>
+            <span class="stat-value">{{ formatNumber(chartData().stats?.median) }}</span>
           </div>
-          <div class="bg-purple-50 p-2 rounded text-center">
-            <span class="block text-xs text-gray-500">Total</span>
-            <span class="font-bold text-purple-600">{{ chartData().stats?.count | number }}</span>
+          <div class="stat-item stat-primary">
+            <span class="stat-label">Total</span>
+            <span class="stat-value">{{ chartData().stats?.count | number }}</span>
           </div>
-          <div class="bg-orange-50 p-2 rounded text-center">
-            <span class="block text-xs text-gray-500">Mínimo</span>
-            <span class="font-bold text-orange-600">{{ formatNumber(chartData().stats?.min) }}</span>
+          <div class="stat-item stat-warning">
+            <span class="stat-label">Mínimo</span>
+            <span class="stat-value">{{ formatNumber(chartData().stats?.min) }}</span>
           </div>
-          <div class="bg-red-50 p-2 rounded text-center">
-            <span class="block text-xs text-gray-500">Máximo</span>
-            <span class="font-bold text-red-600">{{ formatNumber(chartData().stats?.max) }}</span>
+          <div class="stat-item stat-error">
+            <span class="stat-label">Máximo</span>
+            <span class="stat-value">{{ formatNumber(chartData().stats?.max) }}</span>
           </div>
-          <div class="bg-gray-50 p-2 rounded text-center">
-            <span class="block text-xs text-gray-500">Suma</span>
-            <span class="font-bold text-gray-600">{{ formatNumber(chartData().stats?.sum) }}</span>
+          <div class="stat-item stat-neutral">
+            <span class="stat-label">Suma</span>
+            <span class="stat-value">{{ formatNumber(chartData().stats?.sum) }}</span>
           </div>
         </div>
       }
 
-      <div echarts [options]="chartOptions()" class="h-72"></div>
+      <div echarts [options]="chartOptions()" class="chart-container"></div>
     </div>
-  `
+  `,
+  styles: [`
+    .chart-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-xl);
+      padding: 1rem;
+      height: 100%;
+    }
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    .chart-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .chart-type-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-md);
+    }
+    .chart-type-badge.type-bar {
+      background: var(--info-bg);
+      color: var(--info-color);
+    }
+    .chart-type-badge.type-pie,
+    .chart-type-badge.type-donut {
+      background: var(--success-bg);
+      color: var(--success-color);
+    }
+    .chart-type-badge.type-line,
+    .chart-type-badge.type-area {
+      background: rgba(139, 92, 246, 0.15);
+      color: #A78BFA;
+    }
+    .chart-type-badge.type-histogram {
+      background: var(--warning-bg);
+      color: var(--warning-color);
+    }
+    .chart-type-badge.type-scatter {
+      background: var(--error-bg);
+      color: var(--error-color);
+    }
+    .chart-type-badge.type-default {
+      background: var(--neutral-bg);
+      color: var(--text-secondary);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.875rem;
+    }
+    @media (min-width: 768px) {
+      .stats-grid { grid-template-columns: repeat(6, 1fr); }
+    }
+    .stat-item {
+      padding: 0.5rem;
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+    .stat-label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .stat-value {
+      font-weight: 700;
+    }
+    .stat-item.stat-info {
+      background: var(--info-bg);
+    }
+    .stat-item.stat-info .stat-value { color: var(--info-color); }
+    .stat-item.stat-success {
+      background: var(--success-bg);
+    }
+    .stat-item.stat-success .stat-value { color: var(--success-color); }
+    .stat-item.stat-primary {
+      background: rgba(139, 92, 246, 0.15);
+    }
+    .stat-item.stat-primary .stat-value { color: #A78BFA; }
+    .stat-item.stat-warning {
+      background: var(--warning-bg);
+    }
+    .stat-item.stat-warning .stat-value { color: var(--warning-color); }
+    .stat-item.stat-error {
+      background: var(--error-bg);
+    }
+    .stat-item.stat-error .stat-value { color: var(--error-color); }
+    .stat-item.stat-neutral {
+      background: var(--neutral-bg);
+    }
+    .stat-item.stat-neutral .stat-value { color: var(--text-secondary); }
+    .chart-container {
+      height: 18rem;
+    }
+  `]
 })
 export class DynamicChartComponent {
   chartData = input.required<ChartData>();
@@ -85,12 +187,12 @@ export class DynamicChartComponent {
   chartTypeClass = computed(() => {
     const type = this.chartData().chart_type;
     switch (type) {
-      case 'bar': return 'bg-blue-100 text-blue-800';
-      case 'pie': case 'donut': return 'bg-green-100 text-green-800';
-      case 'line': case 'area': return 'bg-purple-100 text-purple-800';
-      case 'histogram': return 'bg-orange-100 text-orange-800';
-      case 'scatter': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'bar': return 'type-bar';
+      case 'pie': case 'donut': return 'type-pie';
+      case 'line': case 'area': return 'type-line';
+      case 'histogram': return 'type-histogram';
+      case 'scatter': return 'type-scatter';
+      default: return 'type-default';
     }
   });
 

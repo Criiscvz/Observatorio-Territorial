@@ -296,6 +296,32 @@ p {
   box-shadow: 0 4px 12px var(--shadow-color);
 }
 
+/* Botones básicos (sin color) - Texto visible en dark mode */
+.mat-mdc-button,
+.mat-mdc-icon-button {
+  color: var(--text-primary) !important;
+}
+
+.mat-mdc-button:hover,
+.mat-mdc-icon-button:hover {
+  background-color: var(--hover-bg) !important;
+}
+
+/* Botones stroked/outlined */
+.mat-mdc-outlined-button,
+.mat-mdc-stroked-button {
+  border-radius: var(--radius-lg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+  transition: all var(--transition-fast);
+}
+
+.mat-mdc-outlined-button:hover,
+.mat-mdc-stroked-button:hover {
+  background-color: var(--hover-bg) !important;
+  border-color: var(--border-hover) !important;
+}
+
 /* Botones con borde */
 .mat-mdc-outlined-button {
   border-radius: var(--radius-lg) !important;
@@ -323,6 +349,21 @@ p {
 
 .dark .mat-mdc-card {
   box-shadow: none !important;
+}
+
+/* Card titles y subtitles */
+.mat-mdc-card-title,
+.mat-card-title {
+  color: var(--text-primary) !important;
+}
+
+.mat-mdc-card-subtitle,
+.mat-card-subtitle {
+  color: var(--text-secondary) !important;
+}
+
+.mat-mdc-card-content {
+  color: var(--text-primary) !important;
 }
 
 /* Form fields */
@@ -357,6 +398,15 @@ textarea.mat-mdc-input-element {
 .mat-mdc-form-field-label,
 .mdc-floating-label {
   color: var(--text-secondary) !important;
+}
+
+/* Hints y errores */
+.mat-mdc-form-field-hint {
+  color: var(--text-tertiary) !important;
+}
+
+.mat-mdc-form-field-error {
+  color: var(--error-color) !important;
 }
 
 /* Select */
@@ -436,6 +486,28 @@ textarea.mat-mdc-input-element {
   --mdc-chip-label-text-color: #C62828;
 }
 
+/* Chips en modo oscuro */
+.dark .mat-mdc-chip.mat-primary {
+  --mdc-chip-elevated-container-color: rgba(99, 102, 241, 0.2);
+  --mdc-chip-label-text-color: var(--primary-300);
+}
+
+.dark .mat-mdc-chip.mat-accent {
+  --mdc-chip-elevated-container-color: rgba(167, 139, 250, 0.2);
+  --mdc-chip-label-text-color: #C4B5FD;
+}
+
+.dark .mat-mdc-chip.mat-warn {
+  --mdc-chip-elevated-container-color: rgba(239, 68, 68, 0.2);
+  --mdc-chip-label-text-color: #FCA5A5;
+}
+
+/* Chips sin color específico */
+.mat-mdc-chip:not(.mat-primary):not(.mat-accent):not(.mat-warn) {
+  --mdc-chip-elevated-container-color: var(--bg-tertiary);
+  --mdc-chip-label-text-color: var(--text-primary);
+}
+
 /* Dialogs */
 .mat-mdc-dialog-container {
   --mdc-dialog-container-color: var(--card-bg);
@@ -504,11 +576,126 @@ textarea.mat-mdc-input-element {
   background-color: var(--hover-bg) !important;
 }
 
+.mat-expansion-panel-header-title {
+  color: var(--text-primary) !important;
+}
+
+.mat-expansion-panel-header-description {
+  color: var(--text-secondary) !important;
+}
+
+.mat-expansion-panel-body {
+  color: var(--text-primary) !important;
+}
+
+/* Stepper */
+.mat-step-header {
+  color: var(--text-primary) !important;
+}
+
+.mat-step-label {
+  color: var(--text-secondary) !important;
+}
+
+.mat-step-label-active,
+.mat-step-label-selected {
+  color: var(--text-primary) !important;
+}
+
+.mat-stepper-horizontal-line,
+.mat-stepper-vertical-line::before {
+  border-color: var(--border-color) !important;
+}
+
+/* Lists */
+.mat-mdc-list-item {
+  color: var(--text-primary) !important;
+}
+
+.mat-mdc-list-item-title {
+  color: var(--text-primary) !important;
+}
+
+.mat-mdc-list-item-line {
+  color: var(--text-secondary) !important;
+}
+
+/* Checkbox y Slide toggle */
+.mat-mdc-checkbox .mdc-form-field label,
+.mat-mdc-slide-toggle .mdc-form-field label {
+  color: var(--text-primary) !important;
+}
+
+/* Select panel */
+.mat-mdc-select-panel {
+  background-color: var(--card-bg) !important;
+}
+
+.mat-mdc-option {
+  color: var(--text-primary) !important;
+}
+
+.mat-mdc-option:hover:not(.mat-mdc-option-disabled),
+.mat-mdc-option.mat-mdc-option-active {
+  background-color: var(--hover-bg) !important;
+}
+
+/* Radio buttons */
+.mat-mdc-radio-button .mdc-form-field label {
+  color: var(--text-primary) !important;
+}
+
 /* Paginator */
 .mat-mdc-paginator {
   background-color: var(--card-bg) !important;
   color: var(--text-secondary) !important;
   border-top: 1px solid var(--border-color);
+}
+
+.mat-mdc-paginator-page-size-label,
+.mat-mdc-paginator-range-label {
+  color: var(--text-secondary) !important;
+}
+
+/* Slide Toggle Label */
+.mat-mdc-slide-toggle {
+  --mdc-switch-selected-track-color: var(--primary-600);
+  --mdc-switch-selected-handle-color: var(--primary-600);
+}
+
+.mdc-switch__icons {
+  color: white;
+}
+
+/* Botón secundario con fondo transparente */
+.mat-mdc-raised-button:not(.mat-primary):not(.mat-accent):not(.mat-warn),
+.mat-mdc-unelevated-button:not(.mat-primary):not(.mat-accent):not(.mat-warn),
+.mat-mdc-flat-button:not(.mat-primary):not(.mat-accent):not(.mat-warn) {
+  --mdc-filled-button-container-color: var(--bg-tertiary);
+  --mdc-filled-button-label-text-color: var(--text-primary);
+}
+
+.dark .mat-mdc-raised-button:not(.mat-primary):not(.mat-accent):not(.mat-warn),
+.dark .mat-mdc-unelevated-button:not(.mat-primary):not(.mat-accent):not(.mat-warn),
+.dark .mat-mdc-flat-button:not(.mat-primary):not(.mat-accent):not(.mat-warn) {
+  --mdc-filled-button-container-color: var(--bg-tertiary);
+  --mdc-filled-button-label-text-color: var(--text-primary);
+}
+
+/* FAB button */
+.mat-mdc-fab,
+.mat-mdc-mini-fab {
+  --mdc-fab-container-color: var(--primary-600);
+  --mat-fab-foreground-color: white;
+}
+
+/* Anchor links */
+a.mat-mdc-button,
+a.mat-mdc-raised-button,
+a.mat-mdc-stroked-button,
+a.mat-mdc-flat-button,
+a.mat-mdc-outlined-button {
+  text-decoration: none !important;
 }
 
 /* ================================================
@@ -772,6 +959,81 @@ textarea.mat-mdc-input-element {
 .themed-container-secondary {
   background-color: var(--bg-tertiary);
   color: var(--text-secondary);
+}
+
+/* Clases de texto base para compatibilidad con tema */
+.text-base {
+  color: var(--text-primary);
+}
+
+.text-muted {
+  color: var(--text-secondary);
+}
+
+.text-subtle {
+  color: var(--text-tertiary);
+}
+
+/* Label badges genéricos */
+.label-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.label-badge-primary {
+  background-color: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.dark .label-badge-primary {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: var(--primary-400);
+}
+
+/* Estado badges compactos */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+.status-dot.status-success { background-color: var(--success-color); }
+.status-dot.status-warning { background-color: var(--warning-color); }
+.status-dot.status-error { background-color: var(--error-color); }
+.status-dot.status-info { background-color: var(--info-color); }
+
+/* Asegurar texto visible en cards */
+.mat-mdc-card h1, .mat-mdc-card h2, .mat-mdc-card h3,
+.mat-mdc-card h4, .mat-mdc-card h5, .mat-mdc-card h6 {
+  color: var(--text-primary);
+}
+
+.mat-mdc-card p, .mat-mdc-card span:not([class*="badge"]):not([class*="chip"]) {
+  color: var(--text-secondary);
+}
+
+/* Small y muted text */
+small, .text-sm {
+  color: var(--text-secondary);
+}
+
+/* Caption text */
+.mat-caption, .caption {
+  color: var(--text-tertiary);
+}
+
+/* Links en modo oscuro */
+a:not([class*="mat-"]):not([class*="btn"]):not([class*="nav"]) {
+  color: var(--primary-600);
+}
+
+.dark a:not([class*="mat-"]):not([class*="btn"]):not([class*="nav"]) {
+  color: var(--primary-400);
 }
 
 /* ================================================
