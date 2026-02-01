@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Controllers\Api;
 
+use OpenApi\Attributes as OA;
 use App\Application\Departamento\DTOs\CreateDepartamentoDTO;
 use App\Application\Departamento\DTOs\UpdateDepartamentoDTO;
 use App\Application\Departamento\UseCases\CreateDepartamentoUseCase;
@@ -18,12 +19,7 @@ use App\Presentation\Http\Resources\Departamento\DepartamentoResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * @OA\Tag(
- *     name="Departamentos",
- *     description="Gestión de departamentos"
- * )
- */
+#[OA\Tag(name: 'Departamentos', description: 'Gestión de departamentos')]
 class DepartamentoController extends Controller
 {
     public function __construct(
@@ -34,15 +30,15 @@ class DepartamentoController extends Controller
         private readonly DeleteDepartamentoUseCase $deleteDepartamentoUseCase,
     ) {}
 
-    /**
-     * @OA\Get(
-     *     path="/api/departamentos",
-     *     summary="Listar departamentos del usuario",
-     *     tags={"Departamentos"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Response(response=200, description="Lista de departamentos")
-     * )
-     */
+    #[OA\Get(
+        path: '/departamentos',
+        summary: 'Listar departamentos del usuario',
+        security: [['sanctum' => []]],
+        tags: ['Departamentos'],
+        responses: [
+            new OA\Response(response: 200, description: 'Lista de departamentos')
+        ]
+    )]
     public function index(Request $request): JsonResponse
     {
         $departamentos = $this->getDepartamentosUseCase->execute($request->user()->id);
@@ -52,14 +48,14 @@ class DepartamentoController extends Controller
         );
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/departamentos/publicos",
-     *     summary="Listar departamentos públicos",
-     *     tags={"Departamentos"},
-     *     @OA\Response(response=200, description="Lista de departamentos públicos")
-     * )
-     */
+    #[OA\Get(
+        path: '/departamentos/publicos',
+        summary: 'Listar departamentos públicos',
+        tags: ['Departamentos'],
+        responses: [
+            new OA\Response(response: 200, description: 'Lista de departamentos públicos')
+        ]
+    )]
     public function publicos(): JsonResponse
     {
         $departamentos = $this->getDepartamentosUseCase->getPublicos();
@@ -69,25 +65,28 @@ class DepartamentoController extends Controller
         );
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/departamentos",
-     *     summary="Crear nuevo departamento",
-     *     tags={"Departamentos"},
-     *     security={{"sanctum":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"nombre","codigo_interno"},
-     *             @OA\Property(property="nombre", type="string"),
-     *             @OA\Property(property="codigo_interno", type="string"),
-     *             @OA\Property(property="descripcion", type="string"),
-     *             @OA\Property(property="publico", type="boolean")
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Departamento creado")
-     * )
-     */
+    #[OA\Post(
+        path: '/departamentos',
+        summary: 'Crear nuevo departamento',
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['nombre', 'codigo_interno'],
+                properties: [
+                    new OA\Property(property: 'nombre', type: 'string', example: 'Departamento de Ejemplo'),
+                    new OA\Property(property: 'codigo_interno', type: 'string', example: 'DEP001'),
+                    new OA\Property(property: 'descripcion', type: 'string', example: 'Descripción del departamento'),
+                    new OA\Property(property: 'publico', type: 'boolean', example: true),
+                    new OA\Property(property: 'icono', type: 'string', example: 'groups')
+                ]
+            )
+        ),
+        tags: ['Departamentos'],
+        responses: [
+            new OA\Response(response: 201, description: 'Departamento creado')
+        ]
+    )]
     public function store(CreateDepartamentoRequest $request): JsonResponse
     {
         $dto = CreateDepartamentoDTO::fromArray(
@@ -100,17 +99,19 @@ class DepartamentoController extends Controller
         return response()->json($result->toArray(), 201);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/departamentos/{id}",
-     *     summary="Obtener departamento",
-     *     tags={"Departamentos"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=200, description="Datos del departamento"),
-     *     @OA\Response(response=404, description="No encontrado")
-     * )
-     */
+    #[OA\Get(
+        path: '/departamentos/{id}',
+        summary: 'Obtener departamento',
+        security: [['sanctum' => []]],
+        tags: ['Departamentos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Datos del departamento'),
+            new OA\Response(response: 404, description: 'No encontrado')
+        ]
+    )]
     public function show(Request $request, string $id): JsonResponse
     {
         $result = $this->getDepartamentoUseCase->execute($id, $request->user()->id);
@@ -118,23 +119,28 @@ class DepartamentoController extends Controller
         return response()->json($result->toArray());
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/departamentos/{id}",
-     *     summary="Actualizar departamento",
-     *     tags={"Departamentos"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(
-     *             @OA\Property(property="nombre", type="string"),
-     *             @OA\Property(property="descripcion", type="string"),
-     *             @OA\Property(property="publico", type="boolean")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Departamento actualizado")
-     * )
-     */
+    #[OA\Put(
+        path: '/departamentos/{id}',
+        summary: 'Actualizar departamento',
+        security: [['sanctum' => []]],
+        tags: ['Departamentos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'nombre', type: 'string'),
+                    new OA\Property(property: 'descripcion', type: 'string'),
+                    new OA\Property(property: 'publico', type: 'boolean'),
+                    new OA\Property(property: 'icono', type: 'string')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Departamento actualizado')
+        ]
+    )]
     public function update(UpdateDepartamentoRequest $request, string $id): JsonResponse
     {
         $dto = UpdateDepartamentoDTO::fromArray(
@@ -148,16 +154,18 @@ class DepartamentoController extends Controller
         return response()->json($result->toArray());
     }
 
-    /**
-     * @OA\Delete(
-     *     path="/api/departamentos/{id}",
-     *     summary="Eliminar departamento",
-     *     tags={"Departamentos"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=200, description="Departamento eliminado")
-     * )
-     */
+    #[OA\Delete(
+        path: '/departamentos/{id}',
+        summary: 'Eliminar departamento',
+        security: [['sanctum' => []]],
+        tags: ['Departamentos'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Departamento eliminado')
+        ]
+    )]
     public function destroy(Request $request, string $id): JsonResponse
     {
         $this->deleteDepartamentoUseCase->execute($id, $request->user()->id);

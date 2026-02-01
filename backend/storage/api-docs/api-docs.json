@@ -16,264 +16,32 @@
         }
     ],
     "paths": {
-        "/dashboard/{departamento}": {
-            "get": {
+        "/login": {
+            "post": {
                 "tags": [
-                    "Dashboard"
+                    "Auth"
                 ],
-                "summary": "Obtener dashboard de departamento",
-                "description": "Obtiene los datos para el dashboard de un departamento",
-                "operationId": "ff2c47dad416ce1348c416602f749b99",
-                "parameters": [
-                    {
-                        "name": "departamento",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "dataset_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Datos del dashboard"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/public/dashboard/{departamento}": {
-            "get": {
-                "tags": [
-                    "Público"
-                ],
-                "summary": "Dashboard público",
-                "description": "Obtiene el dashboard de un departamento público (sin autenticación)",
-                "operationId": "8cca4643a08a5cd12fe6b6a06f08928d",
-                "parameters": [
-                    {
-                        "name": "departamento",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "dataset_id",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Dashboard público"
-                    },
-                    "404": {
-                        "description": "Departamento no público"
-                    }
-                }
-            }
-        },
-        "/dashboard/{departamento}/stats": {
-            "get": {
-                "tags": [
-                    "Dashboard"
-                ],
-                "summary": "Estadísticas del dashboard",
-                "description": "Obtiene estadísticas específicas para gráficos",
-                "operationId": "8d2ee2384609c69da6d51b47271286a2",
-                "parameters": [
-                    {
-                        "name": "departamento",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "dataset_id",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "variable",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "tipo_grafico",
-                        "in": "query",
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "bar",
-                                "pie",
-                                "line",
-                                "histogram"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "variable_y",
-                        "in": "query",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Estadísticas para gráfico"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/datasets/{dataset}/data": {
-            "get": {
-                "tags": [
-                    "Dashboard"
-                ],
-                "summary": "Obtener datos del dataset",
-                "description": "Obtiene los registros del dataset con paginación",
-                "operationId": "f7dc16b98753907b6c8a2a997a043417",
-                "parameters": [
-                    {
-                        "name": "dataset",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    },
-                    {
-                        "name": "page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "default": 1
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "schema": {
-                            "type": "integer",
-                            "default": 50
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Datos del dataset"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/variables-metadatos/{id}": {
-            "get": {
-                "tags": [
-                    "Variables Metadatos"
-                ],
-                "summary": "Obtener variable",
-                "description": "Obtiene una variable específica",
-                "operationId": "040b26c7c1f3d7f9071c23a5380d20b6",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Variable encontrada"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
-            "put": {
-                "tags": [
-                    "Dashboard"
-                ],
-                "summary": "Actualizar metadatos de variable",
-                "description": "Actualiza el tipo o visibilidad de una variable",
-                "operationId": "806fe222653e1a777968b5de6cc8af41",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
+                "summary": "Iniciar sesión",
+                "operationId": "596636862544bdecdd85d5d224cd3e41",
                 "requestBody": {
+                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
                                 "properties": {
-                                    "tipo_dato": {
+                                    "email": {
                                         "type": "string",
-                                        "enum": [
-                                            "NUMERICO",
-                                            "CATEGORICO",
-                                            "FECHA",
-                                            "TEXTO"
-                                        ]
+                                        "format": "email",
+                                        "example": "admin@example.com"
                                     },
-                                    "es_visible": {
-                                        "type": "boolean"
-                                    },
-                                    "nombre_columna": {
-                                        "type": "string"
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
                                     }
                                 },
                                 "type": "object"
@@ -283,7 +51,78 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Variable actualizada"
+                        "description": "Login exitoso"
+                    },
+                    "422": {
+                        "description": "Credenciales inválidas"
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Registrar nuevo usuario",
+                "operationId": "f49514b91b7d0c74238077a5625a3eb0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Registro exitoso"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                }
+            }
+        },
+        "/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Cerrar sesión",
+                "operationId": "16025b7174a84cec523b594e911fbe3b",
+                "responses": {
+                    "200": {
+                        "description": "Logout exitoso"
                     }
                 },
                 "security": [
@@ -293,25 +132,32 @@
                 ]
             }
         },
-        "/dashboard/{departamento}/bivariable": {
+        "/user": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Obtener usuario actual",
+                "operationId": "9277b8f13acc85c5c8264cc3a337cdf3",
+                "responses": {
+                    "200": {
+                        "description": "Datos del usuario"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/stats/univariable": {
             "post": {
                 "tags": [
                     "Dashboard"
                 ],
-                "summary": "Análisis bivariable",
-                "description": "Obtiene análisis de correlación entre dos variables",
-                "operationId": "13bdb85b913caa94ab941fef6d0bc80d",
-                "parameters": [
-                    {
-                        "name": "departamento",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
+                "summary": "Obtener estadísticas univariables",
+                "operationId": "7b0cab6a71d1a427f1d50470355b22e3",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -319,28 +165,29 @@
                             "schema": {
                                 "required": [
                                     "dataset_id",
-                                    "variable_x",
-                                    "variable_y"
+                                    "variable_id"
                                 ],
                                 "properties": {
                                     "dataset_id": {
                                         "type": "string",
                                         "format": "uuid"
                                     },
-                                    "variable_x": {
-                                        "type": "string"
-                                    },
-                                    "variable_y": {
-                                        "type": "string"
+                                    "variable_id": {
+                                        "type": "string",
+                                        "format": "uuid"
                                     },
                                     "chart_type": {
                                         "type": "string",
                                         "enum": [
                                             "bar",
-                                            "scatter",
-                                            "heatmap",
-                                            "grouped_bar"
+                                            "pie",
+                                            "line",
+                                            "doughnut"
                                         ]
+                                    },
+                                    "limit": {
+                                        "type": "integer",
+                                        "default": 20
                                     }
                                 },
                                 "type": "object"
@@ -350,7 +197,69 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Análisis bivariable"
+                        "description": "Estadísticas univariables"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/stats/bivariable": {
+            "post": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Obtener estadísticas bivariables",
+                "operationId": "9a4f06b71e0ad8f3b073885cc35fac0b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dataset_id",
+                                    "variable_x_id",
+                                    "variable_y_id"
+                                ],
+                                "properties": {
+                                    "dataset_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_x_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_y_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "chart_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "bar",
+                                            "stackedBar",
+                                            "groupedBar",
+                                            "line",
+                                            "scatter"
+                                        ]
+                                    },
+                                    "limit": {
+                                        "type": "integer",
+                                        "default": 20
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Estadísticas bivariables"
                     }
                 },
                 "security": [
@@ -366,8 +275,7 @@
                     "Datasets"
                 ],
                 "summary": "Listar datasets",
-                "description": "Obtiene la lista de datasets del usuario",
-                "operationId": "ad0a3cd4988a8e12209a2a4756cb92e1",
+                "operationId": "a4201b26fc9688422608042a37dcfe05",
                 "parameters": [
                     {
                         "name": "departamento_id",
@@ -393,9 +301,8 @@
                 "tags": [
                     "Datasets"
                 ],
-                "summary": "Crear dataset",
-                "description": "Crea un nuevo dataset y sube el archivo Excel",
-                "operationId": "911ede3cc894bd84f2b6aac27436947d",
+                "summary": "Subir nuevo dataset",
+                "operationId": "7de87e0d91145a6c87277c61c2529356",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -430,9 +337,6 @@
                 "responses": {
                     "201": {
                         "description": "Dataset creado"
-                    },
-                    "422": {
-                        "description": "Error de validación"
                     }
                 },
                 "security": [
@@ -448,8 +352,7 @@
                     "Datasets"
                 ],
                 "summary": "Obtener dataset",
-                "description": "Obtiene un dataset específico con sus metadatos",
-                "operationId": "a04d3c641c3509d069d2ff5feb87a615",
+                "operationId": "809aaeab9d0b1735760d3b2435d45114",
                 "parameters": [
                     {
                         "name": "id",
@@ -463,10 +366,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Dataset encontrado"
-                    },
-                    "404": {
-                        "description": "No encontrado"
+                        "description": "Datos del dataset"
                     }
                 },
                 "security": [
@@ -474,14 +374,15 @@
                         "sanctum": []
                     }
                 ]
-            },
-            "delete": {
+            }
+        },
+        "/datasets/{id}/analyze": {
+            "post": {
                 "tags": [
                     "Datasets"
                 ],
-                "summary": "Eliminar dataset",
-                "description": "Elimina un dataset y todos sus datos",
-                "operationId": "56215870ed6a4a21cd6908bceb6d7ef0",
+                "summary": "Analizar dataset",
+                "operationId": "bf5df88b0a29e444c44e2212b546e79c",
                 "parameters": [
                     {
                         "name": "id",
@@ -495,10 +396,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Dataset eliminado"
-                    },
-                    "403": {
-                        "description": "No autorizado"
+                        "description": "Resultado del análisis"
                     }
                 },
                 "security": [
@@ -513,64 +411,8 @@
                 "tags": [
                     "Datasets"
                 ],
-                "summary": "Analizar archivo Excel",
-                "description": "Analiza el archivo Excel y detecta los tipos de columnas",
-                "operationId": "c8253d0ac975356a8c7b6211508b99ae",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "uuid"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Análisis completado",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string"
-                                        },
-                                        "columnas": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
-                                        },
-                                        "preview": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/datasets/{id}/confirm": {
-            "post": {
-                "tags": [
-                    "Datasets"
-                ],
                 "summary": "Confirmar importación",
-                "description": "Confirma los tipos de datos y procesa la importación completa",
-                "operationId": "26181625f19ba3733ab90b0aab3347a2",
+                "operationId": "781d1df0f782a76a45e66b0f5820526b",
                 "parameters": [
                     {
                         "name": "id",
@@ -594,23 +436,6 @@
                                     "columnas": {
                                         "type": "array",
                                         "items": {
-                                            "properties": {
-                                                "nombre_columna": {
-                                                    "type": "string"
-                                                },
-                                                "tipo_dato": {
-                                                    "type": "string",
-                                                    "enum": [
-                                                        "NUMERICO",
-                                                        "CATEGORICO",
-                                                        "FECHA",
-                                                        "TEXTO"
-                                                    ]
-                                                },
-                                                "es_visible": {
-                                                    "type": "boolean"
-                                                }
-                                            },
                                             "type": "object"
                                         }
                                     }
@@ -623,9 +448,94 @@
                 "responses": {
                     "200": {
                         "description": "Importación completada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/datasets/{id}/data": {
+            "get": {
+                "tags": [
+                    "Datasets"
+                ],
+                "summary": "Obtener datos del dataset",
+                "operationId": "9d709f8c1dcfe2bf52c83dd1f40a7933",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
                     },
-                    "400": {
-                        "description": "Error en la importación"
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos paginados"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/variables/{id}": {
+            "put": {
+                "tags": [
+                    "Datasets"
+                ],
+                "summary": "Actualizar variable",
+                "operationId": "244172d70299212713aa7aeb59ae1bae",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "tipo_dato": {
+                                        "type": "string"
+                                    },
+                                    "es_visible": {
+                                        "type": "boolean"
+                                    },
+                                    "nombre_columna": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Variable actualizada"
                     }
                 },
                 "security": [
@@ -640,27 +550,11 @@
                 "tags": [
                     "Departamentos"
                 ],
-                "summary": "Listar departamentos",
-                "description": "Obtiene la lista de departamentos del usuario autenticado",
-                "operationId": "8d5827a5011b0ae66c95a7298b27f775",
+                "summary": "Listar departamentos del usuario",
+                "operationId": "863806593629a4863f1831a511d9cd48",
                 "responses": {
                     "200": {
-                        "description": "Lista de departamentos",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "departamentos": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Lista de departamentos"
                     }
                 },
                 "security": [
@@ -673,29 +567,37 @@
                 "tags": [
                     "Departamentos"
                 ],
-                "summary": "Crear departamento",
-                "description": "Crea un nuevo departamento",
-                "operationId": "87968a98b4b69584882201d7fefb7423",
+                "summary": "Crear nuevo departamento",
+                "operationId": "8f7d2c8a62ddda2a53ea7dd93a43104d",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "nombre"
+                                    "nombre",
+                                    "codigo_interno"
                                 ],
                                 "properties": {
                                     "nombre": {
                                         "type": "string",
-                                        "example": "Bienestar Estudiantil"
+                                        "example": "Departamento de Ejemplo"
+                                    },
+                                    "codigo_interno": {
+                                        "type": "string",
+                                        "example": "DEP001"
                                     },
                                     "descripcion": {
                                         "type": "string",
-                                        "example": "Departamento de bienestar"
+                                        "example": "Descripción del departamento"
                                     },
                                     "publico": {
                                         "type": "boolean",
-                                        "example": false
+                                        "example": true
+                                    },
+                                    "icono": {
+                                        "type": "string",
+                                        "example": "groups"
                                     }
                                 },
                                 "type": "object"
@@ -706,9 +608,6 @@
                 "responses": {
                     "201": {
                         "description": "Departamento creado"
-                    },
-                    "422": {
-                        "description": "Error de validación"
                     }
                 },
                 "security": [
@@ -718,14 +617,27 @@
                 ]
             }
         },
+        "/departamentos/publicos": {
+            "get": {
+                "tags": [
+                    "Departamentos"
+                ],
+                "summary": "Listar departamentos públicos",
+                "operationId": "401b3f8b066121a89ba5fb49657adadd",
+                "responses": {
+                    "200": {
+                        "description": "Lista de departamentos públicos"
+                    }
+                }
+            }
+        },
         "/departamentos/{id}": {
             "get": {
                 "tags": [
                     "Departamentos"
                 ],
                 "summary": "Obtener departamento",
-                "description": "Obtiene un departamento específico",
-                "operationId": "72b7b539338fdb93139fe4aedcc8cb5e",
+                "operationId": "c0254eb65fa95a9a6a98d049fe588991",
                 "parameters": [
                     {
                         "name": "id",
@@ -739,7 +651,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Departamento encontrado"
+                        "description": "Datos del departamento"
                     },
                     "404": {
                         "description": "No encontrado"
@@ -756,8 +668,7 @@
                     "Departamentos"
                 ],
                 "summary": "Actualizar departamento",
-                "description": "Actualiza un departamento existente",
-                "operationId": "7853ccb9c6dea5c231e9f6c74b06dd0c",
+                "operationId": "7f2b901fec115a5eb85c30a823ddc6d5",
                 "parameters": [
                     {
                         "name": "id",
@@ -782,6 +693,9 @@
                                     },
                                     "publico": {
                                         "type": "boolean"
+                                    },
+                                    "icono": {
+                                        "type": "string"
                                     }
                                 },
                                 "type": "object"
@@ -792,9 +706,6 @@
                 "responses": {
                     "200": {
                         "description": "Departamento actualizado"
-                    },
-                    "403": {
-                        "description": "No autorizado"
                     }
                 },
                 "security": [
@@ -808,8 +719,7 @@
                     "Departamentos"
                 ],
                 "summary": "Eliminar departamento",
-                "description": "Elimina un departamento (soft delete)",
-                "operationId": "b7a36706003080e62a0e4f709aa3ed17",
+                "operationId": "e5dc21de208cb68f7b5134ac5c6bb3ad",
                 "parameters": [
                     {
                         "name": "id",
@@ -824,9 +734,6 @@
                 "responses": {
                     "200": {
                         "description": "Departamento eliminado"
-                    },
-                    "403": {
-                        "description": "No autorizado"
                     }
                 },
                 "security": [
@@ -836,14 +743,13 @@
                 ]
             }
         },
-        "/public/departamentos": {
+        "/publico/departamentos": {
             "get": {
                 "tags": [
                     "Público"
                 ],
                 "summary": "Listar departamentos públicos",
-                "description": "Obtiene la lista de departamentos públicos (sin autenticación)",
-                "operationId": "71cb36edd47cb59da5cc0f1e4565f9df",
+                "operationId": "f34f083ef802e2acf15e6b3e24479884",
                 "responses": {
                     "200": {
                         "description": "Lista de departamentos públicos"
@@ -851,18 +757,45 @@
                 }
             }
         },
-        "/registros-datos": {
+        "/publico/departamentos/{id}": {
             "get": {
                 "tags": [
-                    "Registros Datos"
+                    "Público"
                 ],
-                "summary": "Listar registros de datos",
-                "description": "Obtiene los registros de un dataset con paginación",
-                "operationId": "b73eaacebec9c35dafb57bf5600b474b",
+                "summary": "Obtener departamento público",
+                "operationId": "653b86332f9aadab699327d2e8b048db",
                 "parameters": [
                     {
-                        "name": "dataset_id",
-                        "in": "query",
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos del departamento"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                }
+            }
+        },
+        "/publico/datasets/{id}/data": {
+            "get": {
+                "tags": [
+                    "Público"
+                ],
+                "summary": "Obtener datos de un dataset público",
+                "operationId": "2f3e980bd2e7100acd8875cd0cf0895d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
                         "required": true,
                         "schema": {
                             "type": "string",
@@ -873,7 +806,8 @@
                         "name": "page",
                         "in": "query",
                         "schema": {
-                            "type": "integer"
+                            "type": "integer",
+                            "default": 1
                         }
                     },
                     {
@@ -887,75 +821,191 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de registros"
+                        "description": "Datos paginados del dataset"
+                    },
+                    "404": {
+                        "description": "Dataset no encontrado"
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         },
-        "/registros-datos/{id}": {
-            "get": {
+        "/publico/stats/univariable": {
+            "post": {
                 "tags": [
-                    "Registros Datos"
+                    "Público"
                 ],
-                "summary": "Obtener registro",
-                "description": "Obtiene un registro específico",
-                "operationId": "ad417ef34e0fd5c2d525c79a825a861b",
+                "summary": "Estadísticas univariables",
+                "operationId": "38eea27f944b57a7e1a434026c6d8606",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dataset_id",
+                                    "variable_id"
+                                ],
+                                "properties": {
+                                    "dataset_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "chart_type": {
+                                        "type": "string"
+                                    },
+                                    "limit": {
+                                        "type": "integer",
+                                        "default": 20
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Estadísticas de la variable"
+                    }
+                }
+            }
+        },
+        "/publico/stats/bivariable": {
+            "post": {
+                "tags": [
+                    "Público"
+                ],
+                "summary": "Estadísticas bivariables",
+                "operationId": "de482f4be5ee5210a222ea52f99e0a3f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dataset_id",
+                                    "variable_x_id",
+                                    "variable_y_id"
+                                ],
+                                "properties": {
+                                    "dataset_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_x_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_y_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "chart_type": {
+                                        "type": "string"
+                                    },
+                                    "limit": {
+                                        "type": "integer",
+                                        "default": 20
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Estadísticas bivariables"
+                    }
+                }
+            }
+        },
+        "/seed/admin": {
+            "post": {
+                "tags": [
+                    "Seed"
+                ],
+                "summary": "Crear usuario administrador inicial",
+                "operationId": "349ea281b132164d42fc57a1f2b966e5",
                 "parameters": [
                     {
-                        "name": "id",
-                        "in": "path",
+                        "name": "X-Seed-Token",
+                        "in": "header",
+                        "description": "Token de seguridad para ejecutar seeders",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Registro encontrado"
+                        "description": "Usuario administrador creado exitosamente"
+                    },
+                    "403": {
+                        "description": "Token de seguridad inválido"
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         },
-        "/variables-metadatos": {
-            "get": {
+        "/seed/departamentos": {
+            "post": {
                 "tags": [
-                    "Variables Metadatos"
+                    "Seed"
                 ],
-                "summary": "Listar variables metadatos",
-                "description": "Obtiene las variables de un dataset",
-                "operationId": "b15c8082ebcb6b5e0f6c261b85f49927",
+                "summary": "Crear departamentos iniciales",
+                "operationId": "f7ec8ed4ea72f0ce51a3e88e76f1fdb5",
                 "parameters": [
                     {
-                        "name": "dataset_id",
-                        "in": "query",
+                        "name": "X-Seed-Token",
+                        "in": "header",
+                        "description": "Token de seguridad para ejecutar seeders",
                         "required": true,
                         "schema": {
-                            "type": "string",
-                            "format": "uuid"
+                            "type": "string"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista de variables"
+                        "description": "Departamentos creados exitosamente"
+                    },
+                    "403": {
+                        "description": "Token de seguridad inválido"
                     }
-                },
-                "security": [
+                }
+            }
+        },
+        "/seed/all": {
+            "post": {
+                "tags": [
+                    "Seed"
+                ],
+                "summary": "Ejecutar todos los seeders iniciales",
+                "operationId": "c9c1c32a03f65c0b040f2b8445631018",
+                "parameters": [
                     {
-                        "sanctum": []
+                        "name": "X-Seed-Token",
+                        "in": "header",
+                        "description": "Token de seguridad para ejecutar seeders",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
-                ]
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Todos los seeders ejecutados exitosamente"
+                    },
+                    "403": {
+                        "description": "Token de seguridad inválido"
+                    }
+                }
             }
         }
     },
@@ -971,28 +1021,28 @@
     },
     "tags": [
         {
-            "name": "Dashboard",
-            "description": "Dashboard"
+            "name": "Auth",
+            "description": "Endpoints de autenticación"
         },
         {
-            "name": "Público",
-            "description": "Público"
+            "name": "Dashboard",
+            "description": "Estadísticas y dashboard"
         },
         {
             "name": "Datasets",
-            "description": "Datasets"
+            "description": "Gestión de datasets"
         },
         {
             "name": "Departamentos",
-            "description": "Departamentos"
+            "description": "Gestión de departamentos"
         },
         {
-            "name": "Registros Datos",
-            "description": "Registros Datos"
+            "name": "Público",
+            "description": "Endpoints públicos (sin autenticación)"
         },
         {
-            "name": "Variables Metadatos",
-            "description": "Variables Metadatos"
+            "name": "Seed",
+            "description": "Endpoints para inicializar datos del sistema"
         }
     ]
 }

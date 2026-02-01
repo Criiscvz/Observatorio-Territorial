@@ -13,6 +13,7 @@ class Departamento
         public readonly string $nombre,
         public readonly string $codigoInterno,
         public readonly ?string $descripcion,
+        public readonly ?string $icono,
         public readonly bool $publico,
         public readonly ?\DateTimeImmutable $createdAt = null,
         public readonly ?\DateTimeImmutable $updatedAt = null,
@@ -23,6 +24,7 @@ class Departamento
         string $nombre,
         string $codigoInterno,
         ?string $descripcion = null,
+        ?string $icono = null,
         bool $publico = false
     ): self {
         return new self(
@@ -30,6 +32,7 @@ class Departamento
             nombre: $nombre,
             codigoInterno: $codigoInterno,
             descripcion: $descripcion,
+            icono: $icono,
             publico: $publico,
         );
     }
@@ -41,6 +44,7 @@ class Departamento
             nombre: $this->nombre,
             codigoInterno: $this->codigoInterno,
             descripcion: $this->descripcion,
+            icono: $this->icono,
             publico: $this->publico,
             createdAt: $this->createdAt,
             updatedAt: $this->updatedAt,
@@ -51,6 +55,7 @@ class Departamento
     public function update(
         ?string $nombre = null,
         ?string $descripcion = null,
+        ?string $icono = null,
         ?bool $publico = null
     ): self {
         return new self(
@@ -58,6 +63,7 @@ class Departamento
             nombre: $nombre ?? $this->nombre,
             codigoInterno: $this->codigoInterno,
             descripcion: $descripcion ?? $this->descripcion,
+            icono: $icono ?? $this->icono,
             publico: $publico ?? $this->publico,
             createdAt: $this->createdAt,
             updatedAt: new \DateTimeImmutable(),
@@ -72,6 +78,7 @@ class Departamento
             'nombre' => $this->nombre,
             'codigo_interno' => $this->codigoInterno,
             'descripcion' => $this->descripcion,
+            'icono' => $this->icono,
             'publico' => $this->publico,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),

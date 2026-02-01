@@ -52,7 +52,7 @@ return [
     'defaults' => [
         'routes' => [
             /*
-             * Route for accessing parsed swagger annotations (JSON file).
+             * Route for accessing parsed swagger annotations.
              */
             'docs' => 'api/docs-json',
 
@@ -108,8 +108,8 @@ return [
              * @link https://zircote.github.io/swagger-php/reference/processors.html
              */
             'default_processors_configuration' => [
-            /** Example */
-            /**
+                /** Example */
+                /**
              * 'operationId.hash' => true,
              * 'pathFilter' => [
              * 'tags' => [
@@ -193,14 +193,28 @@ return [
                 ],
                 */
 
-                /* Open API 3.0 support */
-                'sanctum' => [
-                    'type' => 'apiKey',
-                    'description' => 'Ingresa el token en formato: Bearer <token>',
-                    'name' => 'Authorization',
+                /* Open API 3.0 support
+                'passport' => [ // Unique name of security
+                    'type' => 'oauth2', // The type of the security scheme. Valid values are "basic", "apiKey" or "oauth2".
+                    'description' => 'Laravel passport oauth2 security.',
                     'in' => 'header',
+                    'scheme' => 'https',
+                    'flows' => [
+                        "password" => [
+                            "authorizationUrl" => config('app.url') . '/oauth/authorize',
+                            "tokenUrl" => config('app.url') . '/oauth/token',
+                            "refreshUrl" => config('app.url') . '/token/refresh',
+                            "scopes" => []
+                        ],
+                    ],
                 ],
-            ],
+                'sanctum' => [ // Unique name of security
+                    'type' => 'apiKey', // Valid values are "basic", "apiKey" or "oauth2".
+                    'description' => 'Enter token in format (Bearer <token>)',
+                    'name' => 'Authorization', // The name of the header or query parameter to be used.
+                    'in' => 'header', // The location of the API key. Valid values are "query" or "header".
+                ],
+                */],
             'security' => [
                 /*
                  * Examples of Securities
@@ -213,8 +227,7 @@ return [
                     ],
 
                     'passport' => []
-                    */
-                ],
+                    */],
             ],
         ],
 
@@ -222,7 +235,7 @@ return [
          * Set this to `true` in development mode so that docs would be regenerated on each request
          * Set this to `false` to disable swagger generation on production
          */
-        'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', true),
+        'generate_always' => env('L5_SWAGGER_GENERATE_ALWAYS', false),
 
         /*
          * Set this to `true` to generate a copy of documentation in yaml format

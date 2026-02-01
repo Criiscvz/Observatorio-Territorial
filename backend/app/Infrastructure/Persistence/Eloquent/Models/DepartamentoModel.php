@@ -21,6 +21,7 @@ class DepartamentoModel extends Model
         'nombre',
         'codigo_interno',
         'descripcion',
+        'icono',
         'publico',
     ];
 

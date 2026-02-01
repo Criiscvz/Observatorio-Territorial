@@ -1,16 +1,16 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { DepartamentoService } from '../../core/services/departamento.service';
+import { RouterLink } from '@angular/router';
 import { Departamento } from '../../core/models';
+import { DepartamentoService } from '../../core/services/departamento.service';
 
 @Component({
   selector: 'app-public-departamentos',
@@ -64,7 +64,7 @@ export class PublicDepartamentosComponent implements OnInit {
         this.departamentos.set([]);
         this.filteredDepartamentos.set([]);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -75,9 +75,10 @@ export class PublicDepartamentosComponent implements OnInit {
       return;
     }
 
-    const filtered = this.departamentos().filter(d =>
-      d.nombre.toLowerCase().includes(term) ||
-      (d.descripcion && d.descripcion.toLowerCase().includes(term))
+    const filtered = this.departamentos().filter(
+      (d) =>
+        d.nombre.toLowerCase().includes(term) ||
+        (d.descripcion && d.descripcion.toLowerCase().includes(term)),
     );
     this.filteredDepartamentos.set(filtered);
   }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Controllers\Api;
 
+use OpenApi\Attributes as OA;
 use App\Application\Dataset\DTOs\ConfirmImportDTO;
 use App\Application\Dataset\DTOs\UploadDatasetDTO;
 use App\Application\Dataset\UseCases\AnalyzeDatasetUseCase;
@@ -21,12 +22,7 @@ use App\Presentation\Http\Resources\Dataset\DatasetResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * @OA\Tag(
- *     name="Datasets",
- *     description="Gestión de datasets"
- * )
- */
+#[OA\Tag(name: 'Datasets', description: 'Gestión de datasets')]
 class DatasetController extends Controller
 {
     public function __construct(
@@ -39,16 +35,18 @@ class DatasetController extends Controller
         private readonly UpdateVariableUseCase $updateVariableUseCase,
     ) {}
 
-    /**
-     * @OA\Get(
-     *     path="/api/datasets",
-     *     summary="Listar datasets",
-     *     tags={"Datasets"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="departamento_id", in="query", @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=200, description="Lista de datasets")
-     * )
-     */
+    #[OA\Get(
+        path: '/datasets',
+        summary: 'Listar datasets',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        parameters: [
+            new OA\Parameter(name: 'departamento_id', in: 'query', schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Lista de datasets')
+        ]
+    )]
     public function index(Request $request): JsonResponse
     {
         $departamentoId = $request->query('departamento_id');
@@ -60,28 +58,30 @@ class DatasetController extends Controller
         return response()->json(DatasetResource::collection($result));
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/datasets",
-     *     summary="Subir nuevo dataset",
-     *     tags={"Datasets"},
-     *     security={{"sanctum":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\MediaType(
-     *             mediaType="multipart/form-data",
-     *             @OA\Schema(
-     *                 required={"departamento_id","nombre","archivo"},
-     *                 @OA\Property(property="departamento_id", type="string", format="uuid"),
-     *                 @OA\Property(property="nombre", type="string"),
-     *                 @OA\Property(property="descripcion", type="string"),
-     *                 @OA\Property(property="archivo", type="string", format="binary")
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Dataset creado")
-     * )
-     */
+    #[OA\Post(
+        path: '/datasets',
+        summary: 'Subir nuevo dataset',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['departamento_id', 'nombre', 'archivo'],
+                    properties: [
+                        new OA\Property(property: 'departamento_id', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'nombre', type: 'string'),
+                        new OA\Property(property: 'descripcion', type: 'string'),
+                        new OA\Property(property: 'archivo', type: 'string', format: 'binary')
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Dataset creado')
+        ]
+    )]
     public function store(UploadDatasetRequest $request): JsonResponse
     {
         $dto = UploadDatasetDTO::fromArray(
@@ -94,16 +94,18 @@ class DatasetController extends Controller
         return response()->json($result->toArray(), 201);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/datasets/{id}",
-     *     summary="Obtener dataset",
-     *     tags={"Datasets"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=200, description="Datos del dataset")
-     * )
-     */
+    #[OA\Get(
+        path: '/datasets/{id}',
+        summary: 'Obtener dataset',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Datos del dataset')
+        ]
+    )]
     public function show(Request $request, string $id): JsonResponse
     {
         $result = $this->getDatasetUseCase->execute($id, $request->user()->id);
@@ -111,16 +113,18 @@ class DatasetController extends Controller
         return response()->json($result->toArray());
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/datasets/{id}/analyze",
-     *     summary="Analizar dataset",
-     *     tags={"Datasets"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=200, description="Resultado del análisis")
-     * )
-     */
+    #[OA\Post(
+        path: '/datasets/{id}/analyze',
+        summary: 'Analizar dataset',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Resultado del análisis')
+        ]
+    )]
     public function analyze(Request $request, string $id): JsonResponse
     {
         $result = $this->analyzeDatasetUseCase->execute($id, $request->user()->id);
@@ -128,23 +132,27 @@ class DatasetController extends Controller
         return response()->json($result->toArray());
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/datasets/{id}/import",
-     *     summary="Confirmar importación",
-     *     tags={"Datasets"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"columnas"},
-     *             @OA\Property(property="columnas", type="array", @OA\Items(type="object"))
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Importación completada")
-     * )
-     */
+    #[OA\Post(
+        path: '/datasets/{id}/import',
+        summary: 'Confirmar importación',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['columnas'],
+                properties: [
+                    new OA\Property(property: 'columnas', type: 'array', items: new OA\Items(type: 'object'))
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Importación completada')
+        ]
+    )]
     public function import(ConfirmImportRequest $request, string $id): JsonResponse
     {
         $dto = ConfirmImportDTO::fromArray(
@@ -158,17 +166,19 @@ class DatasetController extends Controller
         return response()->json($result->toArray());
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/datasets/{id}/data",
-     *     summary="Obtener datos del dataset",
-     *     tags={"Datasets"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=50)),
-     *     @OA\Response(response=200, description="Datos paginados")
-     * )
-     */
+    #[OA\Get(
+        path: '/datasets/{id}/data',
+        summary: 'Obtener datos del dataset',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 50))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Datos paginados')
+        ]
+    )]
     public function data(Request $request, string $id): JsonResponse
     {
         $perPage = (int) $request->query('per_page', 50);
@@ -181,23 +191,27 @@ class DatasetController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * @OA\Put(
-     *     path="/api/variables/{id}",
-     *     summary="Actualizar variable",
-     *     tags={"Datasets"},
-     *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\RequestBody(
-     *         @OA\JsonContent(
-     *             @OA\Property(property="tipo_dato", type="string"),
-     *             @OA\Property(property="es_visible", type="boolean"),
-     *             @OA\Property(property="nombre_columna", type="string")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Variable actualizada")
-     * )
-     */
+    #[OA\Put(
+        path: '/variables/{id}',
+        summary: 'Actualizar variable',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'tipo_dato', type: 'string'),
+                    new OA\Property(property: 'es_visible', type: 'boolean'),
+                    new OA\Property(property: 'nombre_columna', type: 'string')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Variable actualizada')
+        ]
+    )]
     public function updateVariable(UpdateVariableRequest $request, string $id): JsonResponse
     {
         $result = $this->updateVariableUseCase->execute(
@@ -206,6 +220,6 @@ class DatasetController extends Controller
             $request->validated()
         );
 
-        return response()->json($result);
+        return response()->json($result->toArray());
     }
 }

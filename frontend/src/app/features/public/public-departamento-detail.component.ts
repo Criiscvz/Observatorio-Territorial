@@ -1,13 +1,13 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Dataset, Departamento } from '../../core/models';
 import { DepartamentoService } from '../../core/services/departamento.service';
-import { Departamento, Dataset } from '../../core/models';
 
 @Component({
   selector: 'app-public-departamento-detail',
@@ -34,8 +34,16 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   deptoGradient = 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)';
 
   private datasetColors = [
-    '#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#EF4444',
-    '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#3B82F6'
+    '#6366F1',
+    '#EC4899',
+    '#14B8A6',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#06B6D4',
+    '#84CC16',
+    '#F97316',
+    '#3B82F6',
   ];
 
   get datasets(): Dataset[] {
@@ -60,7 +68,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       error: () => {
         this.departamento.set(null);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -70,10 +78,14 @@ export class PublicDepartamentoDetailComponent implements OnInit {
 
   getTypeClass(tipo: string): string {
     switch (tipo) {
-      case 'NUMERICO': return 'type-numeric';
-      case 'CATEGORICO': return 'type-categoric';
-      case 'FECHA': return 'type-date';
-      default: return 'type-text';
+      case 'NUMERICO':
+        return 'type-numeric';
+      case 'CATEGORICO':
+        return 'type-categoric';
+      case 'FECHA':
+        return 'type-date';
+      default:
+        return 'type-text';
     }
   }
 }
