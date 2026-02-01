@@ -2,14 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { Dataset, AnalisisResponse, ColumnaAnalizada } from '../models';
+import { PaginatedResponse } from './dataset.interfaces';
 
-interface PaginatedResponse<T> {
-  data: T[];
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-}
+// Re-export interfaces for convenience
+export * from './dataset.interfaces';
 
 @Injectable({
   providedIn: 'root'

@@ -1,17 +1,9 @@
 import { Injectable, inject, computed } from '@angular/core';
 import { ThemeService } from './theme.service';
+import { ChartThemeConfig } from './chart-theme.interfaces';
 
-export interface ChartThemeConfig {
-  colors: string[];
-  backgroundColor: string;
-  textColor: string;
-  textColorSecondary: string;
-  borderColor: string;
-  axisLineColor: string;
-  splitLineColor: string;
-  tooltipBg: string;
-  tooltipBorder: string;
-}
+// Re-export interfaces for convenience
+export * from './chart-theme.interfaces';
 
 @Injectable({
   providedIn: 'root'
