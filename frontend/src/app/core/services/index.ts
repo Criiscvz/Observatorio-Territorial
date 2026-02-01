@@ -6,6 +6,7 @@ export * from './dashboard.service';
 export * from './dataset.service';
 export * from './departamento.service';
 export * from './language.service';
+export * from './profile.service';
 export * from './theme.service';
 export * from './user.service';
 

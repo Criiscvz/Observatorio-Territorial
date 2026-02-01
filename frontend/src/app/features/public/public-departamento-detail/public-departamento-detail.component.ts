@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -27,15 +27,16 @@ import { DepartamentoService } from '@core/services/departamento.service';
   styleUrl: './public-departamento-detail.component.scss',
 })
 export class PublicDepartamentoDetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private deptoService = inject(DepartamentoService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly route = inject(ActivatedRoute);
+  private readonly deptoService = inject(DepartamentoService);
 
   departamento = signal<Departamento | null>(null);
   loading = signal(true);
 
   deptoGradient = 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)';
 
-  private datasetColors = [
+  private readonly datasetColors = [
     '#6366F1',
     '#EC4899',
     '#14B8A6',
@@ -57,8 +58,12 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const id = this.route.snapshot.params['id'];
-    this.loadDepartamento(id);
+    if (isPlatformBrowser(this.platformId)) {
+      const id = this.route.snapshot.params['id'];
+      this.loadDepartamento(id);
+    } else {
+      this.loading.set(false);
+    }
   }
 
   loadDepartamento(id: string): void {

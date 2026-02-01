@@ -113,6 +113,14 @@ export class AuthService {
   }
 
   /**
+   * Actualizar datos del usuario en el estado local
+   */
+  updateUser(user: User): void {
+    this.userSignal.set(user);
+    this.storeUser(user);
+  }
+
+  /**
    * Limpiar autenticación sin redireccionar
    */
   clearAuthSilent(): void {

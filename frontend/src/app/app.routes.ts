@@ -30,6 +30,15 @@ export const routes: Routes = [
     children: AUTH_ROUTES,
   },
 
+  // Profile route (protected)
+  {
+    path: 'perfil',
+    loadComponent: () =>
+      import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+    canActivate: [authGuard],
+    title: 'Mi Perfil - Observatorio',
+  },
+
   // Protected admin routes with main layout
   {
     path: 'admin',

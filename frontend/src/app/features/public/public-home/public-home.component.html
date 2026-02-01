@@ -34,8 +34,63 @@
       <button class="theme-toggle" (click)="themeService.toggleTheme()">
         <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
-      <a mat-stroked-button routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
-      <a mat-raised-button color="primary" routerLink="/auth/register">{{ 'public.header.register' | translate }}</a>
+
+      <!-- Botones de autenticación o menú de usuario -->
+      @if (authService.isAuthenticated()) {
+        <!-- Usuario autenticado: mostrar menú -->
+        <button class="user-btn" [matMenuTriggerFor]="userMenu">
+          <div class="user-avatar">
+            @if (authService.user()?.perfil?.avatar) {
+              <img [src]="authService.user()?.perfil?.avatar" alt="Avatar" class="avatar-img" />
+            } @else {
+              <span>{{ authService.user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
+            }
+          </div>
+          <span class="user-name-text">{{ authService.user()?.name }}</span>
+          <mat-icon class="dropdown-icon">expand_more</mat-icon>
+        </button>
+
+        <mat-menu #userMenu="matMenu" class="user-menu">
+          <div class="menu-header">
+            <div class="menu-avatar">
+              @if (authService.user()?.perfil?.avatar) {
+                <img [src]="authService.user()?.perfil?.avatar" alt="Avatar" class="avatar-img" />
+              } @else {
+                <span>{{ authService.user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
+              }
+            </div>
+            <div class="menu-user-info">
+              <span class="menu-user-name">{{ authService.user()?.name }}</span>
+              <span class="menu-user-email">{{ authService.user()?.email }}</span>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <a mat-menu-item routerLink="/perfil" class="menu-item">
+            <mat-icon>person</mat-icon>
+            <span>{{ 'profile.title' | translate }}</span>
+          </a>
+
+          @if (authService.isAdmin()) {
+            <a mat-menu-item routerLink="/admin/dashboard" class="menu-item">
+              <mat-icon>dashboard</mat-icon>
+              <span>{{ 'layout.sidebar.dashboard' | translate }}</span>
+            </a>
+          }
+
+          <mat-divider></mat-divider>
+
+          <button mat-menu-item (click)="authService.logout().subscribe()" class="menu-item logout">
+            <mat-icon>logout</mat-icon>
+            <span>{{ 'auth.logout' | translate }}</span>
+          </button>
+        </mat-menu>
+      } @else {
+        <!-- Usuario no autenticado: mostrar login/register -->
+        <a mat-stroked-button routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
+        <a mat-raised-button color="primary" routerLink="/auth/register">{{ 'public.header.register' | translate }}</a>
+      }
     </div>
   </div>
 </header>
@@ -60,10 +115,24 @@
         <mat-icon>explore</mat-icon>
         {{ 'public.home.hero.exploreData' | translate }}
       </a>
-      <a mat-stroked-button routerLink="/auth/register" class="hero-btn">
-        <mat-icon>person_add</mat-icon>
-        {{ 'public.home.hero.createAccount' | translate }}
-      </a>
+      @if (authService.isAuthenticated()) {
+        @if (authService.isAdmin()) {
+          <a mat-stroked-button routerLink="/admin/dashboard" class="hero-btn">
+            <mat-icon>dashboard</mat-icon>
+            {{ 'public.home.hero.goToDashboard' | translate }}
+          </a>
+        } @else {
+          <a mat-stroked-button routerLink="/perfil" class="hero-btn">
+            <mat-icon>person</mat-icon>
+            {{ 'profile.title' | translate }}
+          </a>
+        }
+      } @else {
+        <a mat-stroked-button routerLink="/auth/register" class="hero-btn">
+          <mat-icon>person_add</mat-icon>
+          {{ 'public.home.hero.createAccount' | translate }}
+        </a>
+      }
     </div>
   </div>
   <div class="hero-illustration">
@@ -185,16 +254,18 @@
 </section>
 
 <!-- CTA Section -->
-<section class="cta-section">
-  <div class="cta-content">
-    <h2>{{ 'public.home.cta.title' | translate }}</h2>
-    <p>{{ 'public.home.cta.subtitle' | translate }}</p>
-    <a mat-raised-button color="primary" routerLink="/auth/register" class="cta-btn">
-      {{ 'public.home.cta.button' | translate }}
-      <mat-icon>arrow_forward</mat-icon>
-    </a>
-  </div>
-</section>
+@if (!authService.isAuthenticated()) {
+  <section class="cta-section">
+    <div class="cta-content">
+      <h2>{{ 'public.home.cta.title' | translate }}</h2>
+      <p>{{ 'public.home.cta.subtitle' | translate }}</p>
+      <a mat-raised-button color="primary" routerLink="/auth/register" class="cta-btn">
+        {{ 'public.home.cta.button' | translate }}
+        <mat-icon>arrow_forward</mat-icon>
+      </a>
+    </div>
+  </section>
+}
 
 <!-- Footer -->
 <footer class="public-footer">

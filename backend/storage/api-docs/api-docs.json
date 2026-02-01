@@ -743,6 +743,144 @@
                 ]
             }
         },
+        "/profile": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Obtener perfil del usuario autenticado",
+                "operationId": "39ded20cef27000f3769d19b36ca5462",
+                "responses": {
+                    "200": {
+                        "description": "Datos del perfil"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Actualizar perfil del usuario",
+                "operationId": "435972de6a7ed7abbd9c574d976a12b3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Juan Pérez"
+                                    },
+                                    "telefono": {
+                                        "type": "string",
+                                        "example": "+593 999 999 999"
+                                    },
+                                    "cargo": {
+                                        "type": "string",
+                                        "example": "Desarrollador"
+                                    },
+                                    "bio": {
+                                        "type": "string",
+                                        "example": "Descripción del usuario"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Perfil actualizado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "422": {
+                        "description": "Datos inválidos"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/profile/avatar": {
+            "post": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Subir avatar del usuario",
+                "operationId": "45f6f4d638f53fbed3156b7f52751857",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "avatar"
+                                ],
+                                "properties": {
+                                    "avatar": {
+                                        "description": "Imagen de avatar (jpg, png, webp, max 2MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Avatar actualizado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "422": {
+                        "description": "Archivo inválido"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Eliminar avatar del usuario",
+                "operationId": "f1fb5180e0a1fbf14047fb5fd807b8e3",
+                "responses": {
+                    "200": {
+                        "description": "Avatar eliminado"
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/publico/departamentos": {
             "get": {
                 "tags": [
@@ -1007,6 +1145,97 @@
                     }
                 }
             }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Listar todos los usuarios (solo admin)",
+                "operationId": "dcec04e641881eb947a7b72a397898e0",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de usuarios"
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/users/{id}/role": {
+            "patch": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Cambiar rol de un usuario (solo admin)",
+                "operationId": "117b5657edb839d81e09ba872eda80ed",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rol"
+                                ],
+                                "properties": {
+                                    "rol": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ADMIN",
+                                            "USER"
+                                        ],
+                                        "example": "USER"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rol actualizado"
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1037,12 +1266,20 @@
             "description": "Gestión de departamentos"
         },
         {
+            "name": "Profile",
+            "description": "Endpoints de perfil de usuario"
+        },
+        {
             "name": "Público",
             "description": "Endpoints públicos (sin autenticación)"
         },
         {
             "name": "Seed",
             "description": "Endpoints para inicializar datos del sistema"
+        },
+        {
+            "name": "Users",
+            "description": "Gestión de usuarios (solo administradores)"
         }
     ]
 }
