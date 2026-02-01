@@ -101,13 +101,13 @@ export class DashboardComponent implements OnInit {
   getEstadoClass(estado: string): string {
     switch (estado) {
       case 'COMPLETADO':
-        return 'text-green-600';
+        return 'text-success';
       case 'PROCESANDO':
-        return 'text-yellow-600';
+        return 'text-warning';
       case 'ERROR':
-        return 'text-red-600';
+        return 'text-error';
       default:
-        return 'text-gray-600';
+        return 'text-[var(--text-secondary)]';
     }
   }
 

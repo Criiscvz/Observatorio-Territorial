@@ -199,10 +199,10 @@ export class DatasetUploadComponent implements OnInit {
 
   getTipoClass(tipo: string): string {
     switch (tipo) {
-      case 'NUMERICO': return 'text-blue-600 bg-blue-100 px-2 py-1 rounded text-xs';
-      case 'CATEGORICO': return 'text-green-600 bg-green-100 px-2 py-1 rounded text-xs';
-      case 'FECHA': return 'text-orange-600 bg-orange-100 px-2 py-1 rounded text-xs';
-      default: return 'text-gray-600 bg-gray-100 px-2 py-1 rounded text-xs';
+      case 'NUMERICO': return 'type-badge type-numeric';
+      case 'CATEGORICO': return 'type-badge type-categoric';
+      case 'FECHA': return 'type-badge type-date';
+      default: return 'type-badge type-text';
     }
   }
 }

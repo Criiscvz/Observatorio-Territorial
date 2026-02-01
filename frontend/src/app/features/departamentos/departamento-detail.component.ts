@@ -49,13 +49,13 @@ export class DepartamentoDetailComponent implements OnInit {
   getEstadoClass(estado: string): string {
     switch (estado) {
       case 'COMPLETADO':
-        return 'bg-green-100 text-green-800';
+        return 'badge-success';
       case 'PROCESANDO':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'badge-warning';
       case 'ERROR':
-        return 'bg-red-100 text-red-800';
+        return 'badge-error';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'badge-neutral';
     }
   }
 }
