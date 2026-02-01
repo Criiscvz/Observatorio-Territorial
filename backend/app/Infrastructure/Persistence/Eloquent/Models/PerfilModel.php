@@ -19,7 +19,8 @@ class PerfilModel extends Model
         'user_id',
         'telefono',
         'cargo',
-        'foto_url',
+        'avatar',
+        'bio',
     ];
 
     public function user(): BelongsTo

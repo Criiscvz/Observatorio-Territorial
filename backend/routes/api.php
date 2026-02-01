@@ -29,6 +29,9 @@ Route::get('/docs', function () {
 // ============ AUTH ============
 require __DIR__ . '/modules/auth.php';
 
+// ============ PROFILE ============
+require __DIR__ . '/modules/profile.php';
+
 // ============ SEED (Inicialización) ============
 require __DIR__ . '/modules/seed.php';
 

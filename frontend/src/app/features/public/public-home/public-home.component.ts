@@ -2,6 +2,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -9,6 +10,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
+import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
@@ -21,6 +23,7 @@ import { ThemeService } from '@core/services/theme.service';
     RouterLink,
     RouterLinkActive,
     MatButtonModule,
+    MatDividerModule,
     MatIconModule,
     MatCardModule,
     MatMenuModule,
@@ -34,6 +37,7 @@ import { ThemeService } from '@core/services/theme.service';
 export class PublicHomeComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly deptoService = inject(DepartamentoService);
+  readonly authService = inject(AuthService);
   readonly themeService = inject(ThemeService);
   readonly languageService = inject(LanguageService);
 
