@@ -40,10 +40,87 @@
   color: var(--text-primary);
 }
 
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.nav-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+}
+
+.nav-links a:hover {
+  color: var(--primary-600);
+  background: var(--hover-bg);
+}
+
+.nav-links a.active {
+  color: var(--primary-600);
+}
+
+.nav-links mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+}
+
 .header-actions {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+}
+
+/* Language selector */
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.lang-toggle:hover {
+  background: var(--hover-bg);
+  color: var(--primary-600);
+}
+
+.lang-code {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.lang-flag {
+  font-size: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+::ng-deep .mat-mdc-menu-item.active {
+  background: var(--hover-bg);
+}
+
+.check-icon {
+  margin-left: auto;
+  color: var(--primary-600);
 }
 
 .theme-toggle {
