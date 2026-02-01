@@ -36,7 +36,7 @@ import { ThemeService } from '../../../core/services/theme.service';
             <mat-icon>menu</mat-icon>
           </button>
 
-          <a routerLink="/dashboard" class="brand">
+          <a routerLink="/admin/dashboard" class="brand">
             <div class="brand-logo">
               <img src="ULEAM.png" alt="ULEAM" class="brand-img">
             </div>
