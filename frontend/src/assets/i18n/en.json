@@ -124,6 +124,53 @@
     },
     "logout": "Sign Out"
   },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Manage your personal information and account settings",
+    "personalInfo": "Personal Information",
+    "personalInfoSubtitle": "Update your profile information",
+    "accountInfo": "Account Information",
+    "fields": {
+      "name": "Full name",
+      "email": "Email",
+      "telefono": "Phone",
+      "cargo": "Position",
+      "bio": "Bio",
+      "role": "Role",
+      "createdAt": "Member since"
+    },
+    "placeholders": {
+      "bio": "Tell us a bit about yourself..."
+    },
+    "hints": {
+      "emailReadOnly": "Email cannot be changed"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameMaxLength": "Name cannot exceed 255 characters",
+      "telefonoMaxLength": "Phone cannot exceed 20 characters",
+      "cargoMaxLength": "Position cannot exceed 100 characters",
+      "bioMaxLength": "Bio cannot exceed 500 characters"
+    },
+    "avatar": {
+      "upload": "Upload Image",
+      "delete": "Delete",
+      "hint": "Allowed formats: JPG, PNG, WebP. Max size: 2MB"
+    },
+    "roles": {
+      "admin": "Administrator",
+      "user": "User"
+    },
+    "messages": {
+      "updateSuccess": "Profile updated successfully",
+      "updateError": "Failed to update profile",
+      "avatarUpdated": "Profile picture updated",
+      "avatarDeleted": "Profile picture deleted",
+      "avatarError": "Failed to update picture",
+      "invalidFileType": "Invalid file format. Use JPG, PNG, or WebP",
+      "fileTooLarge": "File is too large. Max 2MB"
+    }
+  },
   "layout": {
     "header": {
       "brand": "Observatory",
@@ -394,7 +441,8 @@
         "titleHighlight": "Observatory ULEAM",
         "subtitle": "Transform your Excel files into interactive dashboards automatically. Analyze, visualize, and share data intelligently.",
         "exploreData": "Explore Public Data",
-        "createAccount": "Create Free Account"
+        "createAccount": "Create Free Account",
+        "goToDashboard": "Go to Dashboard"
       },
       "floatingCards": {
         "dynamicCharts": "Dynamic Charts",

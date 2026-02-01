@@ -124,6 +124,53 @@
     },
     "logout": "Cerrar Sesión"
   },
+  "profile": {
+    "title": "Mi Perfil",
+    "subtitle": "Gestiona tu información personal y configuración de cuenta",
+    "personalInfo": "Información Personal",
+    "personalInfoSubtitle": "Actualiza tu información de perfil",
+    "accountInfo": "Información de la Cuenta",
+    "fields": {
+      "name": "Nombre completo",
+      "email": "Correo electrónico",
+      "telefono": "Teléfono",
+      "cargo": "Cargo o Posición",
+      "bio": "Biografía",
+      "role": "Rol",
+      "createdAt": "Miembro desde"
+    },
+    "placeholders": {
+      "bio": "Cuéntanos un poco sobre ti..."
+    },
+    "hints": {
+      "emailReadOnly": "El correo electrónico no se puede modificar"
+    },
+    "validation": {
+      "nameRequired": "El nombre es requerido",
+      "nameMaxLength": "El nombre no puede exceder 255 caracteres",
+      "telefonoMaxLength": "El teléfono no puede exceder 20 caracteres",
+      "cargoMaxLength": "El cargo no puede exceder 100 caracteres",
+      "bioMaxLength": "La biografía no puede exceder 500 caracteres"
+    },
+    "avatar": {
+      "upload": "Subir Imagen",
+      "delete": "Eliminar",
+      "hint": "Formatos permitidos: JPG, PNG, WebP. Tamaño máximo: 2MB"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "user": "Usuario"
+    },
+    "messages": {
+      "updateSuccess": "Perfil actualizado correctamente",
+      "updateError": "Error al actualizar el perfil",
+      "avatarUpdated": "Imagen de perfil actualizada",
+      "avatarDeleted": "Imagen de perfil eliminada",
+      "avatarError": "Error al actualizar la imagen",
+      "invalidFileType": "Formato de archivo no válido. Usa JPG, PNG o WebP",
+      "fileTooLarge": "El archivo es demasiado grande. Máximo 2MB"
+    }
+  },
   "layout": {
     "header": {
       "brand": "Observatorio",
@@ -394,7 +441,8 @@
         "titleHighlight": "Universitarios ULEAM",
         "subtitle": "Transforma tus archivos Excel en dashboards interactivos de manera automática. Analiza, visualiza y comparte datos de forma inteligente.",
         "exploreData": "Explorar Datos Públicos",
-        "createAccount": "Crear Cuenta Gratis"
+        "createAccount": "Crear Cuenta Gratis",
+        "goToDashboard": "Ir al Panel"
       },
       "floatingCards": {
         "dynamicCharts": "Gráficos Dinámicos",
