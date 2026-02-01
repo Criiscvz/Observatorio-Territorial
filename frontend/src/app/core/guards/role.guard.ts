@@ -5,7 +5,7 @@ import { UserRole } from '../models';
 
 /**
  * Guard que verifica si el usuario tiene rol ADMIN
- * Redirige a /dashboard si no tiene permisos
+ * Redirige a /admin/dashboard si no tiene permisos
  */
 export const adminGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
@@ -16,7 +16,7 @@ export const adminGuard: CanActivateFn = () => {
   }
 
   // Redirigir a dashboard si no es admin
-  router.navigate(['/dashboard']);
+  router.navigate(['/admin/dashboard']);
   return false;
 };
 
@@ -37,7 +37,7 @@ export function roleGuard(...allowedRoles: UserRole[]): CanActivateFn {
     if (!userRole) {
       router.navigate(['/auth/login']);
     } else {
-      router.navigate(['/dashboard']);
+      router.navigate(['/admin/dashboard']);
     }
     
     return false;
