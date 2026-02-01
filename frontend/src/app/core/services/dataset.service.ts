@@ -1,14 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { AnalisisResponse, ColumnaAnalizada, Dataset } from '../models';
 import { ApiService } from './api.service';
-import { Dataset, AnalisisResponse, ColumnaAnalizada } from '../models';
 import { PaginatedResponse } from './paginated-response.interface';
 
 // Re-export interfaces for convenience
 export * from './paginated-response.interface';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DatasetService {
   private readonly api = inject(ApiService);
@@ -22,7 +22,12 @@ export class DatasetService {
     return this.api.get<Dataset>(`/datasets/${id}`);
   }
 
-  create(departamentoId: string, nombre: string, descripcion: string, archivo: File): Observable<Dataset> {
+  create(
+    departamentoId: string,
+    nombre: string,
+    descripcion: string,
+    archivo: File,
+  ): Observable<Dataset> {
     const formData = new FormData();
     formData.append('departamento_id', departamentoId);
     formData.append('nombre', nombre);
@@ -36,10 +41,13 @@ export class DatasetService {
     return this.api.post<AnalisisResponse>(`/datasets/${datasetId}/analyze`, {});
   }
 
-  confirmar(datasetId: string, columnas: ColumnaAnalizada[]): Observable<{ message: string; total_registros: number }> {
+  confirmar(
+    datasetId: string,
+    columnas: ColumnaAnalizada[],
+  ): Observable<{ message: string; total_registros: number }> {
     return this.api.post<{ message: string; total_registros: number }>(
       `/datasets/${datasetId}/import`,
-      { columnas }
+      { columnas },
     );
   }
 

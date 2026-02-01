@@ -1,12 +1,12 @@
-import { Injectable, inject, computed } from '@angular/core';
-import { ThemeService } from './theme.service';
+import { Injectable, computed, inject } from '@angular/core';
 import { ChartThemeConfig } from './chart-theme-config.interface';
+import { ThemeService } from './theme.service';
 
 // Re-export interfaces for convenience
 export * from './chart-theme-config.interface';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ChartThemeService {
   private readonly themeService = inject(ThemeService);
@@ -63,28 +63,30 @@ export class ChartThemeService {
   // Computed para obtener configuración actual del tema
   readonly config = computed<ChartThemeConfig>(() => {
     const isDark = this.themeService.isDark();
-    
-    return isDark ? {
-      colors: this.darkColors,
-      backgroundColor: 'transparent',
-      textColor: '#F9FAFB',
-      textColorSecondary: '#9CA3AF',
-      borderColor: '#334155',
-      axisLineColor: '#475569',
-      splitLineColor: '#334155',
-      tooltipBg: 'rgba(30, 41, 59, 0.95)',
-      tooltipBorder: '#475569',
-    } : {
-      colors: this.lightColors,
-      backgroundColor: 'transparent',
-      textColor: '#111827',
-      textColorSecondary: '#6B7280',
-      borderColor: '#E5E7EB',
-      axisLineColor: '#D1D5DB',
-      splitLineColor: '#F3F4F6',
-      tooltipBg: 'rgba(255, 255, 255, 0.95)',
-      tooltipBorder: '#E5E7EB',
-    };
+
+    return isDark
+      ? {
+          colors: this.darkColors,
+          backgroundColor: 'transparent',
+          textColor: '#F9FAFB',
+          textColorSecondary: '#9CA3AF',
+          borderColor: '#334155',
+          axisLineColor: '#475569',
+          splitLineColor: '#334155',
+          tooltipBg: 'rgba(30, 41, 59, 0.95)',
+          tooltipBorder: '#475569',
+        }
+      : {
+          colors: this.lightColors,
+          backgroundColor: 'transparent',
+          textColor: '#111827',
+          textColorSecondary: '#6B7280',
+          borderColor: '#E5E7EB',
+          axisLineColor: '#D1D5DB',
+          splitLineColor: '#F3F4F6',
+          tooltipBg: 'rgba(255, 255, 255, 0.95)',
+          tooltipBorder: '#E5E7EB',
+        };
   });
 
   /**
@@ -122,7 +124,7 @@ export class ChartThemeService {
    */
   getBaseChartOptions(): any {
     const cfg = this.config();
-    
+
     return {
       backgroundColor: cfg.backgroundColor,
       textStyle: {
@@ -194,7 +196,7 @@ export class ChartThemeService {
    */
   getTooltipOptions(showPercentage = false): any {
     const cfg = this.config();
-    
+
     return {
       trigger: 'item' as const,
       backgroundColor: cfg.tooltipBg,
@@ -206,7 +208,7 @@ export class ChartThemeService {
         fontSize: 13,
       },
       extraCssText: 'box-shadow: 0 4px 20px rgba(0,0,0,0.15); border-radius: 12px;',
-      formatter: showPercentage 
+      formatter: showPercentage
         ? (params: any) => {
             const value = params.value;
             const percent = params.percent ? `(${params.percent.toFixed(1)}%)` : '';
@@ -281,7 +283,7 @@ export class ChartThemeService {
   getEnhancedLegend(position: 'bottom' | 'right' | 'top' = 'bottom'): any {
     const cfg = this.config();
     const base = {
-      textStyle: { 
+      textStyle: {
         color: cfg.textColorSecondary,
         fontSize: 12,
       },
@@ -339,7 +341,7 @@ export class ChartThemeService {
    */
   getDataZoomOptions(): any[] {
     const cfg = this.config();
-    
+
     return [
       {
         type: 'inside',
@@ -370,7 +372,7 @@ export class ChartThemeService {
    */
   getCorrelationColor(correlation: number): string {
     const absCorr = Math.abs(correlation);
-    
+
     if (absCorr >= 0.7) {
       return correlation > 0 ? '#10B981' : '#EF4444'; // Verde fuerte / Rojo fuerte
     } else if (absCorr >= 0.4) {
@@ -388,7 +390,7 @@ export class ChartThemeService {
   getCorrelationText(correlation: number): string {
     const absCorr = Math.abs(correlation);
     const direction = correlation > 0 ? 'positiva' : 'negativa';
-    
+
     if (absCorr >= 0.7) {
       return `Correlación ${direction} fuerte`;
     } else if (absCorr >= 0.4) {
