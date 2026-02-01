@@ -25,7 +25,7 @@ import { AuthService } from '../../core/services/auth.service';
     MatProgressSpinnerModule,
   ],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
@@ -49,12 +49,17 @@ export class LoginComponent {
 
     this.authService.login(this.form.value).subscribe({
       next: () => {
-        this.router.navigate(['/admin/dashboard']);
+        // Redirigir según el rol del usuario
+        if (this.authService.isAdmin()) {
+          this.router.navigate(['/admin/dashboard']);
+        } else {
+          this.router.navigate(['/publico/departamentos']);
+        }
       },
       error: (err) => {
         this.loading.set(false);
         this.error.set(err.error?.message || 'Error al iniciar sesión');
-      }
+      },
     });
   }
 }

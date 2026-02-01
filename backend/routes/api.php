@@ -43,3 +43,4 @@ Route::prefix('departamentos')->group(__DIR__ . '/modules/departamentos.php');
 Route::prefix('datasets')->group(__DIR__ . '/modules/datasets.php');
 Route::prefix('variables')->group(__DIR__ . '/modules/variables.php');
 Route::prefix('stats')->group(__DIR__ . '/modules/stats.php');
+Route::prefix('users')->group(__DIR__ . '/modules/users.php');

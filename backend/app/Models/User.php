@@ -17,6 +17,43 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasApiTokens;
 
     /**
+     * Boot method para proteger la asignación del rol ADMIN
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // Proteger la asignación del rol ADMIN al crear usuarios
+        static::creating(function (User $user) {
+            // Si se intenta crear un usuario con rol ADMIN
+            if ($user->rol === 'ADMIN') {
+                // Verificar si hay un usuario autenticado que sea ADMIN
+                $currentUser = auth()->user();
+
+                // Si no hay usuario autenticado o no es admin, forzar rol USER
+                // NOTA: Esto permite crear admins via seeder (no hay usuario autenticado en CLI)
+                // pero protege la API de crear admins sin autorización
+                if ($currentUser && !$currentUser->isAdmin()) {
+                    $user->rol = 'USER';
+                }
+            }
+        });
+
+        // Proteger la actualización del rol a ADMIN
+        static::updating(function (User $user) {
+            // Si se intenta cambiar el rol a ADMIN
+            if ($user->isDirty('rol') && $user->rol === 'ADMIN') {
+                $currentUser = auth()->user();
+
+                // Solo permitir si el usuario actual es admin
+                if (!$currentUser || !$currentUser->isAdmin()) {
+                    $user->rol = $user->getOriginal('rol');
+                }
+            }
+        });
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var list<string>

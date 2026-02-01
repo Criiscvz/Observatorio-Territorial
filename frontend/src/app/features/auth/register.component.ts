@@ -1,13 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -25,7 +25,7 @@ import { AuthService } from '../../core/services/auth.service';
     MatProgressSpinnerModule,
   ],
   templateUrl: './register.component.html',
-  styleUrl: './register.component.scss'
+  styleUrl: './register.component.scss',
 })
 export class RegisterComponent {
   private fb = inject(FormBuilder);
@@ -56,12 +56,13 @@ export class RegisterComponent {
 
     this.authService.register(this.form.value).subscribe({
       next: () => {
-        this.router.navigate(['/admin/dashboard']);
+        // Los usuarios registrados son siempre USER, redirigir al área pública
+        this.router.navigate(['/publico/departamentos']);
       },
       error: (err) => {
         this.loading.set(false);
         this.error.set(err.error?.message || 'Error al crear la cuenta');
-      }
+      },
     });
   }
 }

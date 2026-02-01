@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
-import { Router, CanActivateFn } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
+import { catchError, map, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
-import { map, catchError, of } from 'rxjs';
 
 /**
  * Guard que protege rutas que requieren autenticación.
@@ -34,13 +34,13 @@ export const authGuard: CanActivateFn = () => {
     catchError(() => {
       router.navigate(['/auth/login']);
       return of(false);
-    })
+    }),
   );
 };
 
 /**
  * Guard que protege rutas públicas (login, register).
- * Redirige a dashboard si el usuario ya está autenticado.
+ * Redirige según el rol si el usuario ya está autenticado.
  */
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
@@ -50,6 +50,11 @@ export const guestGuard: CanActivateFn = () => {
     return true;
   }
 
-  router.navigate(['/admin/dashboard']);
+  // Redirigir según el rol del usuario
+  if (authService.isAdmin()) {
+    router.navigate(['/admin/dashboard']);
+  } else {
+    router.navigate(['/publico/departamentos']);
+  }
   return false;
 };
