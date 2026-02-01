@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Controllers\Api;
 
+use OpenApi\Attributes as OA;
 use App\Application\Public\DTOs\BivariableStatsDTO;
 use App\Application\Public\DTOs\UnivariableStatsDTO;
 use App\Application\Public\UseCases\GetBivariableStatsUseCase;
@@ -16,12 +17,7 @@ use App\Presentation\Http\Requests\Public\UnivariableStatsRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * @OA\Tag(
- *     name="Public",
- *     description="Endpoints públicos (sin autenticación)"
- * )
- */
+#[OA\Tag(name: 'Público', description: 'Endpoints públicos (sin autenticación)')]
 class PublicController extends Controller
 {
     public function __construct(
@@ -31,14 +27,14 @@ class PublicController extends Controller
         private readonly GetBivariableStatsUseCase $getBivariableStatsUseCase,
     ) {}
 
-    /**
-     * @OA\Get(
-     *     path="/api/publico/departamentos",
-     *     summary="Listar departamentos públicos",
-     *     tags={"Public"},
-     *     @OA\Response(response=200, description="Lista de departamentos públicos")
-     * )
-     */
+    #[OA\Get(
+        path: '/publico/departamentos',
+        summary: 'Listar departamentos públicos',
+        tags: ['Público'],
+        responses: [
+            new OA\Response(response: 200, description: 'Lista de departamentos públicos')
+        ]
+    )]
     public function departamentos(): JsonResponse
     {
         $departamentos = $this->getDepartamentosUseCase->execute();
@@ -48,16 +44,18 @@ class PublicController extends Controller
         );
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/publico/departamentos/{id}",
-     *     summary="Obtener departamento público",
-     *     tags={"Public"},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Response(response=200, description="Datos del departamento"),
-     *     @OA\Response(response=404, description="No encontrado")
-     * )
-     */
+    #[OA\Get(
+        path: '/publico/departamentos/{id}',
+        summary: 'Obtener departamento público',
+        tags: ['Público'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Datos del departamento'),
+            new OA\Response(response: 404, description: 'No encontrado')
+        ]
+    )]
     public function departamento(string $id): JsonResponse
     {
         $departamento = $this->getDepartamentosUseCase->getById($id);
@@ -69,18 +67,20 @@ class PublicController extends Controller
         return response()->json($departamento->toArray());
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/publico/datasets/{id}/data",
-     *     summary="Obtener datos de un dataset público",
-     *     tags={"Public"},
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="string", format="uuid")),
-     *     @OA\Parameter(name="page", in="query", @OA\Schema(type="integer", default=1)),
-     *     @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer", default=50)),
-     *     @OA\Response(response=200, description="Datos paginados del dataset"),
-     *     @OA\Response(response=404, description="Dataset no encontrado")
-     * )
-     */
+    #[OA\Get(
+        path: '/publico/datasets/{id}/data',
+        summary: 'Obtener datos de un dataset público',
+        tags: ['Público'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid')),
+            new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', default: 1)),
+            new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 50))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Datos paginados del dataset'),
+            new OA\Response(response: 404, description: 'Dataset no encontrado')
+        ]
+    )]
     public function datasetData(string $id, Request $request): JsonResponse
     {
         $page = (int) $request->input('page', 1);
@@ -91,24 +91,26 @@ class PublicController extends Controller
         return response()->json($result);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/publico/stats/univariable",
-     *     summary="Estadísticas univariables",
-     *     tags={"Public"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"dataset_id","variable_id"},
-     *             @OA\Property(property="dataset_id", type="string", format="uuid"),
-     *             @OA\Property(property="variable_id", type="string", format="uuid"),
-     *             @OA\Property(property="chart_type", type="string"),
-     *             @OA\Property(property="limit", type="integer", default=20)
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Estadísticas de la variable")
-     * )
-     */
+    #[OA\Post(
+        path: '/publico/stats/univariable',
+        summary: 'Estadísticas univariables',
+        tags: ['Público'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['dataset_id', 'variable_id'],
+                properties: [
+                    new OA\Property(property: 'dataset_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'variable_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'chart_type', type: 'string'),
+                    new OA\Property(property: 'limit', type: 'integer', default: 20)
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Estadísticas de la variable')
+        ]
+    )]
     public function univariable(UnivariableStatsRequest $request): JsonResponse
     {
         $dto = UnivariableStatsDTO::fromArray($request->validated());
@@ -117,25 +119,27 @@ class PublicController extends Controller
         return response()->json($result->toArray());
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/publico/stats/bivariable",
-     *     summary="Estadísticas bivariables",
-     *     tags={"Public"},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"dataset_id","variable_x_id","variable_y_id"},
-     *             @OA\Property(property="dataset_id", type="string", format="uuid"),
-     *             @OA\Property(property="variable_x_id", type="string", format="uuid"),
-     *             @OA\Property(property="variable_y_id", type="string", format="uuid"),
-     *             @OA\Property(property="chart_type", type="string"),
-     *             @OA\Property(property="limit", type="integer", default=20)
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Estadísticas bivariables")
-     * )
-     */
+    #[OA\Post(
+        path: '/publico/stats/bivariable',
+        summary: 'Estadísticas bivariables',
+        tags: ['Público'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['dataset_id', 'variable_x_id', 'variable_y_id'],
+                properties: [
+                    new OA\Property(property: 'dataset_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'variable_x_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'variable_y_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'chart_type', type: 'string'),
+                    new OA\Property(property: 'limit', type: 'integer', default: 20)
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Estadísticas bivariables')
+        ]
+    )]
     public function bivariable(BivariableStatsRequest $request): JsonResponse
     {
         $dto = BivariableStatsDTO::fromArray($request->validated());

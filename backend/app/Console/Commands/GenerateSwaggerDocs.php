@@ -45,7 +45,14 @@ class GenerateSwaggerDocs extends Command
             file_put_contents($outputPath, $openapi->toJson());
 
             $this->info('Documentation generated successfully at: ' . $outputPath);
-            $this->info('Paths found: ' . (isset($openapi->paths) ? count($openapi->paths) : 0));
+
+            $pathCount = 0;
+            if (isset($openapi->paths) && is_array($openapi->paths)) {
+                $pathCount = count($openapi->paths);
+            } elseif (isset($openapi->paths) && is_object($openapi->paths)) {
+                $pathCount = count((array) $openapi->paths);
+            }
+            $this->info('Paths found: ' . $pathCount);
 
             return Command::SUCCESS;
         } catch (\Exception $e) {

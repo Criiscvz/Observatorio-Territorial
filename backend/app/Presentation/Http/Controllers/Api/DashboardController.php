@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Controllers\Api;
 
+use OpenApi\Attributes as OA;
 use App\Application\Dashboard\DTOs\BivariableRequestDTO;
 use App\Application\Dashboard\DTOs\StatsRequestDTO;
 use App\Application\Dashboard\UseCases\GetBivariableStatsUseCase;
@@ -13,72 +14,78 @@ use App\Presentation\Http\Requests\BivariableRequest;
 use App\Presentation\Http\Requests\StatsRequest;
 use App\Presentation\Http\Resources\Dataset\ChartDataResource;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
-/**
- * @OA\Tag(
- *     name="Dashboard",
- *     description="Estadísticas y gráficos"
- * )
- */
+#[OA\Tag(name: 'Dashboard', description: 'Estadísticas y dashboard')]
 class DashboardController extends Controller
 {
     public function __construct(
-        private readonly GetUnivariableStatsUseCase $getUnivariableStatsUseCase,
-        private readonly GetBivariableStatsUseCase $getBivariableStatsUseCase,
+        private readonly GetUnivariableStatsUseCase $univariableStatsUseCase,
+        private readonly GetBivariableStatsUseCase $bivariableStatsUseCase,
     ) {}
 
-    /**
-     * @OA\Post(
-     *     path="/api/stats/univariable",
-     *     summary="Obtener estadísticas univariable",
-     *     tags={"Dashboard"},
-     *     security={{"sanctum":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"dataset_id","variable_id"},
-     *             @OA\Property(property="dataset_id", type="string", format="uuid"),
-     *             @OA\Property(property="variable_id", type="string", format="uuid"),
-     *             @OA\Property(property="chart_type", type="string"),
-     *             @OA\Property(property="limit", type="integer")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Datos del gráfico")
-     * )
-     */
+    #[OA\Post(
+        path: '/stats/univariable',
+        summary: 'Obtener estadísticas univariables',
+        security: [['sanctum' => []]],
+        tags: ['Dashboard'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['dataset_id', 'variable_id'],
+                properties: [
+                    new OA\Property(property: 'dataset_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'variable_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'chart_type', type: 'string', enum: ['bar', 'pie', 'line', 'doughnut']),
+                    new OA\Property(property: 'limit', type: 'integer', default: 20)
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Estadísticas univariables')
+        ]
+    )]
     public function univariable(StatsRequest $request): JsonResponse
     {
-        $dto = StatsRequestDTO::fromArray($request->validated());
-        $result = $this->getUnivariableStatsUseCase->execute($dto, $request->user()->id);
+        $dto = StatsRequestDTO::fromArray(
+            $request->validated(),
+            $request->user()->id
+        );
+
+        $result = $this->univariableStatsUseCase->execute($dto);
 
         return response()->json(new ChartDataResource($result));
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/stats/bivariable",
-     *     summary="Obtener estadísticas bivariable",
-     *     tags={"Dashboard"},
-     *     security={{"sanctum":{}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"dataset_id","variable_x_id","variable_y_id"},
-     *             @OA\Property(property="dataset_id", type="string", format="uuid"),
-     *             @OA\Property(property="variable_x_id", type="string", format="uuid"),
-     *             @OA\Property(property="variable_y_id", type="string", format="uuid"),
-     *             @OA\Property(property="chart_type", type="string"),
-     *             @OA\Property(property="limit", type="integer")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="Datos del gráfico")
-     * )
-     */
+    #[OA\Post(
+        path: '/stats/bivariable',
+        summary: 'Obtener estadísticas bivariables',
+        security: [['sanctum' => []]],
+        tags: ['Dashboard'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['dataset_id', 'variable_x_id', 'variable_y_id'],
+                properties: [
+                    new OA\Property(property: 'dataset_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'variable_x_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'variable_y_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'chart_type', type: 'string', enum: ['bar', 'stackedBar', 'groupedBar', 'line', 'scatter']),
+                    new OA\Property(property: 'limit', type: 'integer', default: 20)
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Estadísticas bivariables')
+        ]
+    )]
     public function bivariable(BivariableRequest $request): JsonResponse
     {
-        $dto = BivariableRequestDTO::fromArray($request->validated());
-        $result = $this->getBivariableStatsUseCase->execute($dto, $request->user()->id);
+        $dto = BivariableRequestDTO::fromArray(
+            $request->validated(),
+            $request->user()->id
+        );
+
+        $result = $this->bivariableStatsUseCase->execute($dto);
 
         return response()->json(new ChartDataResource($result));
     }
