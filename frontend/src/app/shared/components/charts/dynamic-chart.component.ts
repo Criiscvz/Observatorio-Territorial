@@ -1,13 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ChartData } from '@core/models';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
 
 @Component({
   selector: 'app-dynamic-chart',
   standalone: true,
-  imports: [CommonModule, NgxEchartsDirective],
+  imports: [CommonModule, NgxEchartsDirective, TranslateModule],
   template: `
     <div class="chart-card">
       <div class="chart-header">
@@ -20,27 +21,27 @@ import { NgxEchartsDirective } from 'ngx-echarts';
       @if (chartData().stats) {
         <div class="stats-grid">
           <div class="stat-item stat-info">
-            <span class="stat-label">Promedio</span>
+            <span class="stat-label">{{ 'charts.stats.mean' | translate }}</span>
             <span class="stat-value">{{ formatNumber(chartData().stats?.mean) }}</span>
           </div>
           <div class="stat-item stat-success">
-            <span class="stat-label">Mediana</span>
+            <span class="stat-label">{{ 'charts.stats.median' | translate }}</span>
             <span class="stat-value">{{ formatNumber(chartData().stats?.median) }}</span>
           </div>
           <div class="stat-item stat-primary">
-            <span class="stat-label">Total</span>
+            <span class="stat-label">{{ 'charts.stats.total' | translate }}</span>
             <span class="stat-value">{{ chartData().stats?.count | number }}</span>
           </div>
           <div class="stat-item stat-warning">
-            <span class="stat-label">Mínimo</span>
+            <span class="stat-label">{{ 'charts.stats.min' | translate }}</span>
             <span class="stat-value">{{ formatNumber(chartData().stats?.min) }}</span>
           </div>
           <div class="stat-item stat-error">
-            <span class="stat-label">Máximo</span>
+            <span class="stat-label">{{ 'charts.stats.max' | translate }}</span>
             <span class="stat-value">{{ formatNumber(chartData().stats?.max) }}</span>
           </div>
           <div class="stat-item stat-neutral">
-            <span class="stat-label">Suma</span>
+            <span class="stat-label">{{ 'charts.stats.sum' | translate }}</span>
             <span class="stat-value">{{ formatNumber(chartData().stats?.sum) }}</span>
           </div>
         </div>
@@ -169,6 +170,8 @@ import { NgxEchartsDirective } from 'ngx-echarts';
   ],
 })
 export class DynamicChartComponent {
+  private readonly translate = inject(TranslateService);
+  
   chartData = input.required<ChartData>();
 
   // Colores ULEAM y paleta complementaria
@@ -230,24 +233,17 @@ export class DynamicChartComponent {
 
   chartTypeLabel = computed(() => {
     const type = this.chartData().chart_type;
-    switch (type) {
-      case 'bar':
-        return 'Barras';
-      case 'pie':
-        return 'Pastel';
-      case 'donut':
-        return 'Donut';
-      case 'line':
-        return 'Líneas';
-      case 'area':
-        return 'Área';
-      case 'histogram':
-        return 'Histograma';
-      case 'scatter':
-        return 'Dispersión';
-      default:
-        return type;
-    }
+    const typeMap: Record<string, string> = {
+      'bar': 'charts.types.bar.name',
+      'pie': 'charts.types.pie.name',
+      'donut': 'charts.types.donut.name',
+      'line': 'charts.types.line.name',
+      'area': 'charts.types.area.name',
+      'histogram': 'charts.types.histogram.name',
+      'scatter': 'charts.types.scatter.name'
+    };
+    const key = typeMap[type];
+    return key ? this.translate.instant(key) : type;
   });
 
   formatNumber(value: number | undefined): string {
