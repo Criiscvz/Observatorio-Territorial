@@ -6,15 +6,7 @@ export const serverRoutes: ServerRoute[] = [
     path: '',
     renderMode: RenderMode.Prerender,
   },
-  {
-    path: 'auth/**',
-    renderMode: RenderMode.Server,
-  },
-  {
-    path: 'perfil',
-    renderMode: RenderMode.Server,
-  },
-  // Rutas públicas con parámetros dinámicos - usar Server rendering
+  // Rutas públicas
   {
     path: 'publico/departamentos',
     renderMode: RenderMode.Prerender,
@@ -24,7 +16,16 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Server,
   },
   {
-    path: 'publico/departamentos/:id/datasets/:datasetId',
+    path: 'publico/datasets/:id',
+    renderMode: RenderMode.Server,
+  },
+  // Rutas de autenticación y perfil
+  {
+    path: 'auth/**',
+    renderMode: RenderMode.Server,
+  },
+  {
+    path: 'perfil',
     renderMode: RenderMode.Server,
   },
   // Rutas admin - siempre Server rendering (requieren auth)
