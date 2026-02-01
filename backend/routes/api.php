@@ -2,6 +2,7 @@
 
 use App\Presentation\Http\Controllers\Api\PublicController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\File;
 
 /*
 |--------------------------------------------------------------------------
@@ -11,6 +12,19 @@ use Illuminate\Support\Facades\Route;
 | Similar a la estructura de FastAPI/NestJS.
 |--------------------------------------------------------------------------
 */
+
+// ============ DOCUMENTACIÓN API (Swagger) ============
+Route::get('/documentation', function () {
+    $path = storage_path('api-docs/api-docs.json');
+    if (!File::exists($path)) {
+        return response()->json(['error' => 'Documentación no generada. Ejecuta: php artisan swagger:generate'], 404);
+    }
+    return response()->file($path, ['Content-Type' => 'application/json']);
+});
+
+Route::get('/docs', function () {
+    return view('swagger');
+});
 
 // ============ AUTH ============
 require __DIR__ . '/modules/auth.php';

@@ -1,0 +1,28 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Observatorio ULEAM API",
+        "description": "API para el Sistema de Gestión y Visualización de Datos Universitarios",
+        "contact": {
+            "name": "ULEAM",
+            "email": "soporte@uleam.edu.ec"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api",
+            "description": "Servidor de desarrollo"
+        }
+    ],
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Ingresa el token en formato: Bearer <token>",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    }
+}

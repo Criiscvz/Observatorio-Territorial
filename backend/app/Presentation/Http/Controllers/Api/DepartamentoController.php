@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Controllers\Api;
 
+use OpenApi\Annotations as OA;
 use App\Application\Departamento\DTOs\CreateDepartamentoDTO;
 use App\Application\Departamento\DTOs\UpdateDepartamentoDTO;
 use App\Application\Departamento\UseCases\CreateDepartamentoUseCase;

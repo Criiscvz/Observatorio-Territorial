@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Controllers\Api;
 
+use OpenApi\Annotations as OA;
 use App\Application\Dataset\DTOs\ConfirmImportDTO;
 use App\Application\Dataset\DTOs\UploadDatasetDTO;
 use App\Application\Dataset\UseCases\AnalyzeDatasetUseCase;
