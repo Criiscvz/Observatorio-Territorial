@@ -150,8 +150,10 @@
                 @if (saving()) {
                   <mat-spinner diameter="20"></mat-spinner>
                 } @else {
-                  <mat-icon>save</mat-icon>
-                  {{ 'common.buttons.save' | translate }}
+                  <ng-container>
+                    <mat-icon>save</mat-icon>
+                    {{ 'common.buttons.save' | translate }}
+                  </ng-container>
                 }
               </button>
             </div>
