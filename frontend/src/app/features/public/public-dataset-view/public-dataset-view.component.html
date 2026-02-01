@@ -23,7 +23,8 @@
         <div class="header-stats">
           <span class="stat">
             <mat-icon>grid_on</mat-icon>
-            {{ datasetInfo()?.total_registros | number }} {{ 'public.datasetView.stats.records' | translate }}
+            {{ datasetInfo()?.total_registros | number }}
+            {{ 'public.datasetView.stats.records' | translate }}
           </span>
           <span class="stat">
             <mat-icon>view_column</mat-icon>
@@ -42,43 +43,12 @@
           {{ 'public.datasetView.tabs.data' | translate }}
         </ng-template>
         <div class="tab-content">
-          <mat-card class="data-card">
-            <div class="table-container">
-              @if (visibleColumns().length > 0 && tableData().length > 0) {
-                <table mat-table [dataSource]="tableData()" class="data-table">
-                  @for (col of visibleColumns(); track col._uniqueId) {
-                    <ng-container [matColumnDef]="col._uniqueId">
-                      <th mat-header-cell *matHeaderCellDef>
-                        <div class="header-cell">
-                          <span>{{ col.nombre_original || col.nombre_columna }}</span>
-                          <span class="type-indicator" [class]="getTypeClass(col.tipo_dato)">
-                            {{ getTypeShort(col.tipo_dato) }}
-                          </span>
-                        </div>
-                      </th>
-                      <td mat-cell *matCellDef="let row">{{ row.data[col.nombre_columna] }}</td>
-                    </ng-container>
-                  }
-                  <tr mat-header-row *matHeaderRowDef="columnNames()"></tr>
-                  <tr mat-row *matRowDef="let row; columns: columnNames()"></tr>
-                </table>
-              } @else {
-                <div class="empty-state">
-                  <mat-icon>table_rows</mat-icon>
-                  <p>{{ 'public.datasetView.noData' | translate }}</p>
-                </div>
-              }
-            </div>
-            <mat-paginator
-              [length]="pagination().total"
-              [pageSize]="pagination().per_page"
-              [pageIndex]="pagination().current_page - 1"
-              [pageSizeOptions]="[25, 50, 100]"
-              (page)="onPageChange($event)"
-              showFirstLastButtons
-            >
-            </mat-paginator>
-          </mat-card>
+          <app-data-table
+            [columns]="visibleColumns()"
+            [data]="tableData()"
+            [pagination]="pagination()"
+            (pageChange)="onPageChange($event)"
+          />
         </div>
       </mat-tab>
 
@@ -92,75 +62,30 @@
           <!-- Chart Creator -->
           <mat-card class="chart-creator-card">
             <mat-card-header>
-              <mat-card-title>{{ 'public.datasetView.createChart.title' | translate }}</mat-card-title>
-              <mat-card-subtitle>{{ 'public.datasetView.createChart.subtitle' | translate }}</mat-card-subtitle>
+              <mat-card-title>{{
+                'public.datasetView.createChart.title' | translate
+              }}</mat-card-title>
+              <mat-card-subtitle>{{
+                'public.datasetView.createChart.subtitle' | translate
+              }}</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
               <!-- Chart Types Grid -->
-              <div class="chart-types-grid">
-                @for (type of chartTypes; track type.id) {
-                  <div
-                    class="chart-type-item"
-                    [class.selected]="selectedChartType()?.id === type.id"
-                    (click)="selectChartType(type)"
-                  >
-                    <mat-icon>{{ type.icon }}</mat-icon>
-                    <span class="type-name">{{ 'charts.types.' + type.id + '.name' | translate }}</span>
-                    <span class="type-desc">{{ 'charts.types.' + type.id + '.description' | translate }}</span>
-                  </div>
-                }
-              </div>
+              <app-chart-type-selector
+                [chartTypes]="chartTypes"
+                [selectedType]="selectedChartType()"
+                (typeSelected)="selectedChartType.set($event)"
+              />
 
               <mat-divider class="creator-divider"></mat-divider>
 
               <!-- Variable Selection -->
-              <div class="variable-selection">
-                <mat-form-field appearance="outline">
-                  <mat-label>{{ 'datasets.view.analysis.variableX' | translate }}</mat-label>
-                  <mat-select [(value)]="selectedVariableX">
-                    @for (v of compatibleVariablesX(); track v.id) {
-                      <mat-option [value]="v">
-                        {{ v.nombre_original }}
-                        <span class="option-type">({{ v.tipo_dato }})</span>
-                      </mat-option>
-                    }
-                  </mat-select>
-                  @if (compatibleVariablesX().length === 0) {
-                    <mat-hint class="hint-error">{{ getIncompatibilityMessage() }}</mat-hint>
-                  } @else {
-                    <mat-hint>{{ 'datasets.view.analysis.variablesAvailable' | translate: { count: compatibleVariablesX().length } }}</mat-hint>
-                  }
-                </mat-form-field>
-
-                @if (selectedChartType()?.bivariable) {
-                  <mat-form-field appearance="outline">
-                    <mat-label>{{ 'datasets.view.analysis.variableY' | translate }}</mat-label>
-                    <mat-select [(value)]="selectedVariableY">
-                      @for (v of compatibleVariablesY(); track v.id) {
-                        <mat-option [value]="v">
-                          {{ v.nombre_original }}
-                          <span class="option-type">({{ v.tipo_dato }})</span>
-                        </mat-option>
-                      }
-                    </mat-select>
-                    @if (selectedVariableX && compatibleVariablesY().length === 0) {
-                      <mat-hint class="hint-error">{{ getIncompatibilityMessage() }}</mat-hint>
-                    } @else if (compatibleVariablesY().length > 0) {
-                      <mat-hint>{{ 'datasets.view.analysis.variablesCompatible' | translate: { count: compatibleVariablesY().length } }}</mat-hint>
-                    }
-                  </mat-form-field>
-                }
-
-                <button
-                  mat-raised-button
-                  color="primary"
-                  [disabled]="!canAddChart()"
-                  (click)="addChart()"
-                >
-                  <mat-icon>add_chart</mat-icon>
-                  {{ 'datasets.view.analysis.addChart' | translate }}
-                </button>
-              </div>
+              <app-variable-selector
+                #variableSelector
+                [selectedChartType]="selectedChartType()"
+                [variables]="analysableVariables()"
+                (addChart)="addChart($event)"
+              />
             </mat-card-content>
           </mat-card>
 
@@ -179,46 +104,13 @@
               <mat-icon>delete_sweep</mat-icon>
               {{ 'public.datasetView.quickActions.clear' | translate }}
             </button>
-            <span class="charts-counter">{{ 'public.datasetView.chartsCount' | translate: { count: activeCharts().length } }}</span>
+            <span class="charts-counter">{{
+              'public.datasetView.chartsCount' | translate: { count: activeCharts().length }
+            }}</span>
           </div>
 
           <!-- Charts Grid -->
-          @if (activeCharts().length > 0) {
-            <div class="charts-grid">
-              @for (chart of activeCharts(); track chart.id) {
-                <mat-card class="chart-card">
-                  <button mat-icon-button class="remove-chart" (click)="removeChart(chart.id)">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                  <mat-card-header>
-                    <mat-icon mat-card-avatar>{{ chart.chartType.icon }}</mat-icon>
-                    <mat-card-title>{{ chart.title }}</mat-card-title>
-                    <mat-card-subtitle>{{ 'charts.types.' + chart.chartType.id + '.name' | translate }}</mat-card-subtitle>
-                  </mat-card-header>
-                  <mat-card-content>
-                    @if (chart.loading) {
-                      <div class="chart-loading">
-                        <mat-spinner diameter="32"></mat-spinner>
-                      </div>
-                    } @else if (chart.data) {
-                      <div echarts [options]="getChartOptions(chart)" class="chart-canvas"></div>
-                    } @else {
-                      <div class="chart-error">
-                        <mat-icon>error_outline</mat-icon>
-                        <p>{{ 'charts.errors.loadFailed' | translate }}</p>
-                      </div>
-                    }
-                  </mat-card-content>
-                </mat-card>
-              }
-            </div>
-          } @else {
-            <div class="no-charts">
-              <mat-icon>insert_chart</mat-icon>
-              <h3>{{ 'public.datasetView.noCharts.title' | translate }}</h3>
-              <p>{{ 'public.datasetView.noCharts.message' | translate }}</p>
-            </div>
-          }
+          <app-charts-grid [charts]="activeCharts()" (removeChart)="removeChart($event)" />
         </div>
       </mat-tab>
     </mat-tab-group>
