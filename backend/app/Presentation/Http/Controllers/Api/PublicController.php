@@ -3,10 +3,10 @@
 namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Departamento;
-use App\Models\Dataset;
-use App\Models\RegistroDato;
-use App\Models\VariableMetadato;
+use App\Infrastructure\Persistence\Eloquent\Models\DepartamentoModel as Departamento;
+use App\Infrastructure\Persistence\Eloquent\Models\DatasetModel as Dataset;
+use App\Infrastructure\Persistence\Eloquent\Models\RegistroDatoModel as RegistroDato;
+use App\Infrastructure\Persistence\Eloquent\Models\VariableMetadatoModel as VariableMetadato;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -24,8 +24,8 @@ class PublicController extends Controller
             ->withCount('datasets')
             ->with(['datasets' => function ($q) {
                 $q->select('id', 'nombre', 'departamento_id', 'total_registros', 'created_at')
-                  ->orderBy('created_at', 'desc')
-                  ->limit(5);
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5);
             }])
             ->orderBy('nombre')
             ->get();
@@ -42,11 +42,11 @@ class PublicController extends Controller
             ->where('id', $id)
             ->with(['datasets' => function ($q) {
                 $q->select('id', 'nombre', 'departamento_id', 'total_registros', 'created_at')
-                  ->with(['variablesMetadatos' => function ($q2) {
-                      $q2->select('id', 'dataset_id', 'nombre_original', 'nombre_columna', 'tipo_dato')
-                         ->where('es_visible', true);
-                  }])
-                  ->orderBy('created_at', 'desc');
+                    ->with(['variablesMetadatos' => function ($q2) {
+                        $q2->select('id', 'dataset_id', 'nombre_original', 'nombre_columna', 'tipo_dato')
+                            ->where('es_visible', true);
+                    }])
+                    ->orderBy('created_at', 'desc');
             }])
             ->first();
 
@@ -179,7 +179,8 @@ class PublicController extends Controller
 
         // Una categórica/texto, una numérica -> grouped bar
         if (($tipoX === 'CATEGORICO' && $tipoY === 'NUMERICO') ||
-            ($tipoX === 'NUMERICO' && $tipoY === 'CATEGORICO')) {
+            ($tipoX === 'NUMERICO' && $tipoY === 'CATEGORICO')
+        ) {
             return $this->getGroupedBarData($dataset->id, $varX, $varY, $limit);
         }
 
@@ -190,13 +191,15 @@ class PublicController extends Controller
 
         // FECHA + NUMERICO -> serie temporal
         if (($tipoX === 'FECHA' && $tipoY === 'NUMERICO') ||
-            ($tipoX === 'NUMERICO' && $tipoY === 'FECHA')) {
+            ($tipoX === 'NUMERICO' && $tipoY === 'FECHA')
+        ) {
             return $this->getTimeSeriesData($dataset->id, $varX, $varY, $limit);
         }
 
         // FECHA + CATEGORICO -> evolución temporal por categoría
         if (($tipoX === 'FECHA' && $tipoY === 'CATEGORICO') ||
-            ($tipoX === 'CATEGORICO' && $tipoY === 'FECHA')) {
+            ($tipoX === 'CATEGORICO' && $tipoY === 'FECHA')
+        ) {
             return $this->getStackedBarData($dataset->id, $varX, $varY, $limit);
         }
 

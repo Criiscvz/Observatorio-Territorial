@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Services;
+namespace App\Infrastructure\Services;
 
-use App\Models\Dataset;
-use App\Models\RegistroDato;
-use App\Models\VariableMetadato;
+use App\Infrastructure\Persistence\Eloquent\Models\DatasetModel as Dataset;
+use App\Infrastructure\Persistence\Eloquent\Models\RegistroDatoModel as RegistroDato;
+use App\Infrastructure\Persistence\Eloquent\Models\VariableMetadatoModel as VariableMetadato;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
@@ -29,7 +29,7 @@ class ExcelImportService
     public function analizar(Dataset $dataset): array
     {
         $path = storage_path('app/datasets/' . $dataset->nombre_archivo);
-        
+
         if (!file_exists($path)) {
             throw new \Exception('Archivo no encontrado: ' . $dataset->nombre_archivo);
         }
@@ -42,7 +42,7 @@ class ExcelImportService
         // Obtener encabezados (primera fila)
         $headers = [];
         $headerRow = $worksheet->rangeToArray('A1:' . $highestColumn . '1', null, true, true, true)[1];
-        
+
         foreach ($headerRow as $col => $value) {
             if ($value !== null && $value !== '') {
                 $headers[$col] = $this->normalizarNombreColumna($value);
@@ -56,7 +56,7 @@ class ExcelImportService
         // Leer datos de muestra para análisis
         $sampleRows = min($this->sampleSize, $highestRow - 1);
         $endRow = $sampleRows + 1;
-        
+
         $dataRange = $worksheet->rangeToArray('A2:' . $highestColumn . $endRow, null, true, true, true);
 
         // Analizar cada columna
@@ -72,7 +72,7 @@ class ExcelImportService
             }
 
             $tipoDetectado = $this->detectarTipo($valores);
-            
+
             // Obtener valores únicos para categóricos
             $opciones = null;
             if ($tipoDetectado === 'CATEGORICO') {
@@ -101,7 +101,7 @@ class ExcelImportService
 
         foreach ($dataRange as $row) {
             if ($rowIndex >= $previewRows) break;
-            
+
             $fila = [];
             foreach ($headers as $col => $nombreColumna) {
                 $fila[$nombreColumna] = $row[$col] ?? null;
@@ -130,7 +130,7 @@ class ExcelImportService
 
         // Obtener encabezados
         $headerRow = $worksheet->rangeToArray('A1:' . $highestColumn . '1', null, true, true, true)[1];
-        
+
         $headers = [];
         foreach ($headerRow as $col => $value) {
             if ($value !== null && $value !== '') {
@@ -175,14 +175,14 @@ class ExcelImportService
 
             for ($row = 2; $row <= $highestRow; $row++) {
                 $rowData = $worksheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, null, true, true, true)[$row];
-                
+
                 $registro = [];
                 foreach ($headers as $col => $nombreColumna) {
                     if (!isset($columnasMap[$nombreColumna])) continue;
-                    
+
                     $valor = $rowData[$col] ?? null;
                     $tipoDato = $columnasMap[$nombreColumna]['tipo_dato'];
-                    
+
                     // Convertir valor según tipo
                     $registro[$nombreColumna] = $this->convertirValor($valor, $tipoDato);
                 }
@@ -227,7 +227,7 @@ class ExcelImportService
     protected function detectarTipo(array $valores): string
     {
         $valoresNoVacios = array_filter($valores, fn($v) => $v !== null && $v !== '');
-        
+
         if (empty($valoresNoVacios)) {
             return 'TEXTO';
         }
@@ -344,7 +344,7 @@ class ExcelImportService
     {
         // Remover caracteres especiales y normalizar
         $normalizado = Str::slug($nombre, '_');
-        
+
         // Asegurar que no empiece con número
         if (preg_match('/^\d/', $normalizado)) {
             $normalizado = 'col_' . $normalizado;

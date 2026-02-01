@@ -41,6 +41,10 @@
     "editor.tabSize": 4
   },
   "intelephense.environment.phpVersion": "8.2.0",
+  "intelephense.environment.includePaths": ["backend/vendor", "backend"],
+  "intelephense.diagnostics.undefinedTypes": false,
+  "intelephense.diagnostics.undefinedFunctions": false,
+  "intelephense.diagnostics.undefinedMethods": false,
 
   // Blade
   "[blade]": {
