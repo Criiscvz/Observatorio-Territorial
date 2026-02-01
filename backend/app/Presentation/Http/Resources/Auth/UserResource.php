@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Presentation\Http\Resources;
+namespace App\Presentation\Http\Resources\Auth;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -23,7 +23,9 @@ class UserResource extends JsonResource
                 'avatar' => $this->perfil->avatar,
                 'bio' => $this->perfil->bio,
             ]),
-            'departamentos' => $this->whenLoaded('departamentos', fn() => 
+            'departamentos' => $this->whenLoaded(
+                'departamentos',
+                fn() =>
                 $this->departamentos->map(fn($d) => [
                     'id' => $d->id,
                     'nombre' => $d->nombre,
