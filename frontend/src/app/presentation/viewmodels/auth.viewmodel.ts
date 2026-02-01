@@ -1,8 +1,8 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { LoginUseCase, LogoutUseCase, RegisterUseCase } from '../../core/domain/usecases/auth';
-import { AuthRepository } from '../../core/domain/repositories';
-import { LoginCredentials, RegisterData, UserEntity } from '../../core/domain/entities';
+import { LoginCredentials, RegisterData, UserEntity } from '@core/domain/entities';
+import { AuthRepository } from '@core/domain/repositories';
+import { LoginUseCase, LogoutUseCase, RegisterUseCase } from '@core/domain/usecases/auth';
 
 @Injectable({ providedIn: 'root' })
 export class AuthViewModel {

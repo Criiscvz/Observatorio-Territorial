@@ -6,9 +6,9 @@ import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
-import { Dataset, Departamento } from '../../core/models';
-import { AuthService } from '../../core/services/auth.service';
-import { DepartamentoService } from '../../core/services/departamento.service';
+import { Dataset, Departamento } from '@core/models';
+import { AuthService } from '@core/services/auth.service';
+import { DepartamentoService } from '@core/services/departamento.service';
 
 interface StatCard {
   title: string;
@@ -30,7 +30,7 @@ interface StatCard {
     MatRippleModule,
   ],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+  styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
   private readonly deptoService = inject(DepartamentoService);

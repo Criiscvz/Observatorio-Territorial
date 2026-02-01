@@ -1,10 +1,10 @@
-import { Directive, Input, TemplateRef, ViewContainerRef, inject, effect } from '@angular/core';
-import { AuthService } from '../../core/services/auth.service';
-import { UserRole } from '../../core/models';
+import { Directive, Input, TemplateRef, ViewContainerRef, effect, inject } from '@angular/core';
+import { UserRole } from '@core/models';
+import { AuthService } from '@core/services/auth.service';
 
 /**
  * Directiva estructural que muestra/oculta elementos según el rol del usuario.
- * 
+ *
  * Uso:
  * ```html
  * <button *hasRole="'ADMIN'">Solo Admin</button>
@@ -13,13 +13,13 @@ import { UserRole } from '../../core/models';
  */
 @Directive({
   selector: '[hasRole]',
-  standalone: true
+  standalone: true,
 })
 export class HasRoleDirective {
   private readonly authService = inject(AuthService);
   private readonly templateRef = inject(TemplateRef<any>);
   private readonly viewContainer = inject(ViewContainerRef);
-  
+
   private hasView = false;
   private roles: UserRole[] = [];
 
@@ -53,7 +53,7 @@ export class HasRoleDirective {
 
 /**
  * Directiva que muestra elementos solo para usuarios admin.
- * 
+ *
  * Uso:
  * ```html
  * <button *isAdmin>Solo Admin</button>
@@ -61,13 +61,13 @@ export class HasRoleDirective {
  */
 @Directive({
   selector: '[isAdmin]',
-  standalone: true
+  standalone: true,
 })
 export class IsAdminDirective {
   private readonly authService = inject(AuthService);
   private readonly templateRef = inject(TemplateRef<any>);
   private readonly viewContainer = inject(ViewContainerRef);
-  
+
   private hasView = false;
 
   constructor() {
@@ -90,7 +90,7 @@ export class IsAdminDirective {
 
 /**
  * Directiva que muestra elementos solo para usuarios autenticados.
- * 
+ *
  * Uso:
  * ```html
  * <div *isAuthenticated>Solo usuarios autenticados</div>
@@ -98,13 +98,13 @@ export class IsAdminDirective {
  */
 @Directive({
   selector: '[isAuthenticated]',
-  standalone: true
+  standalone: true,
 })
 export class IsAuthenticatedDirective {
   private readonly authService = inject(AuthService);
   private readonly templateRef = inject(TemplateRef<any>);
   private readonly viewContainer = inject(ViewContainerRef);
-  
+
   private hasView = false;
 
   constructor() {

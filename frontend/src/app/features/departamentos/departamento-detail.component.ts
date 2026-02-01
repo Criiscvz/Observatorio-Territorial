@@ -5,8 +5,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Dataset, Departamento } from '../../core/models';
-import { DepartamentoService } from '../../core/services/departamento.service';
+import { Dataset, Departamento } from '@core/models';
+import { DepartamentoService } from '@core/services/departamento.service';
 
 @Component({
   selector: 'app-departamento-detail',
@@ -20,7 +20,7 @@ import { DepartamentoService } from '../../core/services/departamento.service';
     MatProgressSpinnerModule,
   ],
   templateUrl: './departamento-detail.component.html',
-  styleUrl: './departamento-detail.component.scss'
+  styleUrl: './departamento-detail.component.scss',
 })
 export class DepartamentoDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);

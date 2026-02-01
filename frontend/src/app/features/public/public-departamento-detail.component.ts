@@ -6,8 +6,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Dataset, Departamento } from '../../core/models';
-import { DepartamentoService } from '../../core/services/departamento.service';
+import { Dataset, Departamento } from '@core/models';
+import { DepartamentoService } from '@core/services/departamento.service';
 
 @Component({
   selector: 'app-public-departamento-detail',
@@ -22,7 +22,7 @@ import { DepartamentoService } from '../../core/services/departamento.service';
     MatChipsModule,
   ],
   templateUrl: './public-departamento-detail.component.html',
-  styleUrl: './public-departamento-detail.component.scss'
+  styleUrl: './public-departamento-detail.component.scss',
 })
 export class PublicDepartamentoDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);

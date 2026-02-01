@@ -9,8 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
-import { Departamento } from '../../core/models';
-import { DepartamentoService } from '../../core/services/departamento.service';
+import { Departamento } from '@core/models';
+import { DepartamentoService } from '@core/services/departamento.service';
 
 @Component({
   selector: 'app-public-departamentos',
@@ -28,7 +28,7 @@ import { DepartamentoService } from '../../core/services/departamento.service';
     MatChipsModule,
   ],
   templateUrl: './public-departamentos.component.html',
-  styleUrl: './public-departamentos.component.scss'
+  styleUrl: './public-departamentos.component.scss',
 })
 export class PublicDepartamentosComponent implements OnInit {
   private deptoService = inject(DepartamentoService);

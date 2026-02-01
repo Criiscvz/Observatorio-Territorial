@@ -1,22 +1,16 @@
-import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { ThemeService } from '../../core/services/theme.service';
+import { RouterLink, RouterOutlet } from '@angular/router';
+import { ThemeService } from '@core/services/theme.service';
 
 @Component({
   selector: 'app-public-layout',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    RouterOutlet,
-    MatButtonModule,
-    MatIconModule,
-  ],
+  imports: [CommonModule, RouterLink, RouterOutlet, MatButtonModule, MatIconModule],
   templateUrl: './public-layout.component.html',
-  styleUrl: './public-layout.component.scss'
+  styleUrl: './public-layout.component.scss',
 })
 export class PublicLayoutComponent {
   readonly themeService = inject(ThemeService);

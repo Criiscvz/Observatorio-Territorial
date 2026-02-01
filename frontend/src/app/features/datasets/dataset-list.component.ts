@@ -1,15 +1,15 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatTableModule } from '@angular/material/table';
+import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { DatasetService } from '../../core/services/dataset.service';
-import { Dataset } from '../../core/models';
+import { MatTableModule } from '@angular/material/table';
+import { RouterLink } from '@angular/router';
+import { Dataset } from '@core/models';
+import { DatasetService } from '@core/services/dataset.service';
 
 @Component({
   selector: 'app-dataset-list',
@@ -26,7 +26,7 @@ import { Dataset } from '../../core/models';
     MatProgressSpinnerModule,
   ],
   templateUrl: './dataset-list.component.html',
-  styleUrl: './dataset-list.component.scss'
+  styleUrl: './dataset-list.component.scss',
 })
 export class DatasetListComponent implements OnInit {
   private datasetService = inject(DatasetService);
@@ -50,22 +50,25 @@ export class DatasetListComponent implements OnInit {
       error: () => {
         this.datasets.set([]);
         this.loading.set(false);
-      }
+      },
     });
   }
 
   getEstadoColor(estado: string): 'primary' | 'accent' | 'warn' {
     switch (estado) {
-      case 'COMPLETADO': return 'primary';
-      case 'PROCESANDO': return 'accent';
-      default: return 'warn';
+      case 'COMPLETADO':
+        return 'primary';
+      case 'PROCESANDO':
+        return 'accent';
+      default:
+        return 'warn';
     }
   }
 
   deleteDataset(dataset: Dataset): void {
     if (confirm(`¿Eliminar el dataset "${dataset.nombre}"?`)) {
       this.datasetService.delete(dataset.id).subscribe({
-        next: () => this.loadDatasets()
+        next: () => this.loadDatasets(),
       });
     }
   }

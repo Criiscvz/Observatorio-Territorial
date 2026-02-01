@@ -1,22 +1,28 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatStepperModule } from '@angular/material/stepper';
+import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
-import { DatasetService } from '../../core/services/dataset.service';
-import { DepartamentoService } from '../../core/services/departamento.service';
-import { Departamento, ColumnaAnalizada } from '../../core/models';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ColumnaAnalizada, Departamento } from '@core/models';
+import { DatasetService } from '@core/services/dataset.service';
+import { DepartamentoService } from '@core/services/departamento.service';
 
 interface ColumnaExtendida extends ColumnaAnalizada {
   excluida?: boolean;
@@ -45,7 +51,7 @@ interface ColumnaExtendida extends ColumnaAnalizada {
     MatExpansionModule,
   ],
   templateUrl: './dataset-upload.component.html',
-  styleUrl: './dataset-upload.component.scss'
+  styleUrl: './dataset-upload.component.scss',
 })
 export class DatasetUploadComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -72,9 +78,7 @@ export class DatasetUploadComponent implements OnInit {
   importedCount = signal(0);
 
   // Columnas activas (no excluidas)
-  columnasActivas = computed(() => 
-    this.columnas().filter(c => !c.excluida)
-  );
+  columnasActivas = computed(() => this.columnas().filter((c) => !c.excluida));
 
   ngOnInit(): void {
     this.loadDepartamentos();
@@ -88,7 +92,7 @@ export class DatasetUploadComponent implements OnInit {
 
   loadDepartamentos(): void {
     this.deptoService.getAll().subscribe({
-      next: (departamentos) => this.departamentos.set(departamentos || [])
+      next: (departamentos) => this.departamentos.set(departamentos || []),
     });
   }
 
@@ -134,35 +138,37 @@ export class DatasetUploadComponent implements OnInit {
 
     const { departamento_id, nombre, descripcion } = this.uploadForm.value;
 
-    this.datasetService.create(departamento_id, nombre, descripcion, this.selectedFile()!).subscribe({
-      next: (dataset) => {
-        this.datasetId.set(dataset.id);
-        
-        // Analizar archivo
-        this.datasetService.analizar(dataset.id).subscribe({
-          next: (analisis) => {
-            // Agregar propiedades extendidas
-            const columnasExtendidas = analisis.columnas.map(c => ({
-              ...c,
-              excluida: false,
-              nombre_personalizado: c.nombre_columna,
-            }));
-            this.columnas.set(columnasExtendidas);
-            this.totalFilas.set(analisis.total_filas);
-            this.uploading.set(false);
-            stepper.next();
-          },
-          error: (err) => {
-            this.uploading.set(false);
-            this.error.set(err.error?.message || 'Error al analizar el archivo');
-          }
-        });
-      },
-      error: (err) => {
-        this.uploading.set(false);
-        this.error.set(err.error?.message || 'Error al subir el archivo');
-      }
-    });
+    this.datasetService
+      .create(departamento_id, nombre, descripcion, this.selectedFile()!)
+      .subscribe({
+        next: (dataset) => {
+          this.datasetId.set(dataset.id);
+
+          // Analizar archivo
+          this.datasetService.analizar(dataset.id).subscribe({
+            next: (analisis) => {
+              // Agregar propiedades extendidas
+              const columnasExtendidas = analisis.columnas.map((c) => ({
+                ...c,
+                excluida: false,
+                nombre_personalizado: c.nombre_columna,
+              }));
+              this.columnas.set(columnasExtendidas);
+              this.totalFilas.set(analisis.total_filas);
+              this.uploading.set(false);
+              stepper.next();
+            },
+            error: (err) => {
+              this.uploading.set(false);
+              this.error.set(err.error?.message || 'Error al analizar el archivo');
+            },
+          });
+        },
+        error: (err) => {
+          this.uploading.set(false);
+          this.error.set(err.error?.message || 'Error al subir el archivo');
+        },
+      });
   }
 
   toggleExcluir(columna: ColumnaExtendida): void {
@@ -175,7 +181,7 @@ export class DatasetUploadComponent implements OnInit {
     if (!this.datasetId()) return;
 
     const columnasAImportar = this.columnasActivas();
-    
+
     if (columnasAImportar.length === 0) {
       this.error.set('Debes incluir al menos una columna');
       return;
@@ -193,16 +199,20 @@ export class DatasetUploadComponent implements OnInit {
       error: (err) => {
         this.processing.set(false);
         this.error.set(err.error?.message || 'Error al importar');
-      }
+      },
     });
   }
 
   getTipoClass(tipo: string): string {
     switch (tipo) {
-      case 'NUMERICO': return 'type-badge type-numeric';
-      case 'CATEGORICO': return 'type-badge type-categoric';
-      case 'FECHA': return 'type-badge type-date';
-      default: return 'type-badge type-text';
+      case 'NUMERICO':
+        return 'type-badge type-numeric';
+      case 'CATEGORICO':
+        return 'type-badge type-categoric';
+      case 'FECHA':
+        return 'type-badge type-date';
+      default:
+        return 'type-badge type-text';
     }
   }
 }

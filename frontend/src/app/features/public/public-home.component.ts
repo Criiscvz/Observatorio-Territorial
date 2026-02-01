@@ -5,9 +5,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
-import { Departamento } from '../../core/models';
-import { DepartamentoService } from '../../core/services/departamento.service';
-import { ThemeService } from '../../core/services/theme.service';
+import { Departamento } from '@core/models';
+import { DepartamentoService } from '@core/services/departamento.service';
+import { ThemeService } from '@core/services/theme.service';
 
 @Component({
   selector: 'app-public-home',

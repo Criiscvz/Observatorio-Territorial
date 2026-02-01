@@ -10,7 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { DepartamentoService } from '../../core/services/departamento.service';
+import { DepartamentoService } from '@core/services/departamento.service';
 
 @Component({
   selector: 'app-departamento-form',
@@ -29,7 +29,7 @@ import { DepartamentoService } from '../../core/services/departamento.service';
     MatSelectModule,
   ],
   templateUrl: './departamento-form.component.html',
-  styleUrl: './departamento-form.component.scss'
+  styleUrl: './departamento-form.component.scss',
 })
 export class DepartamentoFormComponent implements OnInit {
   private fb = inject(FormBuilder);
