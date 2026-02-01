@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,7 +32,8 @@ import { ThemeService } from '@core/services/theme.service';
   styleUrl: './public-home.component.scss',
 })
 export class PublicHomeComponent implements OnInit {
-  private deptoService = inject(DepartamentoService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly deptoService = inject(DepartamentoService);
   readonly themeService = inject(ThemeService);
   readonly languageService = inject(LanguageService);
 
@@ -40,7 +41,7 @@ export class PublicHomeComponent implements OnInit {
   loading = signal(true);
   currentYear = new Date().getFullYear();
 
-  private deptoColors = [
+  private readonly deptoColors = [
     '#6366F1',
     '#EC4899',
     '#14B8A6',
@@ -65,7 +66,13 @@ export class PublicHomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadDepartamentos();
+    // Solo cargar datos en el navegador, no durante SSR
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadDepartamentos();
+    } else {
+      // Durante SSR, simplemente marcar como no cargando
+      this.loading.set(false);
+    }
   }
 
   loadDepartamentos(): void {

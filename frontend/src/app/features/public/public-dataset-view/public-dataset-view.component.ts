@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, computed, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -71,9 +71,10 @@ interface ColumnWithUniqueId extends VariableMetadato {
   styleUrl: './public-dataset-view.component.scss',
 })
 export class PublicDatasetViewComponent implements OnInit {
-  private route = inject(ActivatedRoute);
-  private dashboardService = inject(DashboardService);
-  private chartTheme = inject(ChartThemeService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly route = inject(ActivatedRoute);
+  private readonly dashboardService = inject(DashboardService);
+  private readonly chartTheme = inject(ChartThemeService);
 
   readonly chartTypes: ChartType[] = [
     // Univariables
@@ -359,8 +360,12 @@ export class PublicDatasetViewComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.datasetId.set(this.route.snapshot.params['id']);
-    this.loadData();
+    if (isPlatformBrowser(this.platformId)) {
+      this.datasetId.set(this.route.snapshot.params['id']);
+      this.loadData();
+    } else {
+      this.loading.set(false);
+    }
   }
 
   loadData(page = 1): void {

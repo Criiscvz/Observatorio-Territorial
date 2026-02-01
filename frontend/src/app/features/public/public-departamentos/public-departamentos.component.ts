@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -33,14 +33,15 @@ import { DepartamentoService } from '@core/services/departamento.service';
   styleUrl: './public-departamentos.component.scss',
 })
 export class PublicDepartamentosComponent implements OnInit {
-  private deptoService = inject(DepartamentoService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly deptoService = inject(DepartamentoService);
 
   departamentos = signal<Departamento[]>([]);
   filteredDepartamentos = signal<Departamento[]>([]);
   loading = signal(true);
   searchTerm = '';
 
-  private deptoGradients = [
+  private readonly deptoGradients = [
     'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
     'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)',
     'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
@@ -52,7 +53,11 @@ export class PublicDepartamentosComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.loadDepartamentos();
+    if (isPlatformBrowser(this.platformId)) {
+      this.loadDepartamentos();
+    } else {
+      this.loading.set(false);
+    }
   }
 
   loadDepartamentos(): void {
