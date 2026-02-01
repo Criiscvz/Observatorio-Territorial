@@ -73,7 +73,7 @@ class Departamento
 
     public function toArray(): array
     {
-        return [
+        $data = [
             'id' => $this->id,
             'nombre' => $this->nombre,
             'codigo_interno' => $this->codigoInterno,
@@ -83,5 +83,12 @@ class Departamento
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),
         ];
+
+        // Incluir datasets si están cargados
+        if ($this->datasets !== null) {
+            $data['datasets'] = $this->datasets;
+        }
+
+        return $data;
     }
 }

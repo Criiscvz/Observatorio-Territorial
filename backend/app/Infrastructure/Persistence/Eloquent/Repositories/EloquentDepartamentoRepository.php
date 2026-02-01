@@ -26,7 +26,7 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
     {
         $model = $this->model
             ->where('publico', true)
-            ->with('datasets')
+            ->with(['datasets' => fn($q) => $q->where('estado', 'COMPLETADO')])
             ->find($id);
 
         return $model ? $this->toDomain($model) : null;
@@ -53,7 +53,7 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
     {
         $models = $this->model
             ->publicos()
-            ->with('datasets')
+            ->with(['datasets' => fn($q) => $q->where('estado', 'COMPLETADO')])
             ->get();
 
         return $models->map(fn($m) => $this->toDomain($m));
