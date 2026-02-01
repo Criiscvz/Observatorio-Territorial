@@ -1,102 +1,43 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/guards/auth.guard';
-import { adminGuard } from './core/guards/role.guard';
+import { authGuard } from './core/guards/auth.guard';
+import { ADMIN_ROUTES, AUTH_ROUTES, PUBLIC_ROUTES } from './routes';
 
 export const routes: Routes = [
-  // Landing page pública (Home)
+  // Landing page (Home)
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./features/public/public-home.component').then(m => m.PublicHomeComponent)
+    loadComponent: () =>
+      import('./features/public/public-home.component').then((m) => m.PublicHomeComponent),
+    title: 'Inicio - Observatorio',
   },
 
-  // Rutas públicas con layout público
+  // Public routes with public layout
   {
     path: 'publico',
-    loadComponent: () => import('./features/public/public-layout.component').then(m => m.PublicLayoutComponent),
-    children: [
-      {
-        path: 'departamentos',
-        loadComponent: () => import('./features/public/public-departamentos.component').then(m => m.PublicDepartamentosComponent)
-      },
-      {
-        path: 'departamentos/:id',
-        loadComponent: () => import('./features/public/public-departamento-detail.component').then(m => m.PublicDepartamentoDetailComponent)
-      },
-      {
-        path: 'datasets/:id',
-        loadComponent: () => import('./features/public/public-dataset-view.component').then(m => m.PublicDatasetViewComponent)
-      },
-      { path: '', redirectTo: 'departamentos', pathMatch: 'full' }
-    ]
+    loadComponent: () =>
+      import('./features/public/public-layout.component').then((m) => m.PublicLayoutComponent),
+    children: PUBLIC_ROUTES,
   },
 
-  // Rutas de autenticación
+  // Authentication routes
   {
     path: 'auth',
-    children: [
-      {
-        path: 'login',
-        loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent),
-        canActivate: [guestGuard]
-      },
-      {
-        path: 'register',
-        loadComponent: () => import('./features/auth/register.component').then(m => m.RegisterComponent),
-        canActivate: [guestGuard]
-      },
-      { path: '', redirectTo: 'login', pathMatch: 'full' }
-    ]
+    children: AUTH_ROUTES,
   },
 
-  // Rutas protegidas con layout principal (Panel de administración)
+  // Protected admin routes with main layout
   {
     path: 'admin',
-    loadComponent: () => import('./shared/components/layout/main-layout.component').then(m => m.MainLayoutComponent),
+    loadComponent: () =>
+      import('./shared/components/layout/main-layout.component').then((m) => m.MainLayoutComponent),
     canActivate: [authGuard],
-    children: [
-      // Dashboard - ruta por defecto del admin
-      {
-        path: '',
-        redirectTo: 'dashboard',
-        pathMatch: 'full'
-      },
-      {
-        path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
-      },
-      // Departamentos
-      {
-        path: 'departamentos/nuevo',
-        loadComponent: () => import('./features/departamentos/departamento-form.component').then(m => m.DepartamentoFormComponent),
-        canActivate: [adminGuard]
-      },
-      {
-        path: 'departamentos/:id/editar',
-        loadComponent: () => import('./features/departamentos/departamento-form.component').then(m => m.DepartamentoFormComponent),
-        canActivate: [adminGuard]
-      },
-      {
-        path: 'departamentos/:id',
-        loadComponent: () => import('./features/departamentos/departamento-detail.component').then(m => m.DepartamentoDetailComponent)
-      },
-      // Datasets
-      {
-        path: 'datasets/nuevo',
-        loadComponent: () => import('./features/datasets/dataset-upload.component').then(m => m.DatasetUploadComponent),
-        canActivate: [adminGuard]
-      },
-      {
-        path: 'datasets/:id',
-        loadComponent: () => import('./features/datasets/dataset-view.component').then(m => m.DatasetViewComponent)
-      },
-      {
-        path: 'datasets',
-        loadComponent: () => import('./features/datasets/dataset-list.component').then(m => m.DatasetListComponent)
-      }
-    ]
+    children: ADMIN_ROUTES,
   },
 
-  // Fallback
-  { path: '**', redirectTo: '' }
+  // Fallback - redirect to home
+  {
+    path: '**',
+    redirectTo: '',
+  },
 ];
