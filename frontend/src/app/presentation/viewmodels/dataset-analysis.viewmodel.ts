@@ -10,25 +10,8 @@ import {
 import { DatasetRepository } from '@core/domain/repositories';
 import { GetBivariableStatsUseCase, GetUnivariableStatsUseCase } from '@core/domain/usecases/chart';
 import { GetDatasetDataUseCase } from '@core/domain/usecases/dataset';
-
-export interface ActiveChart {
-  id: string;
-  type: 'univariable' | 'bivariable';
-  chartType: ChartType;
-  variableX: VariableMetadatoEntity;
-  variableY?: VariableMetadatoEntity;
-  data: ChartEntity | BivariableResponse;
-  isLoading: boolean;
-}
-
-export interface ChartTypeOption {
-  id: ChartType;
-  name: string;
-  icon: string;
-  description: string;
-  forTypes: string[];
-  bivariable: boolean;
-}
+import { ActiveChart } from './active-chart.interface';
+import { ChartTypeOption } from './chart-type-option.interface';
 
 @Injectable({ providedIn: 'root' })
 export class DatasetAnalysisViewModel {

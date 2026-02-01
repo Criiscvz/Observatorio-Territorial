@@ -1,0 +1,15 @@
+import { DepartamentoConRol } from './departamento-con-rol.interface';
+import { Perfil } from './perfil.interface';
+import { UserRole } from './user-role.type';
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  rol: UserRole;
+  email_verified_at?: string;
+  created_at?: string;
+  updated_at?: string;
+  perfil?: Perfil | null;
+  departamentos?: DepartamentoConRol[];
+}

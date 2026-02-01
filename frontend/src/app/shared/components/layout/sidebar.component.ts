@@ -7,7 +7,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
-import { IsAdminDirective } from '../../directives/has-role.directive';
+import { IsAdminDirective } from '../../directives/is-admin.directive';
 
 interface NavItem {
   label: string;
