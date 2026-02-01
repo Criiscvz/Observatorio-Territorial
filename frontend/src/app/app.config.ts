@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideTranslateService } from '@ngx-translate/core';
-import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { provideTranslateBrowserLoader } from './core/loaders/translate-browser.loader';
 import { provideEchartsCore } from 'ngx-echarts';
 import * as echarts from 'echarts/core';
 import { 
@@ -77,8 +77,8 @@ export const appConfig: ApplicationConfig = {
     // Configuración de ngx-translate para internacionalización
     provideTranslateService({
       defaultLanguage: 'es',
-      loader: provideTranslateHttpLoader({
-        prefix: './assets/i18n/',
+      loader: provideTranslateBrowserLoader({
+        prefix: '/assets/i18n/',
         suffix: '.json'
       })
     }),
