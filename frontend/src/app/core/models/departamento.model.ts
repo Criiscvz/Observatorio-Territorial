@@ -23,6 +23,7 @@ export interface Dataset {
   created_at: string;
   updated_at: string;
   variables_metadatos?: VariableMetadato[];
+  variables?: VariableMetadato[]; // Alias para variables_metadatos usado en vistas públicas
   departamento?: Departamento;
 }
 

@@ -31,6 +31,10 @@ export class DepartamentoService {
 
   // Público (sin auth)
   getPublicos(): Observable<Departamento[]> {
-    return this.api.get<Departamento[]>('/departamentos/publicos');
+    return this.api.get<Departamento[]>('/publico/departamentos');
+  }
+
+  getPublicById(id: string): Observable<Departamento> {
+    return this.api.get<Departamento>(`/publico/departamentos/${id}`);
   }
 }

@@ -24,6 +24,8 @@ import { EChartsOption } from 'echarts';
 
 import { DatasetService } from '../../core/services/dataset.service';
 import { DashboardService, BivariableResponse } from '../../core/services/dashboard.service';
+import { ChartThemeService } from '../../core/services/chart-theme.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { VariableMetadato, ChartData } from '../../core/models';
 
 interface ChartType {
@@ -43,6 +45,7 @@ interface ActiveChart {
   variableY?: VariableMetadato;
   data: ChartData | BivariableResponse | null;
   loading: boolean;
+  error?: string | null;
   filters?: {
     min?: number;
     max?: number;
@@ -88,14 +91,14 @@ interface ColumnWithUniqueId extends VariableMetadato {
         </div>
       } @else if (datasetInfo()) {
         <!-- Header -->
-        <div class="flex justify-between items-start bg-white rounded-lg shadow p-4">
+        <div class="dataset-header">
           <div class="flex items-center gap-4">
             <a mat-icon-button [routerLink]="['/departamentos', departamentoId()]" matTooltip="Volver">
               <mat-icon>arrow_back</mat-icon>
             </a>
             <div>
-              <h1 class="text-2xl font-bold text-gray-800">{{ datasetInfo()?.nombre }}</h1>
-              <p class="text-gray-500">{{ datasetInfo()?.total_registros | number }} registros</p>
+              <h1 class="dataset-title">{{ datasetInfo()?.nombre }}</h1>
+              <p class="dataset-subtitle">{{ datasetInfo()?.total_registros | number }} registros</p>
             </div>
           </div>
         </div>
@@ -115,7 +118,7 @@ interface ColumnWithUniqueId extends VariableMetadato {
                     @if (visibleColumns().length > 0 && tableData().length > 0) {
                       <table mat-table [dataSource]="tableData()" class="w-full">
                         <ng-container *ngFor="let col of visibleColumns()" [matColumnDef]="col._uniqueId">
-                          <th mat-header-cell *matHeaderCellDef class="!bg-gray-50">
+                          <th mat-header-cell *matHeaderCellDef>
                             <div class="flex items-center gap-1">
                               <span>{{ col.nombre_original || col.nombre_columna }}</span>
                             </div>
@@ -126,9 +129,9 @@ interface ColumnWithUniqueId extends VariableMetadato {
                         <tr mat-row *matRowDef="let row; columns: columnNames();"></tr>
                       </table>
                     } @else if (!loading()) {
-                      <div class="text-center py-8 text-gray-500">
-                        <mat-icon class="text-4xl">table_rows</mat-icon>
-                        <p class="mt-2">No hay datos disponibles</p>
+                      <div class="empty-state">
+                        <mat-icon>table_rows</mat-icon>
+                        <p>No hay datos disponibles</p>
                       </div>
                     }
                   </div>
@@ -209,21 +212,18 @@ interface ColumnWithUniqueId extends VariableMetadato {
                 <mat-card-content class="!pt-4">
                   <!-- Selector de tipo de gráfico visual -->
                   <div class="mb-4">
-                    <p class="text-sm font-medium text-gray-700 mb-3">Tipo de Gráfico:</p>
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                    <p class="section-label">Tipo de Gráfico:</p>
+                    <div class="chart-type-grid">
                       @for (type of chartTypes; track type.id) {
                         <div 
-                          class="p-3 rounded-lg border-2 cursor-pointer transition-all text-center"
-                          [class.border-red-500]="selectedChartType()?.id === type.id"
-                          [class.bg-red-50]="selectedChartType()?.id === type.id"
-                          [class.border-gray-200]="selectedChartType()?.id !== type.id"
-                          [class.hover:border-red-300]="selectedChartType()?.id !== type.id"
+                          class="chart-type-card"
+                          [class.selected]="selectedChartType()?.id === type.id"
                           (click)="selectChartType(type)">
-                          <mat-icon class="text-3xl" [class.text-red-500]="selectedChartType()?.id === type.id">
+                          <mat-icon class="chart-type-icon" [class.selected]="selectedChartType()?.id === type.id">
                             {{ type.icon }}
                           </mat-icon>
-                          <p class="font-medium text-sm mt-1">{{ type.name }}</p>
-                          <p class="text-xs text-gray-500">{{ type.description }}</p>
+                          <p class="chart-type-name">{{ type.name }}</p>
+                          <p class="chart-type-desc">{{ type.description }}</p>
                         </div>
                       }
                     </div>
@@ -231,39 +231,57 @@ interface ColumnWithUniqueId extends VariableMetadato {
 
                   <mat-divider class="!my-4"></mat-divider>
 
+                  <!-- Mensaje de incompatibilidad -->
+                  @if (getIncompatibilityMessage()) {
+                    <div class="alert alert-warning mb-4">
+                      <mat-icon>warning</mat-icon>
+                      <span>{{ getIncompatibilityMessage() }}</span>
+                    </div>
+                  }
+
                   <!-- Selección de variables -->
                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <mat-form-field appearance="outline">
                       <mat-label>Variable Principal (X)</mat-label>
-                      <mat-select [(value)]="selectedVariableX">
-                        @for (v of analysableVariables(); track v.id) {
+                      <mat-select [(value)]="selectedVariableX" (selectionChange)="onVariableXChange()">
+                        @for (v of compatibleVariablesX(); track v.id) {
                           <mat-option [value]="v">
                             <div class="flex items-center gap-2">
                               <span>{{ v.nombre_original }}</span>
-                              <span class="text-xs px-1 rounded" [class]="getTipoClass(v.tipo_dato)">
+                              <span class="type-badge" [class]="getTipoClass(v.tipo_dato)">
                                 {{ v.tipo_dato }}
                               </span>
                             </div>
                           </mat-option>
                         }
+                        @if (compatibleVariablesX().length === 0) {
+                          <mat-option disabled>No hay variables compatibles</mat-option>
+                        }
                       </mat-select>
+                      <mat-hint *ngIf="selectedChartType()">
+                        {{ getVariableHint('x') }}
+                      </mat-hint>
                     </mat-form-field>
 
                     @if (selectedChartType()?.bivariable) {
                       <mat-form-field appearance="outline">
                         <mat-label>Variable Secundaria (Y)</mat-label>
-                        <mat-select [(value)]="selectedVariableY">
-                          @for (v of analysableVariables(); track v.id) {
-                            <mat-option [value]="v" [disabled]="v.id === selectedVariableX?.id">
+                        <mat-select [(value)]="selectedVariableY" [disabled]="!selectedVariableX">
+                          @for (v of compatibleVariablesY(); track v.id) {
+                            <mat-option [value]="v">
                               <div class="flex items-center gap-2">
                                 <span>{{ v.nombre_original }}</span>
-                                <span class="text-xs px-1 rounded" [class]="getTipoClass(v.tipo_dato)">
+                                <span class="type-badge" [class]="getTipoClass(v.tipo_dato)">
                                   {{ v.tipo_dato }}
                                 </span>
                               </div>
                             </mat-option>
                           }
+                          @if (compatibleVariablesY().length === 0 && selectedVariableX) {
+                            <mat-option disabled>No hay variables compatibles</mat-option>
+                          }
                         </mat-select>
+                        <mat-hint>{{ getVariableHint('y') }}</mat-hint>
                       </mat-form-field>
                     }
 
@@ -298,7 +316,7 @@ interface ColumnWithUniqueId extends VariableMetadato {
               </mat-card>
 
               <!-- Acciones rápidas -->
-              <div class="flex flex-wrap gap-2">
+              <div class="actions-bar">
                 <button mat-stroked-button (click)="addAllUnivariate()" [disabled]="addingChart()">
                   <mat-icon>auto_graph</mat-icon>
                   Generar Todos (Univariable)
@@ -309,7 +327,7 @@ interface ColumnWithUniqueId extends VariableMetadato {
                   Limpiar Todo
                 </button>
                 <span class="flex-grow"></span>
-                <span class="text-gray-500 self-center">
+                <span class="charts-count">
                   {{ activeCharts().length }} gráfico(s) activo(s)
                 </span>
               </div>
@@ -333,38 +351,46 @@ interface ColumnWithUniqueId extends VariableMetadato {
 
                       <mat-card-content>
                         @if (chart.loading) {
-                          <div class="h-64 flex items-center justify-center">
+                          <div class="chart-loading">
                             <mat-spinner diameter="40"></mat-spinner>
+                          </div>
+                        } @else if (chart.error) {
+                          <div class="chart-error">
+                            <mat-icon>error_outline</mat-icon>
+                            <p class="error-message">{{ chart.error }}</p>
+                            <button mat-stroked-button color="primary" (click)="retryChart(chart)">
+                              <mat-icon>refresh</mat-icon>
+                              Reintentar
+                            </button>
                           </div>
                         } @else if (chart.data) {
                           <!-- Estadísticas si aplica -->
                           @if (getChartStats(chart)) {
-                            <div class="grid grid-cols-3 gap-2 mb-3 text-sm">
+                            <div class="stats-grid">
                               @if (getChartStats(chart)?.mean !== undefined) {
-                                <div class="bg-blue-50 p-2 rounded text-center">
-                                  <span class="block text-xs text-gray-500">Promedio</span>
-                                  <span class="font-bold text-blue-600">{{ formatNumber(getChartStats(chart)?.mean) }}</span>
+                                <div class="stat-box stat-info">
+                                  <span class="stat-label">Promedio</span>
+                                  <span class="stat-value">{{ formatNumber(getChartStats(chart)?.mean) }}</span>
                                 </div>
                               }
                               @if (getChartStats(chart)?.count !== undefined) {
-                                <div class="bg-green-50 p-2 rounded text-center">
-                                  <span class="block text-xs text-gray-500">Total</span>
-                                  <span class="font-bold text-green-600">{{ getChartStats(chart)?.count | number }}</span>
+                                <div class="stat-box stat-success">
+                                  <span class="stat-label">Total</span>
+                                  <span class="stat-value">{{ getChartStats(chart)?.count | number }}</span>
                                 </div>
                               }
                               @if (getChartStats(chart)?.correlation !== undefined) {
-                                <div class="bg-purple-50 p-2 rounded text-center">
-                                  <span class="block text-xs text-gray-500">Correlación</span>
-                                  <span class="font-bold" [class]="getCorrelationClass(getChartStats(chart)?.correlation)">
-                                    {{ getChartStats(chart)?.correlation }}
-                                  </span>
+                                <div class="stat-box" [class]="getCorrelationBoxClass(getChartStats(chart)?.correlation)">
+                                  <span class="stat-label">Correlación</span>
+                                  <span class="stat-value">{{ getChartStats(chart)?.correlation }}</span>
                                 </div>
                               }
                             </div>
                           }
-                          <div echarts [options]="getChartOptions(chart)" class="h-64"></div>
+                          <div echarts [options]="getChartOptions(chart)" class="chart-container"></div>
                         } @else {
-                          <div class="h-64 flex items-center justify-center text-gray-400">
+                          <div class="chart-empty">
+                            <mat-icon>insert_chart_outlined</mat-icon>
                             <p>No hay datos disponibles</p>
                           </div>
                         }
@@ -374,10 +400,10 @@ interface ColumnWithUniqueId extends VariableMetadato {
                 </div>
               } @else {
                 <mat-card>
-                  <mat-card-content class="text-center py-12">
-                    <mat-icon class="text-6xl text-gray-300">insert_chart</mat-icon>
-                    <h3 class="text-xl text-gray-600 mt-4">Sin gráficos</h3>
-                    <p class="text-gray-500">Selecciona un tipo de gráfico y una variable para comenzar</p>
+                  <mat-card-content class="charts-empty-state">
+                    <mat-icon>insert_chart</mat-icon>
+                    <h3>Sin gráficos</h3>
+                    <p>Selecciona un tipo de gráfico y una variable para comenzar</p>
                   </mat-card-content>
                 </mat-card>
               }
@@ -390,6 +416,253 @@ interface ColumnWithUniqueId extends VariableMetadato {
   styles: [`
     .mat-mdc-table { background: transparent; }
     ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+    
+    /* Header del dataset */
+    .dataset-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-xl);
+      padding: 1rem;
+    }
+    
+    .dataset-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    
+    .dataset-subtitle {
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    
+    /* Estado vacío */
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-tertiary);
+    }
+    
+    .empty-state mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+    
+    /* Selector de tipos de gráfico */
+    .section-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+    
+    .chart-type-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    
+    @media (min-width: 768px) {
+      .chart-type-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    
+    @media (min-width: 1024px) {
+      .chart-type-grid { grid-template-columns: repeat(6, 1fr); }
+    }
+    
+    .chart-type-card {
+      padding: 0.75rem;
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-color);
+      cursor: pointer;
+      text-align: center;
+      transition: all var(--transition-fast);
+      background: var(--bg-secondary);
+    }
+    
+    .chart-type-card:hover {
+      border-color: var(--primary-300);
+      background: var(--hover-bg);
+    }
+    
+    .chart-type-card.selected {
+      border-color: var(--primary-500);
+      background: var(--primary-50);
+    }
+    
+    :host-context(.dark) .chart-type-card.selected {
+      background: rgba(99, 102, 241, 0.15);
+    }
+    
+    .chart-type-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: var(--text-secondary);
+    }
+    
+    .chart-type-icon.selected {
+      color: var(--primary-600);
+    }
+    
+    :host-context(.dark) .chart-type-icon.selected {
+      color: var(--primary-400);
+    }
+    
+    .chart-type-name {
+      font-weight: 500;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      color: var(--text-primary);
+    }
+    
+    .chart-type-desc {
+      font-size: 0.75rem;
+      color: var(--text-tertiary);
+      margin: 0;
+    }
+    
+    /* Estadísticas del gráfico */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .stat-box {
+      padding: 0.5rem;
+      border-radius: var(--radius-md);
+      text-align: center;
+    }
+    
+    .stat-box.stat-info {
+      background: var(--info-bg);
+    }
+    
+    .stat-box.stat-success {
+      background: var(--success-bg);
+    }
+    
+    .stat-box.stat-warning {
+      background: var(--warning-bg);
+    }
+    
+    .stat-box.stat-error {
+      background: var(--error-bg);
+    }
+    
+    .stat-label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    
+    .stat-value {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .stat-box.stat-info .stat-value { color: var(--info-color); }
+    .stat-box.stat-success .stat-value { color: var(--success-color); }
+    .stat-box.stat-warning .stat-value { color: var(--warning-color); }
+    .stat-box.stat-error .stat-value { color: var(--error-color); }
+    
+    /* Contenedor del gráfico */
+    .chart-container {
+      height: 256px;
+    }
+    
+    .chart-loading {
+      height: 256px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .chart-empty {
+      height: 256px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+      gap: 0.5rem;
+    }
+    
+    .chart-empty mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      opacity: 0.5;
+    }
+    
+    .chart-error {
+      height: 256px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 1rem;
+      gap: 0.75rem;
+    }
+    
+    .chart-error mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: var(--error-color);
+      opacity: 0.7;
+    }
+    
+    .chart-error .error-message {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin: 0;
+      max-width: 280px;
+    }
+    
+    /* Barra de acciones */
+    .actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    
+    .charts-count {
+      color: var(--text-secondary);
+    }
+    
+    /* Estado vacío de gráficos */
+    .charts-empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    
+    .charts-empty-state mat-icon {
+      font-size: 64px;
+      width: 64px;
+      height: 64px;
+      color: var(--text-tertiary);
+      opacity: 0.5;
+    }
+    
+    .charts-empty-state h3 {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      margin-top: 1rem;
+    }
+    
+    .charts-empty-state p {
+      color: var(--text-tertiary);
+    }
   `]
 })
 export class DatasetViewComponent implements OnInit {
@@ -397,6 +670,8 @@ export class DatasetViewComponent implements OnInit {
   private readonly datasetService = inject(DatasetService);
   private readonly dashboardService = inject(DashboardService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly chartTheme = inject(ChartThemeService);
+  readonly themeService = inject(ThemeService);
 
   // Tipos de gráficos disponibles - organizados por complejidad
   readonly chartTypes: ChartType[] = [
@@ -407,11 +682,17 @@ export class DatasetViewComponent implements OnInit {
     { id: 'histogram', name: 'Histograma', icon: 'equalizer', description: 'Distribución de valores numéricos', forTypes: ['NUMERICO'] },
     { id: 'line', name: 'Líneas', icon: 'show_chart', description: 'Tendencias y evolución temporal', forTypes: ['FECHA', 'NUMERICO', 'CATEGORICO'] },
     { id: 'area', name: 'Área', icon: 'area_chart', description: 'Tendencias con área sombreada', forTypes: ['FECHA', 'NUMERICO', 'CATEGORICO'] },
+    { id: 'funnel', name: 'Embudo', icon: 'filter_list', description: 'Procesos secuenciales', forTypes: ['CATEGORICO'] },
+    { id: 'treemap', name: 'Treemap', icon: 'grid_view', description: 'Jerarquía por tamaño', forTypes: ['CATEGORICO'] },
+    { id: 'gauge', name: 'Indicador', icon: 'speed', description: 'Medidor de progreso', forTypes: ['NUMERICO'] },
+    { id: 'radar', name: 'Radar', icon: 'radar', description: 'Comparar múltiples categorías', forTypes: ['CATEGORICO'] },
     // === BIVARIABLES ===
     { id: 'scatter', name: 'Dispersión (Scatter)', icon: 'scatter_plot', description: 'Correlación entre 2 numéricas', forTypes: ['NUMERICO'], bivariable: true },
-    { id: 'grouped_bar', name: 'Barras Agrupadas', icon: 'stacked_bar_chart', description: 'Comparar grupos por categoría', forTypes: ['CATEGORICO'], bivariable: true },
-    { id: 'heatmap', name: 'Mapa de Calor', icon: 'grid_on', description: 'Matriz de frecuencias cruzadas', forTypes: ['CATEGORICO'], bivariable: true },
-    { id: 'box_compare', name: 'Comparar Promedios', icon: 'leaderboard', description: 'Promedio numérico por categoría', forTypes: ['CATEGORICO', 'NUMERICO'], bivariable: true },
+    { id: 'grouped_bar', name: 'Barras Agrupadas', icon: 'stacked_bar_chart', description: 'Comparar promedios por categoría', forTypes: ['CATEGORICO', 'NUMERICO', 'TEXTO'], bivariable: true },
+    { id: 'heatmap', name: 'Mapa de Calor', icon: 'grid_on', description: 'Matriz de frecuencias cruzadas', forTypes: ['CATEGORICO', 'TEXTO'], bivariable: true },
+    { id: 'box_compare', name: 'Comparar Promedios', icon: 'leaderboard', description: 'Promedio numérico por categoría', forTypes: ['CATEGORICO', 'NUMERICO', 'TEXTO'], bivariable: true },
+    { id: 'line_time', name: 'Serie Temporal', icon: 'timeline', description: 'Evolución de valores en el tiempo', forTypes: ['FECHA', 'NUMERICO'], bivariable: true },
+    { id: 'stacked_bar', name: 'Barras Apiladas', icon: 'stacked_bar_chart', description: 'Evolución de categorías en el tiempo', forTypes: ['FECHA', 'CATEGORICO'], bivariable: true },
   ];
 
   // Estado
@@ -445,23 +726,181 @@ export class DatasetViewComponent implements OnInit {
     }));
   });
   columnNames = computed(() => this.visibleColumns().map(v => v._uniqueId));
-  analysableVariables = computed(() => this.variables().filter(v => v.tipo_dato !== 'TEXTO'));
+  // Todas las variables visibles son analizables (TEXTO se trata como CATEGORICO en el backend)
+  analysableVariables = computed(() => this.variables().filter(v => v.es_visible));
 
-  // Paleta de colores moderna y vibrante
-  private readonly colors = [
-    '#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#EF4444',
-    '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#3B82F6',
-    '#10B981', '#E11D48', '#7C3AED', '#0EA5E9', '#22C55E'
-  ];
+  // Computed: Variables compatibles con el tipo de gráfico seleccionado (Variable X)
+  compatibleVariablesX = computed(() => {
+    const chartType = this.selectedChartType();
+    const vars = this.analysableVariables();
+    
+    if (!chartType) return vars;
+
+    // Filtrar según el tipo de gráfico
+    return vars.filter(v => {
+      switch (chartType.id) {
+        // Solo numéricas
+        case 'scatter':
+        case 'histogram':
+        case 'gauge':
+          return v.tipo_dato === 'NUMERICO';
+        // Solo categóricas (TEXTO se permite porque backend lo trata como categórico)
+        case 'pie':
+        case 'donut':
+        case 'funnel':
+        case 'treemap':
+        case 'radar':
+          return v.tipo_dato === 'CATEGORICO' || v.tipo_dato === 'TEXTO';
+        // Categóricas y texto
+        case 'bar':
+        case 'heatmap':
+        case 'stacked_bar':
+          return v.tipo_dato === 'CATEGORICO' || v.tipo_dato === 'TEXTO';
+        // Categóricas y numéricas
+        case 'grouped_bar':
+        case 'box_compare':
+          return v.tipo_dato === 'CATEGORICO' || v.tipo_dato === 'NUMERICO' || v.tipo_dato === 'TEXTO';
+        // Fechas y numéricas
+        case 'line_time':
+          return v.tipo_dato === 'FECHA' || v.tipo_dato === 'NUMERICO';
+        // Líneas y áreas aceptan varios tipos
+        case 'line':
+        case 'area':
+          return v.tipo_dato === 'FECHA' || v.tipo_dato === 'NUMERICO' || v.tipo_dato === 'CATEGORICO';
+        default:
+          return true;
+      }
+    });
+  });
+
+  // Computed: Variables compatibles para Y (solo bivariables)
+  compatibleVariablesY = computed(() => {
+    const chartType = this.selectedChartType();
+    const vars = this.analysableVariables();
+    
+    if (!chartType?.bivariable) return [];
+
+    const selectedX = this.selectedVariableX;
+    // Normalizar tipo: TEXTO se trata como CATEGORICO
+    const tipoX = selectedX?.tipo_dato === 'TEXTO' ? 'CATEGORICO' : selectedX?.tipo_dato;
+
+    return vars.filter(v => {
+      // No permitir la misma variable
+      if (selectedX && v.id === selectedX.id) return false;
+      
+      // Normalizar tipo Y
+      const tipoY = v.tipo_dato === 'TEXTO' ? 'CATEGORICO' : v.tipo_dato;
+
+      switch (chartType.id) {
+        case 'scatter':
+          // Scatter: ambas deben ser numéricas
+          return v.tipo_dato === 'NUMERICO';
+          
+        case 'heatmap':
+          // Heatmap: ambas deben ser categóricas (TEXTO cuenta como categórica)
+          return v.tipo_dato === 'CATEGORICO' || v.tipo_dato === 'TEXTO';
+          
+        case 'stacked_bar':
+          // Barras apiladas: ambas categóricas O fecha + categórica
+          if (tipoX === 'FECHA') return tipoY === 'CATEGORICO';
+          if (tipoX === 'CATEGORICO') return tipoY === 'FECHA' || tipoY === 'CATEGORICO';
+          return tipoY === 'CATEGORICO';
+          
+        case 'grouped_bar':
+        case 'box_compare':
+          // Barras agrupadas: categórica + numérica (cualquier orden)
+          // O texto + numérica
+          if (tipoX === 'CATEGORICO') {
+            return v.tipo_dato === 'NUMERICO';
+          }
+          if (tipoX === 'NUMERICO') {
+            return v.tipo_dato === 'CATEGORICO' || v.tipo_dato === 'TEXTO';
+          }
+          return v.tipo_dato === 'NUMERICO' || v.tipo_dato === 'CATEGORICO';
+          
+        case 'line_time':
+          // Serie temporal: fecha + numérica
+          if (selectedX?.tipo_dato === 'FECHA') {
+            return v.tipo_dato === 'NUMERICO';
+          }
+          if (selectedX?.tipo_dato === 'NUMERICO') {
+            return v.tipo_dato === 'FECHA';
+          }
+          return v.tipo_dato === 'FECHA' || v.tipo_dato === 'NUMERICO';
+          
+        default:
+          return true;
+      }
+    });
+  });
+
+  // Mensaje de incompatibilidad
+  getIncompatibilityMessage(): string | null {
+    const chartType = this.selectedChartType();
+    if (!chartType) return null;
+
+    if (this.compatibleVariablesX().length === 0) {
+      switch (chartType.id) {
+        case 'scatter':
+        case 'histogram':
+        case 'gauge':
+          return 'Este gráfico requiere variables numéricas. No hay variables numéricas disponibles.';
+        case 'pie':
+        case 'donut':
+        case 'funnel':
+        case 'treemap':
+        case 'radar':
+          return 'Este gráfico requiere variables categóricas. No hay variables categóricas disponibles.';
+        case 'heatmap':
+        case 'bar':
+        case 'stacked_bar':
+          return 'Este gráfico requiere variables categóricas o de texto.';
+        case 'line_time':
+          return 'Serie temporal requiere una variable de fecha y una numérica.';
+        default:
+          return 'No hay variables compatibles con este tipo de gráfico.';
+      }
+    }
+
+    if (chartType.bivariable && this.selectedVariableX && this.compatibleVariablesY().length === 0) {
+      const tipoX = this.selectedVariableX.tipo_dato;
+      switch (chartType.id) {
+        case 'scatter':
+          return 'Dispersión requiere dos variables numéricas. Selecciona otra variable numérica.';
+        case 'heatmap':
+          return 'Mapa de calor requiere dos variables categóricas o de texto.';
+        case 'grouped_bar':
+        case 'box_compare':
+          if (tipoX === 'NUMERICO') return 'Selecciona una variable categórica o de texto para comparar.';
+          return 'Selecciona una variable numérica para mostrar promedios.';
+        case 'line_time':
+          if (tipoX === 'FECHA') return 'Selecciona una variable numérica para ver su evolución.';
+          if (tipoX === 'NUMERICO') return 'Selecciona una variable de fecha para el eje temporal.';
+          return 'Selecciona una fecha y una numérica.';
+        case 'stacked_bar':
+          if (tipoX === 'FECHA') return 'Selecciona una variable categórica para las series.';
+          return 'Selecciona una variable de fecha o categórica.';
+        default:
+          return 'No hay variables compatibles para la variable Y.';
+      }
+    }
+
+    return null;
+  }
+
+  // Colores y gradientes dinámicos basados en el tema
+  get colors(): string[] {
+    return this.chartTheme.getColors();
+  }
   
-  // Gradientes para gráficos
-  private readonly gradients = [
-    { start: '#6366F1', end: '#4F46E5' },
-    { start: '#EC4899', end: '#DB2777' },
-    { start: '#14B8A6', end: '#0D9488' },
-    { start: '#F59E0B', end: '#D97706' },
-    { start: '#EF4444', end: '#DC2626' },
-  ];
+  get gradients() {
+    return this.chartTheme.getGradients();
+  }
+
+  // Obtener configuración de tema para gráficos
+  get chartConfig() {
+    return this.chartTheme.config();
+  }
 
   ngOnInit(): void {
     this.datasetId.set(this.route.snapshot.params['id']);
@@ -506,6 +945,78 @@ export class DatasetViewComponent implements OnInit {
     // Reset variables si cambia de bivariable a univariable
     if (!type.bivariable) {
       this.selectedVariableY = null;
+    }
+    // Reset variable X si no es compatible con el nuevo tipo
+    if (this.selectedVariableX) {
+      const compatible = this.compatibleVariablesX().find(v => v.id === this.selectedVariableX?.id);
+      if (!compatible) {
+        this.selectedVariableX = null;
+      }
+    }
+  }
+
+  onVariableXChange(): void {
+    // Reset variable Y cuando cambia X para evitar combinaciones inválidas
+    this.selectedVariableY = null;
+  }
+
+  getVariableHint(axis: 'x' | 'y'): string {
+    const chartType = this.selectedChartType();
+    if (!chartType) return '';
+    
+    const compatibleCount = axis === 'x' ? this.compatibleVariablesX().length : this.compatibleVariablesY().length;
+    const countHint = compatibleCount > 0 ? ` (${compatibleCount} disponibles)` : '';
+
+    if (axis === 'x') {
+      switch (chartType.id) {
+        case 'scatter': 
+        case 'histogram': 
+        case 'gauge': 
+          return `Variable numérica${countHint}`;
+        case 'pie':
+        case 'donut':
+        case 'funnel':
+        case 'treemap':
+        case 'radar':
+          return `Variable categórica${countHint}`;
+        case 'heatmap':
+        case 'stacked_bar':
+        case 'bar':
+          return `Variable categórica o texto${countHint}`;
+        case 'grouped_bar':
+        case 'box_compare':
+          return `Categórica, texto o numérica${countHint}`;
+        case 'line_time': 
+          return `Fecha o numérica${countHint}`;
+        case 'line':
+        case 'area':
+          return `Fecha, numérica o categórica${countHint}`;
+        default: 
+          return compatibleCount > 0 ? `${compatibleCount} variables compatibles` : '';
+      }
+    } else {
+      const tipoX = this.selectedVariableX?.tipo_dato;
+      switch (chartType.id) {
+        case 'scatter': 
+          return `Otra variable numérica${countHint}`;
+        case 'heatmap': 
+          return `Otra variable categórica o texto${countHint}`;
+        case 'grouped_bar':
+        case 'box_compare': 
+          if (tipoX === 'CATEGORICO' || tipoX === 'TEXTO') return `Variable numérica${countHint}`;
+          if (tipoX === 'NUMERICO') return `Variable categórica o texto${countHint}`;
+          return countHint || '';
+        case 'line_time':
+          if (tipoX === 'FECHA') return `Variable numérica${countHint}`;
+          if (tipoX === 'NUMERICO') return `Variable de fecha${countHint}`;
+          return `Fecha o numérica${countHint}`;
+        case 'stacked_bar':
+          if (tipoX === 'FECHA') return `Variable categórica${countHint}`;
+          if (tipoX === 'CATEGORICO') return `Fecha o categórica${countHint}`;
+          return countHint || '';
+        default: 
+          return compatibleCount > 0 ? `${compatibleCount} variables compatibles` : '';
+      }
     }
   }
 
@@ -565,9 +1076,15 @@ export class DatasetViewComponent implements OnInit {
           },
           stats: res.stats
         };
-        this.updateChartData(chart.id, chartData);
+        
+        // Verificar que hay datos
+        if (!chartData.data.labels?.length && !chartData.data.values?.length) {
+          this.updateChartError(chart.id, 'No hay datos disponibles para esta variable');
+        } else {
+          this.updateChartData(chart.id, chartData);
+        }
       },
-      error: () => this.updateChartData(chart.id, null)
+      error: (err) => this.updateChartError(chart.id, this.getChartErrorMessage(err))
     });
   }
 
@@ -581,20 +1098,69 @@ export class DatasetViewComponent implements OnInit {
       chart_type: chart.chartType.id,
       limit: chart.filters?.limit
     }).subscribe({
-      next: (res) => this.updateChartData(chart.id, res),
-      error: () => this.updateChartData(chart.id, null)
+      next: (res) => {
+        // Verificar que hay datos
+        if (!res.data || (
+          !res.data.points?.length && 
+          !res.data.series?.length && 
+          !res.data.heatmap?.length &&
+          !res.data.values?.length
+        )) {
+          this.updateChartError(chart.id, 'No hay datos suficientes para correlacionar estas variables');
+        } else {
+          this.updateChartData(chart.id, res);
+        }
+      },
+      error: (err) => this.updateChartError(chart.id, this.getChartErrorMessage(err))
     });
   }
 
   private updateChartData(chartId: string, data: ChartData | BivariableResponse | null): void {
     this.activeCharts.update(charts => 
-      charts.map(c => c.id === chartId ? { ...c, data, loading: false } : c)
+      charts.map(c => c.id === chartId ? { ...c, data, loading: false, error: null } : c)
     );
     this.addingChart.set(false);
   }
 
+  private updateChartError(chartId: string, error: string): void {
+    this.activeCharts.update(charts =>
+      charts.map(c => c.id === chartId ? { ...c, data: null, loading: false, error } : c)
+    );
+    this.addingChart.set(false);
+  }
+
+  private getChartErrorMessage(error: any): string {
+    if (error.status === 400) {
+      return 'Las variables seleccionadas no son compatibles para este tipo de gráfico';
+    }
+    if (error.status === 404) {
+      return 'No se encontraron datos para las variables seleccionadas';
+    }
+    if (error.status === 500) {
+      return 'Error del servidor al procesar los datos';
+    }
+    if (error.status === 0) {
+      return 'Error de conexión. Verifica tu conexión a internet';
+    }
+    return error.error?.message || 'Error desconocido al cargar el gráfico';
+  }
+
   removeChart(chartId: string): void {
     this.activeCharts.update(charts => charts.filter(c => c.id !== chartId));
+  }
+
+  retryChart(chart: ActiveChart): void {
+    // Marcar como cargando
+    this.activeCharts.update(charts =>
+      charts.map(c => c.id === chart.id ? { ...c, loading: true, error: null } : c)
+    );
+    
+    // Reintentar carga
+    if (chart.chartType.bivariable && chart.variableY) {
+      this.loadBivariableData(chart);
+    } else {
+      this.loadUnivariableData(chart);
+    }
   }
 
   clearAllCharts(): void {
@@ -683,8 +1249,12 @@ export class DatasetViewComponent implements OnInit {
     const variableName = data.variable || 'Variable';
     const total = values.reduce((a, b) => a + b, 0);
     const maxValue = Math.max(...values, 1);
+    
+    // Obtener configuración de tema
+    const cfg = this.chartConfig;
+    const colors = this.colors;
 
-    // Estilos comunes mejorados
+    // Estilos comunes mejorados con tema dinámico
     const titleStyle = { 
       text: variableName, 
       left: 'center', 
@@ -692,16 +1262,16 @@ export class DatasetViewComponent implements OnInit {
       textStyle: { 
         fontSize: 16, 
         fontWeight: 'bold' as const,
-        color: '#1F2937'
+        color: cfg.textColor
       },
-      subtextStyle: { fontSize: 12, color: '#6B7280' }
+      subtextStyle: { fontSize: 12, color: cfg.textColorSecondary }
     };
 
     const tooltipStyle = {
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      borderColor: '#E5E7EB',
+      backgroundColor: cfg.tooltipBg,
+      borderColor: cfg.tooltipBorder,
       borderWidth: 1,
-      textStyle: { color: '#1F2937' },
+      textStyle: { color: cfg.textColor },
       extraCssText: 'box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px;'
     };
 
@@ -716,29 +1286,29 @@ export class DatasetViewComponent implements OnInit {
             formatter: (params: any) => {
               const p = Array.isArray(params) ? params[0] : params;
               const percent = total > 0 ? ((p.value / total) * 100).toFixed(1) : 0;
-              return `<div style="font-weight:600;margin-bottom:8px;color:#6366F1">${variableName}</div>` +
+              return `<div style="font-weight:600;margin-bottom:8px;color:${colors[0]}">${variableName}</div>` +
                      `<div style="display:flex;align-items:center;gap:8px;">` +
                      `<span style="width:12px;height:12px;background:${p.color};border-radius:3px;"></span>` +
                      `<span>${p.name}</span></div>` +
                      `<div style="font-size:18px;font-weight:700;margin-top:4px;">${p.value.toLocaleString()}</div>` +
-                     `<div style="color:#6B7280;font-size:12px;">${percent}% del total</div>`;
+                     `<div style="color:${cfg.textColorSecondary};font-size:12px;">${percent}% del total</div>`;
             }
           },
           legend: { show: false },
           xAxis: { 
             type: 'category' as const, 
             data: labels, 
-            axisLabel: { rotate: labels.length > 6 ? 45 : 0, interval: 0, color: '#4B5563', fontSize: 11 },
-            axisLine: { lineStyle: { color: '#E5E7EB' } },
+            axisLabel: { rotate: labels.length > 6 ? 45 : 0, interval: 0, color: cfg.textColorSecondary, fontSize: 11 },
+            axisLine: { lineStyle: { color: cfg.axisLineColor } },
             axisTick: { show: false }
           },
           yAxis: { 
             type: 'value' as const, 
             name: 'Cantidad',
-            nameTextStyle: { color: '#6B7280', padding: [0, 0, 0, 40] },
+            nameTextStyle: { color: cfg.textColorSecondary, padding: [0, 0, 0, 40] },
             axisLine: { show: false },
             axisTick: { show: false },
-            splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+            splitLine: { lineStyle: { color: cfg.splitLineColor, type: 'dashed' as const } }
           },
           series: [{ 
             type: 'bar' as const, 
@@ -750,8 +1320,8 @@ export class DatasetViewComponent implements OnInit {
                 color: {
                   type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1,
                   colorStops: [
-                    { offset: 0, color: this.colors[i % this.colors.length] },
-                    { offset: 1, color: this.adjustColor(this.colors[i % this.colors.length], -30) }
+                    { offset: 0, color: colors[i % colors.length] },
+                    { offset: 1, color: this.adjustColor(colors[i % colors.length], -30) }
                   ]
                 },
                 borderRadius: [6, 6, 0, 0]
@@ -762,7 +1332,7 @@ export class DatasetViewComponent implements OnInit {
               show: values.length <= 12, 
               position: 'top' as const, 
               formatter: '{c}',
-              color: '#374151',
+              color: cfg.textColor,
               fontWeight: 'bold' as const
             },
             emphasis: {
@@ -781,12 +1351,12 @@ export class DatasetViewComponent implements OnInit {
             ...tooltipStyle,
             trigger: 'item' as const,
             formatter: (params: any) => {
-              return `<div style="font-weight:600;margin-bottom:8px;color:#6366F1">${variableName}</div>` +
+              return `<div style="font-weight:600;margin-bottom:8px;color:${colors[0]}">${variableName}</div>` +
                      `<div style="display:flex;align-items:center;gap:8px;">` +
                      `<span style="width:14px;height:14px;background:${params.color};border-radius:50%;"></span>` +
                      `<span style="font-weight:500">${params.name}</span></div>` +
                      `<div style="font-size:22px;font-weight:700;margin:8px 0;">${params.value.toLocaleString()}</div>` +
-                     `<div style="background:#F3F4F6;padding:4px 8px;border-radius:4px;font-weight:600;color:#6366F1;">` +
+                     `<div style="background:${cfg.splitLineColor};padding:4px 8px;border-radius:4px;font-weight:600;color:${colors[0]};">` +
                      `${params.percent}% del total</div>`;
             }
           },
@@ -795,7 +1365,7 @@ export class DatasetViewComponent implements OnInit {
             right: 20, 
             top: 'middle' as const,
             type: 'scroll' as const,
-            textStyle: { color: '#4B5563' },
+            textStyle: { color: cfg.textColorSecondary },
             formatter: (name: string) => {
               const idx = labels.indexOf(name);
               const val = idx >= 0 ? values[idx] : 0;
@@ -812,8 +1382,8 @@ export class DatasetViewComponent implements OnInit {
               name: l, 
               value: values[i], 
               itemStyle: { 
-                color: this.colors[i % this.colors.length],
-                borderColor: '#fff',
+                color: colors[i % colors.length],
+                borderColor: cfg.tooltipBg,
                 borderWidth: 2
               }
             })),
@@ -821,7 +1391,7 @@ export class DatasetViewComponent implements OnInit {
               show: labels.length <= 8, 
               formatter: '{b}\n{d}%',
               fontSize: 11,
-              color: '#374151'
+              color: cfg.textColor
             },
             labelLine: { length: 15, length2: 10 },
             emphasis: {
@@ -1003,6 +1573,185 @@ export class DatasetViewComponent implements OnInit {
           dataZoom: [{ type: 'inside' as const }, { type: 'slider' as const, show: labels.length > 15, bottom: 10, height: 20 }]
         };
 
+      case 'funnel':
+        return {
+          title: { ...titleStyle, subtext: `${labels.length} etapas` },
+          tooltip: { 
+            ...tooltipStyle,
+            trigger: 'item' as const,
+            formatter: (params: any) => {
+              const pct = total > 0 ? ((params.value / total) * 100).toFixed(1) : 0;
+              return `<div style="font-weight:600;margin-bottom:8px;color:${colors[params.dataIndex % colors.length]}">${variableName}</div>` +
+                     `<div style="font-weight:500">${params.name}</div>` +
+                     `<div style="font-size:20px;font-weight:700;margin:8px 0;">${params.value.toLocaleString()}</div>` +
+                     `<div style="color:${cfg.textColorSecondary}">${pct}% del total</div>`;
+            }
+          },
+          legend: { bottom: 10, textStyle: { color: cfg.textColorSecondary } },
+          series: [{
+            type: 'funnel' as const,
+            left: '10%',
+            top: 60,
+            bottom: 50,
+            width: '80%',
+            min: 0,
+            max: maxValue,
+            minSize: '20%',
+            maxSize: '100%',
+            sort: 'descending' as const,
+            gap: 2,
+            label: { show: true, position: 'inside' as const, formatter: '{b}', fontSize: 12 },
+            labelLine: { length: 10 },
+            itemStyle: { borderColor: cfg.tooltipBg, borderWidth: 2 },
+            emphasis: { 
+              label: { fontSize: 14, fontWeight: 'bold' as const },
+              itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.2)' }
+            },
+            data: labels.map((l, i) => ({ 
+              name: l, 
+              value: values[i], 
+              itemStyle: { color: colors[i % colors.length] }
+            })).sort((a, b) => b.value - a.value)
+          }]
+        };
+
+      case 'treemap':
+        return {
+          title: { ...titleStyle, subtext: `${labels.length} categorías | ${total.toLocaleString()} total` },
+          tooltip: { 
+            ...tooltipStyle,
+            formatter: (params: any) => {
+              const pct = total > 0 ? ((params.value / total) * 100).toFixed(1) : 0;
+              return `<div style="font-weight:600;margin-bottom:8px;color:${params.color}">${variableName}</div>` +
+                     `<div style="font-weight:500">${params.name}</div>` +
+                     `<div style="font-size:18px;font-weight:700;margin:8px 0;">${params.value.toLocaleString()}</div>` +
+                     `<div style="color:${cfg.textColorSecondary}">${pct}% del total</div>`;
+            }
+          },
+          series: [{
+            type: 'treemap' as const,
+            top: 60,
+            bottom: 30,
+            left: 20,
+            right: 20,
+            roam: false,
+            nodeClick: false,
+            breadcrumb: { show: false },
+            label: {
+              show: true,
+              formatter: '{b}',
+              fontSize: 12,
+              color: '#fff'
+            },
+            itemStyle: {
+              borderColor: cfg.tooltipBg,
+              borderWidth: 2,
+              gapWidth: 2
+            },
+            emphasis: {
+              itemStyle: { shadowBlur: 20, shadowColor: 'rgba(0,0,0,0.3)' }
+            },
+            data: labels.map((l, i) => ({
+              name: l,
+              value: values[i],
+              itemStyle: { color: colors[i % colors.length] }
+            }))
+          }]
+        };
+
+      case 'gauge':
+        const avgValue = total / values.length;
+        const gaugeMax = Math.max(...values) * 1.2;
+        return {
+          title: { ...titleStyle, subtext: `Promedio: ${avgValue.toFixed(1)}` },
+          tooltip: { ...tooltipStyle, formatter: '{b}: {c}' },
+          series: [{
+            type: 'gauge' as const,
+            startAngle: 180,
+            endAngle: 0,
+            min: 0,
+            max: gaugeMax,
+            splitNumber: 5,
+            itemStyle: {
+              color: {
+                type: 'linear' as const,
+                x: 0, y: 0, x2: 1, y2: 0,
+                colorStops: [
+                  { offset: 0, color: colors[4] },
+                  { offset: 0.5, color: colors[3] },
+                  { offset: 1, color: colors[2] }
+                ]
+              },
+              shadowColor: 'rgba(0,0,0,0.3)',
+              shadowBlur: 10
+            },
+            progress: { show: true, width: 18 },
+            pointer: { 
+              icon: 'path://M2090.36389,615.30999 L2## 66.4,620.09999 L2090.36389,625.0999 L2080.1,625.0999 L2080.1,615.30999 L2090.36389,615.30999 z M2090.36389,615.30999', 
+              length: '75%', 
+              width: 8 
+            },
+            axisLine: { lineStyle: { width: 18, color: [[1, cfg.splitLineColor]] } },
+            axisTick: { show: false },
+            splitLine: { distance: -18, length: 18, lineStyle: { color: cfg.textColorSecondary, width: 2 } },
+            axisLabel: { distance: 25, color: cfg.textColorSecondary, fontSize: 11 },
+            anchor: { show: true, showAbove: true, size: 20, itemStyle: { borderWidth: 8, borderColor: colors[0] } },
+            title: { show: true, offsetCenter: [0, '70%'], fontSize: 14, color: cfg.textColorSecondary },
+            detail: { 
+              valueAnimation: true, 
+              offsetCenter: [0, '40%'], 
+              fontSize: 28, 
+              fontWeight: 'bold' as const,
+              formatter: (val: number) => val.toFixed(1),
+              color: cfg.textColor
+            },
+            data: [{ value: avgValue, name: variableName }]
+          }]
+        };
+
+      case 'radar':
+        const maxRadar = Math.max(...values);
+        return {
+          title: { ...titleStyle, subtext: `${labels.length} dimensiones` },
+          tooltip: { ...tooltipStyle },
+          legend: { bottom: 10, textStyle: { color: cfg.textColorSecondary } },
+          radar: {
+            indicator: labels.map((l, i) => ({ name: l, max: maxRadar * 1.1 })),
+            shape: 'polygon' as const,
+            splitNumber: 4,
+            axisName: { color: cfg.textColorSecondary, fontSize: 11 },
+            splitLine: { lineStyle: { color: cfg.splitLineColor } },
+            splitArea: { show: true, areaStyle: { color: ['rgba(99,102,241,0.05)', 'rgba(99,102,241,0.1)'] } },
+            axisLine: { lineStyle: { color: cfg.axisLineColor } }
+          },
+          series: [{
+            type: 'radar' as const,
+            name: variableName,
+            data: [{
+              value: values,
+              name: variableName,
+              symbol: 'circle',
+              symbolSize: 6,
+              lineStyle: { width: 3, color: colors[0] },
+              areaStyle: { 
+                color: {
+                  type: 'radial' as const,
+                  x: 0.5, y: 0.5, r: 0.5,
+                  colorStops: [
+                    { offset: 0, color: `${colors[0]}40` },
+                    { offset: 1, color: `${colors[0]}10` }
+                  ]
+                }
+              },
+              itemStyle: { color: colors[0], borderColor: '#fff', borderWidth: 2 }
+            }],
+            emphasis: { 
+              lineStyle: { width: 4 },
+              areaStyle: { color: `${colors[0]}50` }
+            }
+          }]
+        };
+
       default:
         return {};
     }
@@ -1036,6 +1785,105 @@ export class DatasetViewComponent implements OnInit {
       textStyle: { color: '#1F2937' },
       extraCssText: 'box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-radius: 12px; padding: 12px;'
     };
+
+    // ========== LINE_TIME (serie temporal: fecha + numérica) ==========
+    if (type === 'line_time' || (d.labels && d.values && !d.points && !d.heatmap && !d.series)) {
+      const labels = d.labels || [];
+      const values = d.values || [];
+      const counts = d.counts || [];
+      const total = values.reduce((a: number, b: number) => a + b, 0);
+      const avg = values.length > 0 ? total / values.length : 0;
+      
+      return {
+        title: { 
+          text: `Evolución de ${varY} en el tiempo`,
+          subtext: `${labels.length} periodos | Promedio: ${avg.toFixed(2)}`,
+          left: 'center', 
+          top: 10,
+          textStyle: { fontSize: 16, fontWeight: 'bold' as const, color: '#1F2937' },
+          subtextStyle: { fontSize: 12, color: '#6B7280' }
+        },
+        tooltip: { 
+          ...tooltipStyle,
+          trigger: 'axis' as const,
+          formatter: (params: any) => {
+            const p = Array.isArray(params) ? params[0] : params;
+            const count = counts[p.dataIndex] || 0;
+            return `<div style="font-weight:600;color:#6366F1;margin-bottom:8px;">${varX}</div>` +
+                   `<div style="font-size:14px;font-weight:500;margin-bottom:10px;">${p.name}</div>` +
+                   `<div style="display:grid;gap:8px;">` +
+                   `<div><span style="color:#6B7280;font-size:11px;">Promedio de ${varY}</span><br/>` +
+                   `<span style="font-size:24px;font-weight:700;color:#6366F1;">${p.value.toLocaleString()}</span></div>` +
+                   (count > 0 ? `<div><span style="color:#6B7280;font-size:11px;">Registros en este periodo</span><br/>` +
+                   `<span style="font-size:16px;font-weight:600;">${count.toLocaleString()}</span></div>` : '') +
+                   `</div>`;
+          }
+        },
+        xAxis: { 
+          type: 'category' as const, 
+          data: labels,
+          boundaryGap: false,
+          axisLabel: { rotate: labels.length > 10 ? 45 : 0, color: '#4B5563', fontSize: 11 },
+          axisLine: { lineStyle: { color: '#E5E7EB' } },
+          axisTick: { show: false }
+        },
+        yAxis: { 
+          type: 'value' as const, 
+          name: varY,
+          nameTextStyle: { color: '#6B7280' },
+          axisLine: { show: false },
+          splitLine: { lineStyle: { color: '#F3F4F6', type: 'dashed' as const } }
+        },
+        series: [{
+          type: 'line' as const,
+          name: varY,
+          data: values,
+          smooth: true,
+          symbol: 'circle',
+          symbolSize: labels.length <= 20 ? 8 : 4,
+          lineStyle: { 
+            color: '#6366F1', 
+            width: 3,
+            shadowColor: 'rgba(99, 102, 241, 0.3)',
+            shadowBlur: 10,
+            shadowOffsetY: 5
+          },
+          itemStyle: { 
+            color: '#6366F1',
+            borderColor: '#fff',
+            borderWidth: 2
+          },
+          areaStyle: { 
+            color: { 
+              type: 'linear' as const, x: 0, y: 0, x2: 0, y2: 1, 
+              colorStops: [
+                { offset: 0, color: 'rgba(99, 102, 241, 0.4)' }, 
+                { offset: 1, color: 'rgba(99, 102, 241, 0.02)' }
+              ] 
+            }
+          },
+          emphasis: {
+            itemStyle: { 
+              borderColor: '#6366F1',
+              borderWidth: 3,
+              shadowBlur: 15,
+              shadowColor: 'rgba(99, 102, 241, 0.5)'
+            }
+          },
+          markLine: {
+            silent: true,
+            symbol: 'none',
+            lineStyle: { color: '#EF4444', type: 'dashed' as const, width: 2 },
+            data: [{ yAxis: avg, label: { formatter: `Prom: ${avg.toFixed(1)}`, position: 'end' as const, color: '#EF4444' } }]
+          }
+        }],
+        grid: { bottom: labels.length > 10 ? 90 : 50, left: 70, right: 30, top: 80 },
+        dataZoom: [
+          { type: 'inside' as const }, 
+          { type: 'slider' as const, show: labels.length > 15, bottom: 10, height: 20 }
+        ]
+      };
+    }
 
     // ========== SCATTER (2 numéricas) ==========
     if (d.points && d.points.length > 0) {
@@ -1391,19 +2239,27 @@ export class DatasetViewComponent implements OnInit {
 
   getTipoClass(tipo: string): string {
     switch (tipo) {
-      case 'NUMERICO': return 'bg-blue-100 text-blue-800';
-      case 'CATEGORICO': return 'bg-green-100 text-green-800';
-      case 'FECHA': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'NUMERICO': return 'type-numeric';
+      case 'CATEGORICO': return 'type-categoric';
+      case 'FECHA': return 'type-date';
+      default: return 'type-text';
     }
   }
 
   getCorrelationClass(correlation: number | undefined): string {
     if (correlation === undefined) return '';
     const abs = Math.abs(correlation);
-    if (abs >= 0.7) return 'text-green-600';
-    if (abs >= 0.4) return 'text-yellow-600';
-    return 'text-red-600';
+    if (abs >= 0.7) return 'text-success';
+    if (abs >= 0.4) return 'text-warning';
+    return 'text-error';
+  }
+
+  getCorrelationBoxClass(correlation: number | undefined): string {
+    if (correlation === undefined) return 'stat-info';
+    const abs = Math.abs(correlation);
+    if (abs >= 0.7) return 'stat-success';
+    if (abs >= 0.4) return 'stat-warning';
+    return 'stat-error';
   }
 
   formatNumber(value: number | undefined): string {

@@ -77,7 +77,7 @@ if not exist ".env" (
     echo [Backend] Copiando .env.example a .env...
     copy .env.example .env
 )
-start "Laravel Server" cmd /c "php artisan serve --host=localhost --port=8000"
+start "Laravel Server" cmd /c "php -S 127.0.0.1:8000 -t public"
 echo [Backend] Servidor Laravel iniciado
 echo           URL: http://localhost:8000
 goto :eof

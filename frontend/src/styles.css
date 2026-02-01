@@ -74,6 +74,131 @@
 }
 
 /* ================================================
+   1.5 COLORES SEMÁNTICOS (Estados)
+   ================================================ */
+:root {
+  /* Success (Verde) */
+  --success-color: #10B981;
+  --success-color-light: #34D399;
+  --success-color-dark: #059669;
+  --success-bg: rgba(16, 185, 129, 0.1);
+  --success-bg-solid: #ECFDF5;
+  --success-border: rgba(16, 185, 129, 0.3);
+  
+  /* Warning (Amarillo/Naranja) */
+  --warning-color: #F59E0B;
+  --warning-color-light: #FBBF24;
+  --warning-color-dark: #D97706;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --warning-bg-solid: #FFFBEB;
+  --warning-border: rgba(245, 158, 11, 0.3);
+  
+  /* Error (Rojo) */
+  --error-color: #EF4444;
+  --error-color-light: #F87171;
+  --error-color-dark: #DC2626;
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --error-bg-solid: #FEF2F2;
+  --error-border: rgba(239, 68, 68, 0.3);
+  
+  /* Info (Azul) */
+  --info-color: #3B82F6;
+  --info-color-light: #60A5FA;
+  --info-color-dark: #2563EB;
+  --info-bg: rgba(59, 130, 246, 0.1);
+  --info-bg-solid: #EFF6FF;
+  --info-border: rgba(59, 130, 246, 0.3);
+  
+  /* Neutral */
+  --neutral-color: #6B7280;
+  --neutral-bg: rgba(107, 114, 128, 0.1);
+  --neutral-border: rgba(107, 114, 128, 0.3);
+  
+  /* Colores para gráficos - Tema Claro */
+  --chart-color-1: #6366F1;
+  --chart-color-2: #EC4899;
+  --chart-color-3: #14B8A6;
+  --chart-color-4: #F59E0B;
+  --chart-color-5: #EF4444;
+  --chart-color-6: #8B5CF6;
+  --chart-color-7: #06B6D4;
+  --chart-color-8: #84CC16;
+  --chart-color-9: #F97316;
+  --chart-color-10: #3B82F6;
+  
+  /* Colores para tipos de datos */
+  --type-numeric-bg: rgba(59, 130, 246, 0.1);
+  --type-numeric-color: #3B82F6;
+  --type-categoric-bg: rgba(139, 92, 246, 0.1);
+  --type-categoric-color: #8B5CF6;
+  --type-date-bg: rgba(20, 184, 166, 0.1);
+  --type-date-color: #14B8A6;
+  --type-text-bg: rgba(107, 114, 128, 0.1);
+  --type-text-color: #6B7280;
+}
+
+.dark {
+  /* Success (Verde) - Tema Oscuro */
+  --success-color: #34D399;
+  --success-color-light: #6EE7B7;
+  --success-color-dark: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.2);
+  --success-bg-solid: #064E3B;
+  --success-border: rgba(52, 211, 153, 0.3);
+  
+  /* Warning - Tema Oscuro */
+  --warning-color: #FBBF24;
+  --warning-color-light: #FCD34D;
+  --warning-color-dark: #F59E0B;
+  --warning-bg: rgba(245, 158, 11, 0.2);
+  --warning-bg-solid: #78350F;
+  --warning-border: rgba(251, 191, 36, 0.3);
+  
+  /* Error - Tema Oscuro */
+  --error-color: #F87171;
+  --error-color-light: #FCA5A5;
+  --error-color-dark: #EF4444;
+  --error-bg: rgba(239, 68, 68, 0.2);
+  --error-bg-solid: #7F1D1D;
+  --error-border: rgba(248, 113, 113, 0.3);
+  
+  /* Info - Tema Oscuro */
+  --info-color: #60A5FA;
+  --info-color-light: #93C5FD;
+  --info-color-dark: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.2);
+  --info-bg-solid: #1E3A8A;
+  --info-border: rgba(96, 165, 250, 0.3);
+  
+  /* Neutral - Tema Oscuro */
+  --neutral-color: #9CA3AF;
+  --neutral-bg: rgba(156, 163, 175, 0.15);
+  --neutral-border: rgba(156, 163, 175, 0.3);
+  
+  /* Colores para gráficos - Tema Oscuro (más brillantes) */
+  --chart-color-1: #818CF8;
+  --chart-color-2: #F472B6;
+  --chart-color-3: #2DD4BF;
+  --chart-color-4: #FBBF24;
+  --chart-color-5: #F87171;
+  --chart-color-6: #A78BFA;
+  --chart-color-7: #22D3EE;
+  --chart-color-8: #A3E635;
+  --chart-color-9: #FB923C;
+  --chart-color-10: #60A5FA;
+  
+  /* Colores para tipos de datos - Tema Oscuro */
+  --type-numeric-bg: rgba(96, 165, 250, 0.2);
+  --type-numeric-color: #60A5FA;
+  --type-categoric-bg: rgba(167, 139, 250, 0.2);
+  --type-categoric-color: #A78BFA;
+  --type-date-bg: rgba(45, 212, 191, 0.2);
+  --type-date-color: #2DD4BF;
+  --type-text-bg: rgba(156, 163, 175, 0.2);
+  --type-text-color: #9CA3AF;
+}
+
+/* ================================================
    2. ESTILOS BASE
    ================================================ */
 *, *::before, *::after {
@@ -468,6 +593,185 @@ textarea.mat-mdc-input-element {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ================================================
+   6.5 CLASES SEMÁNTICAS (Estados)
+   ================================================ */
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.badge-success {
+  background-color: var(--success-bg);
+  color: var(--success-color);
+  border: 1px solid var(--success-border);
+}
+
+.badge-warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-border);
+}
+
+.badge-error {
+  background-color: var(--error-bg);
+  color: var(--error-color);
+  border: 1px solid var(--error-border);
+}
+
+.badge-info {
+  background-color: var(--info-bg);
+  color: var(--info-color);
+  border: 1px solid var(--info-border);
+}
+
+.badge-neutral {
+  background-color: var(--neutral-bg);
+  color: var(--neutral-color);
+  border: 1px solid var(--neutral-border);
+}
+
+/* Alerts */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid;
+}
+
+.alert-success {
+  background-color: var(--success-bg);
+  color: var(--success-color-dark);
+  border-color: var(--success-border);
+}
+
+.alert-warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-color-dark);
+  border-color: var(--warning-border);
+}
+
+.alert-error {
+  background-color: var(--error-bg);
+  color: var(--error-color-dark);
+  border-color: var(--error-border);
+}
+
+.alert-info {
+  background-color: var(--info-bg);
+  color: var(--info-color-dark);
+  border-color: var(--info-border);
+}
+
+.dark .alert-success { color: var(--success-color); }
+.dark .alert-warning { color: var(--warning-color); }
+.dark .alert-error { color: var(--error-color); }
+.dark .alert-info { color: var(--info-color); }
+
+/* Icon containers */
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+}
+
+.icon-success {
+  background-color: var(--success-bg);
+  color: var(--success-color);
+}
+
+.icon-warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-color);
+}
+
+.icon-error {
+  background-color: var(--error-bg);
+  color: var(--error-color);
+}
+
+.icon-info {
+  background-color: var(--info-bg);
+  color: var(--info-color);
+}
+
+.icon-primary {
+  background-color: var(--primary-50);
+  color: var(--primary-600);
+}
+
+.dark .icon-primary {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: var(--primary-400);
+}
+
+/* Type badges para variables */
+.type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.type-numeric {
+  background-color: var(--type-numeric-bg);
+  color: var(--type-numeric-color);
+}
+
+.type-categoric {
+  background-color: var(--type-categoric-bg);
+  color: var(--type-categoric-color);
+}
+
+.type-date {
+  background-color: var(--type-date-bg);
+  color: var(--type-date-color);
+}
+
+.type-text {
+  background-color: var(--type-text-bg);
+  color: var(--type-text-color);
+}
+
+/* Text colors semánticos */
+.text-success { color: var(--success-color) !important; }
+.text-warning { color: var(--warning-color) !important; }
+.text-error { color: var(--error-color) !important; }
+.text-info { color: var(--info-color) !important; }
+
+/* Background colors semánticos */
+.bg-success { background-color: var(--success-bg) !important; }
+.bg-warning { background-color: var(--warning-bg) !important; }
+.bg-error { background-color: var(--error-bg) !important; }
+.bg-info { background-color: var(--info-bg) !important; }
+
+/* Themed containers */
+.themed-container {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+}
+
+.themed-container-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
 }
 
 /* ================================================

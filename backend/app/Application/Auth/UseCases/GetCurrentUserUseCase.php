@@ -8,12 +8,11 @@ use App\Models\User;
 
 class GetCurrentUserUseCase
 {
-    public function execute(User $user): array
+    public function execute(User $user): User
     {
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-        ];
+        // Cargar relaciones necesarias
+        $user->load(['perfil', 'departamentos']);
+        
+        return $user;
     }
 }

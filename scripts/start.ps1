@@ -100,7 +100,7 @@ function Start-Backend {
         Copy-Item ".env.example" ".env"
     }
     
-    Start-Process -NoNewWindow powershell -ArgumentList "-Command", "cd '$PSScriptRoot\..\backend'; php artisan serve --host=localhost --port=8000"
+    Start-Process -NoNewWindow powershell -ArgumentList "-Command", "cd '$PSScriptRoot\..\backend'; php -S 127.0.0.1:8000 -t public"
     
     Write-Host "[Backend] " -NoNewline -ForegroundColor Green
     Write-Host "Servidor Laravel iniciado" -ForegroundColor White

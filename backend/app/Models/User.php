@@ -25,6 +25,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'rol',
     ];
 
     /**
@@ -95,5 +96,29 @@ class User extends Authenticatable
         return $this->departamentos()
             ->wherePivot('rol', 'ADMIN')
             ->exists();
+    }
+
+    /**
+     * Verificar si el usuario tiene rol global ADMIN
+     */
+    public function isAdmin(): bool
+    {
+        return $this->rol === 'ADMIN';
+    }
+
+    /**
+     * Verificar si el usuario tiene rol global USER
+     */
+    public function isUser(): bool
+    {
+        return $this->rol === 'USER';
+    }
+
+    /**
+     * Verificar si el usuario tiene un rol global específico
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->rol === $role;
     }
 }

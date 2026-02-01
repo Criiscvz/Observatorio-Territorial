@@ -190,4 +190,78 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
             'series' => $series,
         ];
     }
+
+    public function getTimeSeriesAverage(string $datasetId, string $columnaFecha, string $columnaNumerico, int $limit = 50): array
+    {
+        return DB::table('registros_datos')
+            ->select(DB::raw("
+                DATE(data->>'$columnaFecha') as fecha,
+                AVG((data->>'$columnaNumerico')::numeric) as avg_value,
+                COUNT(*) as count
+            "))
+            ->where('dataset_id', $datasetId)
+            ->whereNotNull(DB::raw("data->>'$columnaFecha'"))
+            ->whereRaw("data->>'$columnaNumerico' ~ '^-?[0-9]+(\\.[0-9]+)?$'")
+            ->groupBy(DB::raw("DATE(data->>'$columnaFecha')"))
+            ->orderBy('fecha')
+            ->limit($limit)
+            ->get()
+            ->toArray();
+    }
+
+    public function getStackedTimeData(string $datasetId, string $columnaFecha, string $columnaCategoria, int $limit = 50): array
+    {
+        // Obtener categorías únicas
+        $categories = DB::table('registros_datos')
+            ->select(DB::raw("DISTINCT data->>'$columnaCategoria' as cat"))
+            ->where('dataset_id', $datasetId)
+            ->whereNotNull(DB::raw("data->>'$columnaCategoria'"))
+            ->orderBy('cat')
+            ->limit(10)
+            ->pluck('cat')
+            ->toArray();
+
+        // Obtener fechas únicas
+        $dates = DB::table('registros_datos')
+            ->select(DB::raw("DISTINCT DATE(data->>'$columnaFecha') as fecha"))
+            ->where('dataset_id', $datasetId)
+            ->whereNotNull(DB::raw("data->>'$columnaFecha'"))
+            ->orderBy('fecha')
+            ->limit($limit)
+            ->pluck('fecha')
+            ->toArray();
+
+        // Contar por fecha y categoría
+        $counts = DB::table('registros_datos')
+            ->select(DB::raw("
+                DATE(data->>'$columnaFecha') as fecha,
+                data->>'$columnaCategoria' as categoria,
+                COUNT(*) as count
+            "))
+            ->where('dataset_id', $datasetId)
+            ->whereNotNull(DB::raw("data->>'$columnaFecha'"))
+            ->whereNotNull(DB::raw("data->>'$columnaCategoria'"))
+            ->groupBy(DB::raw("DATE(data->>'$columnaFecha')"), DB::raw("data->>'$columnaCategoria'"))
+            ->get();
+
+        // Construir series
+        $series = [];
+        foreach ($categories as $cat) {
+            $seriesData = [];
+            foreach ($dates as $date) {
+                $count = $counts->first(fn($c) => $c->fecha === $date && $c->categoria === $cat);
+                $seriesData[] = $count ? (int)$count->count : 0;
+            }
+            $series[] = [
+                'name' => $cat ?? 'Sin valor',
+                'data' => $seriesData,
+            ];
+        }
+
+        return [
+            'labels_x' => $dates,
+            'categories' => $categories,
+            'series' => $series,
+        ];
+    }
 }

@@ -25,12 +25,12 @@ import { AuthService } from '../../core/services/auth.service';
     MatProgressSpinnerModule,
   ],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <mat-card class="w-full max-w-md">
+    <div class="auth-container">
+      <mat-card class="auth-card">
         <mat-card-header class="justify-center mb-6">
           <div class="text-center w-full">
-            <img src="ULEAM.png" alt="ULEAM" class="h-20 mx-auto mb-4">
-            <mat-card-title class="text-2xl font-bold text-gray-800">
+            <img src="ULEAM.png" alt="ULEAM" class="auth-logo">
+            <mat-card-title class="auth-title">
               Crear Cuenta
             </mat-card-title>
             <mat-card-subtitle>Regístrate en el Observatorio ULEAM</mat-card-subtitle>
@@ -39,8 +39,9 @@ import { AuthService } from '../../core/services/auth.service';
 
         <mat-card-content>
           @if (error()) {
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {{ error() }}
+            <div class="alert alert-error">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ error() }}</span>
             </div>
           }
 
@@ -102,9 +103,9 @@ import { AuthService } from '../../core/services/auth.service';
         </mat-card-content>
 
         <mat-card-actions class="justify-center">
-          <p class="text-gray-600">
+          <p class="auth-footer-text">
             ¿Ya tienes cuenta? 
-            <a routerLink="/auth/login" class="text-red-600 hover:underline font-medium">
+            <a routerLink="/auth/login" class="auth-link">
               Inicia sesión
             </a>
           </p>
@@ -113,11 +114,47 @@ import { AuthService } from '../../core/services/auth.service';
     </div>
   `,
   styles: [`
-    :host {
+    :host { display: block; }
+    
+    .auth-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+      padding: 1rem;
+    }
+    
+    .auth-card {
+      width: 100%;
+      max-width: 28rem;
+      padding: 2rem;
+    }
+    
+    .auth-logo {
+      height: 5rem;
+      margin: 0 auto 1rem;
       display: block;
     }
-    mat-card {
-      padding: 2rem;
+    
+    .auth-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .auth-footer-text {
+      color: var(--text-secondary);
+    }
+    
+    .auth-link {
+      color: var(--primary-600);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    
+    .auth-link:hover {
+      text-decoration: underline;
     }
   `]
 })

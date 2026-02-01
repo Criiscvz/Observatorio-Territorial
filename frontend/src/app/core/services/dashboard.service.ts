@@ -134,4 +134,38 @@ export class DashboardService {
   updateVariable(variableId: string, data: Partial<VariableMetadato>): Observable<VariableMetadato> {
     return this.api.put<VariableMetadato>(`/variables/${variableId}`, data);
   }
+
+  // =========== MÉTODOS PÚBLICOS (sin auth) ===========
+
+  getPublicDatasetData(datasetId: string, page: number = 1, perPage: number = 50): Observable<DatasetDataResponse> {
+    return this.api.get<DatasetDataResponse>(`/publico/datasets/${datasetId}/data`, { page, per_page: perPage });
+  }
+
+  getPublicUnivariableStats(request: UnivariableRequest): Observable<UnivariableResponse> {
+    return this.api.post<UnivariableResponse>('/publico/stats/univariable', request).pipe(
+      map(res => ({
+        ...res,
+        data: {
+          ...res.data,
+          labels: res.data.labels || res.data.categories || [],
+          values: res.data.values || []
+        }
+      }))
+    );
+  }
+
+  getPublicBivariableStats(request: BivariableRequest): Observable<BivariableResponse> {
+    return this.api.post<BivariableResponse>('/publico/stats/bivariable', request).pipe(
+      map(res => ({
+        ...res,
+        variable_x: res.nombre_variable_x || res.variable_x,
+        variable_y: res.nombre_variable_y || res.variable_y,
+        data: {
+          ...res.data,
+          labels: res.data.labels || res.data.categories || [],
+          labels_x: res.data.labels_x || res.data.categories || [],
+        }
+      }))
+    );
+  }
 }

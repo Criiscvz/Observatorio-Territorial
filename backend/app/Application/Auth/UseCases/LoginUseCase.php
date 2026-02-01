@@ -22,13 +22,15 @@ class LoginUseCase
             ]);
         }
 
+        // Revocar todos los tokens anteriores del usuario
+        $user->tokens()->delete();
+
+        // Cargar relaciones necesarias
+        $user->load(['perfil', 'departamentos']);
+
+        // Crear nuevo token
         $token = $user->createToken('auth-token')->plainTextToken;
 
-        return new AuthResponseDTO(
-            userId: $user->id,
-            name: $user->name,
-            email: $user->email,
-            token: $token,
-        );
+        return AuthResponseDTO::fromUser($user, $token);
     }
 }

@@ -61,8 +61,12 @@ class GetBivariableStatsUseCase
     {
         $datasetId = $variableX->datasetId;
 
+        // Normalizar tipos: TEXTO se trata como CATEGORICO
+        $tipoX = $this->normalizeTipo($variableX->tipoDato);
+        $tipoY = $this->normalizeTipo($variableY->tipoDato);
+
         // Ambas numéricas -> Scatter plot
-        if ($variableX->isNumerico() && $variableY->isNumerico()) {
+        if ($tipoX === 'NUMERICO' && $tipoY === 'NUMERICO') {
             $scatterData = $this->registroRepository->getScatterData(
                 $datasetId,
                 $variableX->nombreColumna,
@@ -89,8 +93,8 @@ class GetBivariableStatsUseCase
             );
         }
 
-        // Categórica + Numérica -> Bar chart agrupado
-        if ($variableX->isCategorico() && $variableY->isNumerico()) {
+        // Categórica/Texto + Numérica -> Bar chart agrupado
+        if ($tipoX === 'CATEGORICO' && $tipoY === 'NUMERICO') {
             $grouped = $this->registroRepository->getGroupedAverages(
                 $datasetId,
                 $variableX->nombreColumna,
@@ -106,15 +110,16 @@ class GetBivariableStatsUseCase
                 chartType: 'grouped_bar',
                 data: [
                     'categories' => array_column($grouped, 'categoria'),
+                    'labels' => array_column($grouped, 'categoria'),
                     'values' => array_map(fn($v) => round((float) $v->promedio, 2), $grouped),
                     'counts' => array_column($grouped, 'count'),
                 ],
-                stats: null,
+                stats: ['count' => array_sum(array_column($grouped, 'count'))],
             );
         }
 
-        // Numérica + Categórica -> invertir
-        if ($variableX->isNumerico() && $variableY->isCategorico()) {
+        // Numérica + Categórica/Texto -> invertir
+        if ($tipoX === 'NUMERICO' && $tipoY === 'CATEGORICO') {
             $grouped = $this->registroRepository->getGroupedAverages(
                 $datasetId,
                 $variableY->nombreColumna,
@@ -130,14 +135,81 @@ class GetBivariableStatsUseCase
                 chartType: 'grouped_bar',
                 data: [
                     'categories' => array_column($grouped, 'categoria'),
+                    'labels' => array_column($grouped, 'categoria'),
                     'values' => array_map(fn($v) => round((float) $v->promedio, 2), $grouped),
                     'counts' => array_column($grouped, 'count'),
                 ],
+                stats: ['count' => array_sum(array_column($grouped, 'count'))],
+            );
+        }
+
+        // Ambas categóricas/texto -> Heatmap o stacked bar
+        if ($tipoX === 'CATEGORICO' && $tipoY === 'CATEGORICO') {
+            $contingency = $this->registroRepository->getContingencyTable(
+                $datasetId,
+                $variableX->nombreColumna,
+                $variableY->nombreColumna,
+                $limit
+            );
+
+            return new BivariableResponseDTO(
+                variableXId: $variableX->id,
+                variableYId: $variableY->id,
+                nombreVariableX: $variableX->nombreColumna,
+                nombreVariableY: $variableY->nombreColumna,
+                chartType: $chartType === 'heatmap' ? 'heatmap' : 'stacked_bar',
+                data: $contingency,
                 stats: null,
             );
         }
 
-        // Ambas categóricas -> Heatmap o stacked bar
+        // FECHA + NUMERICO -> serie temporal
+        if (($tipoX === 'FECHA' && $tipoY === 'NUMERICO') ||
+            ($tipoX === 'NUMERICO' && $tipoY === 'FECHA')) {
+            $timeData = $this->registroRepository->getTimeSeriesAverage(
+                $datasetId,
+                $tipoX === 'FECHA' ? $variableX->nombreColumna : $variableY->nombreColumna,
+                $tipoX === 'NUMERICO' ? $variableX->nombreColumna : $variableY->nombreColumna,
+                $limit
+            );
+
+            return new BivariableResponseDTO(
+                variableXId: $variableX->id,
+                variableYId: $variableY->id,
+                nombreVariableX: $variableX->nombreColumna,
+                nombreVariableY: $variableY->nombreColumna,
+                chartType: 'line_time',
+                data: [
+                    'labels' => array_column($timeData, 'fecha'),
+                    'values' => array_map(fn($v) => round((float) $v->avg_value, 2), $timeData),
+                    'counts' => array_column($timeData, 'count'),
+                ],
+                stats: ['count' => array_sum(array_column($timeData, 'count'))],
+            );
+        }
+
+        // FECHA + CATEGORICO -> evolución temporal
+        if (($tipoX === 'FECHA' && $tipoY === 'CATEGORICO') ||
+            ($tipoX === 'CATEGORICO' && $tipoY === 'FECHA')) {
+            $stackedData = $this->registroRepository->getStackedTimeData(
+                $datasetId,
+                $tipoX === 'FECHA' ? $variableX->nombreColumna : $variableY->nombreColumna,
+                $tipoX === 'CATEGORICO' ? $variableX->nombreColumna : $variableY->nombreColumna,
+                $limit
+            );
+
+            return new BivariableResponseDTO(
+                variableXId: $variableX->id,
+                variableYId: $variableY->id,
+                nombreVariableX: $variableX->nombreColumna,
+                nombreVariableY: $variableY->nombreColumna,
+                chartType: 'stacked_bar',
+                data: $stackedData,
+                stats: null,
+            );
+        }
+
+        // Fallback: tratar como categóricas
         $contingency = $this->registroRepository->getContingencyTable(
             $datasetId,
             $variableX->nombreColumna,
@@ -150,14 +222,26 @@ class GetBivariableStatsUseCase
             variableYId: $variableY->id,
             nombreVariableX: $variableX->nombreColumna,
             nombreVariableY: $variableY->nombreColumna,
-            chartType: $chartType === 'heatmap' ? 'heatmap' : 'stacked_bar',
+            chartType: 'stacked_bar',
             data: $contingency,
             stats: null,
         );
     }
 
+    /**
+     * Normaliza el tipo de dato para análisis
+     */
+    private function normalizeTipo(string $tipo): string
+    {
+        return $tipo === 'TEXTO' ? 'CATEGORICO' : $tipo;
+    }
+
     private function determineChartType(string $tipoX, string $tipoY): string
     {
+        // Normalizar tipos
+        $tipoX = $this->normalizeTipo($tipoX);
+        $tipoY = $this->normalizeTipo($tipoY);
+
         if ($tipoX === 'NUMERICO' && $tipoY === 'NUMERICO') {
             return 'scatter';
         }
@@ -165,6 +249,20 @@ class GetBivariableStatsUseCase
         if (($tipoX === 'CATEGORICO' && $tipoY === 'NUMERICO') ||
             ($tipoX === 'NUMERICO' && $tipoY === 'CATEGORICO')) {
             return 'grouped_bar';
+        }
+
+        if ($tipoX === 'CATEGORICO' && $tipoY === 'CATEGORICO') {
+            return 'heatmap';
+        }
+
+        if (($tipoX === 'FECHA' && $tipoY === 'NUMERICO') ||
+            ($tipoX === 'NUMERICO' && $tipoY === 'FECHA')) {
+            return 'line_time';
+        }
+
+        if (($tipoX === 'FECHA' && $tipoY === 'CATEGORICO') ||
+            ($tipoX === 'CATEGORICO' && $tipoY === 'FECHA')) {
+            return 'stacked_bar';
         }
 
         return 'stacked_bar';

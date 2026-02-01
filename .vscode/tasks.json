@@ -69,7 +69,7 @@
     {
       "label": "Backend: Iniciar servidor",
       "type": "shell",
-      "command": "php artisan serve --host=localhost --port=8000",
+      "command": "php -S 127.0.0.1:8000 -t public",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
@@ -274,7 +274,7 @@
         "Backend: Iniciar servidor",
         "Frontend: Iniciar servidor dev"
       ],
-      "dependsOrder": "sequence",
+      "dependsOrder": "parallel",
       "group": {
         "kind": "build",
         "isDefault": true

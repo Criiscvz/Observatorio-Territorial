@@ -84,7 +84,7 @@ start_backend() {
         cp .env.example .env
     fi
     
-    php artisan serve --host=localhost --port=8000 &
+    php artisan serve --host=127.0.0.1 --port=8000 &
     
     echo -e "${GREEN}[Backend]${NC} ${WHITE}Servidor Laravel iniciado${NC}"
     echo -e "          ${GRAY}URL: http://localhost:8000${NC}"

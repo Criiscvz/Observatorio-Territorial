@@ -48,4 +48,14 @@ interface RegistroDatoRepositoryInterface
      * Obtiene tabla de contingencia para dos categóricas
      */
     public function getContingencyTable(string $datasetId, string $columnaX, string $columnaY, int $limit = 15): array;
+
+    /**
+     * Obtiene promedio de una columna numérica agrupado por fecha
+     */
+    public function getTimeSeriesAverage(string $datasetId, string $columnaFecha, string $columnaNumerico, int $limit = 50): array;
+
+    /**
+     * Obtiene conteos por fecha y categoría para gráficos apilados
+     */
+    public function getStackedTimeData(string $datasetId, string $columnaFecha, string $columnaCategoria, int $limit = 50): array;
 }

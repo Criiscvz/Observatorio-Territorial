@@ -4,8 +4,30 @@ import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideEchartsCore } from 'ngx-echarts';
 import * as echarts from 'echarts/core';
-import { BarChart, PieChart, LineChart, ScatterChart, HeatmapChart } from 'echarts/charts';
-import { GridComponent, TooltipComponent, LegendComponent, TitleComponent, DataZoomComponent, GraphicComponent, VisualMapComponent } from 'echarts/components';
+import { 
+  BarChart, 
+  PieChart, 
+  LineChart, 
+  ScatterChart, 
+  HeatmapChart, 
+  RadarChart, 
+  TreemapChart, 
+  FunnelChart, 
+  GaugeChart,
+  BoxplotChart
+} from 'echarts/charts';
+import { 
+  GridComponent, 
+  TooltipComponent, 
+  LegendComponent, 
+  TitleComponent, 
+  DataZoomComponent, 
+  GraphicComponent, 
+  VisualMapComponent,
+  RadarComponent,
+  MarkLineComponent,
+  MarkPointComponent
+} from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 
 import { routes } from './app.routes';
@@ -15,11 +37,18 @@ import { repositoryProviders } from './core/di/providers';
 
 // Registrar componentes de ECharts
 echarts.use([
+  // Charts
   BarChart,
   PieChart,
   LineChart,
   ScatterChart,
   HeatmapChart,
+  RadarChart,
+  TreemapChart,
+  FunnelChart,
+  GaugeChart,
+  BoxplotChart,
+  // Components
   GridComponent,
   TooltipComponent,
   LegendComponent,
@@ -27,6 +56,10 @@ echarts.use([
   DataZoomComponent,
   GraphicComponent,
   VisualMapComponent,
+  RadarComponent,
+  MarkLineComponent,
+  MarkPointComponent,
+  // Renderer
   CanvasRenderer,
 ]);
 

@@ -1,4 +1,5 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, effect, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 export type Theme = 'light' | 'dark';
 
@@ -7,6 +8,10 @@ export type Theme = 'light' | 'dark';
 })
 export class ThemeService {
   private readonly STORAGE_KEY = 'observatorio-theme';
+  private readonly platformId = inject(PLATFORM_ID);
+  
+  // Verificar si estamos en el navegador
+  private readonly isBrowser = isPlatformBrowser(this.platformId);
   
   // Signal reactivo para el tema actual
   readonly theme = signal<Theme>(this.getInitialTheme());
@@ -27,7 +32,7 @@ export class ThemeService {
   toggleTheme(): void {
     const newTheme = this.theme() === 'light' ? 'dark' : 'light';
     this.theme.set(newTheme);
-    localStorage.setItem(this.STORAGE_KEY, newTheme);
+    this.saveTheme(newTheme);
   }
   
   /**
@@ -35,13 +40,27 @@ export class ThemeService {
    */
   setTheme(theme: Theme): void {
     this.theme.set(theme);
-    localStorage.setItem(this.STORAGE_KEY, theme);
+    this.saveTheme(theme);
+  }
+  
+  /**
+   * Guarda el tema en localStorage (solo en navegador)
+   */
+  private saveTheme(theme: Theme): void {
+    if (this.isBrowser) {
+      localStorage.setItem(this.STORAGE_KEY, theme);
+    }
   }
   
   /**
    * Obtiene el tema inicial desde localStorage o preferencia del sistema
    */
   private getInitialTheme(): Theme {
+    // Solo acceder a localStorage si estamos en el navegador
+    if (!this.isBrowser) {
+      return 'light';
+    }
+    
     // Primero verificar localStorage
     const stored = localStorage.getItem(this.STORAGE_KEY) as Theme | null;
     if (stored && (stored === 'light' || stored === 'dark')) {
@@ -49,7 +68,7 @@ export class ThemeService {
     }
     
     // Si no hay preferencia guardada, usar preferencia del sistema
-    if (typeof window !== 'undefined' && window.matchMedia) {
+    if (window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
     
@@ -60,16 +79,18 @@ export class ThemeService {
    * Aplica el tema al documento HTML
    */
   private applyTheme(theme: Theme): void {
-    if (typeof document !== 'undefined') {
-      const root = document.documentElement;
-      
-      if (theme === 'dark') {
-        root.classList.add('dark');
-        root.style.colorScheme = 'dark';
-      } else {
-        root.classList.remove('dark');
-        root.style.colorScheme = 'light';
-      }
+    if (!this.isBrowser) {
+      return;
+    }
+    
+    const root = document.documentElement;
+    
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      root.style.colorScheme = 'light';
     }
   }
 }

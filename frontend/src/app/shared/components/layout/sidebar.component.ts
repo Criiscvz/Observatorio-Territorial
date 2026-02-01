@@ -1,11 +1,13 @@
-import { Component, inject, OnInit, signal, output } from '@angular/core';
+import { Component, inject, OnInit, signal, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatBadgeModule } from '@angular/material/badge';
 import { DepartamentoService } from '../../../core/services/departamento.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Departamento } from '../../../core/models';
+import { IsAdminDirective } from '../../directives/has-role.directive';
 
 interface NavItem {
   label: string;
@@ -24,6 +26,7 @@ interface NavItem {
     MatIconModule,
     MatTooltipModule,
     MatBadgeModule,
+    IsAdminDirective,
   ],
   template: `
     <nav class="sidebar">
@@ -31,23 +34,33 @@ interface NavItem {
       <div class="nav-section">
         <span class="nav-label">Principal</span>
         
-        @for (item of mainNavItems; track item.route) {
-          <a 
-            class="nav-item"
-            [routerLink]="item.route"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: item.route === '/dashboard' }"
-            (click)="navigate.emit()"
-          >
-            <div class="nav-icon-wrapper">
-              <mat-icon class="nav-icon">{{ item.icon }}</mat-icon>
-            </div>
-            <span class="nav-text">{{ item.label }}</span>
-            @if (item.badge) {
-              <span class="nav-badge">{{ item.badge }}</span>
-            }
-          </a>
-        }
+        <!-- Dashboard - visible para todos -->
+        <a 
+          class="nav-item"
+          routerLink="/dashboard"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          (click)="navigate.emit()"
+        >
+          <div class="nav-icon-wrapper">
+            <mat-icon class="nav-icon">dashboard</mat-icon>
+          </div>
+          <span class="nav-text">Dashboard</span>
+        </a>
+        
+        <!-- Subir Dataset - solo admin -->
+        <a 
+          *isAdmin
+          class="nav-item"
+          routerLink="/datasets/nuevo"
+          routerLinkActive="active"
+          (click)="navigate.emit()"
+        >
+          <div class="nav-icon-wrapper">
+            <mat-icon class="nav-icon">cloud_upload</mat-icon>
+          </div>
+          <span class="nav-text">Subir Dataset</span>
+        </a>
       </div>
 
       <!-- Departamentos section -->
@@ -55,6 +68,7 @@ interface NavItem {
         <div class="nav-label-row">
           <span class="nav-label">Departamentos</span>
           <a 
+            *isAdmin
             class="add-btn" 
             routerLink="/departamentos/nuevo"
             matTooltip="Nuevo departamento"
@@ -90,6 +104,7 @@ interface NavItem {
               <mat-icon>folder_off</mat-icon>
               <span>Sin departamentos</span>
               <a 
+                *isAdmin
                 routerLink="/departamentos/nuevo" 
                 class="empty-action"
                 (click)="navigate.emit()"
@@ -345,15 +360,14 @@ interface NavItem {
   `]
 })
 export class SidebarComponent implements OnInit {
-  private deptoService = inject(DepartamentoService);
+  private readonly deptoService = inject(DepartamentoService);
+  private readonly authService = inject(AuthService);
   
   departamentos = signal<Departamento[]>([]);
   navigate = output<void>();
-
-  mainNavItems: NavItem[] = [
-    { label: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
-    { label: 'Subir Dataset', icon: 'cloud_upload', route: '/datasets/nuevo' },
-  ];
+  
+  // Computed para verificar si el usuario es admin
+  isAdmin = computed(() => this.authService.isAdmin());
 
   // Colores para los departamentos
   private deptoColors = [

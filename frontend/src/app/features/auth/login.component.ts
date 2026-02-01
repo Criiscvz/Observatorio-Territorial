@@ -1,13 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
@@ -25,12 +25,12 @@ import { AuthService } from '../../core/services/auth.service';
     MatProgressSpinnerModule,
   ],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <mat-card class="w-full max-w-md">
+    <div class="auth-container">
+      <mat-card class="auth-card">
         <mat-card-header class="justify-center mb-6">
           <div class="text-center w-full">
-            <img src="ULEAM.png" alt="ULEAM" class="h-20 mx-auto mb-4">
-            <mat-card-title class="text-2xl font-bold text-gray-800">
+            <img src="ULEAM.png" alt="ULEAM" class="auth-logo">
+            <mat-card-title class="auth-title">
               Observatorio ULEAM
             </mat-card-title>
             <mat-card-subtitle>Ingresa a tu cuenta</mat-card-subtitle>
@@ -39,8 +39,9 @@ import { AuthService } from '../../core/services/auth.service';
 
         <mat-card-content>
           @if (error()) {
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {{ error() }}
+            <div class="alert alert-error">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ error() }}</span>
             </div>
           }
 
@@ -81,9 +82,9 @@ import { AuthService } from '../../core/services/auth.service';
         </mat-card-content>
 
         <mat-card-actions class="justify-center">
-          <p class="text-gray-600">
+          <p class="auth-footer-text">
             ¿No tienes cuenta? 
-            <a routerLink="/auth/register" class="text-red-600 hover:underline font-medium">
+            <a routerLink="/auth/register" class="auth-link">
               Regístrate aquí
             </a>
           </p>
@@ -92,21 +93,58 @@ import { AuthService } from '../../core/services/auth.service';
     </div>
   `,
   styles: [`
-    :host {
-      display: block;
+    :host { display: block; }
+    
+    .auth-container {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+      padding: 1rem;
     }
-    mat-card {
+    
+    .auth-card {
+      width: 100%;
+      max-width: 28rem;
       padding: 2rem;
     }
+    
+    .auth-logo {
+      height: 5rem;
+      margin: 0 auto 1rem;
+      display: block;
+    }
+    
+    .auth-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .auth-footer-text {
+      color: var(--text-secondary);
+    }
+    
+    .auth-link {
+      color: var(--primary-600);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    
+    .auth-link:hover {
+      text-decoration: underline;
+    }
+    
     mat-card-header {
       margin-bottom: 1.5rem;
     }
   `]
 })
 export class LoginComponent {
-  private fb = inject(FormBuilder);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   form: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
