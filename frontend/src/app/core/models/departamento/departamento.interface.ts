@@ -1,4 +1,4 @@
-import { Dataset } from './dataset.interface';
+import { Dataset } from '../dataset/dataset.interface';
 
 export interface Departamento {
   id: string;

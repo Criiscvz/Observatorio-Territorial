@@ -1,4 +1,4 @@
-import { Departamento } from './departamento.interface';
+import { Departamento } from '../departamento/departamento.interface';
 import { VariableMetadato } from './variable-metadato.interface';
 
 export interface Dataset {

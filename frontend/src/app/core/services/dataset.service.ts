@@ -2,10 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AnalisisResponse, ColumnaAnalizada, Dataset } from '../models';
 import { ApiService } from './api.service';
-import { PaginatedResponse } from './paginated-response.interface';
+import { PaginatedResponse } from './interfaces';
 
 // Re-export interfaces for convenience
-export * from './paginated-response.interface';
+export * from './interfaces/common/paginated-response.interface';
 
 @Injectable({
   providedIn: 'root',

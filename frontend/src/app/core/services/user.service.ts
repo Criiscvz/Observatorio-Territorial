@@ -1,9 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { UpdateUserRoleRequest } from './update-user-role-request.interface';
-import { UpdateUserRoleResponse } from './update-user-role-response.interface';
-import { UsersListResponse } from './users-list-response.interface';
+import { UpdateUserRoleRequest, UpdateUserRoleResponse, UsersListResponse } from './interfaces';
 
 @Injectable({
   providedIn: 'root',
