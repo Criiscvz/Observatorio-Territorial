@@ -11,7 +11,9 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('../features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      import('../features/dashboard/dashboard/dashboard.component').then(
+        (m) => m.DashboardComponent,
+      ),
     title: 'Dashboard - Panel de Administración',
   },
 
@@ -19,7 +21,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'departamentos/nuevo',
     loadComponent: () =>
-      import('../features/departamentos/departamento-form.component').then(
+      import('../features/departamentos/departamento-form/departamento-form.component').then(
         (m) => m.DepartamentoFormComponent,
       ),
     canActivate: [adminGuard],
@@ -28,7 +30,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'departamentos/:id/editar',
     loadComponent: () =>
-      import('../features/departamentos/departamento-form.component').then(
+      import('../features/departamentos/departamento-form/departamento-form.component').then(
         (m) => m.DepartamentoFormComponent,
       ),
     canActivate: [adminGuard],
@@ -37,7 +39,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'departamentos/:id',
     loadComponent: () =>
-      import('../features/departamentos/departamento-detail.component').then(
+      import('../features/departamentos/departamento-detail/departamento-detail.component').then(
         (m) => m.DepartamentoDetailComponent,
       ),
     title: 'Detalle del Departamento - Panel de Administración',
@@ -47,20 +49,26 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'datasets',
     loadComponent: () =>
-      import('../features/datasets/dataset-list.component').then((m) => m.DatasetListComponent),
+      import('../features/datasets/dataset-list/dataset-list.component').then(
+        (m) => m.DatasetListComponent,
+      ),
     title: 'Datasets - Panel de Administración',
   },
   {
     path: 'datasets/nuevo',
     loadComponent: () =>
-      import('../features/datasets/dataset-upload.component').then((m) => m.DatasetUploadComponent),
+      import('../features/datasets/dataset-upload/dataset-upload.component').then(
+        (m) => m.DatasetUploadComponent,
+      ),
     canActivate: [adminGuard],
     title: 'Subir Dataset - Panel de Administración',
   },
   {
     path: 'datasets/:id',
     loadComponent: () =>
-      import('../features/datasets/dataset-view.component').then((m) => m.DatasetViewComponent),
+      import('../features/datasets/dataset-view/dataset-view.component').then(
+        (m) => m.DatasetViewComponent,
+      ),
     title: 'Visualización de Dataset - Panel de Administración',
   },
 ];

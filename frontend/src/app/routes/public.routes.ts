@@ -4,7 +4,7 @@ export const PUBLIC_ROUTES: Routes = [
   {
     path: 'departamentos',
     loadComponent: () =>
-      import('../features/public/public-departamentos.component').then(
+      import('../features/public/public-departamentos/public-departamentos.component').then(
         (m) => m.PublicDepartamentosComponent,
       ),
     title: 'Departamentos - Observatorio',
@@ -12,7 +12,7 @@ export const PUBLIC_ROUTES: Routes = [
   {
     path: 'departamentos/:id',
     loadComponent: () =>
-      import('../features/public/public-departamento-detail.component').then(
+      import('../features/public/public-departamento-detail/public-departamento-detail.component').then(
         (m) => m.PublicDepartamentoDetailComponent,
       ),
     title: 'Detalle del Departamento - Observatorio',
@@ -20,7 +20,7 @@ export const PUBLIC_ROUTES: Routes = [
   {
     path: 'datasets/:id',
     loadComponent: () =>
-      import('../features/public/public-dataset-view.component').then(
+      import('../features/public/public-dataset-view/public-dataset-view.component').then(
         (m) => m.PublicDatasetViewComponent,
       ),
     title: 'Visualización de Dataset - Observatorio',

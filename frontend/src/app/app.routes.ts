@@ -8,7 +8,9 @@ export const routes: Routes = [
     path: '',
     pathMatch: 'full',
     loadComponent: () =>
-      import('./features/public/public-home.component').then((m) => m.PublicHomeComponent),
+      import('./features/public/public-home/public-home.component').then(
+        (m) => m.PublicHomeComponent,
+      ),
     title: 'Inicio - Observatorio',
   },
 
@@ -16,7 +18,9 @@ export const routes: Routes = [
   {
     path: 'publico',
     loadComponent: () =>
-      import('./features/public/public-layout.component').then((m) => m.PublicLayoutComponent),
+      import('./features/public/public-layout/public-layout.component').then(
+        (m) => m.PublicLayoutComponent,
+      ),
     children: PUBLIC_ROUTES,
   },
 
