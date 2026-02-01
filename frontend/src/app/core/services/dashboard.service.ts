@@ -94,7 +94,7 @@ export interface BivariableResponse {
   providedIn: 'root'
 })
 export class DashboardService {
-  private api = inject(ApiService);
+  private readonly api = inject(ApiService);
 
   getUnivariableStats(request: UnivariableRequest): Observable<UnivariableResponse> {
     return this.api.post<UnivariableResponse>('/stats/univariable', request).pipe(

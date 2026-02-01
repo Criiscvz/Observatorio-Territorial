@@ -15,7 +15,7 @@ interface PaginatedResponse<T> {
   providedIn: 'root'
 })
 export class DatasetService {
-  private api = inject(ApiService);
+  private readonly api = inject(ApiService);
 
   getAll(departamentoId?: string): Observable<PaginatedResponse<Dataset>> {
     const params = departamentoId ? { departamento_id: departamentoId } : {};
