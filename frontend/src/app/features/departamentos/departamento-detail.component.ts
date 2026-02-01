@@ -1,12 +1,12 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Dataset, Departamento } from '../../core/models';
 import { DepartamentoService } from '../../core/services/departamento.service';
-import { Departamento, Dataset } from '../../core/models';
 
 @Component({
   selector: 'app-departamento-detail',
@@ -28,24 +28,43 @@ import { Departamento, Dataset } from '../../core/models';
       <div class="space-y-6">
         <!-- Header -->
         <div class="flex justify-between items-start">
-          <div>
-            <h1 class="text-3xl font-bold text-[var(--text-primary)]">{{ departamento()?.nombre }}</h1>
-            <p class="text-[var(--text-secondary)]">{{ departamento()?.descripcion || 'Sin descripción' }}</p>
-            <p class="text-sm text-[var(--text-tertiary)] mt-1">
-              Código: {{ departamento()?.codigo_interno }}
-              @if (departamento()?.publico) {
-                <span class="ml-2 bg-[var(--success-bg-solid)] text-[var(--success-color)] px-2 py-1 rounded text-xs">Público</span>
-              }
-            </p>
+          <div class="flex items-start gap-4">
+            @if (departamento()?.icono) {
+              <div
+                class="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg"
+              >
+                <mat-icon class="!text-3xl text-white">{{ departamento()?.icono }}</mat-icon>
+              </div>
+            }
+            <div>
+              <h1 class="text-3xl font-bold text-[var(--text-primary)]">
+                {{ departamento()?.nombre }}
+              </h1>
+              <p class="text-[var(--text-secondary)]">
+                {{ departamento()?.descripcion || 'Sin descripción' }}
+              </p>
+              <p class="text-sm text-[var(--text-tertiary)] mt-1">
+                Código: {{ departamento()?.codigo_interno }}
+                @if (departamento()?.publico) {
+                  <span
+                    class="ml-2 bg-[var(--success-bg-solid)] text-[var(--success-color)] px-2 py-1 rounded text-xs"
+                    >Público</span
+                  >
+                }
+              </p>
+            </div>
           </div>
           <div class="flex gap-2">
             <a mat-button [routerLink]="['/admin/departamentos', departamento()?.id, 'editar']">
               <mat-icon>edit</mat-icon>
               Editar
             </a>
-            <a mat-raised-button color="primary" 
-               [routerLink]="['/admin/datasets/nuevo']" 
-               [queryParams]="{departamento: departamento()?.id}">
+            <a
+              mat-raised-button
+              color="primary"
+              [routerLink]="['/admin/datasets/nuevo']"
+              [queryParams]="{ departamento: departamento()?.id }"
+            >
               <mat-icon>upload</mat-icon>
               Importar Dataset
             </a>
@@ -55,7 +74,9 @@ import { Departamento, Dataset } from '../../core/models';
         <!-- Lista de Datasets -->
         @if (datasets().length > 0) {
           <div class="space-y-4">
-            <h2 class="text-xl font-semibold text-[var(--text-primary)]">Datasets del Departamento</h2>
+            <h2 class="text-xl font-semibold text-[var(--text-primary)]">
+              Datasets del Departamento
+            </h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               @for (dataset of datasets(); track dataset.id) {
                 <mat-card class="cursor-pointer hover:shadow-lg transition-shadow">
@@ -71,11 +92,14 @@ import { Departamento, Dataset } from '../../core/models';
                       {{ dataset.descripcion || 'Sin descripción' }}
                     </p>
                     <div class="flex items-center gap-2">
-                      <span class="text-xs px-2 py-1 rounded" [class]="getEstadoClass(dataset.estado)">
+                      <span
+                        class="text-xs px-2 py-1 rounded"
+                        [class]="getEstadoClass(dataset.estado)"
+                      >
                         {{ dataset.estado }}
                       </span>
                       <span class="text-xs text-[var(--text-tertiary)]">
-                        {{ dataset.fecha_carga | date:'shortDate' }}
+                        {{ dataset.fecha_carga | date: 'shortDate' }}
                       </span>
                     </div>
                   </mat-card-content>
@@ -94,10 +118,15 @@ import { Departamento, Dataset } from '../../core/models';
             <mat-card-content class="text-center py-12">
               <mat-icon class="text-6xl text-[var(--text-tertiary)]">insert_chart</mat-icon>
               <h3 class="text-xl text-[var(--text-secondary)] mt-4">Sin datasets</h3>
-              <p class="text-[var(--text-secondary)] mb-4">Importa un archivo Excel para comenzar el análisis</p>
-              <a mat-raised-button color="primary" 
-                 [routerLink]="['/admin/datasets/nuevo']" 
-                 [queryParams]="{departamento: departamento()?.id}">
+              <p class="text-[var(--text-secondary)] mb-4">
+                Importa un archivo Excel para comenzar el análisis
+              </p>
+              <a
+                mat-raised-button
+                color="primary"
+                [routerLink]="['/admin/datasets/nuevo']"
+                [queryParams]="{ departamento: departamento()?.id }"
+              >
                 <mat-icon>upload</mat-icon>
                 Importar Dataset
               </a>
@@ -106,7 +135,7 @@ import { Departamento, Dataset } from '../../core/models';
         }
       </div>
     }
-  `
+  `,
 })
 export class DepartamentoDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -128,16 +157,20 @@ export class DepartamentoDetailComponent implements OnInit {
         this.datasets.set(departamento?.datasets || []);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
   getEstadoClass(estado: string): string {
     switch (estado) {
-      case 'COMPLETADO': return 'bg-green-100 text-green-800';
-      case 'PROCESANDO': return 'bg-yellow-100 text-yellow-800';
-      case 'ERROR': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'COMPLETADO':
+        return 'bg-green-100 text-green-800';
+      case 'PROCESANDO':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'ERROR':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   }
 }

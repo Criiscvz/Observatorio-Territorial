@@ -1,16 +1,16 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
-import { DepartamentoService } from '../../core/services/departamento.service';
+import { RouterLink } from '@angular/router';
 import { Departamento } from '../../core/models';
+import { DepartamentoService } from '../../core/services/departamento.service';
 
 @Component({
   selector: 'app-public-departamentos',
@@ -33,14 +33,21 @@ import { Departamento } from '../../core/models';
       <div class="page-header">
         <div class="header-content">
           <h1 class="page-title">Departamentos Públicos</h1>
-          <p class="page-subtitle">Explora los datasets y análisis compartidos por la comunidad universitaria</p>
+          <p class="page-subtitle">
+            Explora los datasets y análisis compartidos por la comunidad universitaria
+          </p>
         </div>
-        
+
         <!-- Search -->
         <div class="search-container">
           <mat-form-field appearance="outline" class="search-field">
             <mat-label>Buscar departamento</mat-label>
-            <input matInput [(ngModel)]="searchTerm" (ngModelChange)="filterDepartamentos()" placeholder="Escribe para buscar...">
+            <input
+              matInput
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="filterDepartamentos()"
+              placeholder="Escribe para buscar..."
+            />
             <mat-icon matPrefix>search</mat-icon>
             @if (searchTerm) {
               <button matSuffix mat-icon-button (click)="clearSearch()">
@@ -68,9 +75,15 @@ import { Departamento } from '../../core/models';
           @for (depto of filteredDepartamentos(); track depto.id; let i = $index) {
             <a [routerLink]="['/publico/departamentos', depto.id]" class="department-card">
               <div class="card-header">
-                <div class="department-avatar" [style.background]="getDeptoGradient(i)">
-                  {{ depto.nombre.charAt(0).toUpperCase() }}
-                </div>
+                @if (depto.icono) {
+                  <div class="department-icon" [style.background]="getDeptoGradient(i)">
+                    <mat-icon>{{ depto.icono }}</mat-icon>
+                  </div>
+                } @else {
+                  <div class="department-avatar" [style.background]="getDeptoGradient(i)">
+                    {{ depto.nombre.charAt(0).toUpperCase() }}
+                  </div>
+                }
                 <div class="department-meta">
                   <h3>{{ depto.nombre }}</h3>
                   <span class="meta-badge">
@@ -79,7 +92,7 @@ import { Departamento } from '../../core/models';
                   </span>
                 </div>
               </div>
-              
+
               <p class="department-desc">
                 {{ depto.descripcion || 'Sin descripción disponible' }}
               </p>
@@ -113,9 +126,7 @@ import { Departamento } from '../../core/models';
           <h3>No se encontraron departamentos</h3>
           @if (searchTerm) {
             <p>No hay resultados para "{{ searchTerm }}"</p>
-            <button mat-stroked-button (click)="clearSearch()">
-              Limpiar búsqueda
-            </button>
+            <button mat-stroked-button (click)="clearSearch()">Limpiar búsqueda</button>
           } @else {
             <p>No hay departamentos públicos disponibles en este momento</p>
           }
@@ -123,261 +134,284 @@ import { Departamento } from '../../core/models';
       }
     </div>
   `,
-  styles: [`
-    .page-container {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-    }
+  styles: [
+    `
+      .page-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
 
-    /* Page Header */
-    .page-header {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
+      /* Page Header */
+      .page-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
 
-    .page-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0;
-    }
+      .page-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+      }
 
-    .page-subtitle {
-      color: var(--text-secondary);
-      margin: 0.25rem 0 0;
-    }
+      .page-subtitle {
+        color: var(--text-secondary);
+        margin: 0.25rem 0 0;
+      }
 
-    .search-container {
-      flex: 1;
-      max-width: 400px;
-      min-width: 280px;
-    }
+      .search-container {
+        flex: 1;
+        max-width: 400px;
+        min-width: 280px;
+      }
 
-    .search-field {
-      width: 100%;
-    }
+      .search-field {
+        width: 100%;
+      }
 
-    ::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
-      display: none;
-    }
+      ::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
 
-    /* Results info */
-    .results-info {
-      margin-bottom: 1.5rem;
-    }
+      /* Results info */
+      .results-info {
+        margin-bottom: 1.5rem;
+      }
 
-    .results-count {
-      color: var(--text-secondary);
-      font-size: 0.875rem;
-    }
+      .results-count {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+      }
 
-    /* Loading */
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4rem;
-      color: var(--text-secondary);
-    }
+      /* Loading */
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        color: var(--text-secondary);
+      }
 
-    .loading-container p {
-      margin-top: 1rem;
-    }
+      .loading-container p {
+        margin-top: 1rem;
+      }
 
-    /* Departments Grid */
-    .departments-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-    }
+      /* Departments Grid */
+      .departments-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+      }
 
-    @media (max-width: 1024px) {
-      .departments-grid { grid-template-columns: repeat(2, 1fr); }
-    }
+      @media (max-width: 1024px) {
+        .departments-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
 
-    @media (max-width: 640px) {
-      .departments-grid { grid-template-columns: 1fr; }
-    }
+      @media (max-width: 640px) {
+        .departments-grid {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    /* Department Card */
-    .department-card {
-      display: flex;
-      flex-direction: column;
-      padding: 1.5rem;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-xl);
-      text-decoration: none;
-      transition: all var(--transition-normal);
-    }
+      /* Department Card */
+      .department-card {
+        display: flex;
+        flex-direction: column;
+        padding: 1.5rem;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-xl);
+        text-decoration: none;
+        transition: all var(--transition-normal);
+      }
 
-    .department-card:hover {
-      border-color: var(--primary-300);
-      box-shadow: 0 12px 40px var(--shadow-color);
-      transform: translateY(-4px);
-    }
+      .department-card:hover {
+        border-color: var(--primary-300);
+        box-shadow: 0 12px 40px var(--shadow-color);
+        transform: translateY(-4px);
+      }
 
-    .card-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
+      .card-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
 
-    .department-avatar {
-      width: 56px;
-      height: 56px;
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 1.5rem;
-      flex-shrink: 0;
-    }
+      .department-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+      }
 
-    .department-meta h3 {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0 0 0.25rem;
-    }
+      .department-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+      }
 
-    .meta-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
-      background: var(--bg-tertiary);
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--radius-md);
-    }
+      .department-icon mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+      }
 
-    .meta-badge mat-icon {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
-    }
+      .department-meta h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 0.25rem;
+      }
 
-    .department-desc {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      line-height: 1.5;
-      margin: 0 0 1rem;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      flex: 1;
-    }
+      .meta-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        background: var(--bg-tertiary);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-md);
+      }
 
-    /* Datasets Preview */
-    .datasets-preview {
-      margin-bottom: 1rem;
-    }
+      .meta-badge mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
 
-    .preview-label {
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
-      display: block;
-      margin-bottom: 0.5rem;
-    }
+      .department-desc {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin: 0 0 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+      }
 
-    .dataset-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
+      /* Datasets Preview */
+      .datasets-preview {
+        margin-bottom: 1rem;
+      }
 
-    .dataset-chip {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      background: var(--primary-50);
-      color: var(--primary-700);
-      border-radius: var(--radius-full);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 120px;
-    }
+      .preview-label {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+        display: block;
+        margin-bottom: 0.5rem;
+      }
 
-    :host-context(.dark) .dataset-chip {
-      background: rgba(99, 102, 241, 0.15);
-      color: var(--primary-400);
-    }
+      .dataset-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
 
-    .more-chip {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
-      border-radius: var(--radius-full);
-    }
+      .dataset-chip {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        background: var(--primary-50);
+        color: var(--primary-700);
+        border-radius: var(--radius-full);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 120px;
+      }
 
-    /* Card Footer */
-    .card-footer {
-      padding-top: 1rem;
-      border-top: 1px solid var(--border-color);
-    }
+      :host-context(.dark) .dataset-chip {
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--primary-400);
+      }
 
-    .view-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--primary-600);
-      transition: gap var(--transition-fast);
-    }
+      .more-chip {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border-radius: var(--radius-full);
+      }
 
-    .department-card:hover .view-link {
-      gap: 0.5rem;
-    }
+      /* Card Footer */
+      .card-footer {
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+      }
 
-    .view-link mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
+      .view-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--primary-600);
+        transition: gap var(--transition-fast);
+      }
 
-    /* Empty State */
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4rem;
-      text-align: center;
-    }
+      .department-card:hover .view-link {
+        gap: 0.5rem;
+      }
 
-    .empty-state mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      color: var(--text-tertiary);
-      opacity: 0.5;
-    }
+      .view-link mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
 
-    .empty-state h3 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 1rem 0 0.5rem;
-    }
+      /* Empty State */
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        text-align: center;
+      }
 
-    .empty-state p {
-      color: var(--text-secondary);
-      margin: 0 0 1.5rem;
-    }
-  `]
+      .empty-state mat-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: var(--text-tertiary);
+        opacity: 0.5;
+      }
+
+      .empty-state h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 1rem 0 0.5rem;
+      }
+
+      .empty-state p {
+        color: var(--text-secondary);
+        margin: 0 0 1.5rem;
+      }
+    `,
+  ],
 })
 export class PublicDepartamentosComponent implements OnInit {
   private deptoService = inject(DepartamentoService);
@@ -413,7 +447,7 @@ export class PublicDepartamentosComponent implements OnInit {
         this.departamentos.set([]);
         this.filteredDepartamentos.set([]);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -424,9 +458,10 @@ export class PublicDepartamentosComponent implements OnInit {
       return;
     }
 
-    const filtered = this.departamentos().filter(d =>
-      d.nombre.toLowerCase().includes(term) ||
-      (d.descripcion && d.descripcion.toLowerCase().includes(term))
+    const filtered = this.departamentos().filter(
+      (d) =>
+        d.nombre.toLowerCase().includes(term) ||
+        (d.descripcion && d.descripcion.toLowerCase().includes(term)),
     );
     this.filteredDepartamentos.set(filtered);
   }

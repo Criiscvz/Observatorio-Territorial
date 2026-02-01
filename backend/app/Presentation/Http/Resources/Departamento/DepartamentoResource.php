@@ -20,6 +20,7 @@ class DepartamentoResource extends JsonResource
             'nombre' => $this->nombre,
             'codigo_interno' => $this->codigo_interno,
             'descripcion' => $this->descripcion,
+            'icono' => $this->icono,
             'publico' => (bool) $this->publico,
             'datasets_count' => $this->datasets_count ?? $this->datasets->count(),
             'created_at' => $this->created_at?->toISOString(),

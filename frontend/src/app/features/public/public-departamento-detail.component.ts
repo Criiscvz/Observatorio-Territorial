@@ -1,13 +1,13 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Dataset, Departamento } from '../../core/models';
 import { DepartamentoService } from '../../core/services/departamento.service';
-import { Departamento, Dataset } from '../../core/models';
 
 @Component({
   selector: 'app-public-departamento-detail',
@@ -39,9 +39,15 @@ import { Departamento, Dataset } from '../../core/models';
 
         <!-- Department Header -->
         <div class="department-header">
-          <div class="header-avatar" [style.background]="deptoGradient">
-            {{ departamento()!.nombre.charAt(0).toUpperCase() }}
-          </div>
+          @if (departamento()!.icono) {
+            <div class="header-icon" [style.background]="deptoGradient">
+              <mat-icon>{{ departamento()!.icono }}</mat-icon>
+            </div>
+          } @else {
+            <div class="header-avatar" [style.background]="deptoGradient">
+              {{ departamento()!.nombre.charAt(0).toUpperCase() }}
+            </div>
+          }
           <div class="header-info">
             <h1>{{ departamento()!.nombre }}</h1>
             <p class="description">{{ departamento()!.descripcion || 'Sin descripción' }}</p>
@@ -82,7 +88,7 @@ import { Departamento, Dataset } from '../../core/models';
                       @if (ds.created_at) {
                         <span class="meta-item">
                           <mat-icon>calendar_today</mat-icon>
-                          {{ ds.created_at | date:'dd/MM/yyyy' }}
+                          {{ ds.created_at | date: 'dd/MM/yyyy' }}
                         </span>
                       }
                     </div>
@@ -125,302 +131,327 @@ import { Departamento, Dataset } from '../../core/models';
       }
     </div>
   `,
-  styles: [`
-    .page-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-    }
-
-    /* Loading */
-    .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 6rem;
-      color: var(--text-secondary);
-    }
-
-    .loading-container p {
-      margin-top: 1rem;
-    }
-
-    /* Breadcrumb */
-    .breadcrumb {
-      margin-bottom: 1.5rem;
-    }
-
-    .breadcrumb a {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: color var(--transition-fast);
-    }
-
-    .breadcrumb a:hover {
-      color: var(--primary-600);
-    }
-
-    .breadcrumb mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
-
-    /* Department Header */
-    .department-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 1.5rem;
-      padding: 2rem;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-xl);
-      margin-bottom: 2rem;
-    }
-
-    @media (max-width: 640px) {
-      .department-header {
-        flex-direction: column;
-        text-align: center;
-        align-items: center;
+  styles: [
+    `
+      .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
       }
-    }
 
-    .header-avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: var(--radius-xl);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 700;
-      font-size: 2rem;
-      flex-shrink: 0;
-    }
+      /* Loading */
+      .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 6rem;
+        color: var(--text-secondary);
+      }
 
-    .header-info h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0 0 0.5rem;
-    }
+      .loading-container p {
+        margin-top: 1rem;
+      }
 
-    .description {
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin: 0 0 1rem;
-    }
+      /* Breadcrumb */
+      .breadcrumb {
+        margin-bottom: 1.5rem;
+      }
 
-    .header-stats {
-      display: flex;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-    }
+      .breadcrumb a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: color var(--transition-fast);
+      }
 
-    @media (max-width: 640px) {
-      .header-stats { justify-content: center; }
-    }
+      .breadcrumb a:hover {
+        color: var(--primary-600);
+      }
 
-    .stat {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
+      .breadcrumb mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
 
-    .stat mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-      color: var(--primary-600);
-    }
+      /* Department Header */
+      .department-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.5rem;
+        padding: 2rem;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-xl);
+        margin-bottom: 2rem;
+      }
 
-    /* Datasets Section */
-    .datasets-section {
-      margin-top: 2rem;
-    }
+      @media (max-width: 640px) {
+        .department-header {
+          flex-direction: column;
+          text-align: center;
+          align-items: center;
+        }
+      }
 
-    .section-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 1.5rem;
-    }
+      .header-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: var(--radius-xl);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 2rem;
+        flex-shrink: 0;
+      }
 
-    .section-title mat-icon {
-      color: var(--primary-600);
-    }
+      .header-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: var(--radius-xl);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+      }
 
-    /* Datasets Grid */
-    .datasets-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+      .header-icon mat-icon {
+        font-size: 40px;
+        width: 40px;
+        height: 40px;
+      }
 
-    .dataset-card {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1.25rem;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-lg);
-      text-decoration: none;
-      transition: all var(--transition-fast);
-    }
+      .header-info h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem;
+      }
 
-    .dataset-card:hover {
-      border-color: var(--primary-300);
-      box-shadow: 0 8px 24px var(--shadow-color);
-    }
+      .description {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin: 0 0 1rem;
+      }
 
-    .card-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-lg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+      .header-stats {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      }
 
-    .card-icon mat-icon {
-      color: white;
-      font-size: 24px;
-      width: 24px;
-      height: 24px;
-    }
+      @media (max-width: 640px) {
+        .header-stats {
+          justify-content: center;
+        }
+      }
 
-    .card-content {
-      flex: 1;
-      min-width: 0;
-    }
+      .stat {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+      }
 
-    .card-content h3 {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 0 0 0.5rem;
-    }
+      .stat mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: var(--primary-600);
+      }
 
-    .dataset-meta {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      margin-bottom: 0.5rem;
-    }
+      /* Datasets Section */
+      .datasets-section {
+        margin-top: 2rem;
+      }
 
-    .meta-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      font-size: 0.75rem;
-      color: var(--text-tertiary);
-    }
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+      }
 
-    .meta-item mat-icon {
-      font-size: 14px;
-      width: 14px;
-      height: 14px;
-    }
+      .section-title mat-icon {
+        color: var(--primary-600);
+      }
 
-    .variables-preview {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.375rem;
-    }
+      /* Datasets Grid */
+      .datasets-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
 
-    .variable-chip {
-      font-size: 0.625rem;
-      padding: 0.125rem 0.375rem;
-      border-radius: var(--radius-sm);
-      text-transform: uppercase;
-      font-weight: 500;
-    }
+      .dataset-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        transition: all var(--transition-fast);
+      }
 
-    .variable-chip.type-numeric {
-      background: var(--type-numeric-bg);
-      color: var(--type-numeric-color);
-    }
+      .dataset-card:hover {
+        border-color: var(--primary-300);
+        box-shadow: 0 8px 24px var(--shadow-color);
+      }
 
-    .variable-chip.type-categoric {
-      background: var(--type-categoric-bg);
-      color: var(--type-categoric-color);
-    }
+      .card-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
 
-    .variable-chip.type-date {
-      background: var(--type-date-bg);
-      color: var(--type-date-color);
-    }
+      .card-icon mat-icon {
+        color: white;
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
 
-    .variable-chip.type-text {
-      background: var(--type-text-bg);
-      color: var(--type-text-color);
-    }
+      .card-content {
+        flex: 1;
+        min-width: 0;
+      }
 
-    .more-chip {
-      font-size: 0.625rem;
-      padding: 0.125rem 0.375rem;
-      background: var(--bg-tertiary);
-      color: var(--text-secondary);
-      border-radius: var(--radius-sm);
-    }
+      .card-content h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0 0 0.5rem;
+      }
 
-    .card-arrow {
-      color: var(--text-tertiary);
-      transition: transform var(--transition-fast);
-    }
+      .dataset-meta {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+      }
 
-    .dataset-card:hover .card-arrow {
-      transform: translateX(4px);
-      color: var(--primary-600);
-    }
+      .meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+      }
 
-    /* Empty State */
-    .empty-state, .error-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4rem;
-      text-align: center;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-xl);
-    }
+      .meta-item mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
 
-    .empty-state mat-icon, .error-state mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      color: var(--text-tertiary);
-      opacity: 0.5;
-    }
+      .variables-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+      }
 
-    .empty-state h3, .error-state h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin: 1rem 0 0.5rem;
-    }
+      .variable-chip {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.375rem;
+        border-radius: var(--radius-sm);
+        text-transform: uppercase;
+        font-weight: 500;
+      }
 
-    .empty-state p, .error-state p {
-      color: var(--text-secondary);
-      margin: 0 0 1.5rem;
-    }
-  `]
+      .variable-chip.type-numeric {
+        background: var(--type-numeric-bg);
+        color: var(--type-numeric-color);
+      }
+
+      .variable-chip.type-categoric {
+        background: var(--type-categoric-bg);
+        color: var(--type-categoric-color);
+      }
+
+      .variable-chip.type-date {
+        background: var(--type-date-bg);
+        color: var(--type-date-color);
+      }
+
+      .variable-chip.type-text {
+        background: var(--type-text-bg);
+        color: var(--type-text-color);
+      }
+
+      .more-chip {
+        font-size: 0.625rem;
+        padding: 0.125rem 0.375rem;
+        background: var(--bg-tertiary);
+        color: var(--text-secondary);
+        border-radius: var(--radius-sm);
+      }
+
+      .card-arrow {
+        color: var(--text-tertiary);
+        transition: transform var(--transition-fast);
+      }
+
+      .dataset-card:hover .card-arrow {
+        transform: translateX(4px);
+        color: var(--primary-600);
+      }
+
+      /* Empty State */
+      .empty-state,
+      .error-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem;
+        text-align: center;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-xl);
+      }
+
+      .empty-state mat-icon,
+      .error-state mat-icon {
+        font-size: 64px;
+        width: 64px;
+        height: 64px;
+        color: var(--text-tertiary);
+        opacity: 0.5;
+      }
+
+      .empty-state h3,
+      .error-state h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 1rem 0 0.5rem;
+      }
+
+      .empty-state p,
+      .error-state p {
+        color: var(--text-secondary);
+        margin: 0 0 1.5rem;
+      }
+    `,
+  ],
 })
 export class PublicDepartamentoDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -432,8 +463,16 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   deptoGradient = 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)';
 
   private datasetColors = [
-    '#6366F1', '#EC4899', '#14B8A6', '#F59E0B', '#EF4444',
-    '#8B5CF6', '#06B6D4', '#84CC16', '#F97316', '#3B82F6'
+    '#6366F1',
+    '#EC4899',
+    '#14B8A6',
+    '#F59E0B',
+    '#EF4444',
+    '#8B5CF6',
+    '#06B6D4',
+    '#84CC16',
+    '#F97316',
+    '#3B82F6',
   ];
 
   get datasets(): Dataset[] {
@@ -458,7 +497,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       error: () => {
         this.departamento.set(null);
         this.loading.set(false);
-      }
+      },
     });
   }
 
@@ -468,10 +507,14 @@ export class PublicDepartamentoDetailComponent implements OnInit {
 
   getTypeClass(tipo: string): string {
     switch (tipo) {
-      case 'NUMERICO': return 'type-numeric';
-      case 'CATEGORICO': return 'type-categoric';
-      case 'FECHA': return 'type-date';
-      default: return 'type-text';
+      case 'NUMERICO':
+        return 'type-numeric';
+      case 'CATEGORICO':
+        return 'type-categoric';
+      case 'FECHA':
+        return 'type-date';
+      default:
+        return 'type-text';
     }
   }
 }

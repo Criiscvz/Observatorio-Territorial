@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\Route;
 // ============ AUTH ============
 require __DIR__ . '/modules/auth.php';
 
+// ============ SEED (Inicialización) ============
+require __DIR__ . '/modules/seed.php';
+
 // ============ RUTAS PÚBLICAS ============
 Route::prefix('publico')->group(__DIR__ . '/modules/publico.php');
 

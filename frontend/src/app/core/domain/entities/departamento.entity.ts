@@ -5,6 +5,7 @@ export interface DepartamentoEntity {
   nombre: string;
   codigo_interno: string;
   descripcion?: string;
+  icono?: string;
   publico: boolean;
   created_at?: string;
   updated_at?: string;
@@ -16,11 +17,13 @@ export interface CreateDepartamentoData {
   nombre: string;
   codigo_interno: string;
   descripcion?: string;
+  icono?: string;
   publico?: boolean;
 }
 
 export interface UpdateDepartamentoData {
   nombre?: string;
   descripcion?: string;
+  icono?: string;
   publico?: boolean;
 }
