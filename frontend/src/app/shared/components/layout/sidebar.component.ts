@@ -34,7 +34,7 @@ interface NavItem {
     <nav class="sidebar">
       <!-- Main navigation -->
       <div class="nav-section">
-        <span class="nav-label">Principal</span>
+        <span class="nav-label">{{ 'layout.sidebar.main' | translate }}</span>
 
         <!-- Dashboard - visible para todos -->
         <a
@@ -47,7 +47,7 @@ interface NavItem {
           <div class="nav-icon-wrapper">
             <mat-icon class="nav-icon">dashboard</mat-icon>
           </div>
-          <span class="nav-text">Dashboard</span>
+          <span class="nav-text">{{ 'layout.sidebar.dashboard' | translate }}</span>
         </a>
 
         <!-- Subir Dataset - solo admin -->
@@ -61,19 +61,19 @@ interface NavItem {
           <div class="nav-icon-wrapper">
             <mat-icon class="nav-icon">cloud_upload</mat-icon>
           </div>
-          <span class="nav-text">Subir Dataset</span>
+          <span class="nav-text">{{ 'layout.sidebar.uploadDataset' | translate }}</span>
         </a>
       </div>
 
       <!-- Departamentos section -->
       <div class="nav-section">
         <div class="nav-label-row">
-          <span class="nav-label">Departamentos</span>
+          <span class="nav-label">{{ 'layout.sidebar.departments' | translate }}</span>
           <a
             *isAdmin
             class="add-btn"
             routerLink="/admin/departamentos/nuevo"
-            matTooltip="Nuevo departamento"
+            [matTooltip]="'layout.sidebar.newDepartment' | translate"
             (click)="navigate.emit()"
           >
             <mat-icon>add</mat-icon>
@@ -94,24 +94,24 @@ interface NavItem {
               <div class="depto-info">
                 <span class="depto-name">{{ depto.nombre }}</span>
                 @if (depto.datasets_count !== undefined) {
-                  <span class="depto-count">{{ depto.datasets_count }} datasets</span>
+                  <span class="depto-count">{{ depto.datasets_count }} {{ 'common.units.datasets' | translate }}</span>
                 }
               </div>
               @if (depto.publico) {
-                <mat-icon class="public-icon" matTooltip="Público">public</mat-icon>
+                <mat-icon class="public-icon" [matTooltip]="'common.labels.public' | translate">public</mat-icon>
               }
             </a>
           } @empty {
             <div class="empty-state">
               <mat-icon>folder_off</mat-icon>
-              <span>Sin departamentos</span>
+              <span>{{ 'layout.sidebar.noDepartments' | translate }}</span>
               <a
                 *isAdmin
                 routerLink="/admin/departamentos/nuevo"
                 class="empty-action"
                 (click)="navigate.emit()"
               >
-                Crear uno
+                {{ 'layout.sidebar.createOne' | translate }}
               </a>
             </div>
           }
@@ -129,7 +129,7 @@ interface NavItem {
           <div class="nav-icon-wrapper">
             <mat-icon class="nav-icon">storage</mat-icon>
           </div>
-          <span class="nav-text">Todos los Datasets</span>
+          <span class="nav-text">{{ 'layout.sidebar.allDatasets' | translate }}</span>
         </a>
       </div>
     </nav>
