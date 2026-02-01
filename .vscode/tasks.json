@@ -2,270 +2,181 @@
   "version": "2.0.0",
   "tasks": [
     // ==========================================
-    // DOCKER TASKS
+    // 🐳 DOCKER
     // ==========================================
     {
       "label": "Docker: Iniciar PostgreSQL",
       "type": "shell",
-      "command": "docker-compose up -d",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/docker.ps1 up" },
+      "linux": { "command": "./scripts/docker.sh up" },
+      "osx": { "command": "./scripts/docker.sh up" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "focus": true
-      },
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
       "problemMatcher": []
     },
     {
       "label": "Docker: Detener PostgreSQL",
       "type": "shell",
-      "command": "docker-compose down",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/docker.ps1 down" },
+      "linux": { "command": "./scripts/docker.sh down" },
+      "osx": { "command": "./scripts/docker.sh down" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Docker: Ver logs PostgreSQL",
       "type": "shell",
-      "command": "docker-compose logs -f postgres",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/docker.ps1 logs" },
+      "linux": { "command": "./scripts/docker.sh logs" },
+      "osx": { "command": "./scripts/docker.sh logs" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": [],
-      "isBackground": true
+      "isBackground": true,
+      "problemMatcher": []
     },
     {
       "label": "Docker: Reiniciar PostgreSQL",
       "type": "shell",
-      "command": "docker-compose restart",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/docker.ps1 restart" },
+      "linux": { "command": "./scripts/docker.sh restart" },
+      "osx": { "command": "./scripts/docker.sh restart" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
 
     // ==========================================
-    // BACKEND TASKS (Laravel)
+    // 🔧 BACKEND (Laravel)
     // ==========================================
     {
       "label": "Backend: Iniciar servidor",
       "type": "shell",
-      "command": "php -S 127.0.0.1:8000 -t public",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 start" },
+      "linux": { "command": "./scripts/backend.sh start" },
+      "osx": { "command": "./scripts/backend.sh start" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "focus": false
-      },
-      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" },
       "isBackground": true,
-      "runOptions": {
-        "instanceLimit": 1
-      }
+      "runOptions": { "instanceLimit": 1 },
+      "problemMatcher": []
     },
     {
       "label": "Backend: Instalar dependencias",
       "type": "shell",
-      "command": "composer install",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 install" },
+      "linux": { "command": "./scripts/backend.sh install" },
+      "osx": { "command": "./scripts/backend.sh install" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Backend: Ejecutar migraciones",
       "type": "shell",
-      "command": "php artisan migrate",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 migrate" },
+      "linux": { "command": "./scripts/backend.sh migrate" },
+      "osx": { "command": "./scripts/backend.sh migrate" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Backend: Resetear migraciones",
       "type": "shell",
-      "command": "php artisan migrate:fresh",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 migrate-fresh" },
+      "linux": { "command": "./scripts/backend.sh migrate-fresh" },
+      "osx": { "command": "./scripts/backend.sh migrate-fresh" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Backend: Limpiar caché",
       "type": "shell",
-      "command": "php artisan config:clear && php artisan cache:clear && php artisan route:clear && php artisan view:clear",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 cache-clear" },
+      "linux": { "command": "./scripts/backend.sh cache-clear" },
+      "osx": { "command": "./scripts/backend.sh cache-clear" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Backend: Generar Swagger",
       "type": "shell",
-      "command": "php artisan l5-swagger:generate",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 swagger" },
+      "linux": { "command": "./scripts/backend.sh swagger" },
+      "osx": { "command": "./scripts/backend.sh swagger" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Backend: Ver rutas API",
       "type": "shell",
-      "command": "php artisan route:list --path=api",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 routes" },
+      "linux": { "command": "./scripts/backend.sh routes" },
+      "osx": { "command": "./scripts/backend.sh routes" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Backend: Tinker (REPL)",
       "type": "shell",
-      "command": "php artisan tinker",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 tinker" },
+      "linux": { "command": "./scripts/backend.sh tinker" },
+      "osx": { "command": "./scripts/backend.sh tinker" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "focus": true
-      },
+      "presentation": { "reveal": "always", "panel": "new", "focus": true },
       "problemMatcher": []
     },
 
     // ==========================================
-    // FRONTEND TASKS (Angular)
+    // 🌐 FRONTEND (Angular) - Detecta bun/npm automáticamente
     // ==========================================
     {
       "label": "Frontend: Iniciar servidor dev",
       "type": "shell",
-      "command": "bun run start",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/frontend.ps1 start" },
+      "linux": { "command": "./scripts/frontend.sh start" },
+      "osx": { "command": "./scripts/frontend.sh start" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "new",
-        "focus": false
-      },
-      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "new" },
       "isBackground": true,
-      "runOptions": {
-        "instanceLimit": 1
-      }
+      "runOptions": { "instanceLimit": 1 },
+      "problemMatcher": []
     },
     {
       "label": "Frontend: Instalar dependencias",
       "type": "shell",
-      "command": "bun install",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/frontend.ps1 install" },
+      "linux": { "command": "./scripts/frontend.sh install" },
+      "osx": { "command": "./scripts/frontend.sh install" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Frontend: Build producción",
       "type": "shell",
-      "command": "bun run build",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/frontend.ps1 build" },
+      "linux": { "command": "./scripts/frontend.sh build" },
+      "osx": { "command": "./scripts/frontend.sh build" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Frontend: Ejecutar tests",
       "type": "shell",
-      "command": "bun run test",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/frontend.ps1 test" },
+      "linux": { "command": "./scripts/frontend.sh test" },
+      "osx": { "command": "./scripts/frontend.sh test" },
       "group": "test",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
       "label": "Frontend: Lint",
       "type": "shell",
-      "command": "bun run lint",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/frontend.ps1 lint" },
+      "linux": { "command": "./scripts/frontend.sh lint" },
+      "osx": { "command": "./scripts/frontend.sh lint" },
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
 
     // ==========================================
-    // COMPOUND TASKS (Iniciar todo)
+    // 🚀 COMPOUND TASKS
     // ==========================================
     {
       "label": "🚀 Iniciar TODO (Docker + Backend + Frontend)",
@@ -275,28 +186,13 @@
         "Frontend: Iniciar servidor dev"
       ],
       "dependsOrder": "parallel",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "new"
-      },
+      "group": { "kind": "build", "isDefault": true },
       "problemMatcher": []
     },
     {
       "label": "⏹️ Detener TODO",
-      "type": "shell",
-      "command": "docker-compose down",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
+      "dependsOn": ["Docker: Detener PostgreSQL"],
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     },
     {
@@ -309,10 +205,6 @@
       ],
       "dependsOrder": "sequence",
       "group": "build",
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      },
       "problemMatcher": []
     }
   ]
