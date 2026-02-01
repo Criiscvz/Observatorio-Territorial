@@ -3,14 +3,21 @@
   <div class="page-header">
     <div class="header-content">
       <h1 class="page-title">Departamentos Públicos</h1>
-      <p class="page-subtitle">Explora los datasets y análisis compartidos por la comunidad universitaria</p>
+      <p class="page-subtitle">
+        Explora los datasets y análisis compartidos por la comunidad universitaria
+      </p>
     </div>
-    
+
     <!-- Search -->
     <div class="search-container">
       <mat-form-field appearance="outline" class="search-field">
         <mat-label>Buscar departamento</mat-label>
-        <input matInput [(ngModel)]="searchTerm" (ngModelChange)="filterDepartamentos()" placeholder="Escribe para buscar...">
+        <input
+          matInput
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="filterDepartamentos()"
+          placeholder="Escribe para buscar..."
+        />
         <mat-icon matPrefix>search</mat-icon>
         @if (searchTerm) {
           <button matSuffix mat-icon-button (click)="clearSearch()">
@@ -49,7 +56,7 @@
               </span>
             </div>
           </div>
-          
+
           <p class="department-desc">
             {{ depto.descripcion || 'Sin descripción disponible' }}
           </p>
@@ -83,9 +90,7 @@
       <h3>No se encontraron departamentos</h3>
       @if (searchTerm) {
         <p>No hay resultados para "{{ searchTerm }}"</p>
-        <button mat-stroked-button (click)="clearSearch()">
-          Limpiar búsqueda
-        </button>
+        <button mat-stroked-button (click)="clearSearch()">Limpiar búsqueda</button>
       } @else {
         <p>No hay departamentos públicos disponibles en este momento</p>
       }

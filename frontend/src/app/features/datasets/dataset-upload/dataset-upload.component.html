@@ -18,7 +18,7 @@
 
             <mat-form-field class="w-full" appearance="outline">
               <mat-label>Nombre del Dataset</mat-label>
-              <input matInput formControlName="nombre" placeholder="Ej: Encuesta 2025">
+              <input matInput formControlName="nombre" placeholder="Ej: Encuesta 2025" />
             </mat-form-field>
 
             <mat-form-field class="w-full" appearance="outline">
@@ -27,21 +27,21 @@
             </mat-form-field>
 
             <!-- Drop zone -->
-            <div 
+            <div
               class="drop-zone"
               [class.has-file]="selectedFile()"
               (click)="fileInput.click()"
               (dragover)="onDragOver($event)"
               (drop)="onDrop($event)"
             >
-              <input 
-                #fileInput 
-                type="file" 
-                hidden 
+              <input
+                #fileInput
+                type="file"
+                hidden
                 accept=".xlsx,.xls,.csv"
                 (change)="onFileSelect($event)"
-              >
-              
+              />
+
               @if (selectedFile()) {
                 <mat-icon class="icon success">check_circle</mat-icon>
                 <p class="file-name">{{ selectedFile()?.name }}</p>
@@ -73,9 +73,12 @@
         </mat-card-content>
 
         <mat-card-actions align="end">
-          <button mat-raised-button color="primary" 
-                  [disabled]="uploadForm.invalid || !selectedFile() || uploading()"
-                  (click)="uploadAndAnalyze(stepper)">
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="uploadForm.invalid || !selectedFile() || uploading()"
+            (click)="uploadAndAnalyze(stepper)"
+          >
             <mat-icon>upload</mat-icon>
             Subir y Analizar
           </button>
@@ -89,8 +92,8 @@
         <mat-card-header>
           <mat-card-title>Configurar Columnas del Dataset</mat-card-title>
           <mat-card-subtitle>
-            {{ totalFilas() | number }} filas detectadas | 
-            {{ columnasActivas().length }} columnas a importar de {{ columnas().length }} totales
+            {{ totalFilas() | number }} filas detectadas | {{ columnasActivas().length }} columnas a
+            importar de {{ columnas().length }} totales
           </mat-card-subtitle>
         </mat-card-header>
 
@@ -125,9 +128,12 @@
                   <!-- Nombre personalizado -->
                   <mat-form-field appearance="outline" class="w-full">
                     <mat-label>Nombre en Base de Datos</mat-label>
-                    <input matInput [(ngModel)]="col.nombre_columna" 
-                           placeholder="nombre_columna"
-                           [disabled]="col.excluida === true">
+                    <input
+                      matInput
+                      [(ngModel)]="col.nombre_columna"
+                      placeholder="nombre_columna"
+                      [disabled]="col.excluida === true"
+                    />
                     <mat-hint>Identificador interno (sin espacios)</mat-hint>
                   </mat-form-field>
 
@@ -164,12 +170,19 @@
 
                 <!-- Opciones -->
                 <div class="column-options">
-                  <mat-checkbox [(ngModel)]="col.es_visible" [disabled]="col.excluida === true" color="primary">
+                  <mat-checkbox
+                    [(ngModel)]="col.es_visible"
+                    [disabled]="col.excluida === true"
+                    color="primary"
+                  >
                     Visible en Dashboard
                   </mat-checkbox>
-                  
-                  <button mat-button [color]="col.excluida ? 'primary' : 'warn'" 
-                          (click)="toggleExcluir(col)">
+
+                  <button
+                    mat-button
+                    [color]="col.excluida ? 'primary' : 'warn'"
+                    (click)="toggleExcluir(col)"
+                  >
                     <mat-icon>{{ col.excluida ? 'add_circle' : 'remove_circle' }}</mat-icon>
                     {{ col.excluida ? 'Incluir columna' : 'Excluir columna' }}
                   </button>
@@ -190,9 +203,12 @@
           <button mat-button matStepperPrevious [disabled]="processing()">
             <mat-icon>arrow_back</mat-icon> Atrás
           </button>
-          <button mat-raised-button color="primary" 
-                  [disabled]="processing() || columnasActivas().length === 0"
-                  (click)="confirmImport(stepper)">
+          <button
+            mat-raised-button
+            color="primary"
+            [disabled]="processing() || columnasActivas().length === 0"
+            (click)="confirmImport(stepper)"
+          >
             @if (processing()) {
               <mat-icon class="animate-spin">refresh</mat-icon>
             } @else {
@@ -211,16 +227,19 @@
           <mat-icon class="success-icon">check_circle</mat-icon>
           <h2 class="success-title">¡Importación Exitosa!</h2>
           <p class="success-message">
-            Se importaron <strong>{{ importedCount() | number }}</strong> registros
-            con <strong>{{ columnasActivas().length }}</strong> columnas
+            Se importaron <strong>{{ importedCount() | number }}</strong> registros con
+            <strong>{{ columnasActivas().length }}</strong> columnas
           </p>
 
           <div class="success-actions">
             <button mat-button routerLink="/admin/datasets">
               <mat-icon>list</mat-icon> Ver Datasets
             </button>
-            <button mat-raised-button color="primary" 
-                    [routerLink]="['/admin/datasets', datasetId()]">
+            <button
+              mat-raised-button
+              color="primary"
+              [routerLink]="['/admin/datasets', datasetId()]"
+            >
               <mat-icon>analytics</mat-icon> Ver Datos y Gráficos
             </button>
           </div>

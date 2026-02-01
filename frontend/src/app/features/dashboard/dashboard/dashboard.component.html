@@ -110,7 +110,7 @@
             <mat-icon>arrow_forward</mat-icon>
           </a>
         </div>
-        
+
         <div class="card-body">
           @if (departamentos().length > 0) {
             <div class="items-list">
@@ -159,7 +159,7 @@
             <mat-icon>arrow_forward</mat-icon>
           </a>
         </div>
-        
+
         <div class="card-body">
           @if (datasetsRecientes().length > 0) {
             <div class="items-list">
@@ -172,7 +172,9 @@
                     <span class="item-title">{{ ds.nombre }}</span>
                     <span class="item-meta">
                       {{ ds.total_registros | number }} registros
-                      <span class="badge" [class]="getEstadoBadgeClass(ds.estado)">{{ ds.estado }}</span>
+                      <span class="badge" [class]="getEstadoBadgeClass(ds.estado)">{{
+                        ds.estado
+                      }}</span>
                     </span>
                   </div>
                   <mat-icon class="item-arrow">chevron_right</mat-icon>
@@ -219,7 +221,11 @@
         </a>
 
         @if (datasetsRecientes().length > 0) {
-          <a class="quick-action" [routerLink]="['/admin/datasets', datasetsRecientes()[0].id]" matRipple>
+          <a
+            class="quick-action"
+            [routerLink]="['/admin/datasets', datasetsRecientes()[0].id]"
+            matRipple
+          >
             <div class="action-icon orange">
               <mat-icon>analytics</mat-icon>
             </div>

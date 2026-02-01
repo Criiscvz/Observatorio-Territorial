@@ -72,11 +72,15 @@
 }
 
 @media (max-width: 1024px) {
-  .departments-grid { grid-template-columns: repeat(2, 1fr); }
+  .departments-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 640px) {
-  .departments-grid { grid-template-columns: 1fr; }
+  .departments-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Department Card */

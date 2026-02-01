@@ -8,11 +8,16 @@
     <div class="flex justify-between items-start">
       <div>
         <h1 class="text-3xl font-bold text-[var(--text-primary)]">{{ departamento()?.nombre }}</h1>
-        <p class="text-[var(--text-secondary)]">{{ departamento()?.descripcion || 'Sin descripción' }}</p>
+        <p class="text-[var(--text-secondary)]">
+          {{ departamento()?.descripcion || 'Sin descripción' }}
+        </p>
         <p class="text-sm text-[var(--text-tertiary)] mt-1">
           Código: {{ departamento()?.codigo_interno }}
           @if (departamento()?.publico) {
-            <span class="ml-2 bg-[var(--success-bg-solid)] text-[var(--success-color)] px-2 py-1 rounded text-xs">Público</span>
+            <span
+              class="ml-2 bg-[var(--success-bg-solid)] text-[var(--success-color)] px-2 py-1 rounded text-xs"
+              >Público</span
+            >
           }
         </p>
       </div>
@@ -21,9 +26,12 @@
           <mat-icon>edit</mat-icon>
           Editar
         </a>
-        <a mat-raised-button color="primary" 
-           [routerLink]="['/admin/datasets/nuevo']" 
-           [queryParams]="{departamento: departamento()?.id}">
+        <a
+          mat-raised-button
+          color="primary"
+          [routerLink]="['/admin/datasets/nuevo']"
+          [queryParams]="{ departamento: departamento()?.id }"
+        >
           <mat-icon>upload</mat-icon>
           Importar Dataset
         </a>
@@ -53,7 +61,7 @@
                     {{ dataset.estado }}
                   </span>
                   <span class="text-xs text-[var(--text-tertiary)]">
-                    {{ dataset.fecha_carga | date:'shortDate' }}
+                    {{ dataset.fecha_carga | date: 'shortDate' }}
                   </span>
                 </div>
               </mat-card-content>
@@ -72,10 +80,15 @@
         <mat-card-content class="text-center py-12">
           <mat-icon class="text-6xl text-[var(--text-tertiary)]">insert_chart</mat-icon>
           <h3 class="text-xl text-[var(--text-secondary)] mt-4">Sin datasets</h3>
-          <p class="text-[var(--text-secondary)] mb-4">Importa un archivo Excel para comenzar el análisis</p>
-          <a mat-raised-button color="primary" 
-             [routerLink]="['/admin/datasets/nuevo']" 
-             [queryParams]="{departamento: departamento()?.id}">
+          <p class="text-[var(--text-secondary)] mb-4">
+            Importa un archivo Excel para comenzar el análisis
+          </p>
+          <a
+            mat-raised-button
+            color="primary"
+            [routerLink]="['/admin/datasets/nuevo']"
+            [queryParams]="{ departamento: departamento()?.id }"
+          >
             <mat-icon>upload</mat-icon>
             Importar Dataset
           </a>

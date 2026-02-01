@@ -97,7 +97,9 @@
 }
 
 @media (max-width: 640px) {
-  .header-stats { justify-content: center; }
+  .header-stats {
+    justify-content: center;
+  }
 }
 
 .stat {
@@ -261,7 +263,8 @@
 }
 
 /* Empty State */
-.empty-state, .error-state {
+.empty-state,
+.error-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -273,7 +276,8 @@
   border-radius: var(--radius-xl);
 }
 
-.empty-state mat-icon, .error-state mat-icon {
+.empty-state mat-icon,
+.error-state mat-icon {
   font-size: 64px;
   width: 64px;
   height: 64px;
@@ -281,14 +285,16 @@
   opacity: 0.5;
 }
 
-.empty-state h3, .error-state h2 {
+.empty-state h3,
+.error-state h2 {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 1rem 0 0.5rem;
 }
 
-.empty-state p, .error-state p {
+.empty-state p,
+.error-state p {
   color: var(--text-secondary);
   margin: 0 0 1.5rem;
 }

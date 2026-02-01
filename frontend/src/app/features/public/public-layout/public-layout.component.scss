@@ -31,7 +31,9 @@
   text-decoration: none;
 }
 
-.logo { height: 40px; }
+.logo {
+  height: 40px;
+}
 
 .logo-text {
   font-weight: 700;
@@ -102,8 +104,12 @@
 }
 
 @media (max-width: 768px) {
-  .nav-links { display: none; }
-  .header-actions a[mat-stroked-button] { display: none; }
+  .nav-links {
+    display: none;
+  }
+  .header-actions a[mat-stroked-button] {
+    display: none;
+  }
 }
 
 /* Main */
@@ -178,7 +184,7 @@
     flex-direction: column;
     text-align: center;
   }
-  
+
   .footer-links {
     flex-wrap: wrap;
     justify-content: center;

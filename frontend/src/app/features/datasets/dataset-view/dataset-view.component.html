@@ -31,7 +31,10 @@
               <div class="overflow-x-auto">
                 @if (visibleColumns().length > 0 && tableData().length > 0) {
                   <table mat-table [dataSource]="tableData()" class="w-full">
-                    <ng-container *ngFor="let col of visibleColumns()" [matColumnDef]="col._uniqueId">
+                    <ng-container
+                      *ngFor="let col of visibleColumns()"
+                      [matColumnDef]="col._uniqueId"
+                    >
                       <th mat-header-cell *matHeaderCellDef>
                         <div class="flex items-center gap-1">
                           <span>{{ col.nombre_original || col.nombre_columna }}</span>
@@ -40,7 +43,7 @@
                       <td mat-cell *matCellDef="let row">{{ row.data[col.nombre_columna] }}</td>
                     </ng-container>
                     <tr mat-header-row *matHeaderRowDef="columnNames()"></tr>
-                    <tr mat-row *matRowDef="let row; columns: columnNames();"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnNames()"></tr>
                   </table>
                 } @else if (!loading()) {
                   <div class="empty-state">
@@ -55,7 +58,8 @@
                 [pageIndex]="pagination().current_page - 1"
                 [pageSizeOptions]="[25, 50, 100]"
                 (page)="onPageChange($event)"
-                showFirstLastButtons>
+                showFirstLastButtons
+              >
               </mat-paginator>
             </mat-card-content>
           </mat-card>
@@ -72,7 +76,9 @@
           <mat-card>
             <mat-card-header>
               <mat-card-title>Configuración de Variables</mat-card-title>
-              <mat-card-subtitle>Cambia el tipo de dato o visibilidad de cada columna</mat-card-subtitle>
+              <mat-card-subtitle
+                >Cambia el tipo de dato o visibilidad de cada columna</mat-card-subtitle
+              >
             </mat-card-header>
             <mat-card-content>
               <table mat-table [dataSource]="variables()" class="w-full">
@@ -98,12 +104,19 @@
                 <ng-container matColumnDef="es_visible">
                   <th mat-header-cell *matHeaderCellDef>Visible</th>
                   <td mat-cell *matCellDef="let v">
-                    <mat-checkbox [(ngModel)]="v.es_visible" (change)="updateVariable(v)" color="primary">
+                    <mat-checkbox
+                      [(ngModel)]="v.es_visible"
+                      (change)="updateVariable(v)"
+                      color="primary"
+                    >
                     </mat-checkbox>
                   </td>
                 </ng-container>
                 <tr mat-header-row *matHeaderRowDef="['nombre', 'tipo_dato', 'es_visible']"></tr>
-                <tr mat-row *matRowDef="let row; columns: ['nombre', 'tipo_dato', 'es_visible'];"></tr>
+                <tr
+                  mat-row
+                  *matRowDef="let row; columns: ['nombre', 'tipo_dato', 'es_visible']"
+                ></tr>
               </table>
             </mat-card-content>
           </mat-card>
@@ -121,7 +134,9 @@
           <mat-card>
             <mat-card-header>
               <mat-card-title>Crear Gráfico</mat-card-title>
-              <mat-card-subtitle>Selecciona el tipo de gráfico y las variables a analizar</mat-card-subtitle>
+              <mat-card-subtitle
+                >Selecciona el tipo de gráfico y las variables a analizar</mat-card-subtitle
+              >
             </mat-card-header>
             <mat-card-content class="!pt-4">
               <!-- Selector de tipo de gráfico visual -->
@@ -129,11 +144,15 @@
                 <p class="section-label">Tipo de Gráfico:</p>
                 <div class="chart-type-grid">
                   @for (type of chartTypes; track type.id) {
-                    <div 
+                    <div
                       class="chart-type-card"
                       [class.selected]="selectedChartType()?.id === type.id"
-                      (click)="selectChartType(type)">
-                      <mat-icon class="chart-type-icon" [class.selected]="selectedChartType()?.id === type.id">
+                      (click)="selectChartType(type)"
+                    >
+                      <mat-icon
+                        class="chart-type-icon"
+                        [class.selected]="selectedChartType()?.id === type.id"
+                      >
                         {{ type.icon }}
                       </mat-icon>
                       <p class="chart-type-name">{{ type.name }}</p>
@@ -213,9 +232,12 @@
                   </mat-form-field>
 
                   <div class="flex items-end">
-                    <button mat-raised-button color="primary" 
-                            [disabled]="!canAddChart() || addingChart()"
-                            (click)="addChart()">
+                    <button
+                      mat-raised-button
+                      color="primary"
+                      [disabled]="!canAddChart() || addingChart()"
+                      (click)="addChart()"
+                    >
                       @if (addingChart()) {
                         <mat-icon class="animate-spin">refresh</mat-icon>
                       } @else {
@@ -235,15 +257,17 @@
               <mat-icon>auto_graph</mat-icon>
               Generar Todos (Univariable)
             </button>
-            <button mat-stroked-button color="warn" (click)="clearAllCharts()" 
-                    [disabled]="activeCharts().length === 0">
+            <button
+              mat-stroked-button
+              color="warn"
+              (click)="clearAllCharts()"
+              [disabled]="activeCharts().length === 0"
+            >
               <mat-icon>delete_sweep</mat-icon>
               Limpiar Todo
             </button>
             <span class="flex-grow"></span>
-            <span class="charts-count">
-              {{ activeCharts().length }} gráfico(s) activo(s)
-            </span>
+            <span class="charts-count"> {{ activeCharts().length }} gráfico(s) activo(s) </span>
           </div>
 
           <!-- Grilla de gráficos activos -->
@@ -252,13 +276,19 @@
               @for (chart of activeCharts(); track chart.id) {
                 <mat-card class="relative">
                   <!-- Botón eliminar -->
-                  <button mat-icon-button class="!absolute top-2 right-2 z-10" 
-                          (click)="removeChart(chart.id)" matTooltip="Eliminar gráfico">
+                  <button
+                    mat-icon-button
+                    class="!absolute top-2 right-2 z-10"
+                    (click)="removeChart(chart.id)"
+                    matTooltip="Eliminar gráfico"
+                  >
                     <mat-icon>close</mat-icon>
                   </button>
 
                   <mat-card-header>
-                    <mat-icon mat-card-avatar class="text-[var(--primary-600)]">{{ chart.chartType.icon }}</mat-icon>
+                    <mat-icon mat-card-avatar class="text-[var(--primary-600)]">{{
+                      chart.chartType.icon
+                    }}</mat-icon>
                     <mat-card-title>{{ chart.title }}</mat-card-title>
                     <mat-card-subtitle>{{ chart.chartType.name }}</mat-card-subtitle>
                   </mat-card-header>
@@ -284,19 +314,28 @@
                           @if (getChartStats(chart)?.mean !== undefined) {
                             <div class="stat-box stat-info">
                               <span class="stat-label">Promedio</span>
-                              <span class="stat-value">{{ formatNumber(getChartStats(chart)?.mean) }}</span>
+                              <span class="stat-value">{{
+                                formatNumber(getChartStats(chart)?.mean)
+                              }}</span>
                             </div>
                           }
                           @if (getChartStats(chart)?.count !== undefined) {
                             <div class="stat-box stat-success">
                               <span class="stat-label">Total</span>
-                              <span class="stat-value">{{ getChartStats(chart)?.count | number }}</span>
+                              <span class="stat-value">{{
+                                getChartStats(chart)?.count | number
+                              }}</span>
                             </div>
                           }
                           @if (getChartStats(chart)?.correlation !== undefined) {
-                            <div class="stat-box" [class]="getCorrelationBoxClass(getChartStats(chart)?.correlation)">
+                            <div
+                              class="stat-box"
+                              [class]="getCorrelationBoxClass(getChartStats(chart)?.correlation)"
+                            >
                               <span class="stat-label">Correlación</span>
-                              <span class="stat-value">{{ getChartStats(chart)?.correlation }}</span>
+                              <span class="stat-value">{{
+                                getChartStats(chart)?.correlation
+                              }}</span>
                             </div>
                           }
                         </div>

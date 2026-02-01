@@ -20,7 +20,12 @@
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
         <mat-form-field class="w-full" appearance="outline">
           <mat-label>Nombre del Departamento</mat-label>
-          <input matInput formControlName="nombre" placeholder="Ej: Bienestar Estudiantil" maxlength="255">
+          <input
+            matInput
+            formControlName="nombre"
+            placeholder="Ej: Bienestar Estudiantil"
+            maxlength="255"
+          />
           <mat-icon matSuffix>business</mat-icon>
           <mat-hint align="end">{{ form.get('nombre')?.value?.length || 0 }}/255</mat-hint>
           @if (form.get('nombre')?.hasError('required') && form.get('nombre')?.touched) {
@@ -37,10 +42,18 @@
         @if (!isEdit()) {
           <mat-form-field class="w-full" appearance="outline">
             <mat-label>Código Interno</mat-label>
-            <input matInput formControlName="codigo_interno" placeholder="Ej: BIENESTAR-2024" maxlength="50">
+            <input
+              matInput
+              formControlName="codigo_interno"
+              placeholder="Ej: BIENESTAR-2024"
+              maxlength="50"
+            />
             <mat-icon matSuffix>tag</mat-icon>
             <mat-hint>Identificador único del departamento</mat-hint>
-            @if (form.get('codigo_interno')?.hasError('required') && form.get('codigo_interno')?.touched) {
+            @if (
+              form.get('codigo_interno')?.hasError('required') &&
+              form.get('codigo_interno')?.touched
+            ) {
               <mat-error>El código interno es requerido</mat-error>
             }
             @if (form.get('codigo_interno')?.hasError('maxlength')) {
@@ -51,8 +64,13 @@
 
         <mat-form-field class="w-full" appearance="outline">
           <mat-label>Descripción (opcional)</mat-label>
-          <textarea matInput formControlName="descripcion" rows="4" 
-                    placeholder="Describe el propósito del departamento..." maxlength="1000"></textarea>
+          <textarea
+            matInput
+            formControlName="descripcion"
+            rows="4"
+            placeholder="Describe el propósito del departamento..."
+            maxlength="1000"
+          ></textarea>
           <mat-hint align="end">{{ form.get('descripcion')?.value?.length || 0 }}/1000</mat-hint>
         </mat-form-field>
 
@@ -71,9 +89,12 @@
       <button mat-button type="button" routerLink="/admin/dashboard" [disabled]="loading()">
         Cancelar
       </button>
-      <button mat-raised-button color="primary" 
-              [disabled]="form.invalid || loading()"
-              (click)="onSubmit()">
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="form.invalid || loading()"
+        (click)="onSubmit()"
+      >
         @if (loading()) {
           <mat-spinner diameter="20" class="inline-block mr-2"></mat-spinner>
           Guardando...

@@ -30,7 +30,7 @@
           <th mat-header-cell *matHeaderCellDef>Nombre</th>
           <td mat-cell *matCellDef="let ds">
             <span class="font-medium">{{ ds.nombre }}</span>
-            <br>
+            <br />
             <span class="text-xs text-[var(--text-secondary)]">{{ ds.nombre_archivo }}</span>
           </td>
         </ng-container>
@@ -56,7 +56,7 @@
 
         <ng-container matColumnDef="fecha">
           <th mat-header-cell *matHeaderCellDef>Fecha</th>
-          <td mat-cell *matCellDef="let ds">{{ ds.fecha_carga | date:'short' }}</td>
+          <td mat-cell *matCellDef="let ds">{{ ds.fecha_carga | date: 'short' }}</td>
         </ng-container>
 
         <ng-container matColumnDef="acciones">
@@ -85,7 +85,7 @@
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
     </mat-card>
   }
