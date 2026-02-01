@@ -28,20 +28,20 @@ import { DepartamentoService } from '../../core/services/departamento.service';
   ],
   template: `
     <div class="max-w-2xl mx-auto">
-      <h1 class="text-2xl font-bold text-gray-800 mb-6">
+      <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">
         {{ isEdit() ? 'Editar Departamento' : 'Nuevo Departamento' }}
       </h1>
 
       <mat-card>
         <mat-card-content>
           @if (error()) {
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <div class="bg-[var(--error-bg)] border border-[var(--error-border)] text-[var(--error-color)] px-4 py-3 rounded mb-4">
               {{ error() }}
             </div>
           }
 
           @if (success()) {
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+            <div class="bg-[var(--success-bg)] border border-[var(--success-border)] text-[var(--success-color)] px-4 py-3 rounded mb-4">
               {{ success() }}
             </div>
           }
@@ -90,14 +90,14 @@ import { DepartamentoService } from '../../core/services/departamento.service';
                 Departamento Público
               </mat-slide-toggle>
             </div>
-            <p class="text-sm text-gray-500">
+            <p class="text-sm text-[var(--text-secondary)]">
               Los departamentos públicos pueden ser vistos por usuarios externos sin autenticación.
             </p>
           </form>
         </mat-card-content>
 
         <mat-card-actions align="end" class="px-4 pb-4">
-          <button mat-button type="button" routerLink="/dashboard" [disabled]="loading()">
+          <button mat-button type="button" routerLink="/admin/dashboard" [disabled]="loading()">
             Cancelar
           </button>
           <button mat-raised-button color="primary" 
@@ -184,7 +184,7 @@ export class DepartamentoFormComponent implements OnInit {
         next: () => {
           this.success.set('Departamento actualizado exitosamente');
           setTimeout(() => {
-            this.router.navigate(['/departamentos', this.departamentoId()]);
+            this.router.navigate(['/admin/departamentos', this.departamentoId()]);
           }, 1000);
         },
         error: (err) => {
@@ -204,7 +204,7 @@ export class DepartamentoFormComponent implements OnInit {
         next: (departamento) => {
           this.success.set('Departamento creado exitosamente');
           setTimeout(() => {
-            this.router.navigate(['/departamentos', departamento.id]);
+            this.router.navigate(['/admin/departamentos', departamento.id]);
           }, 1000);
         },
         error: (err) => {

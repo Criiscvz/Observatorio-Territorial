@@ -51,29 +51,21 @@ export const routes: Routes = [
 
   // Rutas protegidas con layout principal (Panel de administración)
   {
-    path: '',
+    path: 'admin',
     loadComponent: () => import('./shared/components/layout/main-layout.component').then(m => m.MainLayoutComponent),
     canActivate: [authGuard],
     children: [
-      // === RUTAS PARA TODOS LOS USUARIOS AUTENTICADOS ===
+      // Dashboard - ruta por defecto del admin
+      {
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full'
+      },
       {
         path: 'dashboard',
         loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
       },
-      {
-        path: 'departamentos/:id',
-        loadComponent: () => import('./features/departamentos/departamento-detail.component').then(m => m.DepartamentoDetailComponent)
-      },
-      {
-        path: 'datasets',
-        loadComponent: () => import('./features/datasets/dataset-list.component').then(m => m.DatasetListComponent)
-      },
-      {
-        path: 'datasets/:id',
-        loadComponent: () => import('./features/datasets/dataset-view.component').then(m => m.DatasetViewComponent)
-      },
-      
-      // === RUTAS SOLO PARA ADMIN ===
+      // Departamentos
       {
         path: 'departamentos/nuevo',
         loadComponent: () => import('./features/departamentos/departamento-form.component').then(m => m.DepartamentoFormComponent),
@@ -85,9 +77,22 @@ export const routes: Routes = [
         canActivate: [adminGuard]
       },
       {
+        path: 'departamentos/:id',
+        loadComponent: () => import('./features/departamentos/departamento-detail.component').then(m => m.DepartamentoDetailComponent)
+      },
+      // Datasets
+      {
         path: 'datasets/nuevo',
         loadComponent: () => import('./features/datasets/dataset-upload.component').then(m => m.DatasetUploadComponent),
         canActivate: [adminGuard]
+      },
+      {
+        path: 'datasets/:id',
+        loadComponent: () => import('./features/datasets/dataset-view.component').then(m => m.DatasetViewComponent)
+      },
+      {
+        path: 'datasets',
+        loadComponent: () => import('./features/datasets/dataset-list.component').then(m => m.DatasetListComponent)
       }
     ]
   },

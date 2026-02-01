@@ -29,22 +29,22 @@ import { Departamento, Dataset } from '../../core/models';
         <!-- Header -->
         <div class="flex justify-between items-start">
           <div>
-            <h1 class="text-3xl font-bold text-gray-800">{{ departamento()?.nombre }}</h1>
-            <p class="text-gray-500">{{ departamento()?.descripcion || 'Sin descripción' }}</p>
-            <p class="text-sm text-gray-400 mt-1">
+            <h1 class="text-3xl font-bold text-[var(--text-primary)]">{{ departamento()?.nombre }}</h1>
+            <p class="text-[var(--text-secondary)]">{{ departamento()?.descripcion || 'Sin descripción' }}</p>
+            <p class="text-sm text-[var(--text-tertiary)] mt-1">
               Código: {{ departamento()?.codigo_interno }}
               @if (departamento()?.publico) {
-                <span class="ml-2 bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Público</span>
+                <span class="ml-2 bg-[var(--success-bg-solid)] text-[var(--success-color)] px-2 py-1 rounded text-xs">Público</span>
               }
             </p>
           </div>
           <div class="flex gap-2">
-            <a mat-button [routerLink]="['/departamentos', departamento()?.id, 'editar']">
+            <a mat-button [routerLink]="['/admin/departamentos', departamento()?.id, 'editar']">
               <mat-icon>edit</mat-icon>
               Editar
             </a>
             <a mat-raised-button color="primary" 
-               [routerLink]="['/datasets/nuevo']" 
+               [routerLink]="['/admin/datasets/nuevo']" 
                [queryParams]="{departamento: departamento()?.id}">
               <mat-icon>upload</mat-icon>
               Importar Dataset
@@ -55,7 +55,7 @@ import { Departamento, Dataset } from '../../core/models';
         <!-- Lista de Datasets -->
         @if (datasets().length > 0) {
           <div class="space-y-4">
-            <h2 class="text-xl font-semibold text-gray-700">Datasets del Departamento</h2>
+            <h2 class="text-xl font-semibold text-[var(--text-primary)]">Datasets del Departamento</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               @for (dataset of datasets(); track dataset.id) {
                 <mat-card class="cursor-pointer hover:shadow-lg transition-shadow">
@@ -67,20 +67,20 @@ import { Departamento, Dataset } from '../../core/models';
                     </mat-card-subtitle>
                   </mat-card-header>
                   <mat-card-content>
-                    <p class="text-sm text-gray-500 mb-2">
+                    <p class="text-sm text-[var(--text-secondary)] mb-2">
                       {{ dataset.descripcion || 'Sin descripción' }}
                     </p>
                     <div class="flex items-center gap-2">
                       <span class="text-xs px-2 py-1 rounded" [class]="getEstadoClass(dataset.estado)">
                         {{ dataset.estado }}
                       </span>
-                      <span class="text-xs text-gray-400">
+                      <span class="text-xs text-[var(--text-tertiary)]">
                         {{ dataset.fecha_carga | date:'shortDate' }}
                       </span>
                     </div>
                   </mat-card-content>
                   <mat-card-actions align="end">
-                    <a mat-button color="primary" [routerLink]="['/datasets', dataset.id]">
+                    <a mat-button color="primary" [routerLink]="['/admin/datasets', dataset.id]">
                       <mat-icon>analytics</mat-icon>
                       Ver Análisis
                     </a>
@@ -92,11 +92,11 @@ import { Departamento, Dataset } from '../../core/models';
         } @else {
           <mat-card>
             <mat-card-content class="text-center py-12">
-              <mat-icon class="text-6xl text-gray-300">insert_chart</mat-icon>
-              <h3 class="text-xl text-gray-600 mt-4">Sin datasets</h3>
-              <p class="text-gray-500 mb-4">Importa un archivo Excel para comenzar el análisis</p>
+              <mat-icon class="text-6xl text-[var(--text-tertiary)]">insert_chart</mat-icon>
+              <h3 class="text-xl text-[var(--text-secondary)] mt-4">Sin datasets</h3>
+              <p class="text-[var(--text-secondary)] mb-4">Importa un archivo Excel para comenzar el análisis</p>
               <a mat-raised-button color="primary" 
-                 [routerLink]="['/datasets/nuevo']" 
+                 [routerLink]="['/admin/datasets/nuevo']" 
                  [queryParams]="{departamento: departamento()?.id}">
                 <mat-icon>upload</mat-icon>
                 Importar Dataset

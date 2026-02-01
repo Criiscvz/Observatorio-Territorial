@@ -37,7 +37,7 @@ interface NavItem {
         <!-- Dashboard - visible para todos -->
         <a 
           class="nav-item"
-          routerLink="/dashboard"
+          routerLink="/admin/dashboard"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: true }"
           (click)="navigate.emit()"
@@ -52,7 +52,7 @@ interface NavItem {
         <a 
           *isAdmin
           class="nav-item"
-          routerLink="/datasets/nuevo"
+          routerLink="/admin/datasets/nuevo"
           routerLinkActive="active"
           (click)="navigate.emit()"
         >
@@ -70,7 +70,7 @@ interface NavItem {
           <a 
             *isAdmin
             class="add-btn" 
-            routerLink="/departamentos/nuevo"
+            routerLink="/admin/departamentos/nuevo"
             matTooltip="Nuevo departamento"
             (click)="navigate.emit()"
           >
@@ -82,7 +82,7 @@ interface NavItem {
           @for (depto of departamentos(); track depto.id) {
             <a 
               class="nav-item depto-item"
-              [routerLink]="['/departamentos', depto.id]"
+              [routerLink]="['/admin/departamentos', depto.id]"
               routerLinkActive="active"
               (click)="navigate.emit()"
             >
@@ -105,7 +105,7 @@ interface NavItem {
               <span>Sin departamentos</span>
               <a 
                 *isAdmin
-                routerLink="/departamentos/nuevo" 
+                routerLink="/admin/departamentos/nuevo" 
                 class="empty-action"
                 (click)="navigate.emit()"
               >
@@ -120,7 +120,7 @@ interface NavItem {
       <div class="sidebar-footer">
         <a 
           class="nav-item"
-          routerLink="/datasets"
+          routerLink="/admin/datasets"
           routerLinkActive="active"
           (click)="navigate.emit()"
         >

@@ -28,8 +28,8 @@ import { Dataset } from '../../core/models';
   template: `
     <div class="space-y-6">
       <div class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold text-gray-800">Datasets</h1>
-        <a mat-raised-button color="primary" routerLink="/datasets/nuevo">
+        <h1 class="text-2xl font-bold text-[var(--text-primary)]">Datasets</h1>
+        <a mat-raised-button color="primary" routerLink="/admin/datasets/nuevo">
           <mat-icon>add</mat-icon>
           Nuevo Dataset
         </a>
@@ -42,10 +42,10 @@ import { Dataset } from '../../core/models';
       } @else if (datasets().length === 0) {
         <mat-card>
           <mat-card-content class="text-center py-12">
-            <mat-icon class="text-6xl text-gray-300">table_chart</mat-icon>
-            <h3 class="text-xl text-gray-600 mt-4">No hay datasets</h3>
-            <p class="text-gray-500 mb-4">Importa tu primer archivo Excel</p>
-            <a mat-raised-button color="primary" routerLink="/datasets/nuevo">
+            <mat-icon class="text-6xl text-[var(--text-tertiary)]">table_chart</mat-icon>
+            <h3 class="text-xl text-[var(--text-secondary)] mt-4">No hay datasets</h3>
+            <p class="text-[var(--text-secondary)] mb-4">Importa tu primer archivo Excel</p>
+            <a mat-raised-button color="primary" routerLink="/admin/datasets/nuevo">
               <mat-icon>add</mat-icon>
               Importar Dataset
             </a>
@@ -59,7 +59,7 @@ import { Dataset } from '../../core/models';
               <td mat-cell *matCellDef="let ds">
                 <span class="font-medium">{{ ds.nombre }}</span>
                 <br>
-                <span class="text-xs text-gray-500">{{ ds.nombre_archivo }}</span>
+                <span class="text-xs text-[var(--text-secondary)]">{{ ds.nombre_archivo }}</span>
               </td>
             </ng-container>
 
@@ -94,12 +94,12 @@ import { Dataset } from '../../core/models';
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #menu="matMenu">
-                  <button mat-menu-item [routerLink]="['/departamentos', ds.departamento_id]">
+                  <button mat-menu-item [routerLink]="['/admin/departamentos', ds.departamento_id]">
                     <mat-icon>dashboard</mat-icon>
                     <span>Ver Dashboard</span>
                   </button>
                   @if (ds.estado === 'PENDIENTE') {
-                    <button mat-menu-item [routerLink]="['/datasets', ds.id, 'importar']">
+                    <button mat-menu-item [routerLink]="['/admin/datasets', ds.id, 'importar']">
                       <mat-icon>upload</mat-icon>
                       <span>Continuar Importación</span>
                     </button>
@@ -136,10 +136,13 @@ export class DatasetListComponent implements OnInit {
     this.loading.set(true);
     this.datasetService.getAll().subscribe({
       next: (res) => {
-        this.datasets.set(res.data);
+        this.datasets.set(res?.data || []);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => {
+        this.datasets.set([]);
+        this.loading.set(false);
+      }
     });
   }
 

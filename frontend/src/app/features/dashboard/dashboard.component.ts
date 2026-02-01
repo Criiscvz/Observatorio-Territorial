@@ -40,11 +40,11 @@ interface StatCard {
             <p class="welcome-subtitle">Bienvenido al Observatorio de Datos ULEAM</p>
           </div>
           <div class="header-actions">
-            <a class="action-btn secondary" routerLink="/datasets/nuevo">
+            <a class="action-btn secondary" routerLink="/admin/datasets/nuevo">
               <mat-icon>cloud_upload</mat-icon>
               <span>Importar</span>
             </a>
-            <a class="action-btn primary" routerLink="/departamentos/nuevo">
+            <a class="action-btn primary" routerLink="/admin/departamentos/nuevo">
               <mat-icon>add</mat-icon>
               <span>Nuevo Departamento</span>
             </a>
@@ -137,7 +137,7 @@ interface StatCard {
                   <p class="card-subtitle">Últimos agregados</p>
                 </div>
               </div>
-              <a class="view-all" routerLink="/departamentos">
+              <a class="view-all" routerLink="/admin/dashboard">
                 Ver todos
                 <mat-icon>arrow_forward</mat-icon>
               </a>
@@ -147,7 +147,7 @@ interface StatCard {
               @if (departamentos().length > 0) {
                 <div class="items-list">
                   @for (depto of departamentosRecientes(); track depto.id) {
-                    <a class="list-item" [routerLink]="['/departamentos', depto.id]" matRipple>
+                    <a class="list-item" [routerLink]="['/admin/departamentos', depto.id]" matRipple>
                       <div class="item-avatar" [style.background]="getDeptoColor($index)">
                         {{ depto.nombre.charAt(0).toUpperCase() }}
                       </div>
@@ -168,7 +168,7 @@ interface StatCard {
                 <div class="empty-state">
                   <mat-icon>folder_off</mat-icon>
                   <p>No hay departamentos</p>
-                  <a routerLink="/departamentos/nuevo" class="empty-action">Crear uno</a>
+                  <a routerLink="/admin/departamentos/nuevo" class="empty-action">Crear uno</a>
                 </div>
               }
             </div>
@@ -186,7 +186,7 @@ interface StatCard {
                   <p class="card-subtitle">Últimos importados</p>
                 </div>
               </div>
-              <a class="view-all" routerLink="/datasets">
+              <a class="view-all" routerLink="/admin/datasets">
                 Ver todos
                 <mat-icon>arrow_forward</mat-icon>
               </a>
@@ -196,7 +196,7 @@ interface StatCard {
               @if (datasetsRecientes().length > 0) {
                 <div class="items-list">
                   @for (ds of datasetsRecientes(); track ds.id) {
-                    <a class="list-item" [routerLink]="['/datasets', ds.id]" matRipple>
+                    <a class="list-item" [routerLink]="['/admin/datasets', ds.id]" matRipple>
                       <div class="item-icon blue">
                         <mat-icon>table_chart</mat-icon>
                       </div>
@@ -215,7 +215,7 @@ interface StatCard {
                 <div class="empty-state">
                   <mat-icon>description</mat-icon>
                   <p>No hay datasets</p>
-                  <a routerLink="/datasets/nuevo" class="empty-action">Importar uno</a>
+                  <a routerLink="/admin/datasets/nuevo" class="empty-action">Importar uno</a>
                 </div>
               }
             </div>
@@ -226,7 +226,7 @@ interface StatCard {
         <section class="quick-actions">
           <h3 class="section-title">Acciones Rápidas</h3>
           <div class="actions-grid">
-            <a class="quick-action" routerLink="/departamentos/nuevo" matRipple>
+            <a class="quick-action" routerLink="/admin/departamentos/nuevo" matRipple>
               <div class="action-icon purple">
                 <mat-icon>add_business</mat-icon>
               </div>
@@ -234,7 +234,7 @@ interface StatCard {
               <p class="action-desc">Crear una nueva área de trabajo</p>
             </a>
 
-            <a class="quick-action" routerLink="/datasets/nuevo" matRipple>
+            <a class="quick-action" routerLink="/admin/datasets/nuevo" matRipple>
               <div class="action-icon blue">
                 <mat-icon>cloud_upload</mat-icon>
               </div>
@@ -242,7 +242,7 @@ interface StatCard {
               <p class="action-desc">Subir datos desde archivo</p>
             </a>
 
-            <a class="quick-action" routerLink="/datasets" matRipple>
+            <a class="quick-action" routerLink="/admin/datasets" matRipple>
               <div class="action-icon teal">
                 <mat-icon>folder_open</mat-icon>
               </div>
@@ -251,7 +251,7 @@ interface StatCard {
             </a>
 
             @if (datasetsRecientes().length > 0) {
-              <a class="quick-action" [routerLink]="['/datasets', datasetsRecientes()[0].id]" matRipple>
+              <a class="quick-action" [routerLink]="['/admin/datasets', datasetsRecientes()[0].id]" matRipple>
                 <div class="action-icon orange">
                   <mat-icon>analytics</mat-icon>
                 </div>

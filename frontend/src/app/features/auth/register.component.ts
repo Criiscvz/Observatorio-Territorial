@@ -187,7 +187,7 @@ export class RegisterComponent {
 
     this.authService.register(this.form.value).subscribe({
       next: () => {
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/admin/dashboard']);
       },
       error: (err) => {
         this.loading.set(false);

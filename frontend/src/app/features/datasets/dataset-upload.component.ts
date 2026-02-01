@@ -46,7 +46,7 @@ interface ColumnaExtendida extends ColumnaAnalizada {
   ],
   template: `
     <div class="max-w-5xl mx-auto">
-      <h1 class="text-2xl font-bold text-gray-800 mb-6">Importar Dataset</h1>
+      <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">Importar Dataset</h1>
 
       <mat-stepper [linear]="true" #stepper>
         <!-- Step 1: Subir archivo -->
@@ -92,23 +92,23 @@ interface ColumnaExtendida extends ColumnaAnalizada {
                   >
                   
                   @if (selectedFile()) {
-                    <mat-icon class="text-5xl text-green-500">check_circle</mat-icon>
+                    <mat-icon class="text-5xl text-[var(--success-color)]">check_circle</mat-icon>
                     <p class="text-lg font-medium mt-2">{{ selectedFile()?.name }}</p>
-                    <p class="text-sm text-gray-500">{{ formatFileSize(selectedFile()?.size || 0) }}</p>
+                    <p class="text-sm text-[var(--text-secondary)]">{{ formatFileSize(selectedFile()?.size || 0) }}</p>
                     <button mat-button color="warn" (click)="clearFile($event)" class="mt-2">
                       <mat-icon>close</mat-icon> Quitar archivo
                     </button>
                   } @else {
-                    <mat-icon class="text-5xl text-gray-400">cloud_upload</mat-icon>
-                    <p class="text-lg text-gray-600 mt-2">Arrastra tu archivo aquí</p>
-                    <p class="text-sm text-gray-500">o haz clic para seleccionar</p>
-                    <p class="text-xs text-gray-400 mt-2">Formatos: .xlsx, .xls, .csv (máx 10MB)</p>
+                    <mat-icon class="text-5xl text-[var(--text-tertiary)]">cloud_upload</mat-icon>
+                    <p class="text-lg text-[var(--text-secondary)] mt-2">Arrastra tu archivo aquí</p>
+                    <p class="text-sm text-[var(--text-secondary)]">o haz clic para seleccionar</p>
+                    <p class="text-xs text-[var(--text-tertiary)] mt-2">Formatos: .xlsx, .xls, .csv (máx 10MB)</p>
                   }
                 </div>
 
                 @if (uploading()) {
                   <div class="space-y-2">
-                    <p class="text-sm text-gray-600 text-center">Subiendo y analizando archivo...</p>
+                    <p class="text-sm text-[var(--text-secondary)] text-center">Subiendo y analizando archivo...</p>
                     <mat-progress-bar mode="indeterminate"></mat-progress-bar>
                   </div>
                 }
@@ -165,7 +165,7 @@ interface ColumnaExtendida extends ColumnaAnalizada {
                       <mat-panel-description class="flex items-center gap-2">
                         <span [class]="getTipoClass(col.tipo_dato)">{{ col.tipo_dato }}</span>
                         @if (col.excluida) {
-                          <span class="text-red-500 text-sm">(Excluida)</span>
+                          <span class="text-[var(--error-color)] text-sm">(Excluida)</span>
                         }
                       </mat-panel-description>
                     </mat-expansion-panel-header>
@@ -202,11 +202,11 @@ interface ColumnaExtendida extends ColumnaAnalizada {
                     </div>
 
                     <!-- Muestra de valores -->
-                    <div class="bg-gray-50 p-3 rounded mb-3">
-                      <p class="text-sm text-gray-600 mb-1">Muestra de valores:</p>
+                    <div class="bg-[var(--bg-tertiary)] p-3 rounded mb-3">
+                      <p class="text-sm text-[var(--text-secondary)] mb-1">Muestra de valores:</p>
                       <div class="flex flex-wrap gap-1">
                         @for (val of col.muestra_valores?.slice(0, 5); track val) {
-                          <span class="bg-white px-2 py-1 rounded text-sm border">{{ val }}</span>
+                          <span class="bg-[var(--card-bg)] px-2 py-1 rounded text-sm border border-[var(--border-color)]">{{ val }}</span>
                         }
                       </div>
                     </div>
@@ -229,7 +229,7 @@ interface ColumnaExtendida extends ColumnaAnalizada {
 
               @if (processing()) {
                 <div class="mt-4">
-                  <p class="text-center text-gray-600 mb-2">Importando datos... esto puede tardar unos segundos</p>
+                  <p class="text-center text-[var(--text-secondary)] mb-2">Importando datos... esto puede tardar unos segundos</p>
                   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
                 </div>
               }
@@ -257,19 +257,19 @@ interface ColumnaExtendida extends ColumnaAnalizada {
         <mat-step label="Completado">
           <mat-card class="mt-4">
             <mat-card-content class="text-center py-8">
-              <mat-icon class="text-6xl text-green-500">check_circle</mat-icon>
-              <h2 class="text-2xl font-bold text-gray-800 mt-4">¡Importación Exitosa!</h2>
-              <p class="text-gray-600 mt-2">
+              <mat-icon class="text-6xl text-[var(--success-color)]">check_circle</mat-icon>
+              <h2 class="text-2xl font-bold text-[var(--text-primary)] mt-4">¡Importación Exitosa!</h2>
+              <p class="text-[var(--text-secondary)] mt-2">
                 Se importaron <strong>{{ importedCount() | number }}</strong> registros
                 con <strong>{{ columnasActivas().length }}</strong> columnas
               </p>
 
               <div class="flex justify-center gap-4 mt-6">
-                <button mat-button routerLink="/datasets">
+                <button mat-button routerLink="/admin/datasets">
                   <mat-icon>list</mat-icon> Ver Datasets
                 </button>
                 <button mat-raised-button color="primary" 
-                        [routerLink]="['/datasets', datasetId()]">
+                        [routerLink]="['/admin/datasets', datasetId()]">
                   <mat-icon>analytics</mat-icon> Ver Datos y Gráficos
                 </button>
               </div>
