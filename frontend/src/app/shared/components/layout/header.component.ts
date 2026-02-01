@@ -7,6 +7,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '@core/services/auth.service';
 import { ThemeService } from '@core/services/theme.service';
 
@@ -22,6 +23,7 @@ import { ThemeService } from '@core/services/theme.service';
     MatMenuModule,
     MatTooltipModule,
     MatDividerModule,
+    TranslateModule,
   ],
   template: `
     <header class="header">

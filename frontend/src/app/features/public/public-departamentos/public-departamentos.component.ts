@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
 
@@ -26,6 +27,7 @@ import { DepartamentoService } from '@core/services/departamento.service';
     MatInputModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    TranslateModule,
   ],
   templateUrl: './public-departamentos.component.html',
   styleUrl: './public-departamentos.component.scss',

@@ -333,6 +333,13 @@
       "saveChanges": "Guardar Cambios",
       "createDepartment": "Crear Departamento",
       "saving": "Guardando...",
+      "validation": {
+        "nameRequired": "El nombre es requerido",
+        "nameMinLength": "El nombre debe tener al menos 3 caracteres",
+        "nameMaxLength": "El nombre no puede exceder 255 caracteres",
+        "codeRequired": "El código interno es requerido",
+        "codeMaxLength": "El código no puede exceder 50 caracteres"
+      },
       "errors": {
         "formInvalid": "Por favor, corrige los errores en el formulario",
         "validationError": "Error de validación. Verifica los datos ingresados.",
@@ -347,9 +354,15 @@
     },
     "detail": {
       "title": "Departamento",
-      "datasets": "Datasets",
-      "noDatasets": "No hay datasets en este departamento",
-      "addDataset": "Agregar Dataset"
+      "noDescription": "Sin descripción",
+      "code": "Código",
+      "publicBadge": "Público",
+      "datasets": "Datasets del Departamento",
+      "records": "registros",
+      "noDatasets": "Sin datasets",
+      "noDatasetsMessage": "Importa un archivo Excel para comenzar el análisis",
+      "importDataset": "Importar Dataset",
+      "viewAnalysis": "Ver Análisis"
     },
     "icons": {
       "social": "Social / Grupos",

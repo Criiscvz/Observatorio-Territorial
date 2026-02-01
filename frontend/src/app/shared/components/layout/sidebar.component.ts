@@ -4,6 +4,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
@@ -27,6 +28,7 @@ interface NavItem {
     MatTooltipModule,
     MatBadgeModule,
     IsAdminDirective,
+    TranslateModule,
   ],
   template: `
     <nav class="sidebar">
