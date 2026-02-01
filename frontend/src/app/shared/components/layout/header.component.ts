@@ -9,6 +9,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '@core/services/auth.service';
+import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
 
 @Component({
@@ -47,6 +48,28 @@ import { ThemeService } from '@core/services/theme.service';
 
         <!-- Right section -->
         <div class="header-right">
+          <!-- Language selector -->
+          <button
+            class="lang-btn"
+            [matMenuTriggerFor]="langMenu"
+            [matTooltip]="'language.select' | translate"
+          >
+            <mat-icon>language</mat-icon>
+            <span class="lang-code">{{ languageService.currentLang().toUpperCase() }}</span>
+          </button>
+
+          <mat-menu #langMenu="matMenu">
+            @for (lang of languageService.availableLanguages; track lang.code) {
+              <button mat-menu-item (click)="languageService.setLanguage(lang.code)" [class.active]="languageService.currentLang() === lang.code">
+                <span class="lang-flag">{{ lang.flag }}</span>
+                <span>{{ lang.name }}</span>
+                @if (languageService.currentLang() === lang.code) {
+                  <mat-icon class="check-icon">check</mat-icon>
+                }
+              </button>
+            }
+          </mat-menu>
+
           <!-- Theme toggle -->
           <button
             class="theme-btn"
@@ -209,6 +232,43 @@ import { ThemeService } from '@core/services/theme.service';
         gap: 0.5rem;
       }
 
+      .lang-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.5rem;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        color: var(--text-secondary);
+        transition: all var(--transition-fast);
+      }
+
+      .lang-btn:hover {
+        background: var(--hover-bg);
+        color: var(--primary-600);
+      }
+
+      .lang-code {
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      .lang-flag {
+        font-size: 1.25rem;
+        margin-right: 0.5rem;
+      }
+
+      ::ng-deep .mat-mdc-menu-item.active {
+        background: var(--hover-bg);
+      }
+
+      .check-icon {
+        margin-left: auto;
+        color: var(--primary-600);
+      }
+
       .theme-btn {
         width: 40px;
         height: 40px;
@@ -367,6 +427,7 @@ import { ThemeService } from '@core/services/theme.service';
 export class HeaderComponent {
   authService = inject(AuthService);
   themeService = inject(ThemeService);
+  languageService = inject(LanguageService);
   toggleSidenav = output<void>();
 
   logout(): void {

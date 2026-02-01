@@ -14,6 +14,23 @@
     </nav>
 
     <div class="header-actions">
+      <!-- Language selector -->
+      <button class="lang-toggle" [matMenuTriggerFor]="langMenu" [matTooltip]="'language.select' | translate">
+        <mat-icon>language</mat-icon>
+        <span class="lang-code">{{ languageService.currentLang().toUpperCase() }}</span>
+      </button>
+      <mat-menu #langMenu="matMenu">
+        @for (lang of languageService.availableLanguages; track lang.code) {
+          <button mat-menu-item (click)="languageService.setLanguage(lang.code)" [class.active]="languageService.currentLang() === lang.code">
+            <span class="lang-flag">{{ lang.flag }}</span>
+            <span>{{ lang.name }}</span>
+            @if (languageService.currentLang() === lang.code) {
+              <mat-icon class="check-icon">check</mat-icon>
+            }
+          </button>
+        }
+      </mat-menu>
+
       <button class="theme-toggle" (click)="themeService.toggleTheme()">
         <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
