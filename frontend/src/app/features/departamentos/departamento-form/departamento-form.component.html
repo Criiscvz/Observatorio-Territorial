@@ -1,6 +1,6 @@
 <div class="max-w-2xl mx-auto">
   <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">
-    {{ isEdit() ? 'Editar Departamento' : 'Nuevo Departamento' }}
+    {{ isEdit() ? ('departamentos.form.titleEdit' | translate) : ('departamentos.form.titleNew' | translate) }}
   </h1>
 
   <mat-card>
@@ -19,56 +19,56 @@
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
         <mat-form-field class="w-full" appearance="outline">
-          <mat-label>Nombre del Departamento</mat-label>
+          <mat-label>{{ 'departamentos.form.name' | translate }}</mat-label>
           <input
             matInput
             formControlName="nombre"
-            placeholder="Ej: Bienestar Estudiantil"
+            [placeholder]="'departamentos.form.namePlaceholder' | translate"
             maxlength="255"
           />
           <mat-icon matSuffix>business</mat-icon>
           <mat-hint align="end">{{ form.get('nombre')?.value?.length || 0 }}/255</mat-hint>
           @if (form.get('nombre')?.hasError('required') && form.get('nombre')?.touched) {
-            <mat-error>El nombre es requerido</mat-error>
+            <mat-error>{{ 'departamentos.form.validation.nameRequired' | translate }}</mat-error>
           }
           @if (form.get('nombre')?.hasError('minlength')) {
-            <mat-error>El nombre debe tener al menos 3 caracteres</mat-error>
+            <mat-error>{{ 'departamentos.form.validation.nameMinLength' | translate }}</mat-error>
           }
           @if (form.get('nombre')?.hasError('maxlength')) {
-            <mat-error>El nombre no puede exceder 255 caracteres</mat-error>
+            <mat-error>{{ 'departamentos.form.validation.nameMaxLength' | translate }}</mat-error>
           }
         </mat-form-field>
 
         @if (!isEdit()) {
           <mat-form-field class="w-full" appearance="outline">
-            <mat-label>Código Interno</mat-label>
+            <mat-label>{{ 'departamentos.form.code' | translate }}</mat-label>
             <input
               matInput
               formControlName="codigo_interno"
-              placeholder="Ej: BIENESTAR-2024"
+              [placeholder]="'departamentos.form.codePlaceholder' | translate"
               maxlength="50"
             />
             <mat-icon matSuffix>tag</mat-icon>
-            <mat-hint>Identificador único del departamento</mat-hint>
+            <mat-hint>{{ 'departamentos.form.codeHint' | translate }}</mat-hint>
             @if (
               form.get('codigo_interno')?.hasError('required') &&
               form.get('codigo_interno')?.touched
             ) {
-              <mat-error>El código interno es requerido</mat-error>
+              <mat-error>{{ 'departamentos.form.validation.codeRequired' | translate }}</mat-error>
             }
             @if (form.get('codigo_interno')?.hasError('maxlength')) {
-              <mat-error>El código no puede exceder 50 caracteres</mat-error>
+              <mat-error>{{ 'departamentos.form.validation.codeMaxLength' | translate }}</mat-error>
             }
           </mat-form-field>
         }
 
         <mat-form-field class="w-full" appearance="outline">
-          <mat-label>Descripción (opcional)</mat-label>
+          <mat-label>{{ 'departamentos.form.description' | translate }}</mat-label>
           <textarea
             matInput
             formControlName="descripcion"
             rows="4"
-            placeholder="Describe el propósito del departamento..."
+            [placeholder]="'departamentos.form.descriptionPlaceholder' | translate"
             maxlength="1000"
           ></textarea>
           <mat-hint align="end">{{ form.get('descripcion')?.value?.length || 0 }}/1000</mat-hint>
@@ -76,18 +76,18 @@
 
         <div class="flex items-center gap-4 pt-2">
           <mat-slide-toggle formControlName="publico" color="primary">
-            Departamento Público
+            {{ 'departamentos.form.public' | translate }}
           </mat-slide-toggle>
         </div>
         <p class="text-sm text-[var(--text-secondary)]">
-          Los departamentos públicos pueden ser vistos por usuarios externos sin autenticación.
+          {{ 'departamentos.form.publicDescription' | translate }}
         </p>
       </form>
     </mat-card-content>
 
     <mat-card-actions align="end" class="px-4 pb-4">
       <button mat-button type="button" routerLink="/admin/dashboard" [disabled]="loading()">
-        Cancelar
+        {{ 'common.buttons.cancel' | translate }}
       </button>
       <button
         mat-raised-button
@@ -97,9 +97,9 @@
       >
         @if (loading()) {
           <mat-spinner diameter="20" class="inline-block mr-2"></mat-spinner>
-          Guardando...
+          {{ 'departamentos.form.saving' | translate }}
         } @else {
-          {{ isEdit() ? 'Guardar Cambios' : 'Crear Departamento' }}
+          {{ isEdit() ? ('departamentos.form.saveChanges' | translate) : ('departamentos.form.createDepartment' | translate) }}
         }
       </button>
     </mat-card-actions>
