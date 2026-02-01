@@ -2,9 +2,6 @@ import { Injectable, computed, inject } from '@angular/core';
 import { ChartThemeConfig } from './interfaces';
 import { ThemeService } from './theme.service';
 
-// Re-export interfaces for convenience
-export * from './interfaces/common/chart-theme-config.interface';
-
 @Injectable({
   providedIn: 'root',
 })

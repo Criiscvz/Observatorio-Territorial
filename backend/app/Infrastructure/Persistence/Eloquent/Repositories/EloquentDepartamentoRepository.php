@@ -39,6 +39,15 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
         return $model ? $this->toDomain($model) : null;
     }
 
+    public function findAll(): Collection
+    {
+        $models = $this->model
+            ->with(['datasets' => fn($q) => $q->select('id', 'departamento_id', 'nombre', 'estado', 'total_registros')])
+            ->get();
+
+        return $models->map(fn($m) => $this->toDomain($m));
+    }
+
     public function findAllByUserId(int $userId): Collection
     {
         $models = $this->model

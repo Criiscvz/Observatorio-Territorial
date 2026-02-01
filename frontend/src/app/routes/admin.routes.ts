@@ -11,9 +11,7 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('../features/dashboard/dashboard/dashboard.component').then(
-        (m) => m.DashboardComponent,
-      ),
+      import('../features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
     title: 'Dashboard - Panel de Administración',
   },
 

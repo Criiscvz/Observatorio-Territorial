@@ -10,9 +10,6 @@ import {
   UnivariableResponse,
 } from './interfaces';
 
-// Re-export interfaces for convenience
-export * from './interfaces/stats';
-
 @Injectable({
   providedIn: 'root',
 })

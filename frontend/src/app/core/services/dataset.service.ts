@@ -4,9 +4,6 @@ import { AnalisisResponse, ColumnaAnalizada, Dataset } from '../models';
 import { ApiService } from './api.service';
 import { PaginatedResponse } from './interfaces';
 
-// Re-export interfaces for convenience
-export * from './interfaces/common/paginated-response.interface';
-
 @Injectable({
   providedIn: 'root',
 })

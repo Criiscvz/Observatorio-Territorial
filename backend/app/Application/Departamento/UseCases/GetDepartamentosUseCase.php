@@ -24,6 +24,13 @@ class GetDepartamentosUseCase
         });
     }
 
+    public function getAll(): Collection
+    {
+        $departamentos = $this->departamentoRepository->findAll();
+
+        return $departamentos->map(fn($d) => DepartamentoResponseDTO::fromEntity($d, 'ADMIN'));
+    }
+
     public function getPublicos(): Collection
     {
         $departamentos = $this->departamentoRepository->findPublicos();

@@ -19,7 +19,8 @@ import { NgxEchartsDirective } from 'ngx-echarts';
 
 import { ChartData, VariableMetadato } from '@core/models';
 import { ChartThemeService } from '@core/services/chart-theme.service';
-import { BivariableResponse, DashboardService } from '@core/services/dashboard.service';
+import { DashboardService } from '@core/services/dashboard.service';
+import { BivariableResponse } from '@core/services/interfaces';
 
 interface ChartType {
   id: string;

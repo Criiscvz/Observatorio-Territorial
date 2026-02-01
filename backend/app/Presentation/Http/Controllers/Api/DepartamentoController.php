@@ -41,7 +41,14 @@ class DepartamentoController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $departamentos = $this->getDepartamentosUseCase->execute($request->user()->id);
+        $user = $request->user();
+
+        // Admin ve todos los departamentos, usuarios normales solo los asignados
+        if ($user->rol === 'ADMIN') {
+            $departamentos = $this->getDepartamentosUseCase->getAll();
+        } else {
+            $departamentos = $this->getDepartamentosUseCase->execute($user->id);
+        }
 
         return response()->json(
             $departamentos->map(fn($d) => $d->toArray())
