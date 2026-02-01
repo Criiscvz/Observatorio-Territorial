@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/services/auth.service';
 
 @Component({
@@ -23,6 +24,7 @@ import { AuthService } from '@core/services/auth.service';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    TranslateModule,
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss',
@@ -31,6 +33,7 @@ export class RegisterComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private translate = inject(TranslateService);
 
   form: FormGroup = this.fb.group({
     name: ['', [Validators.required]],
@@ -47,7 +50,7 @@ export class RegisterComponent {
     if (this.form.invalid) return;
 
     if (this.form.value.password !== this.form.value.password_confirmation) {
-      this.error.set('Las contraseñas no coinciden');
+      this.error.set(this.translate.instant('common.validation.passwordMismatch'));
       return;
     }
 
@@ -61,7 +64,7 @@ export class RegisterComponent {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.message || 'Error al crear la cuenta');
+        this.error.set(err.error?.message || this.translate.instant('auth.register.errors.registrationFailed'));
       },
     });
   }

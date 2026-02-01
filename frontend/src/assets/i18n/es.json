@@ -1,0 +1,591 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "create": "Crear",
+      "back": "Volver",
+      "next": "Siguiente",
+      "previous": "Anterior",
+      "confirm": "Confirmar",
+      "close": "Cerrar",
+      "search": "Buscar",
+      "filter": "Filtrar",
+      "export": "Exportar",
+      "import": "Importar",
+      "refresh": "Actualizar",
+      "add": "Agregar",
+      "remove": "Quitar",
+      "view": "Ver",
+      "download": "Descargar",
+      "upload": "Subir",
+      "retry": "Reintentar",
+      "clear": "Limpiar"
+    },
+    "labels": {
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "description": "Descripción",
+      "date": "Fecha",
+      "status": "Estado",
+      "type": "Tipo",
+      "actions": "Acciones",
+      "total": "Total",
+      "details": "Detalles",
+      "options": "Opciones",
+      "settings": "Configuración",
+      "profile": "Perfil",
+      "visible": "Visible",
+      "public": "Público",
+      "private": "Privado"
+    },
+    "messages": {
+      "loading": "Cargando...",
+      "saving": "Guardando...",
+      "deleting": "Eliminando...",
+      "processing": "Procesando...",
+      "success": "Operación exitosa",
+      "error": "Ha ocurrido un error",
+      "noData": "No hay datos disponibles",
+      "noResults": "No se encontraron resultados",
+      "confirmDelete": "¿Estás seguro de que deseas eliminar este elemento?",
+      "unsavedChanges": "Tienes cambios sin guardar",
+      "connectionError": "Error de conexión. Verifica que el servidor esté funcionando.",
+      "permissionDenied": "No tienes permisos para realizar esta acción.",
+      "unexpectedError": "Ocurrió un error inesperado. Intenta de nuevo."
+    },
+    "validation": {
+      "required": "Este campo es requerido",
+      "minLength": "Debe tener al menos {{min}} caracteres",
+      "maxLength": "No puede exceder {{max}} caracteres",
+      "email": "Ingresa un correo electrónico válido",
+      "pattern": "El formato no es válido",
+      "min": "El valor mínimo es {{min}}",
+      "max": "El valor máximo es {{max}}",
+      "passwordMismatch": "Las contraseñas no coinciden"
+    },
+    "time": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "daysAgo": "Hace {{count}} días",
+      "hoursAgo": "Hace {{count}} horas",
+      "minutesAgo": "Hace {{count}} minutos",
+      "justNow": "Justo ahora"
+    },
+    "units": {
+      "records": "registros",
+      "columns": "columnas",
+      "variables": "variables",
+      "datasets": "datasets",
+      "departments": "departamentos",
+      "bytes": "Bytes",
+      "kb": "KB",
+      "mb": "MB",
+      "gb": "GB"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Observatorio ULEAM",
+      "subtitle": "Ingresa a tu cuenta",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "correo@uleam.edu.ec",
+      "password": "Contraseña",
+      "submit": "Iniciar Sesión",
+      "submitting": "Ingresando...",
+      "noAccount": "¿No tienes cuenta?",
+      "registerLink": "Regístrate aquí",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "errors": {
+        "invalidCredentials": "Credenciales inválidas",
+        "loginFailed": "Error al iniciar sesión"
+      }
+    },
+    "register": {
+      "title": "Crear Cuenta",
+      "subtitle": "Regístrate en el Observatorio ULEAM",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Juan Pérez",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "correo@uleam.edu.ec",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "submit": "Crear Cuenta",
+      "submitting": "Creando cuenta...",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "loginLink": "Inicia sesión",
+      "errors": {
+        "registrationFailed": "Error al crear la cuenta"
+      }
+    },
+    "logout": "Cerrar Sesión"
+  },
+  "layout": {
+    "header": {
+      "brand": "Observatorio",
+      "brandSubtitle": "ULEAM",
+      "menu": "Menú",
+      "themeLight": "Modo claro",
+      "themeDark": "Modo oscuro",
+      "profile": "Mi Perfil",
+      "settings": "Configuración",
+      "logout": "Cerrar Sesión",
+      "administrator": "Administrador"
+    },
+    "sidebar": {
+      "main": "Principal",
+      "dashboard": "Dashboard",
+      "uploadDataset": "Subir Dataset",
+      "departments": "Departamentos",
+      "newDepartment": "Nuevo departamento",
+      "allDatasets": "Todos los Datasets",
+      "noDepartments": "Sin departamentos",
+      "createOne": "Crear uno"
+    },
+    "footer": {
+      "copyright": "© {{year}} Observatorio ULEAM. Todos los derechos reservados.",
+      "university": "Universidad Laica Eloy Alfaro de Manabí"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Bienvenido al Observatorio",
+    "welcomeMessage": "Gestiona tus departamentos y datasets de manera eficiente",
+    "stats": {
+      "totalDepartments": "Departamentos",
+      "totalDatasets": "Datasets",
+      "totalRecords": "Registros Totales",
+      "publicDepartments": "Departamentos Públicos"
+    },
+    "quickActions": {
+      "title": "Acciones Rápidas",
+      "newDepartment": "Nuevo Departamento",
+      "newDepartmentDesc": "Crea un nuevo departamento para organizar tus datos",
+      "uploadDataset": "Subir Dataset",
+      "uploadDatasetDesc": "Importa un archivo Excel o CSV para analizar",
+      "viewAll": "Ver Todos",
+      "viewAllDesc": "Explora todos los datasets disponibles"
+    },
+    "recentDepartments": {
+      "title": "Departamentos Recientes",
+      "viewAll": "Ver todos",
+      "empty": "No hay departamentos aún"
+    },
+    "recentDatasets": {
+      "title": "Datasets Recientes",
+      "viewAll": "Ver todos",
+      "empty": "No hay datasets aún"
+    }
+  },
+  "datasets": {
+    "title": "Datasets",
+    "list": {
+      "title": "Datasets",
+      "newDataset": "Nuevo Dataset",
+      "empty": "No hay datasets",
+      "emptyDescription": "Importa tu primer archivo Excel",
+      "importDataset": "Importar Dataset",
+      "columns": {
+        "name": "Nombre",
+        "department": "Departamento",
+        "status": "Estado",
+        "records": "Registros",
+        "date": "Fecha"
+      },
+      "actions": {
+        "viewDashboard": "Ver Dashboard",
+        "continueImport": "Continuar Importación",
+        "delete": "Eliminar"
+      },
+      "confirmDelete": "¿Eliminar el dataset \"{{name}}\"?"
+    },
+    "upload": {
+      "title": "Importar Dataset",
+      "steps": {
+        "upload": "Subir Archivo",
+        "configure": "Configurar Columnas",
+        "complete": "Completado"
+      },
+      "form": {
+        "department": "Departamento",
+        "selectDepartment": "Selecciona un departamento",
+        "name": "Nombre del Dataset",
+        "namePlaceholder": "Ej: Encuesta 2025",
+        "description": "Descripción"
+      },
+      "dropzone": {
+        "title": "Arrastra tu archivo aquí",
+        "subtitle": "o haz clic para seleccionar",
+        "formats": "Formatos: .xlsx, .xls, .csv (máx 10MB)",
+        "removeFile": "Quitar archivo"
+      },
+      "analyzing": "Subiendo y analizando archivo...",
+      "uploadAndAnalyze": "Subir y Analizar",
+      "configure": {
+        "title": "Configurar Columnas del Dataset",
+        "rowsDetected": "filas detectadas",
+        "columnsToImport": "columnas a importar de",
+        "totalColumns": "totales",
+        "columnName": "Nombre en Base de Datos",
+        "columnNameHint": "Identificador interno (sin espacios)",
+        "dataType": "Tipo de Dato",
+        "types": {
+          "numeric": "Numérico",
+          "categorical": "Categórico",
+          "date": "Fecha",
+          "text": "Texto"
+        },
+        "sampleValues": "Muestra de valores:",
+        "visibleInDashboard": "Visible en Dashboard",
+        "includeColumn": "Incluir columna",
+        "excludeColumn": "Excluir columna"
+      },
+      "importing": "Importando datos... esto puede tardar unos segundos",
+      "confirmImport": "Confirmar e Importar",
+      "success": {
+        "title": "¡Importación Exitosa!",
+        "message": "Se importaron {{records}} registros con {{columns}} columnas",
+        "viewDatasets": "Ver Datasets",
+        "viewData": "Ver Datos y Gráficos"
+      },
+      "errors": {
+        "analyzeFailed": "Error al analizar el archivo",
+        "uploadFailed": "Error al subir el archivo",
+        "noColumns": "Debes incluir al menos una columna",
+        "importFailed": "Error al importar"
+      }
+    },
+    "view": {
+      "title": "Dataset",
+      "tabs": {
+        "data": "Datos",
+        "variables": "Variables",
+        "analysis": "Análisis"
+      },
+      "data": {
+        "noData": "No hay datos disponibles"
+      },
+      "variables": {
+        "title": "Configuración de Variables",
+        "subtitle": "Cambia el tipo de dato o visibilidad de cada columna",
+        "column": "Columna",
+        "type": "Tipo",
+        "visible": "Visible"
+      },
+      "analysis": {
+        "title": "Crear Gráfico",
+        "subtitle": "Selecciona el tipo de gráfico y las variables a analizar",
+        "chartType": "Tipo de Gráfico:",
+        "variableX": "Variable Principal (X)",
+        "variableY": "Variable Secundaria (Y)",
+        "limit": "Límite de resultados",
+        "limitOptions": {
+          "top10": "Top 10",
+          "top20": "Top 20",
+          "top50": "Top 50",
+          "top100": "Top 100",
+          "noLimit": "Sin límite"
+        },
+        "addChart": "Agregar Gráfico",
+        "generateAll": "Generar Todos (Univariable)",
+        "clearAll": "Limpiar Todo",
+        "chartsCount": "{{count}} gráfico(s) activo(s)",
+        "noCharts": "Sin gráficos",
+        "noChartsMessage": "Selecciona un tipo de gráfico y una variable para comenzar",
+        "noCompatibleVariables": "No hay variables compatibles",
+        "variablesAvailable": "{{count}} variables disponibles",
+        "variablesCompatible": "{{count}} variables compatibles"
+      }
+    },
+    "status": {
+      "completed": "COMPLETADO",
+      "processing": "PROCESANDO",
+      "pending": "PENDIENTE",
+      "error": "ERROR"
+    }
+  },
+  "departamentos": {
+    "title": "Departamentos",
+    "list": {
+      "title": "Departamentos",
+      "newDepartment": "Nuevo Departamento",
+      "empty": "No hay departamentos",
+      "emptyDescription": "Crea tu primer departamento"
+    },
+    "form": {
+      "titleEdit": "Editar Departamento",
+      "titleNew": "Nuevo Departamento",
+      "name": "Nombre del Departamento",
+      "namePlaceholder": "Ej: Bienestar Estudiantil",
+      "code": "Código Interno",
+      "codePlaceholder": "Ej: BIENESTAR-2024",
+      "codeHint": "Identificador único del departamento",
+      "description": "Descripción (opcional)",
+      "descriptionPlaceholder": "Describe el propósito del departamento...",
+      "public": "Departamento Público",
+      "publicDescription": "Los departamentos públicos pueden ser vistos por usuarios externos sin autenticación.",
+      "icon": "Icono",
+      "selectIcon": "Selecciona un icono",
+      "saveChanges": "Guardar Cambios",
+      "createDepartment": "Crear Departamento",
+      "saving": "Guardando...",
+      "errors": {
+        "formInvalid": "Por favor, corrige los errores en el formulario",
+        "validationError": "Error de validación. Verifica los datos ingresados.",
+        "permissionDenied": "No tienes permisos para realizar esta acción.",
+        "connectionError": "Error de conexión. Verifica que el servidor esté funcionando.",
+        "unexpectedError": "Ocurrió un error inesperado. Intenta de nuevo."
+      },
+      "success": {
+        "created": "Departamento creado exitosamente",
+        "updated": "Departamento actualizado exitosamente"
+      }
+    },
+    "detail": {
+      "title": "Departamento",
+      "datasets": "Datasets",
+      "noDatasets": "No hay datasets en este departamento",
+      "addDataset": "Agregar Dataset"
+    },
+    "icons": {
+      "social": "Social / Grupos",
+      "work": "Laboral / Trabajo",
+      "electoral": "Electoral / Voto",
+      "tourism": "Turístico / Viajes",
+      "education": "Educación",
+      "health": "Salud",
+      "environment": "Medio Ambiente",
+      "sports": "Deportes",
+      "culture": "Cultura / Arte",
+      "technology": "Tecnología",
+      "finance": "Finanzas",
+      "agriculture": "Agricultura",
+      "security": "Seguridad",
+      "infrastructure": "Infraestructura",
+      "research": "Investigación",
+      "generic": "Genérico"
+    }
+  },
+  "public": {
+    "header": {
+      "login": "Iniciar Sesión",
+      "register": "Registrarse"
+    },
+    "home": {
+      "hero": {
+        "title": "Observatorio de Datos",
+        "titleHighlight": "Universitarios ULEAM",
+        "subtitle": "Transforma tus archivos Excel en dashboards interactivos de manera automática. Analiza, visualiza y comparte datos de forma inteligente.",
+        "exploreData": "Explorar Datos Públicos",
+        "createAccount": "Crear Cuenta Gratis"
+      },
+      "floatingCards": {
+        "dynamicCharts": "Gráficos Dinámicos",
+        "visualAnalysis": "Análisis Visual",
+        "correlations": "Correlaciones"
+      },
+      "stats": {
+        "publicDepartments": "Departamentos Públicos",
+        "availableDatasets": "Datasets Disponibles",
+        "analyzedRecords": "Registros Analizados"
+      },
+      "features": {
+        "title": "Potentes Herramientas de Análisis",
+        "subtitle": "Todo lo que necesitas para convertir datos en conocimiento",
+        "smartImport": {
+          "title": "Importación Inteligente",
+          "description": "Sube archivos Excel o CSV y el sistema detectará automáticamente los tipos de datos"
+        },
+        "autoCharts": {
+          "title": "Gráficos Automáticos",
+          "description": "Genera visualizaciones instantáneas: barras, pastel, líneas, dispersión y más"
+        },
+        "bivariable": {
+          "title": "Análisis Bivariable",
+          "description": "Descubre correlaciones y relaciones entre variables con un clic"
+        },
+        "sharePublic": {
+          "title": "Comparte Públicamente",
+          "description": "Haz públicos tus análisis para que cualquiera pueda verlos"
+        }
+      },
+      "departments": {
+        "title": "Departamentos Públicos",
+        "subtitle": "Explora los datos compartidos por la comunidad universitaria",
+        "loading": "Cargando departamentos...",
+        "noDescription": "Sin descripción",
+        "viewAll": "Ver todos los departamentos",
+        "empty": "No hay departamentos públicos disponibles"
+      },
+      "cta": {
+        "title": "¿Listo para analizar tus datos?",
+        "subtitle": "Únete a la comunidad de investigadores y analistas de ULEAM",
+        "button": "Comenzar Ahora"
+      },
+      "footer": {
+        "websiteLink": "Sitio Web ULEAM",
+        "departmentsLink": "Departamentos"
+      }
+    },
+    "departments": {
+      "title": "Departamentos Públicos",
+      "subtitle": "Explora los datos compartidos por los departamentos de la universidad",
+      "search": "Buscar departamentos...",
+      "resultsCount": "{{count}} departamento(s) encontrado(s)",
+      "loading": "Cargando departamentos...",
+      "empty": "No hay departamentos públicos disponibles",
+      "viewDetails": "Ver detalles"
+    },
+    "departmentDetail": {
+      "backToDepartments": "Departamentos",
+      "noDescription": "Sin descripción",
+      "stats": {
+        "datasets": "datasets",
+        "records": "registros"
+      },
+      "datasets": {
+        "title": "Datasets Disponibles",
+        "empty": "Sin datasets",
+        "emptyMessage": "Este departamento aún no tiene datasets públicos disponibles"
+      },
+      "notFound": {
+        "title": "Departamento no encontrado",
+        "message": "El departamento que buscas no existe o no está disponible públicamente",
+        "backButton": "Volver a departamentos"
+      }
+    },
+    "datasetView": {
+      "loading": "Cargando dataset...",
+      "backToDepartment": "Volver al departamento",
+      "stats": {
+        "records": "registros",
+        "variables": "variables"
+      },
+      "tabs": {
+        "data": "Datos",
+        "analysis": "Análisis"
+      },
+      "noData": "No hay datos disponibles",
+      "createChart": {
+        "title": "Crear Visualización",
+        "subtitle": "Selecciona el tipo de gráfico y las variables"
+      },
+      "quickActions": {
+        "generateAll": "Generar Todo Automático",
+        "clear": "Limpiar"
+      },
+      "chartsCount": "{{count}} gráfico(s)",
+      "noCharts": {
+        "title": "Sin gráficos",
+        "message": "Selecciona un tipo de gráfico y variables para comenzar a analizar"
+      },
+      "notFound": {
+        "title": "Dataset no encontrado",
+        "message": "El dataset que buscas no existe o no está disponible públicamente",
+        "backButton": "Volver a departamentos"
+      }
+    }
+  },
+  "charts": {
+    "types": {
+      "bar": {
+        "name": "Barras",
+        "description": "Comparar categorías"
+      },
+      "pie": {
+        "name": "Pastel",
+        "description": "Proporciones"
+      },
+      "donut": {
+        "name": "Anillo",
+        "description": "Con total"
+      },
+      "histogram": {
+        "name": "Histograma",
+        "description": "Distribución"
+      },
+      "line": {
+        "name": "Líneas",
+        "description": "Tendencias"
+      },
+      "area": {
+        "name": "Área",
+        "description": "Tendencias con área"
+      },
+      "funnel": {
+        "name": "Embudo",
+        "description": "Procesos"
+      },
+      "treemap": {
+        "name": "Treemap",
+        "description": "Jerarquía"
+      },
+      "gauge": {
+        "name": "Indicador",
+        "description": "Medidor"
+      },
+      "radar": {
+        "name": "Radar",
+        "description": "Múltiples ejes"
+      },
+      "scatter": {
+        "name": "Dispersión",
+        "description": "Correlación 2 numéricas"
+      },
+      "groupedBar": {
+        "name": "Barras Agrupadas",
+        "description": "Promedio por categoría"
+      },
+      "heatmap": {
+        "name": "Mapa de Calor",
+        "description": "Matriz de frecuencias"
+      },
+      "boxCompare": {
+        "name": "Comparar Promedios",
+        "description": "Promedio por categoría"
+      },
+      "lineTime": {
+        "name": "Serie Temporal",
+        "description": "Evolución en el tiempo"
+      },
+      "stackedBar": {
+        "name": "Barras Apiladas",
+        "description": "Categorías por tiempo"
+      }
+    },
+    "stats": {
+      "mean": "Promedio",
+      "median": "Mediana",
+      "total": "Total",
+      "min": "Mínimo",
+      "max": "Máximo",
+      "sum": "Suma",
+      "count": "Conteo",
+      "correlation": "Correlación"
+    },
+    "errors": {
+      "loadFailed": "No se pudieron cargar los datos"
+    }
+  },
+  "dataTypes": {
+    "numeric": "Numérico",
+    "categorical": "Categórico",
+    "date": "Fecha",
+    "text": "Texto",
+    "short": {
+      "numeric": "NUM",
+      "categorical": "CAT",
+      "date": "FECHA",
+      "text": "TXT"
+    }
+  },
+  "language": {
+    "select": "Seleccionar idioma",
+    "spanish": "Español",
+    "english": "English"
+  }
+}
