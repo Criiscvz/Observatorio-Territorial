@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Presentation\Http\Requests;
+namespace App\Presentation\Http\Requests\Dataset;
 
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -19,7 +19,7 @@ class UploadDatasetRequest extends FormRequest
             'departamento_id' => ['required', 'uuid', 'exists:departamentos,id'],
             'nombre' => ['required', 'string', 'max:255'],
             'descripcion' => ['nullable', 'string', 'max:1000'],
-            'archivo' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:51200'], // 50MB max
+            'archivo' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:51200'],
         ];
     }
 
@@ -29,9 +29,9 @@ class UploadDatasetRequest extends FormRequest
             'departamento_id.required' => 'El departamento es obligatorio',
             'departamento_id.exists' => 'El departamento seleccionado no existe',
             'nombre.required' => 'El nombre del dataset es obligatorio',
-            'archivo.required' => 'El archivo es obligatorio',
+            'archivo.required' => 'Debe subir un archivo',
             'archivo.mimes' => 'El archivo debe ser Excel (.xlsx, .xls) o CSV',
-            'archivo.max' => 'El archivo no puede exceder 50MB',
+            'archivo.max' => 'El archivo no debe superar los 50MB',
         ];
     }
 }
