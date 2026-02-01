@@ -14,10 +14,10 @@ use App\Application\Dataset\UseCases\GetDatasetUseCase;
 use App\Application\Dataset\UseCases\UpdateVariableUseCase;
 use App\Application\Dataset\UseCases\UploadDatasetUseCase;
 use App\Http\Controllers\Controller;
-use App\Presentation\Http\Requests\ConfirmImportRequest;
-use App\Presentation\Http\Requests\UpdateVariableRequest;
-use App\Presentation\Http\Requests\UploadDatasetRequest;
-use App\Presentation\Http\Resources\DatasetResource;
+use App\Presentation\Http\Requests\Dataset\ConfirmImportRequest;
+use App\Presentation\Http\Requests\Dataset\UpdateVariableRequest;
+use App\Presentation\Http\Requests\Dataset\UploadDatasetRequest;
+use App\Presentation\Http\Resources\Dataset\DatasetResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -56,7 +56,7 @@ class DatasetController extends Controller
             $request->user()->id,
             $departamentoId
         );
-        
+
         return response()->json(DatasetResource::collection($result));
     }
 
@@ -88,9 +88,9 @@ class DatasetController extends Controller
             $request->validated(),
             $request->user()->id
         );
-        
+
         $result = $this->uploadDatasetUseCase->execute($dto);
-        
+
         return response()->json($result->toArray(), 201);
     }
 
@@ -107,7 +107,7 @@ class DatasetController extends Controller
     public function show(Request $request, string $id): JsonResponse
     {
         $result = $this->getDatasetUseCase->execute($id, $request->user()->id);
-        
+
         return response()->json($result->toArray());
     }
 
@@ -124,7 +124,7 @@ class DatasetController extends Controller
     public function analyze(Request $request, string $id): JsonResponse
     {
         $result = $this->analyzeDatasetUseCase->execute($id, $request->user()->id);
-        
+
         return response()->json($result->toArray());
     }
 
@@ -152,9 +152,9 @@ class DatasetController extends Controller
             $id,
             $request->user()->id
         );
-        
+
         $result = $this->confirmImportUseCase->execute($dto);
-        
+
         return response()->json($result->toArray());
     }
 
@@ -177,7 +177,7 @@ class DatasetController extends Controller
             $request->user()->id,
             $perPage
         );
-        
+
         return response()->json($result);
     }
 
@@ -205,7 +205,7 @@ class DatasetController extends Controller
             $request->user()->id,
             $request->validated()
         );
-        
+
         return response()->json($result);
     }
 }

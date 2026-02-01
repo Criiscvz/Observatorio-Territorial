@@ -11,10 +11,10 @@ use App\Application\Auth\UseCases\LoginUseCase;
 use App\Application\Auth\UseCases\LogoutUseCase;
 use App\Application\Auth\UseCases\RegisterUseCase;
 use App\Http\Controllers\Controller;
-use App\Presentation\Http\Requests\LoginRequest;
-use App\Presentation\Http\Requests\RegisterRequest;
-use App\Presentation\Http\Resources\AuthResource;
-use App\Presentation\Http\Resources\UserResource;
+use App\Presentation\Http\Requests\Auth\LoginRequest;
+use App\Presentation\Http\Requests\Auth\RegisterRequest;
+use App\Presentation\Http\Resources\Auth\AuthResource;
+use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -54,7 +54,7 @@ class AuthController extends Controller
     {
         $dto = LoginDTO::fromArray($request->validated());
         $result = $this->loginUseCase->execute($dto);
-        
+
         return response()->json(new AuthResource($result));
     }
 
@@ -81,7 +81,7 @@ class AuthController extends Controller
     {
         $dto = RegisterDTO::fromArray($request->validated());
         $result = $this->registerUseCase->execute($dto);
-        
+
         return response()->json(new AuthResource($result), 201);
     }
 
@@ -97,7 +97,7 @@ class AuthController extends Controller
     public function logout(Request $request): JsonResponse
     {
         $this->logoutUseCase->execute($request->user());
-        
+
         return response()->json(['message' => 'Sesión cerrada exitosamente']);
     }
 
@@ -113,7 +113,7 @@ class AuthController extends Controller
     public function user(Request $request): JsonResponse
     {
         $user = $this->getCurrentUserUseCase->execute($request->user());
-        
+
         return response()->json(new UserResource($user));
     }
 }

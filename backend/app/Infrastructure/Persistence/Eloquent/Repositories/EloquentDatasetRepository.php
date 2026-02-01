@@ -19,7 +19,17 @@ class EloquentDatasetRepository implements DatasetRepositoryInterface
     public function findById(string $id): ?Dataset
     {
         $model = $this->model->with('variablesMetadatos')->find($id);
-        
+
+        return $model ? $this->toDomain($model) : null;
+    }
+
+    public function findPublicById(string $id): ?Dataset
+    {
+        $model = $this->model
+            ->with('variablesMetadatos')
+            ->whereHas('departamento', fn($q) => $q->where('publico', true))
+            ->find($id);
+
         return $model ? $this->toDomain($model) : null;
     }
 
@@ -79,7 +89,7 @@ class EloquentDatasetRepository implements DatasetRepositoryInterface
     public function update(Dataset $dataset): Dataset
     {
         $model = $this->model->findOrFail($dataset->id);
-        
+
         $model->update([
             'nombre' => $dataset->nombre,
             'descripcion' => $dataset->descripcion,

@@ -89,5 +89,11 @@
   "emmet.includeLanguages": {
     "blade": "html",
     "typescript": "html"
+  },
+  "chat.tools.terminal.autoApprove": {
+    "/^cd \"c:\\\\Users\\\\Bryan\\\\OneDrive - ULEAM\\\\Tareas\\\\Vinculacion\\\\2da vinculacion\\\\Observatorio\\\\backend\"; php artisan route:list --path=api 2>&1 \\| Select-Object -First 50$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
   }
 }

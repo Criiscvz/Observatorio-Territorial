@@ -12,6 +12,7 @@ use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
 use App\Domain\Dataset\Repositories\RegistroDatoRepositoryInterface;
 use App\Domain\Dataset\Repositories\VariableMetadatoRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
+use App\Domain\Statistics\Services\StatisticsServiceInterface;
 
 // Infrastructure Implementations
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentDepartamentoRepository;
@@ -19,6 +20,7 @@ use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentDatasetReposito
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentRegistroDatoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentVariableMetadatoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentUserRepository;
+use App\Infrastructure\Services\StatisticsService;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -28,11 +30,14 @@ class RepositoryServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     public array $bindings = [
+        // Repositories
         DepartamentoRepositoryInterface::class => EloquentDepartamentoRepository::class,
         DatasetRepositoryInterface::class => EloquentDatasetRepository::class,
         RegistroDatoRepositoryInterface::class => EloquentRegistroDatoRepository::class,
         VariableMetadatoRepositoryInterface::class => EloquentVariableMetadatoRepository::class,
         UserRepositoryInterface::class => EloquentUserRepository::class,
+        // Services
+        StatisticsServiceInterface::class => StatisticsService::class,
     ];
 
     /**

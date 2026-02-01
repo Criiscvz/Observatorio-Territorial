@@ -18,14 +18,24 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
     public function findById(string $id): ?Departamento
     {
         $model = $this->model->with('datasets')->find($id);
-        
+
+        return $model ? $this->toDomain($model) : null;
+    }
+
+    public function findPublicById(string $id): ?Departamento
+    {
+        $model = $this->model
+            ->where('publico', true)
+            ->with('datasets')
+            ->find($id);
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByCodigoInterno(string $codigo): ?Departamento
     {
         $model = $this->model->where('codigo_interno', $codigo)->first();
-        
+
         return $model ? $this->toDomain($model) : null;
     }
 
@@ -64,7 +74,7 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
     public function update(Departamento $departamento): Departamento
     {
         $model = $this->model->findOrFail($departamento->id);
-        
+
         $model->update([
             'nombre' => $departamento->nombre,
             'descripcion' => $departamento->descripcion,

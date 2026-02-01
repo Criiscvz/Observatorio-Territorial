@@ -12,9 +12,9 @@ use App\Application\Departamento\UseCases\GetDepartamentosUseCase;
 use App\Application\Departamento\UseCases\GetDepartamentoUseCase;
 use App\Application\Departamento\UseCases\UpdateDepartamentoUseCase;
 use App\Http\Controllers\Controller;
-use App\Presentation\Http\Requests\CreateDepartamentoRequest;
-use App\Presentation\Http\Requests\UpdateDepartamentoRequest;
-use App\Presentation\Http\Resources\DepartamentoResource;
+use App\Presentation\Http\Requests\Departamento\CreateDepartamentoRequest;
+use App\Presentation\Http\Requests\Departamento\UpdateDepartamentoRequest;
+use App\Presentation\Http\Resources\Departamento\DepartamentoResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -46,7 +46,7 @@ class DepartamentoController extends Controller
     public function index(Request $request): JsonResponse
     {
         $departamentos = $this->getDepartamentosUseCase->execute($request->user()->id);
-        
+
         return response()->json(
             $departamentos->map(fn($d) => $d->toArray())
         );
@@ -63,7 +63,7 @@ class DepartamentoController extends Controller
     public function publicos(): JsonResponse
     {
         $departamentos = $this->getDepartamentosUseCase->getPublicos();
-        
+
         return response()->json(
             $departamentos->map(fn($d) => $d->toArray())
         );
@@ -94,9 +94,9 @@ class DepartamentoController extends Controller
             $request->validated(),
             $request->user()->id
         );
-        
+
         $result = $this->createDepartamentoUseCase->execute($dto);
-        
+
         return response()->json($result->toArray(), 201);
     }
 
@@ -114,7 +114,7 @@ class DepartamentoController extends Controller
     public function show(Request $request, string $id): JsonResponse
     {
         $result = $this->getDepartamentoUseCase->execute($id, $request->user()->id);
-        
+
         return response()->json($result->toArray());
     }
 
@@ -142,9 +142,9 @@ class DepartamentoController extends Controller
             $id,
             $request->user()->id
         );
-        
+
         $result = $this->updateDepartamentoUseCase->execute($dto);
-        
+
         return response()->json($result->toArray());
     }
 
@@ -161,7 +161,7 @@ class DepartamentoController extends Controller
     public function destroy(Request $request, string $id): JsonResponse
     {
         $this->deleteDepartamentoUseCase->execute($id, $request->user()->id);
-        
+
         return response()->json(['message' => 'Departamento eliminado exitosamente']);
     }
 }
