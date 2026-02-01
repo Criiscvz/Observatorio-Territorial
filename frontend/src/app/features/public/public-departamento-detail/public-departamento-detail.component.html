@@ -2,14 +2,14 @@
   @if (loading()) {
     <div class="loading-container">
       <mat-spinner diameter="48"></mat-spinner>
-      <p>Cargando departamento...</p>
+      <p>{{ 'common.messages.loading' | translate }}</p>
     </div>
   } @else if (departamento()) {
     <!-- Breadcrumb -->
     <nav class="breadcrumb">
       <a routerLink="/publico/departamentos">
         <mat-icon>arrow_back</mat-icon>
-        Departamentos
+        {{ 'public.departmentDetail.backToDepartments' | translate }}
       </a>
     </nav>
 
@@ -20,15 +20,15 @@
       </div>
       <div class="header-info">
         <h1>{{ departamento()!.nombre }}</h1>
-        <p class="description">{{ departamento()!.descripcion || 'Sin descripción' }}</p>
+        <p class="description">{{ departamento()!.descripcion || ('public.departmentDetail.noDescription' | translate) }}</p>
         <div class="header-stats">
           <span class="stat">
             <mat-icon>table_chart</mat-icon>
-            {{ departamento()!.datasets?.length || 0 }} datasets
+            {{ departamento()!.datasets?.length || 0 }} {{ 'public.departmentDetail.stats.datasets' | translate }}
           </span>
           <span class="stat">
             <mat-icon>storage</mat-icon>
-            {{ totalRegistros | number }} registros
+            {{ totalRegistros | number }} {{ 'public.departmentDetail.stats.records' | translate }}
           </span>
         </div>
       </div>
@@ -38,7 +38,7 @@
     <section class="datasets-section">
       <h2 class="section-title">
         <mat-icon>folder_open</mat-icon>
-        Datasets Disponibles
+        {{ 'public.departmentDetail.datasets.title' | translate }}
       </h2>
 
       @if (datasets.length > 0) {
@@ -53,7 +53,7 @@
                 <div class="dataset-meta">
                   <span class="meta-item">
                     <mat-icon>grid_on</mat-icon>
-                    {{ ds.total_registros | number }} registros
+                    {{ ds.total_registros | number }} {{ 'public.departmentDetail.stats.records' | translate }}
                   </span>
                   @if (ds.created_at) {
                     <span class="meta-item">
@@ -82,8 +82,8 @@
       } @else {
         <div class="empty-state">
           <mat-icon>folder_off</mat-icon>
-          <h3>Sin datasets</h3>
-          <p>Este departamento aún no tiene datasets públicos disponibles</p>
+          <h3>{{ 'public.departmentDetail.datasets.empty' | translate }}</h3>
+          <p>{{ 'public.departmentDetail.datasets.emptyMessage' | translate }}</p>
         </div>
       }
     </section>
@@ -91,11 +91,11 @@
     <!-- Error state -->
     <div class="error-state">
       <mat-icon>error_outline</mat-icon>
-      <h2>Departamento no encontrado</h2>
-      <p>El departamento que buscas no existe o no está disponible públicamente</p>
+      <h2>{{ 'public.departmentDetail.notFound.title' | translate }}</h2>
+      <p>{{ 'public.departmentDetail.notFound.message' | translate }}</p>
       <a mat-stroked-button routerLink="/publico/departamentos">
         <mat-icon>arrow_back</mat-icon>
-        Volver a departamentos
+        {{ 'public.departmentDetail.notFound.backButton' | translate }}
       </a>
     </div>
   }
