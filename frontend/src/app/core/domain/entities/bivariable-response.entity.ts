@@ -2,11 +2,11 @@ import { ChartData } from './chart-data.entity';
 import { ChartStats } from './chart-stats.entity';
 import { ChartType } from './chart-type.type';
 
-export interface ChartEntity {
-  id: string;
-  variable_id: string;
-  nombre_variable: string;
-  tipo_variable: string;
+export interface BivariableResponse {
+  variable_x_id: string;
+  variable_y_id: string;
+  nombre_variable_x: string;
+  nombre_variable_y: string;
   chart_type: ChartType;
   data: ChartData;
   stats?: ChartStats;

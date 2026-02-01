@@ -1,6 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import {
-  BivariableResponse,
   ChartEntity,
   ChartType,
   DatasetDataResponse,

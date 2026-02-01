@@ -1,4 +1,9 @@
-import { BivariableResponse, ChartEntity, ChartType, VariableMetadatoEntity } from '@core/domain/entities';
+import {
+  BivariableResponse,
+  ChartEntity,
+  ChartType,
+  VariableMetadatoEntity,
+} from '@core/domain/entities';
 
 export interface ActiveChart {
   id: string;

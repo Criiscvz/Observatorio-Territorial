@@ -12,18 +12,3 @@ export interface DepartamentoEntity {
   datasets?: DatasetEntity[];
   user_role?: string;
 }
-
-export interface CreateDepartamentoData {
-  nombre: string;
-  codigo_interno: string;
-  descripcion?: string;
-  icono?: string;
-  publico?: boolean;
-}
-
-export interface UpdateDepartamentoData {
-  nombre?: string;
-  descripcion?: string;
-  icono?: string;
-  publico?: boolean;
-}
