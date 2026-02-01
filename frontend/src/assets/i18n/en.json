@@ -333,6 +333,13 @@
       "saveChanges": "Save Changes",
       "createDepartment": "Create Department",
       "saving": "Saving...",
+      "validation": {
+        "nameRequired": "Name is required",
+        "nameMinLength": "Name must have at least 3 characters",
+        "nameMaxLength": "Name cannot exceed 255 characters",
+        "codeRequired": "Internal code is required",
+        "codeMaxLength": "Code cannot exceed 50 characters"
+      },
       "errors": {
         "formInvalid": "Please correct the errors in the form",
         "validationError": "Validation error. Please check the entered data.",
@@ -347,9 +354,15 @@
     },
     "detail": {
       "title": "Department",
-      "datasets": "Datasets",
-      "noDatasets": "No datasets in this department",
-      "addDataset": "Add Dataset"
+      "noDescription": "No description",
+      "code": "Code",
+      "publicBadge": "Public",
+      "datasets": "Department Datasets",
+      "records": "records",
+      "noDatasets": "No datasets",
+      "noDatasetsMessage": "Import an Excel file to start the analysis",
+      "importDataset": "Import Dataset",
+      "viewAnalysis": "View Analysis"
     },
     "icons": {
       "social": "Social / Groups",
