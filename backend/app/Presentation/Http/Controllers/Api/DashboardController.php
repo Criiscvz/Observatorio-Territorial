@@ -11,7 +11,7 @@ use App\Application\Dashboard\UseCases\GetUnivariableStatsUseCase;
 use App\Http\Controllers\Controller;
 use App\Presentation\Http\Requests\BivariableRequest;
 use App\Presentation\Http\Requests\StatsRequest;
-use App\Presentation\Http\Resources\ChartDataResource;
+use App\Presentation\Http\Resources\Dataset\ChartDataResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -51,7 +51,7 @@ class DashboardController extends Controller
     {
         $dto = StatsRequestDTO::fromArray($request->validated());
         $result = $this->getUnivariableStatsUseCase->execute($dto, $request->user()->id);
-        
+
         return response()->json(new ChartDataResource($result));
     }
 
@@ -79,7 +79,7 @@ class DashboardController extends Controller
     {
         $dto = BivariableRequestDTO::fromArray($request->validated());
         $result = $this->getBivariableStatsUseCase->execute($dto, $request->user()->id);
-        
+
         return response()->json(new ChartDataResource($result));
     }
 }
