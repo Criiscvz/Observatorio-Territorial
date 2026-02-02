@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -14,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
 
     /**
      * Boot method para proteger la asignación del rol ADMIN
@@ -63,6 +64,7 @@ class User extends Authenticatable
         'email',
         'password',
         'rol',
+        'is_active',
     ];
 
     /**
@@ -85,6 +87,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -157,5 +160,31 @@ class User extends Authenticatable
     public function hasRole(string $role): bool
     {
         return $this->rol === $role;
+    }
+
+    /**
+     * Verificar si el usuario está activo
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active;
+    }
+
+    /**
+     * Activar usuario
+     */
+    public function activate(): void
+    {
+        $this->is_active = true;
+        $this->save();
+    }
+
+    /**
+     * Desactivar/Bloquear usuario
+     */
+    public function deactivate(): void
+    {
+        $this->is_active = false;
+        $this->save();
     }
 }
