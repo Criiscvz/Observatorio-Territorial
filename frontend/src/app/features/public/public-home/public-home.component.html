@@ -250,7 +250,7 @@
             <p>{{ depto.descripcion || ('public.home.departments.noDescription' | translate) }}</p>
             <span class="dataset-count">
               <mat-icon>table_chart</mat-icon>
-              {{ depto.datasets_count || 0 }} {{ 'common.units.datasets' | translate }}
+              {{ depto.datasets?.length || 0 }} {{ 'common.units.datasets' | translate }}
             </span>
           </div>
         </a>

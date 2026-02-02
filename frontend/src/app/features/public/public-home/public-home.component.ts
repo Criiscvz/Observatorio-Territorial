@@ -8,12 +8,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-public-home',
@@ -59,7 +59,7 @@ export class PublicHomeComponent implements OnInit {
   ];
 
   get totalDatasets(): number {
-    return this.departamentos().reduce((sum, d) => sum + (d.datasets_count || 0), 0);
+    return this.departamentos().reduce((sum, d) => sum + (d.datasets?.length || 0), 0);
   }
 
   get totalRegistros(): number {
