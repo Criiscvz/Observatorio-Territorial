@@ -14,6 +14,10 @@ use OpenApi\Attributes as OA;
     )
 )]
 #[OA\Server(
+    url: 'https://observatirio.onrender.com/api',
+    description: 'Servidor de producción'
+)]
+#[OA\Server(
     url: 'http://localhost:8000/api',
     description: 'Servidor de desarrollo'
 )]
