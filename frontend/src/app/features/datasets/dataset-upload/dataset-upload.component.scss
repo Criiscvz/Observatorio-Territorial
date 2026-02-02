@@ -2,6 +2,45 @@
   padding-top: 8px !important;
 }
 
+// Fix para textos largos en el header del expansion panel
+::ng-deep .mat-expansion-panel-header {
+  height: auto !important;
+  min-height: 48px;
+  padding: 12px 24px !important;
+}
+
+::ng-deep .mat-expansion-panel-header-title,
+::ng-deep .mat-expansion-panel-header-description {
+  flex-basis: auto;
+  margin-right: 8px;
+}
+
+// Estilos para el título de columna con texto largo
+.column-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  max-width: 60%;
+
+  .column-name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+}
+
+.column-description {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
 .drop-zone {
   border: 2px dashed var(--border-color);
   border-radius: var(--radius-lg);

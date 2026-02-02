@@ -412,7 +412,10 @@
       "noDatasets": "No datasets",
       "noDatasetsMessage": "Import an Excel file to start the analysis",
       "importDataset": "Import Dataset",
-      "viewAnalysis": "View Analysis"
+      "viewAnalysis": "View Analysis",
+      "confirmDelete": "Are you sure you want to delete the department \"{{name}}\"? This action cannot be undone.",
+      "deleted": "Department deleted successfully",
+      "deleteError": "Error deleting department"
     },
     "icons": {
       "social": "Social / Groups",

@@ -1,5 +1,7 @@
 <div class="max-w-5xl mx-auto">
-  <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">{{ 'datasets.upload.title' | translate }}</h1>
+  <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">
+    {{ 'datasets.upload.title' | translate }}
+  </h1>
 
   <mat-stepper [linear]="true" #stepper>
     <!-- Step 1: Subir archivo -->
@@ -18,7 +20,11 @@
 
             <mat-form-field class="w-full" appearance="outline">
               <mat-label>{{ 'datasets.upload.form.name' | translate }}</mat-label>
-              <input matInput formControlName="nombre" [placeholder]="'datasets.upload.form.namePlaceholder' | translate" />
+              <input
+                matInput
+                formControlName="nombre"
+                [placeholder]="'datasets.upload.form.namePlaceholder' | translate"
+              />
             </mat-form-field>
 
             <mat-form-field class="w-full" appearance="outline">
@@ -92,7 +98,10 @@
         <mat-card-header>
           <mat-card-title>{{ 'datasets.upload.configure.title' | translate }}</mat-card-title>
           <mat-card-subtitle>
-            {{ totalFilas() | number }} {{ 'datasets.upload.configure.rowsDetected' | translate }} | {{ columnasActivas().length }} {{ 'datasets.upload.configure.columnsToImport' | translate }} {{ columnas().length }} {{ 'datasets.upload.configure.totalColumns' | translate }}
+            {{ totalFilas() | number }} {{ 'datasets.upload.configure.rowsDetected' | translate }} |
+            {{ columnasActivas().length }}
+            {{ 'datasets.upload.configure.columnsToImport' | translate }} {{ columnas().length }}
+            {{ 'datasets.upload.configure.totalColumns' | translate }}
           </mat-card-subtitle>
         </mat-card-header>
 
@@ -107,18 +116,26 @@
             @for (col of columnas(); track col.nombre_columna; let i = $index) {
               <mat-expansion-panel [expanded]="false" [class.excluded]="col.excluida">
                 <mat-expansion-panel-header>
-                  <mat-panel-title class="flex items-center gap-2">
+                  <mat-panel-title class="column-title">
                     @if (!col.excluida) {
-                      <mat-icon class="text-green-500">check_circle</mat-icon>
+                      <mat-icon class="text-green-500 flex-shrink-0">check_circle</mat-icon>
                     } @else {
-                      <mat-icon class="text-red-500">cancel</mat-icon>
+                      <mat-icon class="text-red-500 flex-shrink-0">cancel</mat-icon>
                     }
-                    <span class="font-medium">{{ col.nombre_original }}</span>
+                    <span
+                      class="column-name"
+                      [matTooltip]="col.nombre_original"
+                      matTooltipPosition="above"
+                    >
+                      {{ col.nombre_original }}
+                    </span>
                   </mat-panel-title>
-                  <mat-panel-description class="flex items-center gap-2">
+                  <mat-panel-description class="column-description">
                     <span [class]="getTipoClass(col.tipo_dato)">{{ col.tipo_dato }}</span>
                     @if (col.excluida) {
-                      <span class="excluded-label">({{ 'datasets.upload.configure.excludeColumn' | translate }})</span>
+                      <span class="excluded-label"
+                        >({{ 'datasets.upload.configure.excludeColumn' | translate }})</span
+                      >
                     }
                   </mat-panel-description>
                 </mat-expansion-panel-header>
@@ -133,7 +150,9 @@
                       placeholder="nombre_columna"
                       [disabled]="col.excluida === true"
                     />
-                    <mat-hint>{{ 'datasets.upload.configure.columnNameHint' | translate }}</mat-hint>
+                    <mat-hint>{{
+                      'datasets.upload.configure.columnNameHint' | translate
+                    }}</mat-hint>
                   </mat-form-field>
 
                   <!-- Tipo de dato -->
@@ -141,16 +160,20 @@
                     <mat-label>{{ 'datasets.upload.configure.dataType' | translate }}</mat-label>
                     <mat-select [(value)]="col.tipo_dato" [disabled]="col.excluida === true">
                       <mat-option value="NUMERICO">
-                        <mat-icon>numbers</mat-icon> {{ 'datasets.upload.configure.types.numeric' | translate }}
+                        <mat-icon>numbers</mat-icon>
+                        {{ 'datasets.upload.configure.types.numeric' | translate }}
                       </mat-option>
                       <mat-option value="CATEGORICO">
-                        <mat-icon>category</mat-icon> {{ 'datasets.upload.configure.types.categorical' | translate }}
+                        <mat-icon>category</mat-icon>
+                        {{ 'datasets.upload.configure.types.categorical' | translate }}
                       </mat-option>
                       <mat-option value="FECHA">
-                        <mat-icon>calendar_today</mat-icon> {{ 'datasets.upload.configure.types.date' | translate }}
+                        <mat-icon>calendar_today</mat-icon>
+                        {{ 'datasets.upload.configure.types.date' | translate }}
                       </mat-option>
                       <mat-option value="TEXTO">
-                        <mat-icon>text_fields</mat-icon> {{ 'datasets.upload.configure.types.text' | translate }}
+                        <mat-icon>text_fields</mat-icon>
+                        {{ 'datasets.upload.configure.types.text' | translate }}
                       </mat-option>
                     </mat-select>
                     <mat-hint>Detectado: {{ col.tipo_detectado }}</mat-hint>
@@ -159,7 +182,9 @@
 
                 <!-- Muestra de valores -->
                 <div class="sample-values">
-                  <p class="sample-label">{{ 'datasets.upload.configure.sampleValues' | translate }}</p>
+                  <p class="sample-label">
+                    {{ 'datasets.upload.configure.sampleValues' | translate }}
+                  </p>
                   <div class="sample-chips">
                     @for (val of col.muestra_valores?.slice(0, 5); track val) {
                       <span class="sample-chip">{{ val }}</span>
@@ -183,7 +208,11 @@
                     (click)="toggleExcluir(col)"
                   >
                     <mat-icon>{{ col.excluida ? 'add_circle' : 'remove_circle' }}</mat-icon>
-                    {{ col.excluida ? ('datasets.upload.configure.includeColumn' | translate) : ('datasets.upload.configure.excludeColumn' | translate) }}
+                    {{
+                      col.excluida
+                        ? ('datasets.upload.configure.includeColumn' | translate)
+                        : ('datasets.upload.configure.excludeColumn' | translate)
+                    }}
                   </button>
                 </div>
               </mat-expansion-panel>
@@ -213,7 +242,8 @@
             } @else {
               <mat-icon>check</mat-icon>
             }
-            {{ 'datasets.upload.confirmImport' | translate }} ({{ columnasActivas().length }} {{ 'common.units.columns' | translate }})
+            {{ 'datasets.upload.confirmImport' | translate }} ({{ columnasActivas().length }}
+            {{ 'common.units.columns' | translate }})
           </button>
         </mat-card-actions>
       </mat-card>
@@ -226,7 +256,10 @@
           <mat-icon class="success-icon">check_circle</mat-icon>
           <h2 class="success-title">{{ 'datasets.upload.success.title' | translate }}</h2>
           <p class="success-message">
-            {{ 'datasets.upload.success.message' | translate:{ records: importedCount(), columns: columnasActivas().length } }}
+            {{
+              'datasets.upload.success.message'
+                | translate: { records: importedCount(), columns: columnasActivas().length }
+            }}
           </p>
 
           <div class="success-actions">

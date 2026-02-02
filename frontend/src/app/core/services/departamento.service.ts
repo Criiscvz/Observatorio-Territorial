@@ -1,13 +1,19 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { ApiService } from './api.service';
+import { Observable, Subject, tap } from 'rxjs';
 import { Departamento } from '../models';
+import { ApiService } from './api.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class DepartamentoService {
   private api = inject(ApiService);
+
+  // Subject para notificar cambios en departamentos
+  private departamentosChanged = new Subject<void>();
+
+  /** Observable que emite cuando hay cambios en los departamentos */
+  readonly onDepartamentosChanged$ = this.departamentosChanged.asObservable();
 
   getAll(): Observable<Departamento[]> {
     return this.api.get<Departamento[]>('/departamentos');
@@ -18,15 +24,24 @@ export class DepartamentoService {
   }
 
   create(data: Partial<Departamento>): Observable<Departamento> {
-    return this.api.post<Departamento>('/departamentos', data);
+    return this.api.post<Departamento>('/departamentos', data).pipe(tap(() => this.notifyChange()));
   }
 
   update(id: string, data: Partial<Departamento>): Observable<Departamento> {
-    return this.api.put<Departamento>(`/departamentos/${id}`, data);
+    return this.api
+      .put<Departamento>(`/departamentos/${id}`, data)
+      .pipe(tap(() => this.notifyChange()));
   }
 
   delete(id: string): Observable<{ message: string }> {
-    return this.api.delete<{ message: string }>(`/departamentos/${id}`);
+    return this.api
+      .delete<{ message: string }>(`/departamentos/${id}`)
+      .pipe(tap(() => this.notifyChange()));
+  }
+
+  /** Notifica manualmente que hubo un cambio (útil para otros componentes) */
+  notifyChange(): void {
+    this.departamentosChanged.next();
   }
 
   // Público (sin auth)

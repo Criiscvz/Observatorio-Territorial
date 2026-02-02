@@ -412,7 +412,10 @@
       "noDatasets": "Sin datasets",
       "noDatasetsMessage": "Importa un archivo Excel para comenzar el análisis",
       "importDataset": "Importar Dataset",
-      "viewAnalysis": "Ver Análisis"
+      "viewAnalysis": "Ver Análisis",
+      "confirmDelete": "¿Estás seguro de que deseas eliminar el departamento \"{{name}}\"? Esta acción no se puede deshacer.",
+      "deleted": "Departamento eliminado exitosamente",
+      "deleteError": "Error al eliminar el departamento"
     },
     "icons": {
       "social": "Social / Grupos",

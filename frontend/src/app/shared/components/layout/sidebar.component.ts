@@ -417,6 +417,11 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartamentos();
+
+    // Suscribirse a cambios en departamentos para actualizar automáticamente
+    this.deptoService.onDepartamentosChanged$.subscribe(() => {
+      this.loadDepartamentos();
+    });
   }
 
   loadDepartamentos(): void {
