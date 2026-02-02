@@ -4,10 +4,10 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { TranslateModule } from '@ngx-translate/core';
 import { IsAdminDirective } from '../../directives/is-admin.directive';
 
 interface NavItem {
@@ -98,11 +98,15 @@ interface NavItem {
               <div class="depto-info">
                 <span class="depto-name">{{ depto.nombre }}</span>
                 @if (depto.datasets_count !== undefined) {
-                  <span class="depto-count">{{ depto.datasets_count }} {{ 'common.units.datasets' | translate }}</span>
+                  <span class="depto-count"
+                    >{{ depto.datasets_count }} {{ 'common.units.datasets' | translate }}</span
+                  >
                 }
               </div>
               @if (depto.publico) {
-                <mat-icon class="public-icon" [matTooltip]="'common.labels.public' | translate">public</mat-icon>
+                <mat-icon class="public-icon" [matTooltip]="'common.labels.public' | translate"
+                  >public</mat-icon
+                >
               }
             </a>
           } @empty {
