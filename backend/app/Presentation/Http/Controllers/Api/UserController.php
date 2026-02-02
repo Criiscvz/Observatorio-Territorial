@@ -51,7 +51,7 @@ class UserController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $perPage = $request->input('per_page', 15);
+        $perPage = (int) $request->input('per_page', 15);
         $users = $this->getUsersUseCase->execute($request->user()->id, $perPage);
 
         return response()->json([
