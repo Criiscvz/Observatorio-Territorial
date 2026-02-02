@@ -46,6 +46,7 @@ import { ActiveChart, CHART_TYPES, ChartType, ColumnWithUniqueId } from '@shared
 export class PublicDatasetViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private dashboardService = inject(DashboardService);
+  private platformId = inject(PLATFORM_ID);
 
   variableSelector = viewChild<VariableSelectorComponent>('variableSelector');
 
