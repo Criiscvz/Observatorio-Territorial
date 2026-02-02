@@ -22,8 +22,8 @@ mkdir -p /var/www/html/bootstrap/cache
 echo "Estableciendo permisos..."
 chown -R www:www /var/www/html/storage
 chown -R www:www /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage
-chmod -R 775 /var/www/html/bootstrap/cache
+chmod -R 777 /var/www/html/storage
+chmod -R 777 /var/www/html/bootstrap/cache
 
 # Esperar a que la base de datos esté disponible
 if [ -n "$DB_HOST" ]; then
@@ -48,11 +48,24 @@ if [ -z "$APP_KEY" ] || [ "$APP_KEY" = "base64:" ]; then
     php artisan key:generate --force
 fi
 
+# Limpiar cachés antiguos primero
+echo "Limpiando cachés antiguos..."
+php artisan config:clear || true
+php artisan route:clear || true
+php artisan view:clear || true
+
 # Cachear configuración para producción
 echo "Cacheando configuración..."
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+
+# Re-establecer permisos después de cachear (los archivos de caché se crean como root)
+echo "Re-estableciendo permisos después de cache..."
+chown -R www:www /var/www/html/storage
+chown -R www:www /var/www/html/bootstrap/cache
+chmod -R 777 /var/www/html/storage
+chmod -R 777 /var/www/html/bootstrap/cache
 
 # Ejecutar migraciones
 echo "Ejecutando migraciones..."
@@ -79,12 +92,12 @@ if [ ! -L "/var/www/html/public/storage" ]; then
     php artisan storage:link || true
 fi
 
-# Re-establecer permisos después de todas las operaciones
-echo "Re-estableciendo permisos finales..."
+# Permisos finales - asegurar que todo sea accesible
+echo "Estableciendo permisos finales..."
 chown -R www:www /var/www/html/storage
 chown -R www:www /var/www/html/bootstrap/cache
-chmod -R 775 /var/www/html/storage
-chmod -R 775 /var/www/html/bootstrap/cache
+chmod -R 777 /var/www/html/storage
+chmod -R 777 /var/www/html/bootstrap/cache
 
 echo "=========================================="
 echo "  Iniciando servicios..."
