@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
-import { 
-  CreateUserRequest, 
-  UpdateUserRequest, 
-  UpdateUserRoleRequest, 
-  UpdateUserRoleResponse, 
-  UserDetailResponse,
-  UsersListResponse 
+import {
+    CreateUserRequest,
+    UpdateUserRequest,
+    UpdateUserRoleRequest,
+    UpdateUserRoleResponse,
+    UserDetailResponse,
+    UsersListResponse
 } from './interfaces';
 
 export interface ToggleStatusResponse {
