@@ -103,6 +103,13 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
 
     public function existsForUser(string $departamentoId, int $userId): bool
     {
+        // Los usuarios ADMIN tienen acceso a todos los departamentos
+        $user = \App\Models\User::find($userId);
+        if ($user && $user->rol === 'ADMIN') {
+            return $this->model->where('id', $departamentoId)->exists();
+        }
+
+        // Para otros usuarios, verificar asignación específica
         return $this->model
             ->where('id', $departamentoId)
             ->whereHas('usuarios', fn($q) => $q->where('user_id', $userId))

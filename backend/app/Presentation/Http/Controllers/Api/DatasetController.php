@@ -84,6 +84,11 @@ class DatasetController extends Controller
     )]
     public function store(UploadDatasetRequest $request): JsonResponse
     {
+        \Log::info('DatasetController@store - Request received', [
+            'user_id' => $request->user()?->id,
+            'validated' => $request->validated(),
+        ]);
+
         $dto = UploadDatasetDTO::fromArray(
             $request->validated(),
             $request->user()->id
