@@ -25,8 +25,8 @@
                 <div class="avatar-loading">
                   <mat-spinner diameter="40"></mat-spinner>
                 </div>
-              } @else if (user()?.perfil?.avatar) {
-                <img [src]="user()?.perfil?.avatar" alt="Avatar" class="avatar-image" />
+              } @else if (avatarUrl()) {
+                <img [src]="avatarUrl()" alt="Avatar" class="avatar-image" />
               } @else {
                 <div class="avatar-placeholder">
                   <span>{{ user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
@@ -61,7 +61,7 @@
               <mat-icon>upload</mat-icon>
               {{ 'profile.avatar.upload' | translate }}
             </button>
-            @if (user()?.perfil?.avatar) {
+            @if (avatarUrl()) {
               <button
                 mat-stroked-button
                 color="warn"

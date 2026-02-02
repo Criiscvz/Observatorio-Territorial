@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, ElementRef, inject, OnInit, PLATFORM_ID, signal, ViewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnInit, PLATFORM_ID, signal, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,6 +15,7 @@ import { User } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { ProfileService, UpdateProfileData } from '@core/services/profile.service';
 import { ThemeService } from '@core/services/theme.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -51,6 +52,19 @@ export class ProfileComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
   uploadingAvatar = signal(false);
+
+  // Computed para obtener la URL completa del avatar
+  avatarUrl = computed(() => {
+    const avatar = this.user()?.perfil?.avatar;
+    if (!avatar) return null;
+    // Si ya es una URL absoluta, retornarla
+    if (avatar.startsWith('http://') || avatar.startsWith('https://')) {
+      return avatar;
+    }
+    // Construir URL completa desde el backend
+    const baseUrl = environment.apiUrl.replace('/api', '');
+    return `${baseUrl}${avatar}`;
+  });
 
   profileForm!: FormGroup;
 
