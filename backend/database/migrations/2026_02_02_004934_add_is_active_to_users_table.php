@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->boolean('is_active')->default(true)->after('rol');
-            $table->softDeletes();
+            if (!Schema::hasColumn('users', 'is_active')) {
+                $table->boolean('is_active')->default(true)->after('rol');
+            }
+            if (!Schema::hasColumn('users', 'deleted_at')) {
+                $table->softDeletes();
+            }
         });
     }
 
@@ -23,8 +27,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('is_active');
-            $table->dropSoftDeletes();
+            if (Schema::hasColumn('users', 'is_active')) {
+                $table->dropColumn('is_active');
+            }
+            if (Schema::hasColumn('users', 'deleted_at')) {
+                $table->dropSoftDeletes();
+            }
         });
     }
 };
