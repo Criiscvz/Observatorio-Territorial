@@ -10,8 +10,8 @@ use App\Application\Dashboard\DTOs\StatsRequestDTO;
 use App\Application\Dashboard\UseCases\GetBivariableStatsUseCase;
 use App\Application\Dashboard\UseCases\GetUnivariableStatsUseCase;
 use App\Http\Controllers\Controller;
-use App\Presentation\Http\Requests\BivariableRequest;
-use App\Presentation\Http\Requests\StatsRequest;
+use App\Presentation\Http\Requests\Stats\BivariableRequest;
+use App\Presentation\Http\Requests\Stats\StatsRequest;
 use App\Presentation\Http\Resources\Dataset\ChartDataResource;
 use Illuminate\Http\JsonResponse;
 
