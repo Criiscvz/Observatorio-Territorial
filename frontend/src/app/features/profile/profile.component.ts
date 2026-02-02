@@ -10,11 +10,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { User } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { ProfileService, UpdateProfileData } from '@core/services/profile.service';
 import { ThemeService } from '@core/services/theme.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 
 @Component({
