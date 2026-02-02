@@ -12,6 +12,11 @@ class UploadAvatarUseCase
 {
     public function execute(User $user, UploadedFile $file): User
     {
+        // Asegurar que el directorio de avatares exista
+        if (!Storage::exists('public/avatars')) {
+            Storage::makeDirectory('public/avatars');
+        }
+
         // Eliminar avatar anterior si existe
         if ($user->perfil && $user->perfil->avatar) {
             $oldPath = str_replace('/storage/', 'public/', $user->perfil->avatar);
