@@ -72,10 +72,38 @@ export interface PaginationInfo {
 
       .table-container {
         overflow-x: auto;
+        overflow-y: visible;
+        max-width: 100%;
+        position: relative;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-400) var(--bg-tertiary);
+        padding-bottom: 8px;
+        margin-bottom: 8px;
+      }
+
+      /* Scrollbar personalizado para Webkit (Chrome, Safari, Edge) */
+      .table-container::-webkit-scrollbar {
+        height: 12px;
+      }
+
+      .table-container::-webkit-scrollbar-track {
+        background: var(--bg-tertiary);
+        border-radius: 6px;
+      }
+
+      .table-container::-webkit-scrollbar-thumb {
+        background: var(--primary-400);
+        border-radius: 6px;
+        border: 2px solid var(--bg-tertiary);
+      }
+
+      .table-container::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-500);
       }
 
       .data-table {
         width: 100%;
+        min-width: max-content;
         background: transparent !important;
       }
 

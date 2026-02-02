@@ -18,7 +18,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -91,6 +91,7 @@ interface ColumnWithUniqueId extends VariableMetadato {
 })
 export class DatasetViewComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly datasetService = inject(DatasetService);
   private readonly dashboardService = inject(DashboardService);
   private readonly snackBar = inject(MatSnackBar);
@@ -226,10 +227,23 @@ export class DatasetViewComponent implements OnInit {
   loading = signal(true);
   datasetId = signal<string>('');
   departamentoId = signal<string>('');
-  datasetInfo = signal<{ id: string; nombre: string; total_registros: number } | null>(null);
+  datasetInfo = signal<{
+    id: string;
+    nombre: string;
+    total_registros: number;
+    estado?: 'PENDIENTE' | 'PROCESANDO' | 'COMPLETADO' | 'ERROR';
+  } | null>(null);
   variables = signal<VariableMetadato[]>([]);
   tableData = signal<{ id: number; data: Record<string, any> }[]>([]);
   pagination = signal({ current_page: 1, last_page: 1, per_page: 50, total: 0 });
+
+  // Computed para verificar si el dataset está pendiente
+  isDatasetPending = computed(() => {
+    const info = this.datasetInfo();
+    return (
+      info?.estado === 'PENDIENTE' || (info?.total_registros === 0 && this.variables().length === 0)
+    );
+  });
 
   // Gráficos
   selectedChartType = signal<ChartType | null>(null);
@@ -238,6 +252,10 @@ export class DatasetViewComponent implements OnInit {
   chartLimit: number | null = 20;
   activeCharts = signal<ActiveChart[]>([]);
   addingChart = signal(false);
+
+  // Alias para variables filtradas (usan los computed de compatibilidad)
+  filteredVariablesX = computed(() => this.compatibleVariablesX());
+  filteredVariablesY = computed(() => this.compatibleVariablesY());
 
   // Computed - generamos identificadores únicos para evitar duplicados en mat-table
   visibleColumns = computed<ColumnWithUniqueId[]>(() => {
@@ -447,26 +465,33 @@ export class DatasetViewComponent implements OnInit {
     this.loading.set(true);
     this.dashboardService.getDatasetData(this.datasetId(), page).subscribe({
       next: (res) => {
-        this.datasetInfo.set(res.dataset);
         this.variables.set(res.variables || []);
         this.tableData.set(res.data || []);
         this.pagination.set(res.pagination);
 
-        // El departamento_id puede venir en la respuesta o necesitamos obtenerlo
-        if (res.dataset.departamento_id) {
-          this.departamentoId.set(res.dataset.departamento_id);
-          this.loading.set(false);
-        } else {
-          this.datasetService.getById(this.datasetId()).subscribe({
-            next: (dsRes) => {
-              if (dsRes && dsRes.departamento_id) {
-                this.departamentoId.set(dsRes.departamento_id);
-              }
-              this.loading.set(false);
-            },
-            error: () => this.loading.set(false),
-          });
-        }
+        // Obtener información completa del dataset incluyendo estado
+        this.datasetService.getById(this.datasetId()).subscribe({
+          next: (dsRes) => {
+            this.datasetInfo.set({
+              id: dsRes.id,
+              nombre: dsRes.nombre,
+              total_registros: dsRes.total_registros,
+              estado: dsRes.estado,
+            });
+            if (dsRes.departamento_id) {
+              this.departamentoId.set(dsRes.departamento_id);
+            }
+            this.loading.set(false);
+          },
+          error: () => {
+            // Fallback: usar los datos de la respuesta original
+            this.datasetInfo.set(res.dataset);
+            if (res.dataset.departamento_id) {
+              this.departamentoId.set(res.dataset.departamento_id);
+            }
+            this.loading.set(false);
+          },
+        });
       },
       error: () => this.loading.set(false),
     });
@@ -474,6 +499,41 @@ export class DatasetViewComponent implements OnInit {
 
   onPageChange(event: PageEvent): void {
     this.loadData(event.pageIndex + 1);
+  }
+
+  /**
+   * Elimina un dataset incompleto/pendiente
+   */
+  deleteIncompleteDataset(): void {
+    const message = this.translate.instant('datasets.view.pendingWarning.confirmDelete', {
+      name: this.datasetInfo()?.nombre,
+    });
+
+    if (confirm(message)) {
+      this.datasetService.delete(this.datasetId()).subscribe({
+        next: () => {
+          this.snackBar.open(
+            this.translate.instant('datasets.view.pendingWarning.deleteSuccess'),
+            this.translate.instant('common.buttons.close'),
+            { duration: 3000 },
+          );
+          // Navegar a la lista de datasets o al departamento
+          if (this.departamentoId()) {
+            this.router.navigate(['/admin/departamentos', this.departamentoId()]);
+          } else {
+            this.router.navigate(['/admin/datasets']);
+          }
+        },
+        error: (err) => {
+          this.snackBar.open(
+            err.error?.message ||
+              this.translate.instant('datasets.view.pendingWarning.deleteError'),
+            this.translate.instant('common.buttons.close'),
+            { duration: 5000 },
+          );
+        },
+      });
+    }
   }
 
   selectChartType(type: ChartType): void {
@@ -764,8 +824,14 @@ export class DatasetViewComponent implements OnInit {
         es_visible: variable.es_visible,
       })
       .subscribe({
-        next: () => this.snackBar.open(this.translate.instant('common.messages.success'), 'OK', { duration: 2000 }),
-        error: () => this.snackBar.open(this.translate.instant('common.messages.error'), 'OK', { duration: 2000 }),
+        next: () =>
+          this.snackBar.open(this.translate.instant('common.messages.success'), 'OK', {
+            duration: 2000,
+          }),
+        error: () =>
+          this.snackBar.open(this.translate.instant('common.messages.error'), 'OK', {
+            duration: 2000,
+          }),
       });
   }
 

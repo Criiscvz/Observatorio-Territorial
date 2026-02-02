@@ -315,7 +315,8 @@
         "analysis": "Analysis"
       },
       "data": {
-        "noData": "No data available"
+        "noData": "No data available",
+        "scrollHint": "Scroll horizontally to see more columns"
       },
       "variables": {
         "title": "Variable Configuration",
@@ -347,6 +348,15 @@
         "noCompatibleVariables": "No compatible variables",
         "variablesAvailable": "{{count}} variables available",
         "variablesCompatible": "{{count}} compatible variables"
+      },
+      "pendingWarning": {
+        "title": "Incomplete dataset",
+        "message": "This dataset has no imported data yet. You must complete the column configuration for the data to load correctly.",
+        "continueConfig": "Continue Configuration",
+        "deleteDataset": "Delete Dataset",
+        "confirmDelete": "Are you sure you want to delete the dataset \"{{name}}\"? This action cannot be undone.",
+        "deleteSuccess": "Dataset deleted successfully",
+        "deleteError": "Error deleting dataset"
       }
     },
     "status": {
