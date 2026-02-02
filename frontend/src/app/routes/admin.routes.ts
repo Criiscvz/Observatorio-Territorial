@@ -69,4 +69,33 @@ export const ADMIN_ROUTES: Routes = [
       ),
     title: 'Visualización de Dataset - Panel de Administración',
   },
+
+  // Usuarios (solo admin)
+  {
+    path: 'usuarios',
+    loadComponent: () =>
+      import('../features/usuarios/usuario-list/usuario-list.component').then(
+        (m) => m.UsuarioListComponent,
+      ),
+    canActivate: [adminGuard],
+    title: 'Usuarios - Panel de Administración',
+  },
+  {
+    path: 'usuarios/nuevo',
+    loadComponent: () =>
+      import('../features/usuarios/usuario-form/usuario-form.component').then(
+        (m) => m.UsuarioFormComponent,
+      ),
+    canActivate: [adminGuard],
+    title: 'Nuevo Usuario - Panel de Administración',
+  },
+  {
+    path: 'usuarios/:id',
+    loadComponent: () =>
+      import('../features/usuarios/usuario-form/usuario-form.component').then(
+        (m) => m.UsuarioFormComponent,
+      ),
+    canActivate: [adminGuard],
+    title: 'Editar Usuario - Panel de Administración',
+  },
 ];

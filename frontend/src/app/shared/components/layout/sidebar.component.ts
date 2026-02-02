@@ -63,6 +63,20 @@ interface NavItem {
           </div>
           <span class="nav-text">{{ 'layout.sidebar.uploadDataset' | translate }}</span>
         </a>
+
+        <!-- Gestión de Usuarios - solo admin -->
+        <a
+          *isAdmin
+          class="nav-item"
+          routerLink="/admin/usuarios"
+          routerLinkActive="active"
+          (click)="navigate.emit()"
+        >
+          <div class="nav-icon-wrapper">
+            <mat-icon class="nav-icon">people</mat-icon>
+          </div>
+          <span class="nav-text">{{ 'layout.sidebar.users' | translate }}</span>
+        </a>
       </div>
 
       <!-- Departamentos section -->

@@ -187,6 +187,7 @@
       "main": "Principal",
       "dashboard": "Dashboard",
       "uploadDataset": "Subir Dataset",
+      "users": "Usuarios",
       "departments": "Departamentos",
       "newDepartment": "Nuevo departamento",
       "allDatasets": "Todos los Datasets",
@@ -650,5 +651,86 @@
     "select": "Seleccionar idioma",
     "spanish": "Español",
     "english": "English"
+  },
+  "users": {
+    "title": "Gestión de Usuarios",
+    "subtitle": "Administra todos los usuarios de la plataforma",
+    "columns": {
+      "name": "Usuario",
+      "email": "Email",
+      "role": "Rol",
+      "status": "Estado",
+      "createdAt": "Fecha de registro"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "actions": {
+      "create": "Nuevo Usuario",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "changeRole": "Cambiar Rol"
+    },
+    "roles": {
+      "adminDesc": "Acceso completo al sistema",
+      "userDesc": "Acceso limitado"
+    },
+    "form": {
+      "createTitle": "Crear Usuario",
+      "createSubtitle": "Ingresa los datos del nuevo usuario",
+      "editTitle": "Editar Usuario",
+      "editSubtitle": "Modifica la información del usuario",
+      "basicInfo": "Información Básica",
+      "basicInfoDesc": "Datos principales del usuario",
+      "roleStatus": "Rol y Estado",
+      "roleStatusDesc": "Configura el acceso del usuario",
+      "profileInfo": "Información del Perfil",
+      "profileInfoDesc": "Datos adicionales opcionales",
+      "name": "Nombre completo",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "passwordHint": "Dejar vacío para mantener la contraseña actual",
+      "role": "Rol del usuario",
+      "isActive": "Usuario activo",
+      "isActiveHint": "Los usuarios inactivos no pueden iniciar sesión",
+      "phone": "Teléfono",
+      "position": "Cargo",
+      "bio": "Biografía"
+    },
+    "validation": {
+      "nameRequired": "El nombre es requerido",
+      "nameMaxLength": "El nombre no puede exceder 255 caracteres",
+      "emailRequired": "El email es requerido",
+      "emailInvalid": "Ingresa un email válido",
+      "passwordRequired": "La contraseña es requerida",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres"
+    },
+    "confirmToggle": {
+      "title": "Cambiar estado del usuario",
+      "message": "¿Estás seguro de que deseas {{action}} a {{name}}?"
+    },
+    "confirmRole": {
+      "title": "Cambiar rol del usuario",
+      "message": "¿Estás seguro de que deseas cambiar el rol de {{name}} a {{role}}?"
+    },
+    "confirmDelete": {
+      "title": "Eliminar usuario",
+      "message": "¿Estás seguro de que deseas eliminar a {{name}}? Esta acción no se puede deshacer."
+    },
+    "messages": {
+      "loadError": "Error al cargar los usuarios",
+      "created": "Usuario creado exitosamente",
+      "createError": "Error al crear el usuario",
+      "updated": "Usuario actualizado exitosamente",
+      "updateError": "Error al actualizar el usuario",
+      "deleted": "Usuario eliminado exitosamente",
+      "deleteError": "Error al eliminar el usuario",
+      "statusUpdated": "Estado del usuario actualizado",
+      "statusError": "Error al cambiar el estado",
+      "roleUpdated": "Rol del usuario actualizado",
+      "roleError": "Error al cambiar el rol",
+      "noUsers": "No hay usuarios registrados"
+    }
   }
 }
