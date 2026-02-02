@@ -376,6 +376,8 @@
       "public": "Departamento Público",
       "publicDescription": "Los departamentos públicos pueden ser vistos por usuarios externos sin autenticación.",
       "icon": "Icono",
+      "noIcon": "Sin icono",
+      "iconHint": "El icono se mostrará en las tarjetas del departamento",
       "selectIcon": "Selecciona un icono",
       "saveChanges": "Guardar Cambios",
       "createDepartment": "Crear Departamento",

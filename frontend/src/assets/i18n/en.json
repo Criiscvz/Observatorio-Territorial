@@ -376,6 +376,8 @@
       "public": "Public Department",
       "publicDescription": "Public departments can be viewed by external users without authentication.",
       "icon": "Icon",
+      "noIcon": "No icon",
+      "iconHint": "The icon will be displayed on department cards",
       "selectIcon": "Select an icon",
       "saveChanges": "Save Changes",
       "createDepartment": "Create Department",

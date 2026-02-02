@@ -24,7 +24,7 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Server,
   },
   {
-    path: 'publico/departamentos/:id/datasets/:datasetId',
+    path: 'publico/datasets/:id',
     renderMode: RenderMode.Server,
   },
   // Rutas admin - siempre Server rendering (requieren auth)
