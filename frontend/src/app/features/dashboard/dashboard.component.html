@@ -117,7 +117,11 @@
               @for (depto of departamentosRecientes(); track depto.id) {
                 <a class="list-item" [routerLink]="['/admin/departamentos', depto.id]" matRipple>
                   <div class="item-avatar" [style.background]="getDeptoColor($index)">
-                    {{ depto.nombre.charAt(0).toUpperCase() }}
+                    @if (depto.icono) {
+                      <mat-icon>{{ depto.icono }}</mat-icon>
+                    } @else {
+                      {{ depto.nombre.charAt(0).toUpperCase() }}
+                    }
                   </div>
                   <div class="item-content">
                     <span class="item-title">{{ depto.nombre }}</span>

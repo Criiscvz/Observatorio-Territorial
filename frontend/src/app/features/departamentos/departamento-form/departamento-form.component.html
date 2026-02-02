@@ -43,28 +43,25 @@
           }
         </mat-form-field>
 
-        @if (!isEdit()) {
-          <mat-form-field class="w-full" appearance="outline">
-            <mat-label>{{ 'departamentos.form.code' | translate }}</mat-label>
-            <input
-              matInput
-              formControlName="codigo_interno"
-              [placeholder]="'departamentos.form.codePlaceholder' | translate"
-              maxlength="50"
-            />
-            <mat-icon matSuffix>tag</mat-icon>
-            <mat-hint>{{ 'departamentos.form.codeHint' | translate }}</mat-hint>
-            @if (
-              form.get('codigo_interno')?.hasError('required') &&
-              form.get('codigo_interno')?.touched
-            ) {
-              <mat-error>{{ 'departamentos.form.validation.codeRequired' | translate }}</mat-error>
-            }
-            @if (form.get('codigo_interno')?.hasError('maxlength')) {
-              <mat-error>{{ 'departamentos.form.validation.codeMaxLength' | translate }}</mat-error>
-            }
-          </mat-form-field>
-        }
+        <mat-form-field class="w-full" appearance="outline">
+          <mat-label>{{ 'departamentos.form.code' | translate }}</mat-label>
+          <input
+            matInput
+            formControlName="codigo_interno"
+            [placeholder]="'departamentos.form.codePlaceholder' | translate"
+            maxlength="50"
+          />
+          <mat-icon matSuffix>tag</mat-icon>
+          <mat-hint>{{ 'departamentos.form.codeHint' | translate }}</mat-hint>
+          @if (
+            form.get('codigo_interno')?.hasError('required') && form.get('codigo_interno')?.touched
+          ) {
+            <mat-error>{{ 'departamentos.form.validation.codeRequired' | translate }}</mat-error>
+          }
+          @if (form.get('codigo_interno')?.hasError('maxlength')) {
+            <mat-error>{{ 'departamentos.form.validation.codeMaxLength' | translate }}</mat-error>
+          }
+        </mat-form-field>
 
         <mat-form-field class="w-full" appearance="outline">
           <mat-label>{{ 'departamentos.form.description' | translate }}</mat-label>

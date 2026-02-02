@@ -89,7 +89,11 @@ interface NavItem {
               (click)="navigate.emit()"
             >
               <div class="depto-icon" [style.background]="getDeptoColor(depto)">
-                <span>{{ depto.nombre.charAt(0).toUpperCase() }}</span>
+                @if (depto.icono) {
+                  <mat-icon>{{ depto.icono }}</mat-icon>
+                } @else {
+                  <span>{{ depto.nombre.charAt(0).toUpperCase() }}</span>
+                }
               </div>
               <div class="depto-info">
                 <span class="depto-name">{{ depto.nombre }}</span>
@@ -290,6 +294,12 @@ interface NavItem {
         font-weight: 600;
         font-size: 0.875rem;
         flex-shrink: 0;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
       }
 
       .depto-info {

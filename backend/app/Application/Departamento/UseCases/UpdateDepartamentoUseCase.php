@@ -33,7 +33,9 @@ class UpdateDepartamentoUseCase
         // Actualizar entidad
         $updatedDepartamento = $departamento->update(
             nombre: $dto->nombre,
+            codigoInterno: $dto->codigoInterno,
             descripcion: $dto->descripcion,
+            icono: $dto->icono,
             publico: $dto->publico,
         );
 

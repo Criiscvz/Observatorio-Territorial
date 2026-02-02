@@ -54,6 +54,7 @@ class Departamento
 
     public function update(
         ?string $nombre = null,
+        ?string $codigoInterno = null,
         ?string $descripcion = null,
         ?string $icono = null,
         ?bool $publico = null
@@ -61,7 +62,7 @@ class Departamento
         return new self(
             id: $this->id,
             nombre: $nombre ?? $this->nombre,
-            codigoInterno: $this->codigoInterno,
+            codigoInterno: $codigoInterno ?? $this->codigoInterno,
             descripcion: $descripcion ?? $this->descripcion,
             icono: $icono ?? $this->icono,
             publico: $publico ?? $this->publico,

@@ -17,7 +17,9 @@ class UpdateDepartamentoRequest extends FormRequest
     {
         return [
             'nombre' => ['nullable', 'string', 'max:255'],
+            'codigo_interno' => ['nullable', 'string', 'max:50'],
             'descripcion' => ['nullable', 'string', 'max:1000'],
+            'icono' => ['nullable', 'string', 'max:50'],
             'publico' => ['nullable', 'boolean'],
         ];
     }

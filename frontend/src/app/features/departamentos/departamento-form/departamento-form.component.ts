@@ -10,8 +10,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-departamento-form',
@@ -92,6 +92,7 @@ export class DepartamentoFormComponent implements OnInit {
       next: (departamento) => {
         this.form.patchValue({
           nombre: departamento.nombre,
+          codigo_interno: departamento.codigo_interno,
           descripcion: departamento.descripcion,
           icono: departamento.icono || '',
           publico: departamento.publico,
@@ -109,12 +110,7 @@ export class DepartamentoFormComponent implements OnInit {
     // Marcar todos los campos como touched para mostrar errores
     this.form.markAllAsTouched();
 
-    // En edición, codigo_interno no es requerido
-    const isValid = this.isEdit()
-      ? this.form.get('nombre')?.valid && this.form.get('descripcion')?.valid
-      : this.form.valid;
-
-    if (!isValid) {
+    if (this.form.invalid) {
       this.error.set(this.translate.instant('departamentos.form.errors.formInvalid'));
       return;
     }
@@ -126,6 +122,7 @@ export class DepartamentoFormComponent implements OnInit {
     if (this.isEdit()) {
       const updateData = {
         nombre: this.form.value.nombre.trim(),
+        codigo_interno: this.form.value.codigo_interno.trim(),
         descripcion: this.form.value.descripcion?.trim() || null,
         icono: this.form.value.icono || null,
         publico: this.form.value.publico || false,

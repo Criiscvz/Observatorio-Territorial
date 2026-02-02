@@ -87,6 +87,7 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
 
         $model->update([
             'nombre' => $departamento->nombre,
+            'codigo_interno' => $departamento->codigoInterno,
             'descripcion' => $departamento->descripcion,
             'icono' => $departamento->icono,
             'publico' => $departamento->publico,
