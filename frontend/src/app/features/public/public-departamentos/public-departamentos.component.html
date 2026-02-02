@@ -46,7 +46,11 @@
         <a [routerLink]="['/publico/departamentos', depto.id]" class="department-card">
           <div class="card-header">
             <div class="department-avatar" [style.background]="getDeptoGradient(i)">
-              {{ depto.nombre.charAt(0).toUpperCase() }}
+              @if (depto.icono) {
+                <mat-icon>{{ depto.icono }}</mat-icon>
+              } @else {
+                {{ depto.nombre.charAt(0).toUpperCase() }}
+              }
             </div>
             <div class="department-meta">
               <h3>{{ depto.nombre }}</h3>
@@ -90,7 +94,9 @@
       <h3>{{ 'common.messages.noResults' | translate }}</h3>
       @if (searchTerm) {
         <p>No hay resultados para "{{ searchTerm }}"</p>
-        <button mat-stroked-button (click)="clearSearch()">{{ 'common.buttons.clear' | translate }}</button>
+        <button mat-stroked-button (click)="clearSearch()">
+          {{ 'common.buttons.clear' | translate }}
+        </button>
       } @else {
         <p>{{ 'public.departments.empty' | translate }}</p>
       }

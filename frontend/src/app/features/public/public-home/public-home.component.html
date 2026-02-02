@@ -3,7 +3,10 @@
   <div class="header-container">
     <a routerLink="/" class="logo-link">
       <img src="ULEAM.png" alt="ULEAM" class="logo" />
-      <span class="logo-text">{{ 'layout.header.brand' | translate }} {{ 'layout.header.brandSubtitle' | translate }}</span>
+      <span class="logo-text"
+        >{{ 'layout.header.brand' | translate }}
+        {{ 'layout.header.brandSubtitle' | translate }}</span
+      >
     </a>
 
     <nav class="nav-links">
@@ -15,13 +18,21 @@
 
     <div class="header-actions">
       <!-- Language selector -->
-      <button class="lang-toggle" [matMenuTriggerFor]="langMenu" [matTooltip]="'language.select' | translate">
+      <button
+        class="lang-toggle"
+        [matMenuTriggerFor]="langMenu"
+        [matTooltip]="'language.select' | translate"
+      >
         <mat-icon>language</mat-icon>
         <span class="lang-code">{{ languageService.currentLang().toUpperCase() }}</span>
       </button>
       <mat-menu #langMenu="matMenu">
         @for (lang of languageService.availableLanguages; track lang.code) {
-          <button mat-menu-item (click)="languageService.setLanguage(lang.code)" [class.active]="languageService.currentLang() === lang.code">
+          <button
+            mat-menu-item
+            (click)="languageService.setLanguage(lang.code)"
+            [class.active]="languageService.currentLang() === lang.code"
+          >
             <span class="lang-flag">{{ lang.flag }}</span>
             <span>{{ lang.name }}</span>
             @if (languageService.currentLang() === lang.code) {
@@ -89,7 +100,9 @@
       } @else {
         <!-- Usuario no autenticado: mostrar login/register -->
         <a mat-stroked-button routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
-        <a mat-raised-button color="primary" routerLink="/auth/register">{{ 'public.header.register' | translate }}</a>
+        <a mat-raised-button color="primary" routerLink="/auth/register">{{
+          'public.header.register' | translate
+        }}</a>
       }
     </div>
   </div>
@@ -100,7 +113,9 @@
   <div class="hero-bg"></div>
   <div class="hero-content">
     <h1 class="hero-title">
-      <span class="hero-highlight">{{ 'public.home.hero.title' | translate }}</span> <br />{{ 'public.home.hero.titleHighlight' | translate }}
+      <span class="hero-highlight">{{ 'public.home.hero.title' | translate }}</span> <br />{{
+        'public.home.hero.titleHighlight' | translate
+      }}
     </h1>
     <p class="hero-subtitle">
       {{ 'public.home.hero.subtitle' | translate }}
@@ -224,7 +239,11 @@
       @for (depto of departamentos().slice(0, 6); track depto.id) {
         <a [routerLink]="['/publico/departamentos', depto.id]" class="department-card">
           <div class="department-avatar" [style.background]="getDeptoColor($index)">
-            {{ depto.nombre.charAt(0).toUpperCase() }}
+            @if (depto.icono) {
+              <mat-icon>{{ depto.icono }}</mat-icon>
+            } @else {
+              {{ depto.nombre.charAt(0).toUpperCase() }}
+            }
           </div>
           <div class="department-info">
             <h4>{{ depto.nombre }}</h4>
@@ -275,8 +294,12 @@
       <p>{{ 'layout.footer.university' | translate }}</p>
     </div>
     <div class="footer-links">
-      <a href="https://www.uleam.edu.ec" target="_blank">{{ 'public.home.footer.websiteLink' | translate }}</a>
-      <a routerLink="/publico/departamentos">{{ 'public.home.footer.departmentsLink' | translate }}</a>
+      <a href="https://www.uleam.edu.ec" target="_blank">{{
+        'public.home.footer.websiteLink' | translate
+      }}</a>
+      <a routerLink="/publico/departamentos">{{
+        'public.home.footer.departmentsLink' | translate
+      }}</a>
       <a routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
     </div>
     <div class="footer-copy">

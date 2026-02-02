@@ -16,15 +16,22 @@
     <!-- Department Header -->
     <div class="department-header">
       <div class="header-avatar" [style.background]="deptoGradient">
-        {{ departamento()!.nombre.charAt(0).toUpperCase() }}
+        @if (departamento()!.icono) {
+          <mat-icon>{{ departamento()!.icono }}</mat-icon>
+        } @else {
+          {{ departamento()!.nombre.charAt(0).toUpperCase() }}
+        }
       </div>
       <div class="header-info">
         <h1>{{ departamento()!.nombre }}</h1>
-        <p class="description">{{ departamento()!.descripcion || ('public.departmentDetail.noDescription' | translate) }}</p>
+        <p class="description">
+          {{ departamento()!.descripcion || ('public.departmentDetail.noDescription' | translate) }}
+        </p>
         <div class="header-stats">
           <span class="stat">
             <mat-icon>table_chart</mat-icon>
-            {{ departamento()!.datasets?.length || 0 }} {{ 'public.departmentDetail.stats.datasets' | translate }}
+            {{ departamento()!.datasets?.length || 0 }}
+            {{ 'public.departmentDetail.stats.datasets' | translate }}
           </span>
           <span class="stat">
             <mat-icon>storage</mat-icon>
@@ -53,7 +60,8 @@
                 <div class="dataset-meta">
                   <span class="meta-item">
                     <mat-icon>grid_on</mat-icon>
-                    {{ ds.total_registros | number }} {{ 'public.departmentDetail.stats.records' | translate }}
+                    {{ ds.total_registros | number }}
+                    {{ 'public.departmentDetail.stats.records' | translate }}
                   </span>
                   @if (ds.created_at) {
                     <span class="meta-item">

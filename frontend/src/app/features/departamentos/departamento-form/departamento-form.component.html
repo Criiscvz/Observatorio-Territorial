@@ -1,6 +1,10 @@
 <div class="max-w-2xl mx-auto">
   <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">
-    {{ isEdit() ? ('departamentos.form.titleEdit' | translate) : ('departamentos.form.titleNew' | translate) }}
+    {{
+      isEdit()
+        ? ('departamentos.form.titleEdit' | translate)
+        : ('departamentos.form.titleNew' | translate)
+    }}
   </h1>
 
   <mat-card>
@@ -74,6 +78,26 @@
           <mat-hint align="end">{{ form.get('descripcion')?.value?.length || 0 }}/1000</mat-hint>
         </mat-form-field>
 
+        <!-- Icon selector -->
+        <mat-form-field class="w-full" appearance="outline">
+          <mat-label>{{ 'departamentos.form.icon' | translate }}</mat-label>
+          <mat-select formControlName="icono">
+            <mat-option [value]="''">{{ 'departamentos.form.noIcon' | translate }}</mat-option>
+            @for (icon of availableIcons; track icon.value) {
+              <mat-option [value]="icon.value">
+                <mat-icon class="mr-2">{{ icon.value }}</mat-icon>
+                {{ icon.labelKey | translate }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (form.get('icono')?.value) {
+            <mat-icon matSuffix>{{ form.get('icono')?.value }}</mat-icon>
+          } @else {
+            <mat-icon matSuffix>category</mat-icon>
+          }
+          <mat-hint>{{ 'departamentos.form.iconHint' | translate }}</mat-hint>
+        </mat-form-field>
+
         <div class="flex items-center gap-4 pt-2">
           <mat-slide-toggle formControlName="publico" color="primary">
             {{ 'departamentos.form.public' | translate }}
@@ -99,7 +123,11 @@
           <mat-spinner diameter="20" class="inline-block mr-2"></mat-spinner>
           {{ 'departamentos.form.saving' | translate }}
         } @else {
-          {{ isEdit() ? ('departamentos.form.saveChanges' | translate) : ('departamentos.form.createDepartment' | translate) }}
+          {{
+            isEdit()
+              ? ('departamentos.form.saveChanges' | translate)
+              : ('departamentos.form.createDepartment' | translate)
+          }}
         }
       </button>
     </mat-card-actions>
