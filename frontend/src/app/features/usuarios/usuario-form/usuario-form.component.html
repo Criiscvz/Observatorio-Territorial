@@ -51,13 +51,18 @@
 
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>{{ 'users.form.password' | translate }}</mat-label>
-                <input 
-                  matInput 
-                  formControlName="password" 
-                  [type]="hidePassword() ? 'password' : 'text'" 
+                <input
+                  matInput
+                  formControlName="password"
+                  [type]="hidePassword() ? 'password' : 'text'"
                 />
                 <mat-icon matPrefix>lock</mat-icon>
-                <button type="button" mat-icon-button matSuffix (click)="togglePasswordVisibility()">
+                <button
+                  type="button"
+                  mat-icon-button
+                  matSuffix
+                  (click)="togglePasswordVisibility()"
+                >
                   <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
                 </button>
                 @if (userForm.get('password')?.hasError('required')) {
@@ -143,17 +148,18 @@
         <a mat-stroked-button routerLink="/admin/usuarios">
           {{ 'common.buttons.cancel' | translate }}
         </a>
-        <button 
-          mat-flat-button 
-          color="primary" 
-          type="submit" 
-          [disabled]="loading()"
-        >
+        <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
           @if (loading()) {
             <mat-spinner diameter="20"></mat-spinner>
           } @else {
-            <mat-icon>save</mat-icon>
-            {{ isEditMode() ? ('common.buttons.save' | translate) : ('common.buttons.create' | translate) }}
+            <ng-container>
+              <mat-icon>save</mat-icon>
+              {{
+                isEditMode()
+                  ? ('common.buttons.save' | translate)
+                  : ('common.buttons.create' | translate)
+              }}
+            </ng-container>
           }
         </button>
       </div>
