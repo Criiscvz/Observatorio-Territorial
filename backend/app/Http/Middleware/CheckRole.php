@@ -20,6 +20,14 @@ class CheckRole
     {
         $user = $request->user();
 
+        // Debug temporal
+        \Log::info('CheckRole middleware', [
+            'user_id' => $user?->id,
+            'user_rol' => $user?->rol,
+            'required_roles' => $roles,
+            'path' => $request->path(),
+        ]);
+
         if (!$user) {
             return response()->json([
                 'message' => 'No autenticado.',
