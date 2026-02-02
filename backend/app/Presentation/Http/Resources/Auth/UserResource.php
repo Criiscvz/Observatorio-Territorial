@@ -16,6 +16,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'rol' => $this->rol ?? 'USER',
+            'is_active' => $this->is_active ?? true,
             'perfil' => $this->whenLoaded('perfil', fn() => [
                 'id' => $this->perfil->id,
                 'telefono' => $this->perfil->telefono,
