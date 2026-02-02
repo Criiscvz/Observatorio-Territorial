@@ -9,6 +9,22 @@ echo "=========================================="
 mkdir -p /var/log/supervisor
 mkdir -p /var/log/nginx
 
+# Crear directorios de storage si no existen
+mkdir -p /var/www/html/storage/framework/cache/data
+mkdir -p /var/www/html/storage/framework/sessions
+mkdir -p /var/www/html/storage/framework/views
+mkdir -p /var/www/html/storage/logs
+mkdir -p /var/www/html/storage/app/public/avatars
+mkdir -p /var/www/html/storage/api-docs
+mkdir -p /var/www/html/bootstrap/cache
+
+# Establecer permisos ANTES de cualquier comando artisan
+echo "Estableciendo permisos..."
+chown -R www:www /var/www/html/storage
+chown -R www:www /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage
+chmod -R 775 /var/www/html/bootstrap/cache
+
 # Esperar a que la base de datos esté disponible
 if [ -n "$DB_HOST" ]; then
     echo "Esperando a que la base de datos esté disponible..."
@@ -42,6 +58,17 @@ php artisan view:cache
 echo "Ejecutando migraciones..."
 php artisan migrate --force
 
+# Ejecutar seeders solo si no hay usuarios (primera ejecución)
+echo "Verificando si se necesitan seeders..."
+USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tail -1)
+if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
+    echo "Base de datos vacía, ejecutando seeders..."
+    php artisan db:seed --force
+    echo "Seeders ejecutados correctamente!"
+else
+    echo "Base de datos ya contiene datos ($USER_COUNT usuarios), saltando seeders."
+fi
+
 # Generar documentación Swagger
 echo "Generando documentación Swagger..."
 php artisan swagger:generate || true
@@ -52,8 +79,8 @@ if [ ! -L "/var/www/html/public/storage" ]; then
     php artisan storage:link || true
 fi
 
-# Establecer permisos correctos
-echo "Estableciendo permisos..."
+# Re-establecer permisos después de todas las operaciones
+echo "Re-estableciendo permisos finales..."
 chown -R www:www /var/www/html/storage
 chown -R www:www /var/www/html/bootstrap/cache
 chmod -R 775 /var/www/html/storage
