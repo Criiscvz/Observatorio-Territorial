@@ -22,7 +22,7 @@ class GetBivariableStatsUseCase
         private readonly RegistroDatoRepositoryInterface $registroRepository,
     ) {}
 
-    public function execute(BivariableRequestDTO $dto, int $userId): BivariableResponseDTO
+    public function execute(BivariableRequestDTO $dto): BivariableResponseDTO
     {
         // Obtener variables
         $variableX = $this->variableRepository->findById($dto->variableXId);
@@ -45,7 +45,7 @@ class GetBivariableStatsUseCase
 
         $departamento = $this->departamentoRepository->findById($dataset->departamentoId);
         $hasAccess = $departamento?->publico || 
-            $this->departamentoRepository->existsForUser($dataset->departamentoId, $userId);
+            $this->departamentoRepository->existsForUser($dataset->departamentoId, $dto->userId);
 
         if (!$hasAccess) {
             throw new HttpException(Response::HTTP_FORBIDDEN, 'No tienes acceso a este dataset');

@@ -22,7 +22,7 @@ class GetUnivariableStatsUseCase
         private readonly RegistroDatoRepositoryInterface $registroRepository,
     ) {}
 
-    public function execute(StatsRequestDTO $dto, int $userId): ChartDataDTO
+    public function execute(StatsRequestDTO $dto): ChartDataDTO
     {
         // Obtener variable
         $variable = $this->variableRepository->findById($dto->variableId);
@@ -39,7 +39,7 @@ class GetUnivariableStatsUseCase
 
         $departamento = $this->departamentoRepository->findById($dataset->departamentoId);
         $hasAccess = $departamento?->publico || 
-            $this->departamentoRepository->existsForUser($dataset->departamentoId, $userId);
+            $this->departamentoRepository->existsForUser($dataset->departamentoId, $dto->userId);
 
         if (!$hasAccess) {
             throw new HttpException(Response::HTTP_FORBIDDEN, 'No tienes acceso a este dataset');
