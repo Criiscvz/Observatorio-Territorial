@@ -3,6 +3,7 @@
 use App\Presentation\Http\Controllers\Api\PublicController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +26,22 @@ Route::get('/documentation', function () {
 Route::get('/docs', function () {
     return view('swagger');
 });
+
+// ============ ARCHIVOS PÚBLICOS (Avatares) ============
+Route::get('/avatars/{filename}', function (string $filename) {
+    $path = 'public/avatars/' . $filename;
+    
+    if (!Storage::exists($path)) {
+        abort(404, 'Avatar no encontrado');
+    }
+    
+    $file = Storage::get($path);
+    $mimeType = Storage::mimeType($path);
+    
+    return response($file, 200)
+        ->header('Content-Type', $mimeType)
+        ->header('Cache-Control', 'public, max-age=31536000');
+})->where('filename', '.*');
 
 // ============ AUTH ============
 require __DIR__ . '/modules/auth.php';

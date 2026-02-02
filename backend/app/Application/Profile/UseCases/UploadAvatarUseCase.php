@@ -12,9 +12,16 @@ class UploadAvatarUseCase
 {
     public function execute(User $user, UploadedFile $file): User
     {
+        // Asegurar que el directorio de avatares exista
+        if (!Storage::exists('public/avatars')) {
+            Storage::makeDirectory('public/avatars');
+        }
+
         // Eliminar avatar anterior si existe
         if ($user->perfil && $user->perfil->avatar) {
-            $oldPath = str_replace('/storage/', 'public/', $user->perfil->avatar);
+            // Extraer nombre del archivo de la URL anterior
+            $oldFilename = basename($user->perfil->avatar);
+            $oldPath = 'public/avatars/' . $oldFilename;
             if (Storage::exists($oldPath)) {
                 Storage::delete($oldPath);
             }
@@ -24,10 +31,11 @@ class UploadAvatarUseCase
         $filename = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
         
         // Guardar el archivo
-        $path = $file->storeAs('public/avatars', $filename);
+        $file->storeAs('public/avatars', $filename);
         
-        // Convertir a URL pública
-        $avatarUrl = Storage::url($path);
+        // URL completa usando APP_URL + endpoint API (evita problemas de CORS)
+        $baseUrl = rtrim(config('app.url'), '/');
+        $avatarUrl = $baseUrl . '/api/avatars/' . $filename;
 
         // Actualizar o crear perfil con el avatar
         if ($user->perfil) {
