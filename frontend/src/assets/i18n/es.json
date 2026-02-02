@@ -187,6 +187,7 @@
       "main": "Principal",
       "dashboard": "Dashboard",
       "uploadDataset": "Subir Dataset",
+      "users": "Usuarios",
       "departments": "Departamentos",
       "newDepartment": "Nuevo departamento",
       "allDatasets": "Todos los Datasets",

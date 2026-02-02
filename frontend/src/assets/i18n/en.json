@@ -187,6 +187,7 @@
       "main": "Main",
       "dashboard": "Dashboard",
       "uploadDataset": "Upload Dataset",
+      "users": "Users",
       "departments": "Departments",
       "newDepartment": "New department",
       "allDatasets": "All Datasets",
