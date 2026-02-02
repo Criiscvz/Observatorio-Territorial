@@ -650,5 +650,86 @@
     "select": "Select language",
     "spanish": "Español",
     "english": "English"
+  },
+  "users": {
+    "title": "User Management",
+    "subtitle": "Manage all platform users",
+    "columns": {
+      "name": "User",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "createdAt": "Registration Date"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "actions": {
+      "create": "New User",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "changeRole": "Change Role"
+    },
+    "roles": {
+      "adminDesc": "Full system access",
+      "userDesc": "Limited access"
+    },
+    "form": {
+      "createTitle": "Create User",
+      "createSubtitle": "Enter the new user's details",
+      "editTitle": "Edit User",
+      "editSubtitle": "Modify user information",
+      "basicInfo": "Basic Information",
+      "basicInfoDesc": "User's main data",
+      "roleStatus": "Role and Status",
+      "roleStatusDesc": "Configure user access",
+      "profileInfo": "Profile Information",
+      "profileInfoDesc": "Optional additional data",
+      "name": "Full name",
+      "email": "Email address",
+      "password": "Password",
+      "passwordHint": "Leave empty to keep current password",
+      "role": "User role",
+      "isActive": "Active user",
+      "isActiveHint": "Inactive users cannot log in",
+      "phone": "Phone",
+      "position": "Position",
+      "bio": "Biography"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "nameMaxLength": "Name cannot exceed 255 characters",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Enter a valid email",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 8 characters"
+    },
+    "confirmToggle": {
+      "title": "Change user status",
+      "message": "Are you sure you want to {{action}} {{name}}?"
+    },
+    "confirmRole": {
+      "title": "Change user role",
+      "message": "Are you sure you want to change {{name}}'s role to {{role}}?"
+    },
+    "confirmDelete": {
+      "title": "Delete user",
+      "message": "Are you sure you want to delete {{name}}? This action cannot be undone."
+    },
+    "messages": {
+      "loadError": "Error loading users",
+      "created": "User created successfully",
+      "createError": "Error creating user",
+      "updated": "User updated successfully",
+      "updateError": "Error updating user",
+      "deleted": "User deleted successfully",
+      "deleteError": "Error deleting user",
+      "statusUpdated": "User status updated",
+      "statusError": "Error changing status",
+      "roleUpdated": "User role updated",
+      "roleError": "Error changing role",
+      "noUsers": "No registered users"
+    }
   }
 }

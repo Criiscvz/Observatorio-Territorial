@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDivider } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
@@ -38,6 +39,7 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
     MatSnackBarModule,
     MatTableModule,
     MatTooltipModule,
+    MatDivider,
     TranslateModule,
   ],
   templateUrl: './usuario-list.component.html',
