@@ -6,13 +6,86 @@
 }
 
 /* ================================================
+   CONTROLES DE NAVEGACIÓN HORIZONTAL DE LA TABLA
+   ================================================ */
+
+/* Barra de controles superior */
+.table-nav-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+}
+
+.table-nav-controls .nav-hint {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.table-nav-controls .nav-btn {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Contenedor wrapper con flechas flotantes */
+.table-scroll-wrapper {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+/* Flechas flotantes a los lados */
+.scroll-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  background: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  width: 40px;
+  height: 40px;
+  transition: all var(--transition-fast);
+}
+
+.scroll-arrow:hover {
+  background: var(--primary-500) !important;
+  color: white !important;
+  border-color: var(--primary-500) !important;
+}
+
+.scroll-arrow.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scroll-arrow-left {
+  left: 0;
+}
+
+.scroll-arrow-right {
+  right: 0;
+}
+
+.scroll-arrow mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+/* ================================================
    SCROLL HORIZONTAL PARA TABLAS CON MUCHAS COLUMNAS
    ================================================ */
 .table-scroll-container {
   overflow-x: auto;
   overflow-y: visible;
   max-width: 100%;
+  flex: 1;
   position: relative;
+  margin: 0 48px; /* Espacio para las flechas */
 
   /* Asegurar que el scrollbar sea siempre visible */
   scrollbar-width: thin;
@@ -41,37 +114,6 @@
 
 .table-scroll-container::-webkit-scrollbar-thumb:hover {
   background: var(--primary-500);
-}
-
-/* Indicador visual de scroll disponible */
-.scroll-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  color: var(--text-tertiary);
-  font-size: 0.75rem;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  margin-bottom: 0.5rem;
-}
-
-.scroll-indicator mat-icon {
-  font-size: 16px;
-  width: 16px;
-  height: 16px;
-  animation: bounce-horizontal 1.5s ease-in-out infinite;
-}
-
-@keyframes bounce-horizontal {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(4px);
-  }
 }
 
 /* Tabla dentro del contenedor de scroll */

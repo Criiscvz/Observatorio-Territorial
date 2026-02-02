@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -236,6 +236,11 @@ export class DatasetViewComponent implements OnInit {
   variables = signal<VariableMetadato[]>([]);
   tableData = signal<{ id: number; data: Record<string, any> }[]>([]);
   pagination = signal({ current_page: 1, last_page: 1, per_page: 50, total: 0 });
+
+  // Scroll horizontal de la tabla
+  tableScrollContainer = viewChild<ElementRef<HTMLDivElement>>('tableScrollContainer');
+  canScrollLeft = false;
+  canScrollRight = true;
 
   // Computed para verificar si el dataset está pendiente
   isDatasetPending = computed(() => {
@@ -499,6 +504,38 @@ export class DatasetViewComponent implements OnInit {
 
   onPageChange(event: PageEvent): void {
     this.loadData(event.pageIndex + 1);
+  }
+
+  /**
+   * Desplaza la tabla hacia la izquierda
+   */
+  scrollTableLeft(): void {
+    const container = this.tableScrollContainer()?.nativeElement;
+    if (container) {
+      container.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  }
+
+  /**
+   * Desplaza la tabla hacia la derecha
+   */
+  scrollTableRight(): void {
+    const container = this.tableScrollContainer()?.nativeElement;
+    if (container) {
+      container.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  }
+
+  /**
+   * Actualiza el estado de los botones de scroll según la posición
+   */
+  onTableScroll(): void {
+    const container = this.tableScrollContainer()?.nativeElement;
+    if (container) {
+      this.canScrollLeft = container.scrollLeft > 0;
+      this.canScrollRight =
+        container.scrollLeft < container.scrollWidth - container.clientWidth - 5;
+    }
   }
 
   /**

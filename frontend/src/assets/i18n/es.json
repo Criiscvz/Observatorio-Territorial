@@ -316,7 +316,9 @@
       },
       "data": {
         "noData": "No hay datos disponibles",
-        "scrollHint": "Desliza horizontalmente para ver más columnas"
+        "scrollHint": "Usa las flechas para navegar entre columnas",
+        "scrollLeft": "Desplazar a la izquierda",
+        "scrollRight": "Desplazar a la derecha"
       },
       "variables": {
         "title": "Configuración de Variables",

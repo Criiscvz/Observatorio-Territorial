@@ -316,7 +316,9 @@
       },
       "data": {
         "noData": "No data available",
-        "scrollHint": "Scroll horizontally to see more columns"
+        "scrollHint": "Use the arrows to navigate between columns",
+        "scrollLeft": "Scroll left",
+        "scrollRight": "Scroll right"
       },
       "variables": {
         "title": "Variable Configuration",
