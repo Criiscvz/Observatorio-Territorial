@@ -1,6 +1,5 @@
-import { Component, computed, inject, OnInit, signal, viewChild, PLATFORM_ID} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { Component, computed, inject, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -15,10 +14,10 @@ import { ChartData, VariableMetadato } from '@core/models';
 import { DashboardService } from '@core/services/dashboard.service';
 import { BivariableResponse } from '@core/services/interfaces';
 import {
-  ChartsGridComponent,
-  ChartTypeSelectorComponent,
-  DataTableComponent,
-  VariableSelectorComponent,
+    ChartsGridComponent,
+    ChartTypeSelectorComponent,
+    DataTableComponent,
+    VariableSelectorComponent,
 } from '@shared/components/charts';
 import { ActiveChart, CHART_TYPES, ChartType, ColumnWithUniqueId } from '@shared/models';
 
