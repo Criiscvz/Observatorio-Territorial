@@ -315,7 +315,10 @@
         "analysis": "Análisis"
       },
       "data": {
-        "noData": "No hay datos disponibles"
+        "noData": "No hay datos disponibles",
+        "scrollHint": "Usa las flechas para navegar entre columnas",
+        "scrollLeft": "Desplazar a la izquierda",
+        "scrollRight": "Desplazar a la derecha"
       },
       "variables": {
         "title": "Configuración de Variables",
@@ -347,6 +350,15 @@
         "noCompatibleVariables": "No hay variables compatibles",
         "variablesAvailable": "{{count}} variables disponibles",
         "variablesCompatible": "{{count}} variables compatibles"
+      },
+      "pendingWarning": {
+        "title": "Dataset incompleto",
+        "message": "Este dataset aún no tiene datos importados. Debes completar la configuración de columnas para que los datos se carguen correctamente.",
+        "continueConfig": "Continuar Configuración",
+        "deleteDataset": "Eliminar Dataset",
+        "confirmDelete": "¿Estás seguro de eliminar el dataset \"{{name}}\"? Esta acción no se puede deshacer.",
+        "deleteSuccess": "Dataset eliminado correctamente",
+        "deleteError": "Error al eliminar el dataset"
       }
     },
     "status": {
@@ -412,7 +424,10 @@
       "noDatasets": "Sin datasets",
       "noDatasetsMessage": "Importa un archivo Excel para comenzar el análisis",
       "importDataset": "Importar Dataset",
-      "viewAnalysis": "Ver Análisis"
+      "viewAnalysis": "Ver Análisis",
+      "confirmDelete": "¿Estás seguro de que deseas eliminar el departamento \"{{name}}\"? Esta acción no se puede deshacer.",
+      "deleted": "Departamento eliminado exitosamente",
+      "deleteError": "Error al eliminar el departamento"
     },
     "icons": {
       "social": "Social / Grupos",

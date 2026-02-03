@@ -26,6 +26,10 @@
           <mat-icon>edit</mat-icon>
           {{ 'common.buttons.edit' | translate }}
         </a>
+        <button mat-button color="warn" (click)="deleteDepartamento()">
+          <mat-icon>delete</mat-icon>
+          {{ 'common.buttons.delete' | translate }}
+        </button>
         <a
           mat-raised-button
           color="primary"
@@ -41,7 +45,9 @@
     <!-- Lista de Datasets -->
     @if (datasets().length > 0) {
       <div class="space-y-4">
-        <h2 class="text-xl font-semibold text-[var(--text-primary)]">{{ 'departamentos.detail.datasets' | translate }}</h2>
+        <h2 class="text-xl font-semibold text-[var(--text-primary)]">
+          {{ 'departamentos.detail.datasets' | translate }}
+        </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           @for (dataset of datasets(); track dataset.id) {
             <mat-card class="cursor-pointer hover:shadow-lg transition-shadow">
@@ -49,7 +55,8 @@
                 <mat-icon mat-card-avatar class="!text-red-500">description</mat-icon>
                 <mat-card-title>{{ dataset.nombre }}</mat-card-title>
                 <mat-card-subtitle>
-                  {{ dataset.total_registros | number }} {{ 'departamentos.detail.records' | translate }}
+                  {{ dataset.total_registros | number }}
+                  {{ 'departamentos.detail.records' | translate }}
                 </mat-card-subtitle>
               </mat-card-header>
               <mat-card-content>
@@ -70,6 +77,23 @@
                   <mat-icon>analytics</mat-icon>
                   {{ 'departamentos.detail.viewAnalysis' | translate }}
                 </a>
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="datasetMenu"
+                  (click)="$event.stopPropagation()"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #datasetMenu="matMenu">
+                  <a mat-menu-item [routerLink]="['/admin/datasets', dataset.id]">
+                    <mat-icon>visibility</mat-icon>
+                    <span>{{ 'common.buttons.view' | translate }}</span>
+                  </a>
+                  <button mat-menu-item (click)="deleteDataset(dataset)">
+                    <mat-icon color="warn">delete</mat-icon>
+                    <span class="text-red-500">{{ 'common.buttons.delete' | translate }}</span>
+                  </button>
+                </mat-menu>
               </mat-card-actions>
             </mat-card>
           }
@@ -79,7 +103,9 @@
       <mat-card>
         <mat-card-content class="text-center py-12">
           <mat-icon class="text-6xl text-[var(--text-tertiary)]">insert_chart</mat-icon>
-          <h3 class="text-xl text-[var(--text-secondary)] mt-4">{{ 'departamentos.detail.noDatasets' | translate }}</h3>
+          <h3 class="text-xl text-[var(--text-secondary)] mt-4">
+            {{ 'departamentos.detail.noDatasets' | translate }}
+          </h3>
           <p class="text-[var(--text-secondary)] mb-4">
             {{ 'departamentos.detail.noDatasetsMessage' | translate }}
           </p>

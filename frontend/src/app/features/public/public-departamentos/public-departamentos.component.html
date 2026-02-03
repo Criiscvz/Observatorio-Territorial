@@ -56,7 +56,7 @@
               <h3>{{ depto.nombre }}</h3>
               <span class="meta-badge">
                 <mat-icon>folder</mat-icon>
-                {{ depto.datasets_count || 0 }} {{ 'common.units.datasets' | translate }}
+                {{ depto.datasets?.length || 0 }} {{ 'common.units.datasets' | translate }}
               </span>
             </div>
           </div>

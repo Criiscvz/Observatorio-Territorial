@@ -111,9 +111,9 @@ interface NavItem {
               </div>
               <div class="depto-info">
                 <span class="depto-name">{{ depto.nombre }}</span>
-                @if (depto.datasets_count !== undefined) {
+                @if (depto.datasets) {
                   <span class="depto-count"
-                    >{{ depto.datasets_count }} {{ 'common.units.datasets' | translate }}</span
+                    >{{ depto.datasets.length }} {{ 'common.units.datasets' | translate }}</span
                   >
                 }
               </div>
@@ -417,6 +417,11 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartamentos();
+
+    // Suscribirse a cambios en departamentos para actualizar automáticamente
+    this.deptoService.onDepartamentosChanged$.subscribe(() => {
+      this.loadDepartamentos();
+    });
   }
 
   loadDepartamentos(): void {

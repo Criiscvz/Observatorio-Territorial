@@ -118,6 +118,17 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
 
     public function getUserRole(string $departamentoId, int $userId): ?string
     {
+        // Los usuarios con rol ADMIN global tienen permisos de ADMIN en todos los departamentos
+        $user = \App\Models\User::find($userId);
+        if ($user && $user->rol === 'ADMIN') {
+            // Verificar que el departamento existe
+            if ($this->model->where('id', $departamentoId)->exists()) {
+                return 'ADMIN';
+            }
+            return null;
+        }
+
+        // Para otros usuarios, verificar asignación específica
         $model = $this->model
             ->where('id', $departamentoId)
             ->whereHas('usuarios', fn($q) => $q->where('user_id', $userId))

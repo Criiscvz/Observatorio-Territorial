@@ -9,6 +9,7 @@ use App\Application\Dataset\DTOs\ConfirmImportDTO;
 use App\Application\Dataset\DTOs\UploadDatasetDTO;
 use App\Application\Dataset\UseCases\AnalyzeDatasetUseCase;
 use App\Application\Dataset\UseCases\ConfirmImportUseCase;
+use App\Application\Dataset\UseCases\DeleteDatasetUseCase;
 use App\Application\Dataset\UseCases\GetDatasetDataUseCase;
 use App\Application\Dataset\UseCases\GetDatasetsUseCase;
 use App\Application\Dataset\UseCases\GetDatasetUseCase;
@@ -33,6 +34,7 @@ class DatasetController extends Controller
         private readonly ConfirmImportUseCase $confirmImportUseCase,
         private readonly GetDatasetDataUseCase $getDatasetDataUseCase,
         private readonly UpdateVariableUseCase $updateVariableUseCase,
+        private readonly DeleteDatasetUseCase $deleteDatasetUseCase,
     ) {}
 
     #[OA\Get(
@@ -226,5 +228,26 @@ class DatasetController extends Controller
         );
 
         return response()->json($result->toArray());
+    }
+
+    #[OA\Delete(
+        path: '/datasets/{id}',
+        summary: 'Eliminar dataset',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Dataset eliminado'),
+            new OA\Response(response: 403, description: 'Sin permisos'),
+            new OA\Response(response: 404, description: 'No encontrado')
+        ]
+    )]
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        $this->deleteDatasetUseCase->execute($id, $request->user()->id);
+
+        return response()->json(['message' => 'Dataset eliminado exitosamente']);
     }
 }

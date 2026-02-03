@@ -20,5 +20,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [DatasetController::class, 'store']);
         Route::post('/{dataset}/analyze', [DatasetController::class, 'analyze']);
         Route::post('/{dataset}/import', [DatasetController::class, 'import']);
+        Route::delete('/{dataset}', [DatasetController::class, 'destroy']);
     });
 });
