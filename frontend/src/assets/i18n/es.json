@@ -173,8 +173,8 @@
   },
   "layout": {
     "header": {
-      "brand": "Observatorio",
-      "brandSubtitle": "ULEAM",
+      "brand": "Observatorio Territorial",
+      "brandSubtitle": "Multidisciplinario",
       "menu": "Menú",
       "themeLight": "Modo claro",
       "themeDark": "Modo oscuro",
@@ -188,11 +188,11 @@
       "dashboard": "Dashboard",
       "uploadDataset": "Subir Dataset",
       "users": "Usuarios",
-      "departments": "Departamentos",
-      "newDepartment": "Nuevo departamento",
+      "departments": "Dimensiones",
+      "newDepartment": "Nueva dimensión",
       "allDatasets": "Todos los Datasets",
-      "noDepartments": "Sin departamentos",
-      "createOne": "Crear uno"
+      "noDepartments": "Sin dimensiones",
+      "createOne": "Crear una"
     },
     "footer": {
       "copyright": "© {{year}} Observatorio ULEAM. Todos los derechos reservados.",
@@ -202,26 +202,26 @@
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Bienvenido al Observatorio",
-    "welcomeMessage": "Gestiona tus departamentos y datasets de manera eficiente",
+    "welcomeMessage": "Gestiona tus dimensiones y datasets de manera eficiente",
     "stats": {
-      "totalDepartments": "Departamentos",
+      "totalDepartments": "Dimensiones",
       "totalDatasets": "Datasets",
       "totalRecords": "Registros Totales",
-      "publicDepartments": "Departamentos Públicos"
+      "publicDepartments": "Dimensiones Públicas"
     },
     "quickActions": {
       "title": "Acciones Rápidas",
-      "newDepartment": "Nuevo Departamento",
-      "newDepartmentDesc": "Crea un nuevo departamento para organizar tus datos",
+      "newDepartment": "Nueva Dimensión",
+      "newDepartmentDesc": "Crea una nueva dimensión para organizar tus datos",
       "uploadDataset": "Subir Dataset",
       "uploadDatasetDesc": "Importa un archivo Excel o CSV para analizar",
       "viewAll": "Ver Todos",
       "viewAllDesc": "Explora todos los datasets disponibles"
     },
     "recentDepartments": {
-      "title": "Departamentos Recientes",
-      "viewAll": "Ver todos",
-      "empty": "No hay departamentos aún"
+      "title": "Dimensiones Recientes",
+      "viewAll": "Ver todas",
+      "empty": "No hay dimensiones aún"
     },
     "recentDatasets": {
       "title": "Datasets Recientes",
@@ -239,7 +239,7 @@
       "importDataset": "Importar Dataset",
       "columns": {
         "name": "Nombre",
-        "department": "Departamento",
+        "department": "Dimensión",
         "status": "Estado",
         "records": "Registros",
         "date": "Fecha"
@@ -259,8 +259,8 @@
         "complete": "Completado"
       },
       "form": {
-        "department": "Departamento",
-        "selectDepartment": "Selecciona un departamento",
+        "department": "Dimensión",
+        "selectDepartment": "Selecciona una dimensión",
         "name": "Nombre del Dataset",
         "namePlaceholder": "Ej: Encuesta 2025",
         "description": "Descripción"
@@ -369,31 +369,31 @@
     }
   },
   "departamentos": {
-    "title": "Departamentos",
+    "title": "Dimensiones",
     "list": {
-      "title": "Departamentos",
-      "newDepartment": "Nuevo Departamento",
-      "empty": "No hay departamentos",
-      "emptyDescription": "Crea tu primer departamento"
+      "title": "Dimensiones",
+      "newDepartment": "Nueva Dimensión",
+      "empty": "No hay dimensiones",
+      "emptyDescription": "Crea tu primera dimensión"
     },
     "form": {
-      "titleEdit": "Editar Departamento",
-      "titleNew": "Nuevo Departamento",
-      "name": "Nombre del Departamento",
-      "namePlaceholder": "Ej: Bienestar Estudiantil",
+      "titleEdit": "Editar Dimensión",
+      "titleNew": "Nueva Dimensión",
+      "name": "Nombre de la Dimensión",
+      "namePlaceholder": "Ej: Vitalidad Ecológica",
       "code": "Código Interno",
-      "codePlaceholder": "Ej: BIENESTAR-2024",
-      "codeHint": "Identificador único del departamento",
+      "codePlaceholder": "Ej: VITALIDAD-2024",
+      "codeHint": "Identificador único de la dimensión",
       "description": "Descripción (opcional)",
-      "descriptionPlaceholder": "Describe el propósito del departamento...",
-      "public": "Departamento Público",
-      "publicDescription": "Los departamentos públicos pueden ser vistos por usuarios externos sin autenticación.",
+      "descriptionPlaceholder": "Describe el propósito de la dimensión...",
+      "public": "Dimensión Pública",
+      "publicDescription": "Las dimensiones públicas pueden ser vistas por usuarios externos sin autenticación.",
       "icon": "Icono",
       "noIcon": "Sin icono",
-      "iconHint": "El icono se mostrará en las tarjetas del departamento",
+      "iconHint": "El icono se mostrará en las tarjetas de la dimensión",
       "selectIcon": "Selecciona un icono",
       "saveChanges": "Guardar Cambios",
-      "createDepartment": "Crear Departamento",
+      "createDepartment": "Crear Dimensión",
       "saving": "Guardando...",
       "validation": {
         "nameRequired": "El nombre es requerido",
@@ -410,24 +410,24 @@
         "unexpectedError": "Ocurrió un error inesperado. Intenta de nuevo."
       },
       "success": {
-        "created": "Departamento creado exitosamente",
-        "updated": "Departamento actualizado exitosamente"
+        "created": "Dimensión creada exitosamente",
+        "updated": "Dimensión actualizada exitosamente"
       }
     },
     "detail": {
-      "title": "Departamento",
+      "title": "Dimensión",
       "noDescription": "Sin descripción",
       "code": "Código",
-      "publicBadge": "Público",
-      "datasets": "Datasets del Departamento",
+      "publicBadge": "Pública",
+      "datasets": "Datasets de la Dimensión",
       "records": "registros",
       "noDatasets": "Sin datasets",
       "noDatasetsMessage": "Importa un archivo Excel para comenzar el análisis",
       "importDataset": "Importar Dataset",
       "viewAnalysis": "Ver Análisis",
-      "confirmDelete": "¿Estás seguro de que deseas eliminar el departamento \"{{name}}\"? Esta acción no se puede deshacer.",
-      "deleted": "Departamento eliminado exitosamente",
-      "deleteError": "Error al eliminar el departamento"
+      "confirmDelete": "¿Estás seguro de que deseas eliminar la dimensión \"{{name}}\"? Esta acción no se puede deshacer.",
+      "deleted": "Dimensión eliminada exitosamente",
+      "deleteError": "Error al eliminar la dimensión"
     },
     "icons": {
       "social": "Social / Grupos",
@@ -455,8 +455,8 @@
     },
     "home": {
       "hero": {
-        "title": "Observatorio de Datos",
-        "titleHighlight": "Universitarios ULEAM",
+        "title": "Observatorio Territorial",
+        "titleHighlight": "Multidisciplinario ULEAM",
         "subtitle": "Transforma tus archivos Excel en dashboards interactivos de manera automática. Analiza, visualiza y comparte datos de forma inteligente.",
         "exploreData": "Explorar Datos Públicos",
         "createAccount": "Crear Cuenta Gratis",
@@ -493,34 +493,44 @@
         }
       },
       "departments": {
-        "title": "Departamentos Públicos",
+        "title": "Dimensiones Territoriales",
         "subtitle": "Explora los datos compartidos por la comunidad universitaria",
-        "loading": "Cargando departamentos...",
+        "loading": "Cargando dimensiones...",
         "noDescription": "Sin descripción",
-        "viewAll": "Ver todos los departamentos",
-        "empty": "No hay departamentos públicos disponibles"
+        "viewAll": "Ver todas las dimensiones",
+        "empty": "No hay dimensiones públicas disponibles"
       },
       "cta": {
-        "title": "¿Listo para analizar tus datos?",
-        "subtitle": "Únete a la comunidad de investigadores y analistas de ULEAM",
-        "button": "Comenzar Ahora"
+        "title": "Únete al Observatorio Territorial",
+        "subtitle": "Accede a datos territoriales, análisis multidisciplinarios y herramientas de visualización para la toma de decisiones informadas.",
+        "button": "Crear Cuenta Gratis"
       },
       "footer": {
         "websiteLink": "Sitio Web ULEAM",
-        "departmentsLink": "Departamentos"
+        "departmentsLink": "Dimensiones"
+      },
+      "nav": {
+        "geoViewer": "Visor Geográfico",
+        "observatories": "Observatorios",
+        "aboutOtm": "Acerca del OTM",
+        "sapereAude": "Programa Sapere Aude",
+        "analysis": "Análisis y Propuestas",
+        "territorialData": "Datos Territoriales",
+        "participation": "Participación y Diálogo",
+        "datasets": "Datasets"
       }
     },
     "departments": {
-      "title": "Departamentos Públicos",
-      "subtitle": "Explora los datos compartidos por los departamentos de la universidad",
-      "search": "Buscar departamentos...",
-      "resultsCount": "{{count}} departamento(s) encontrado(s)",
-      "loading": "Cargando departamentos...",
-      "empty": "No hay departamentos públicos disponibles",
+      "title": "Dimensiones Públicas",
+      "subtitle": "Explora los datos compartidos por las dimensiones del observatorio",
+      "search": "Buscar dimensiones...",
+      "resultsCount": "{{count}} dimensión(es) encontrada(s)",
+      "loading": "Cargando dimensiones...",
+      "empty": "No hay dimensiones públicas disponibles",
       "viewDetails": "Ver detalles"
     },
     "departmentDetail": {
-      "backToDepartments": "Departamentos",
+      "backToDepartments": "Dimensiones",
       "noDescription": "Sin descripción",
       "stats": {
         "datasets": "datasets",
@@ -529,17 +539,17 @@
       "datasets": {
         "title": "Datasets Disponibles",
         "empty": "Sin datasets",
-        "emptyMessage": "Este departamento aún no tiene datasets públicos disponibles"
+        "emptyMessage": "Esta dimensión aún no tiene datasets públicos disponibles"
       },
       "notFound": {
-        "title": "Departamento no encontrado",
-        "message": "El departamento que buscas no existe o no está disponible públicamente",
-        "backButton": "Volver a departamentos"
+        "title": "Dimensión no encontrada",
+        "message": "La dimensión que buscas no existe o no está disponible públicamente",
+        "backButton": "Volver a dimensiones"
       }
     },
     "datasetView": {
       "loading": "Cargando dataset...",
-      "backToDepartment": "Volver al departamento",
+      "backToDepartment": "Volver a la dimensión",
       "stats": {
         "records": "registros",
         "variables": "variables"

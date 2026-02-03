@@ -8,6 +8,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { APP_CONFIG } from '@core/config';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
@@ -40,6 +41,8 @@ export class PublicHomeComponent implements OnInit {
   readonly authService = inject(AuthService);
   readonly themeService = inject(ThemeService);
   readonly languageService = inject(LanguageService);
+
+  readonly appConfig = APP_CONFIG;
 
   departamentos = signal<Departamento[]>([]);
   loading = signal(true);

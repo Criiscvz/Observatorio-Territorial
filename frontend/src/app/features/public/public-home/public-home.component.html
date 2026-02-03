@@ -3,16 +3,48 @@
   <div class="header-container">
     <a routerLink="/" class="logo-link">
       <img src="ULEAM.png" alt="ULEAM" class="logo" />
-      <span class="logo-text"
-        >{{ 'layout.header.brand' | translate }}
-        {{ 'layout.header.brandSubtitle' | translate }}</span
-      >
+      <div class="logo-text-container">
+        <span class="logo-text">{{ appConfig.app.name }}</span>
+        <span class="logo-subtitle">{{ appConfig.university.shortName }}</span>
+      </div>
     </a>
 
     <nav class="nav-links">
-      <a routerLink="/publico/departamentos" routerLinkActive="active">
-        <mat-icon>business</mat-icon>
-        {{ 'public.home.footer.departmentsLink' | translate }}
+      <!-- Visor Geográfico -->
+      <a
+        href="https://departamentos.uleam.edu.ec/observatorio-territorial/"
+        target="_blank"
+        class="nav-link featured"
+      >
+        <mat-icon>public</mat-icon>
+        {{ 'public.home.nav.geoViewer' | translate }}
+      </a>
+
+      <!-- Menú de Observatorios -->
+      <button class="nav-link" [matMenuTriggerFor]="observatoriesMenu">
+        <mat-icon>visibility</mat-icon>
+        {{ 'public.home.nav.observatories' | translate }}
+        <mat-icon class="dropdown-arrow">expand_more</mat-icon>
+      </button>
+      <mat-menu #observatoriesMenu="matMenu" class="observatories-menu">
+        @for (depto of departamentos(); track depto.id) {
+          <a mat-menu-item [routerLink]="['/publico/departamentos', depto.id]">
+            <mat-icon>{{ depto.icono || 'folder' }}</mat-icon>
+            <span>{{ depto.nombre }}</span>
+          </a>
+        }
+        @if (departamentos().length === 0) {
+          <button mat-menu-item disabled>
+            <mat-icon>info</mat-icon>
+            <span>{{ 'public.home.departments.empty' | translate }}</span>
+          </button>
+        }
+      </mat-menu>
+
+      <!-- Datasets -->
+      <a routerLink="/publico/departamentos" routerLinkActive="active" class="nav-link">
+        <mat-icon>table_chart</mat-icon>
+        {{ 'public.home.nav.datasets' | translate }}
       </a>
     </nav>
 
@@ -275,13 +307,24 @@
 <!-- CTA Section -->
 @if (!authService.isAuthenticated()) {
   <section class="cta-section">
+    <div class="cta-decoration cta-decoration-1"></div>
+    <div class="cta-decoration cta-decoration-2"></div>
     <div class="cta-content">
+      <div class="cta-icon">
+        <mat-icon>explore</mat-icon>
+      </div>
       <h2>{{ 'public.home.cta.title' | translate }}</h2>
       <p>{{ 'public.home.cta.subtitle' | translate }}</p>
-      <a mat-raised-button color="primary" routerLink="/auth/register" class="cta-btn">
-        {{ 'public.home.cta.button' | translate }}
-        <mat-icon>arrow_forward</mat-icon>
-      </a>
+      <div class="cta-actions">
+        <a mat-raised-button routerLink="/auth/register" class="cta-btn-primary">
+          <mat-icon>person_add</mat-icon>
+          {{ 'public.home.cta.button' | translate }}
+        </a>
+        <a mat-stroked-button routerLink="/auth/login" class="cta-btn-secondary">
+          <mat-icon>login</mat-icon>
+          {{ 'public.header.login' | translate }}
+        </a>
+      </div>
     </div>
   </section>
 }
@@ -291,10 +334,13 @@
   <div class="footer-content">
     <div class="footer-brand">
       <img src="ULEAM.png" alt="ULEAM" class="footer-logo" />
-      <p>{{ 'layout.footer.university' | translate }}</p>
+      <div class="footer-brand-info">
+        <p class="footer-app-name">{{ appConfig.app.name }}</p>
+        <p class="footer-university">{{ appConfig.university.name }}</p>
+      </div>
     </div>
     <div class="footer-links">
-      <a href="https://www.uleam.edu.ec" target="_blank">{{
+      <a [href]="appConfig.university.url" target="_blank">{{
         'public.home.footer.websiteLink' | translate
       }}</a>
       <a routerLink="/publico/departamentos">{{

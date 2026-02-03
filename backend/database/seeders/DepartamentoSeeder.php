@@ -8,61 +8,79 @@ use Illuminate\Database\Seeder;
 class DepartamentoSeeder extends Seeder
 {
     /**
-     * Lista de departamentos iniciales con sus iconos.
+     * Lista de dimensiones territoriales con sus iconos.
      * Los iconos usan Material Icons (compatibles con Angular Material).
      */
     private array $departamentos = [
         [
-            'nombre' => 'Social',
-            'codigo_interno' => 'SOCIAL',
-            'descripcion' => 'Departamento de estadísticas sociales, demografía y bienestar de la población.',
+            'nombre' => 'Vitalidad Ecológica',
+            'codigo_interno' => 'VITALIDAD_ECOLOGICA',
+            'descripcion' => 'Dimensión que analiza la biodiversidad, ecosistemas, recursos naturales y sostenibilidad ambiental del territorio.',
+            'icono' => 'eco',
+            'publico' => true,
+        ],
+        [
+            'nombre' => 'Economía del Cuidado',
+            'codigo_interno' => 'ECONOMIA_CUIDADO',
+            'descripcion' => 'Dimensión dedicada al análisis del trabajo doméstico, cuidado de personas, economía solidaria y bienestar social.',
+            'icono' => 'favorite',
+            'publico' => true,
+        ],
+        [
+            'nombre' => 'Saberes y Cultura Viva',
+            'codigo_interno' => 'SABERES_CULTURA',
+            'descripcion' => 'Dimensión que estudia el patrimonio cultural, conocimientos ancestrales, tradiciones y expresiones artísticas del territorio.',
+            'icono' => 'auto_stories',
+            'publico' => true,
+        ],
+        [
+            'nombre' => 'Gobernanza Comunitaria',
+            'codigo_interno' => 'GOBERNANZA',
+            'descripcion' => 'Dimensión enfocada en la participación ciudadana, organización comunitaria, gestión territorial y políticas públicas.',
             'icono' => 'groups',
             'publico' => true,
         ],
         [
-            'nombre' => 'Laboral',
-            'codigo_interno' => 'LABORAL',
-            'descripcion' => 'Departamento de estadísticas laborales, empleo y mercado de trabajo.',
-            'icono' => 'work',
-            'publico' => true,
-        ],
-        [
-            'nombre' => 'Electoral',
-            'codigo_interno' => 'ELECTORAL',
-            'descripcion' => 'Departamento de estadísticas electorales, participación ciudadana y procesos democráticos.',
-            'icono' => 'how_to_vote',
-            'publico' => true,
-        ],
-        [
-            'nombre' => 'Turístico',
-            'codigo_interno' => 'TURISTICO',
-            'descripcion' => 'Departamento de estadísticas turísticas, visitantes y actividad hotelera.',
-            'icono' => 'flight_takeoff',
+            'nombre' => 'Resiliencia',
+            'codigo_interno' => 'RESILIENCIA',
+            'descripcion' => 'Dimensión que evalúa la capacidad de adaptación, gestión de riesgos, seguridad alimentaria y respuesta ante crisis.',
+            'icono' => 'shield',
             'publico' => true,
         ],
     ];
 
     /**
-     * Seed the application's database with initial departments.
+     * Seed the application's database with initial dimensions.
      */
     public function run(): void
     {
+        // Eliminar dimensiones antiguas que no tienen datasets asociados
+        $codigosNuevos = array_column($this->departamentos, 'codigo_interno');
+        DepartamentoModel::whereDoesntHave('datasets')
+            ->whereNotIn('codigo_interno', $codigosNuevos)
+            ->each(function ($depto) {
+                $this->command->info("Dimensión eliminada (sin datasets): {$depto->nombre}");
+                $depto->delete();
+            });
+
         foreach ($this->departamentos as $departamentoData) {
             $existing = DepartamentoModel::where('codigo_interno', $departamentoData['codigo_interno'])->first();
 
             if ($existing) {
-                // Actualizar si ya existe (por ejemplo, para añadir el icono)
+                // Actualizar si ya existe
                 $existing->update([
+                    'nombre' => $departamentoData['nombre'],
                     'icono' => $departamentoData['icono'],
                     'descripcion' => $departamentoData['descripcion'],
+                    'publico' => $departamentoData['publico'],
                 ]);
-                $this->command->info("Departamento actualizado: {$departamentoData['nombre']}");
+                $this->command->info("Dimensión actualizada: {$departamentoData['nombre']}");
             } else {
                 DepartamentoModel::create($departamentoData);
-                $this->command->info("Departamento creado: {$departamentoData['nombre']}");
+                $this->command->info("Dimensión creada: {$departamentoData['nombre']}");
             }
         }
 
-        $this->command->info('Seeders de departamentos ejecutados correctamente.');
+        $this->command->info('Seeders de dimensiones ejecutados correctamente.');
     }
 }
