@@ -8,8 +8,8 @@ use App\Application\Dashboard\DTOs\BivariableRequestDTO;
 use App\Application\Dashboard\DTOs\BivariableResponseDTO;
 use App\Domain\Departamento\Repositories\DepartamentoRepositoryInterface;
 use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
-use App\Domain\Dataset\Repositories\RegistroDatoRepositoryInterface;
 use App\Domain\Dataset\Repositories\VariableMetadatoRepositoryInterface;
+use App\Domain\Statistics\Services\StatisticsServiceInterface;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -19,7 +19,7 @@ class GetBivariableStatsUseCase
         private readonly DatasetRepositoryInterface $datasetRepository,
         private readonly DepartamentoRepositoryInterface $departamentoRepository,
         private readonly VariableMetadatoRepositoryInterface $variableRepository,
-        private readonly RegistroDatoRepositoryInterface $registroRepository,
+        private readonly StatisticsServiceInterface $statisticsService,
     ) {}
 
     public function execute(BivariableRequestDTO $dto): BivariableResponseDTO
@@ -67,15 +67,12 @@ class GetBivariableStatsUseCase
 
         // Ambas numéricas -> Scatter plot
         if ($tipoX === 'NUMERICO' && $tipoY === 'NUMERICO') {
-            $scatterData = $this->registroRepository->getScatterData(
+            $result = $this->statisticsService->getScatterData(
                 $datasetId,
                 $variableX->nombreColumna,
                 $variableY->nombreColumna,
                 1000
             );
-
-            // Calcular correlación
-            $correlation = $this->calculateCorrelation($scatterData);
 
             return new BivariableResponseDTO(
                 variableXId: $variableX->id,
@@ -83,19 +80,14 @@ class GetBivariableStatsUseCase
                 nombreVariableX: $variableX->nombreColumna,
                 nombreVariableY: $variableY->nombreColumna,
                 chartType: 'scatter',
-                data: [
-                    'points' => $scatterData,
-                ],
-                stats: [
-                    'correlation' => $correlation,
-                    'count' => count($scatterData),
-                ],
+                data: $result['data'],
+                stats: $result['stats'],
             );
         }
 
         // Categórica/Texto + Numérica -> Bar chart agrupado
         if ($tipoX === 'CATEGORICO' && $tipoY === 'NUMERICO') {
-            $grouped = $this->registroRepository->getGroupedAverages(
+            $result = $this->statisticsService->getGroupedBarData(
                 $datasetId,
                 $variableX->nombreColumna,
                 $variableY->nombreColumna,
@@ -108,19 +100,14 @@ class GetBivariableStatsUseCase
                 nombreVariableX: $variableX->nombreColumna,
                 nombreVariableY: $variableY->nombreColumna,
                 chartType: 'grouped_bar',
-                data: [
-                    'categories' => array_column($grouped, 'categoria'),
-                    'labels' => array_column($grouped, 'categoria'),
-                    'values' => array_map(fn($v) => round((float) $v->promedio, 2), $grouped),
-                    'counts' => array_column($grouped, 'count'),
-                ],
-                stats: ['count' => array_sum(array_column($grouped, 'count'))],
+                data: $result['data'],
+                stats: $result['stats'],
             );
         }
 
         // Numérica + Categórica/Texto -> invertir
         if ($tipoX === 'NUMERICO' && $tipoY === 'CATEGORICO') {
-            $grouped = $this->registroRepository->getGroupedAverages(
+            $result = $this->statisticsService->getGroupedBarData(
                 $datasetId,
                 $variableY->nombreColumna,
                 $variableX->nombreColumna,
@@ -133,19 +120,14 @@ class GetBivariableStatsUseCase
                 nombreVariableX: $variableX->nombreColumna,
                 nombreVariableY: $variableY->nombreColumna,
                 chartType: 'grouped_bar',
-                data: [
-                    'categories' => array_column($grouped, 'categoria'),
-                    'labels' => array_column($grouped, 'categoria'),
-                    'values' => array_map(fn($v) => round((float) $v->promedio, 2), $grouped),
-                    'counts' => array_column($grouped, 'count'),
-                ],
-                stats: ['count' => array_sum(array_column($grouped, 'count'))],
+                data: $result['data'],
+                stats: $result['stats'],
             );
         }
 
         // Ambas categóricas/texto -> Heatmap o stacked bar
         if ($tipoX === 'CATEGORICO' && $tipoY === 'CATEGORICO') {
-            $contingency = $this->registroRepository->getContingencyTable(
+            $result = $this->statisticsService->getHeatmapData(
                 $datasetId,
                 $variableX->nombreColumna,
                 $variableY->nombreColumna,
@@ -158,18 +140,21 @@ class GetBivariableStatsUseCase
                 nombreVariableX: $variableX->nombreColumna,
                 nombreVariableY: $variableY->nombreColumna,
                 chartType: $chartType === 'heatmap' ? 'heatmap' : 'stacked_bar',
-                data: $contingency,
-                stats: null,
+                data: $result['data'],
+                stats: $result['stats'],
             );
         }
 
         // FECHA + NUMERICO -> serie temporal
         if (($tipoX === 'FECHA' && $tipoY === 'NUMERICO') ||
             ($tipoX === 'NUMERICO' && $tipoY === 'FECHA')) {
-            $timeData = $this->registroRepository->getTimeSeriesAverage(
+            $dateColumn = $tipoX === 'FECHA' ? $variableX->nombreColumna : $variableY->nombreColumna;
+            $numColumn = $tipoX === 'NUMERICO' ? $variableX->nombreColumna : $variableY->nombreColumna;
+            
+            $result = $this->statisticsService->getTimeSeriesData(
                 $datasetId,
-                $tipoX === 'FECHA' ? $variableX->nombreColumna : $variableY->nombreColumna,
-                $tipoX === 'NUMERICO' ? $variableX->nombreColumna : $variableY->nombreColumna,
+                $dateColumn,
+                $numColumn,
                 $limit
             );
 
@@ -179,22 +164,21 @@ class GetBivariableStatsUseCase
                 nombreVariableX: $variableX->nombreColumna,
                 nombreVariableY: $variableY->nombreColumna,
                 chartType: 'line_time',
-                data: [
-                    'labels' => array_column($timeData, 'fecha'),
-                    'values' => array_map(fn($v) => round((float) $v->avg_value, 2), $timeData),
-                    'counts' => array_column($timeData, 'count'),
-                ],
-                stats: ['count' => array_sum(array_column($timeData, 'count'))],
+                data: $result['data'],
+                stats: $result['stats'],
             );
         }
 
         // FECHA + CATEGORICO -> evolución temporal
         if (($tipoX === 'FECHA' && $tipoY === 'CATEGORICO') ||
             ($tipoX === 'CATEGORICO' && $tipoY === 'FECHA')) {
-            $stackedData = $this->registroRepository->getStackedTimeData(
+            $dateColumn = $tipoX === 'FECHA' ? $variableX->nombreColumna : $variableY->nombreColumna;
+            $catColumn = $tipoX === 'CATEGORICO' ? $variableX->nombreColumna : $variableY->nombreColumna;
+            
+            $result = $this->statisticsService->getStackedBarData(
                 $datasetId,
-                $tipoX === 'FECHA' ? $variableX->nombreColumna : $variableY->nombreColumna,
-                $tipoX === 'CATEGORICO' ? $variableX->nombreColumna : $variableY->nombreColumna,
+                $dateColumn,
+                $catColumn,
                 $limit
             );
 
@@ -204,13 +188,13 @@ class GetBivariableStatsUseCase
                 nombreVariableX: $variableX->nombreColumna,
                 nombreVariableY: $variableY->nombreColumna,
                 chartType: 'stacked_bar',
-                data: $stackedData,
-                stats: null,
+                data: $result['data'],
+                stats: $result['stats'],
             );
         }
 
         // Fallback: tratar como categóricas
-        $contingency = $this->registroRepository->getContingencyTable(
+        $result = $this->statisticsService->getHeatmapData(
             $datasetId,
             $variableX->nombreColumna,
             $variableY->nombreColumna,
@@ -223,8 +207,8 @@ class GetBivariableStatsUseCase
             nombreVariableX: $variableX->nombreColumna,
             nombreVariableY: $variableY->nombreColumna,
             chartType: 'stacked_bar',
-            data: $contingency,
-            stats: null,
+            data: $result['data'],
+            stats: $result['stats'],
         );
     }
 
@@ -266,36 +250,5 @@ class GetBivariableStatsUseCase
         }
 
         return 'stacked_bar';
-    }
-
-    private function calculateCorrelation(array $points): ?float
-    {
-        if (count($points) < 2) {
-            return null;
-        }
-
-        $n = count($points);
-        $sumX = 0;
-        $sumY = 0;
-        $sumXY = 0;
-        $sumX2 = 0;
-        $sumY2 = 0;
-
-        foreach ($points as [$x, $y]) {
-            $sumX += $x;
-            $sumY += $y;
-            $sumXY += $x * $y;
-            $sumX2 += $x * $x;
-            $sumY2 += $y * $y;
-        }
-
-        $numerator = ($n * $sumXY) - ($sumX * $sumY);
-        $denominator = sqrt((($n * $sumX2) - ($sumX * $sumX)) * (($n * $sumY2) - ($sumY * $sumY)));
-
-        if ($denominator == 0) {
-            return null;
-        }
-
-        return round($numerator / $denominator, 4);
     }
 }

@@ -148,3 +148,114 @@ export const CHART_TYPES: ChartType[] = [
     bivariable: true,
   },
 ];
+
+/**
+ * Filtra los tipos de gráficos univariables según el tipo de dato
+ */
+export function getUnivariableChartTypes(tipoDato: DataType): ChartType[] {
+  // Normalizar TEXTO a CATEGORICO
+  const normalizedType = tipoDato === 'TEXTO' ? 'CATEGORICO' : tipoDato;
+  return CHART_TYPES.filter(
+    (chart) => !chart.bivariable && chart.forTypes.includes(normalizedType)
+  );
+}
+
+/**
+ * Filtra los tipos de gráficos bivariables según los tipos de datos de ambas variables
+ */
+export function getBivariableChartTypes(tipoX: DataType, tipoY: DataType): ChartType[] {
+  // Normalizar TEXTO a CATEGORICO
+  const normX = tipoX === 'TEXTO' ? 'CATEGORICO' : tipoX;
+  const normY = tipoY === 'TEXTO' ? 'CATEGORICO' : tipoY;
+
+  return CHART_TYPES.filter((chart) => {
+    if (!chart.bivariable) return false;
+
+    // Scatter: ambas numéricas
+    if (chart.id === 'scatter') {
+      return normX === 'NUMERICO' && normY === 'NUMERICO';
+    }
+
+    // Grouped bar / box_compare: una categórica y una numérica
+    if (chart.id === 'grouped_bar' || chart.id === 'box_compare') {
+      return (
+        (normX === 'CATEGORICO' && normY === 'NUMERICO') ||
+        (normX === 'NUMERICO' && normY === 'CATEGORICO')
+      );
+    }
+
+    // Heatmap: ambas categóricas
+    if (chart.id === 'heatmap') {
+      return normX === 'CATEGORICO' && normY === 'CATEGORICO';
+    }
+
+    // Line time: fecha + numérica
+    if (chart.id === 'line_time') {
+      return (
+        (normX === 'FECHA' && normY === 'NUMERICO') ||
+        (normX === 'NUMERICO' && normY === 'FECHA')
+      );
+    }
+
+    // Stacked bar: fecha + categórica
+    if (chart.id === 'stacked_bar') {
+      return (
+        (normX === 'FECHA' && normY === 'CATEGORICO') ||
+        (normX === 'CATEGORICO' && normY === 'FECHA')
+      );
+    }
+
+    return false;
+  });
+}
+
+/**
+ * Obtiene el tipo de gráfico por defecto según el tipo de dato
+ */
+export function getDefaultUnivariableChartType(tipoDato: DataType): ChartType | undefined {
+  const normalizedType = tipoDato === 'TEXTO' ? 'CATEGORICO' : tipoDato;
+  
+  switch (normalizedType) {
+    case 'NUMERICO':
+      return CHART_TYPES.find((t) => t.id === 'histogram');
+    case 'CATEGORICO':
+      return CHART_TYPES.find((t) => t.id === 'bar');
+    case 'FECHA':
+      return CHART_TYPES.find((t) => t.id === 'line');
+    default:
+      return CHART_TYPES.find((t) => t.id === 'bar');
+  }
+}
+
+/**
+ * Obtiene el tipo de gráfico bivariable por defecto según los tipos de datos
+ */
+export function getDefaultBivariableChartType(tipoX: DataType, tipoY: DataType): ChartType | undefined {
+  const normX = tipoX === 'TEXTO' ? 'CATEGORICO' : tipoX;
+  const normY = tipoY === 'TEXTO' ? 'CATEGORICO' : tipoY;
+
+  if (normX === 'NUMERICO' && normY === 'NUMERICO') {
+    return CHART_TYPES.find((t) => t.id === 'scatter');
+  }
+
+  if ((normX === 'CATEGORICO' && normY === 'NUMERICO') ||
+      (normX === 'NUMERICO' && normY === 'CATEGORICO')) {
+    return CHART_TYPES.find((t) => t.id === 'grouped_bar');
+  }
+
+  if (normX === 'CATEGORICO' && normY === 'CATEGORICO') {
+    return CHART_TYPES.find((t) => t.id === 'heatmap');
+  }
+
+  if ((normX === 'FECHA' && normY === 'NUMERICO') ||
+      (normX === 'NUMERICO' && normY === 'FECHA')) {
+    return CHART_TYPES.find((t) => t.id === 'line_time');
+  }
+
+  if ((normX === 'FECHA' && normY === 'CATEGORICO') ||
+      (normX === 'CATEGORICO' && normY === 'FECHA')) {
+    return CHART_TYPES.find((t) => t.id === 'stacked_bar');
+  }
+
+  return undefined;
+}

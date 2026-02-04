@@ -127,7 +127,6 @@ class StatisticsService implements StatisticsServiceInterface
 
         return [
             'data' => [
-                'categories' => $data->pluck('categoria')->toArray(),
                 'labels' => $data->pluck('categoria')->toArray(),
                 'values' => $data->pluck('avg_value')->map(fn($v) => round((float) $v, 2))->toArray(),
                 'counts' => $data->pluck('count')->map(fn($v) => (int) $v)->toArray(),
