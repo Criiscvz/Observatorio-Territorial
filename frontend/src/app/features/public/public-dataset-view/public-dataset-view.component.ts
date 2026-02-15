@@ -1,5 +1,14 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, computed, DestroyRef, inject, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  OnInit,
+  PLATFORM_ID,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';

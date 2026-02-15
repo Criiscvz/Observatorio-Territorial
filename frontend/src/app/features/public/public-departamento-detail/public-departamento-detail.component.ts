@@ -7,9 +7,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
 import { Dataset, Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-public-departamento-detail',
