@@ -32,7 +32,10 @@ Route::get('/avatars/{filename}', function (string $filename) {
     $path = 'public/avatars/' . $filename;
     
     if (!Storage::exists($path)) {
-        abort(404, 'Avatar no encontrado');
+        // Return 404 with CORS headers so the browser doesn't block the response
+        return response()->json(['message' => 'Avatar no encontrado'], 404)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Cross-Origin-Resource-Policy', 'cross-origin');
     }
     
     $file = Storage::get($path);

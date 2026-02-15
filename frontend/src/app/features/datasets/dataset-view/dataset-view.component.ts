@@ -1,5 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -72,6 +82,7 @@ export class DatasetViewComponent implements OnInit {
   private readonly categoriaService = inject(CategoriaService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly chartTypes = CHART_TYPES;
 
@@ -137,8 +148,16 @@ export class DatasetViewComponent implements OnInit {
   analysableVariables = computed(() => this.variables().filter((v) => v.es_visible));
 
   ngOnInit(): void {
-    this.datasetId.set(this.route.snapshot.params['id']);
-    this.loadData();
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const id = params['id'];
+      if (id && id !== this.datasetId()) {
+        this.datasetId.set(id);
+        this.activeCharts.set([]);
+        this.predefinedCharts.set([]);
+        this.fuentes.set([]);
+        this.loadData();
+      }
+    });
   }
 
   loadData(page: number = 1): void {

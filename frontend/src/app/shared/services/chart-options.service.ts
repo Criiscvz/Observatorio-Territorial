@@ -1,9 +1,13 @@
-import { Injectable, inject } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ChartData } from '@core/models';
 import { ChartThemeService } from '@core/services/chart-theme.service';
 import { BivariableResponse } from '@core/services/interfaces';
 import { EChartsOption } from 'echarts';
-import 'echarts-wordcloud';
+
+// Only import echarts-wordcloud in browser (it depends on 'window')
+if (typeof window !== 'undefined') {
+  import('echarts-wordcloud');
+}
 
 @Injectable({ providedIn: 'root' })
 export class ChartOptionsService {

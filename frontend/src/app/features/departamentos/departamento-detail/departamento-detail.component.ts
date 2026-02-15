@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -33,14 +34,20 @@ export class DepartamentoDetailComponent implements OnInit {
   private readonly deptoService = inject(DepartamentoService);
   private readonly datasetService = inject(DatasetService);
   private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   departamento = signal<Departamento | null>(null);
   datasets = signal<Dataset[]>([]);
   loading = signal(true);
 
   ngOnInit(): void {
-    const id = this.route.snapshot.params['id'];
-    this.loadDepartamento(id);
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      const id = params['id'];
+      if (id) {
+        this.loading.set(true);
+        this.loadDepartamento(id);
+      }
+    });
   }
 
   loadDepartamento(id: string): void {
