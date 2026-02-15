@@ -39,12 +39,17 @@ class GetUnivariableStatsUseCase
         $columna = $variable->nombreColumna;
 
         // Obtener estadísticas según tipo
-        if ($tipo === 'NUMERICO') {
-            $result = $this->statisticsService->getNumericStats($dto->datasetId, $columna, $dto->limit);
-            $chartType = 'histogram';
+        $chartType = $dto->chartType;
+        
+        if ($chartType === 'wordcloud' && ($tipo === 'TEXTO' || $tipo === 'CATEGORICO')) {
+            $result = $this->statisticsService->getWordCloudData($dto->datasetId, $columna, $dto->limit, $dto->filters);
+            $chartType = 'wordcloud';
+        } elseif ($tipo === 'NUMERICO') {
+            $result = $this->statisticsService->getNumericStats($dto->datasetId, $columna, $dto->limit, $dto->filters);
+            $chartType = $chartType ?? 'histogram';
         } else {
-            $result = $this->statisticsService->getCategoricalStats($dto->datasetId, $columna, $dto->limit);
-            $chartType = 'bar';
+            $result = $this->statisticsService->getCategoricalStats($dto->datasetId, $columna, $dto->limit, $dto->filters);
+            $chartType = $chartType ?? 'bar';
         }
 
         return new ChartDataDTO(

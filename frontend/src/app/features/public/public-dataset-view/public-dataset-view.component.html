@@ -59,6 +59,43 @@
           {{ 'public.datasetView.tabs.analysis' | translate }}
         </ng-template>
         <div class="tab-content">
+          <!-- Data Filters -->
+          <app-chart-filters
+            [variables]="analysableVariables()"
+            (filtersChange)="onFiltersChange($event)"
+          />
+
+          <!-- Predefined Charts -->
+          @if (predefinedCharts().length > 0) {
+            <div class="predefined-section">
+              <h3 class="section-subtitle">
+                <mat-icon>dashboard_customize</mat-icon>
+                {{ 'datasets.view.analysis.predefinedCharts' | translate }}
+              </h3>
+              <div class="predefined-grid">
+                @for (pre of predefinedCharts(); track pre.id) {
+                  <button
+                    mat-stroked-button
+                    class="predefined-chip"
+                    (click)="loadPredefinedChart(pre)"
+                    [matTooltip]="pre.descripcion || ''"
+                  >
+                    <mat-icon>{{
+                      pre.tipo_grafico === 'bar'
+                        ? 'bar_chart'
+                        : pre.tipo_grafico === 'pie'
+                          ? 'pie_chart'
+                          : pre.tipo_grafico === 'line'
+                            ? 'show_chart'
+                            : 'analytics'
+                    }}</mat-icon>
+                    {{ pre.titulo }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Chart Creator -->
           <mat-card class="chart-creator-card">
             <mat-card-header>
@@ -97,6 +134,14 @@
             </button>
             <button
               mat-stroked-button
+              (click)="togglePercentages()"
+              [class.active]="showPercentages()"
+            >
+              <mat-icon>percent</mat-icon>
+              {{ 'datasets.view.analysis.showPercentages' | translate }}
+            </button>
+            <button
+              mat-stroked-button
               color="warn"
               (click)="clearAllCharts()"
               [disabled]="activeCharts().length === 0"
@@ -113,6 +158,39 @@
           <app-charts-grid [charts]="activeCharts()" (removeChart)="removeChart($event)" />
         </div>
       </mat-tab>
+
+      <!-- Tab: Fuentes -->
+      @if (fuentes().length > 0) {
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">link</mat-icon>
+            {{ 'datasets.view.sources.title' | translate }}
+          </ng-template>
+          <div class="tab-content">
+            <div class="sources-list">
+              @for (fuente of fuentes(); track fuente.id) {
+                <a
+                  [href]="fuente.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="source-card"
+                >
+                  <div class="source-icon">
+                    <mat-icon>open_in_new</mat-icon>
+                  </div>
+                  <div class="source-content">
+                    <h4>{{ fuente.titulo }}</h4>
+                    @if (fuente.descripcion) {
+                      <p>{{ fuente.descripcion }}</p>
+                    }
+                    <span class="source-url">{{ fuente.url }}</span>
+                  </div>
+                </a>
+              }
+            </div>
+          </div>
+        </mat-tab>
+      }
     </mat-tab-group>
   } @else {
     <div class="error-state">

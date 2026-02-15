@@ -19,10 +19,12 @@ class DatasetModel extends Model
 
     protected $fillable = [
         'departamento_id',
+        'categoria_id',
         'subido_por',
         'nombre',
         'nombre_archivo',
         'descripcion',
+        'enlace_fuente',
         'estado',
         'total_registros',
         'fecha_carga',
@@ -38,6 +40,11 @@ class DatasetModel extends Model
         return $this->belongsTo(DepartamentoModel::class, 'departamento_id');
     }
 
+    public function categoria(): BelongsTo
+    {
+        return $this->belongsTo(CategoriaDatasetModel::class, 'categoria_id');
+    }
+
     public function subidoPor(): BelongsTo
     {
         return $this->belongsTo(UserModel::class, 'subido_por');
@@ -51,6 +58,16 @@ class DatasetModel extends Model
     public function registrosDatos(): HasMany
     {
         return $this->hasMany(RegistroDatoModel::class, 'dataset_id');
+    }
+
+    public function fuentes(): HasMany
+    {
+        return $this->hasMany(DatasetFuenteModel::class, 'dataset_id');
+    }
+
+    public function graficosPredeterminados(): HasMany
+    {
+        return $this->hasMany(GraficoPredeterminadoModel::class, 'dataset_id');
     }
 
     public function scopeCompletados($query)

@@ -12,6 +12,7 @@ final class BivariableStatsDTO
         public readonly string $variableYId,
         public readonly ?string $chartType = null,
         public readonly int $limit = 20,
+        public readonly ?array $filters = null,
     ) {}
 
     public static function fromArray(array $data): self
@@ -22,6 +23,7 @@ final class BivariableStatsDTO
             variableYId: $data['variable_y_id'],
             chartType: $data['chart_type'] ?? null,
             limit: (int) ($data['limit'] ?? 20),
+            filters: $data['filters'] ?? null,
         );
     }
 }

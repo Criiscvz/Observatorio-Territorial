@@ -16,7 +16,7 @@ class StatsRequest extends FormRequest
     public const CATEGORICAL_CHARTS = ['bar', 'pie', 'donut', 'funnel', 'treemap', 'radar', 'line', 'area'];
     
     // Todos los gráficos univariables permitidos
-    public const ALL_UNIVARIABLE_CHARTS = ['bar', 'pie', 'donut', 'histogram', 'line', 'area', 'funnel', 'treemap', 'gauge', 'radar'];
+    public const ALL_UNIVARIABLE_CHARTS = ['bar', 'pie', 'donut', 'histogram', 'line', 'area', 'funnel', 'treemap', 'gauge', 'radar', 'wordcloud'];
 
     public function authorize(): bool
     {
@@ -32,6 +32,10 @@ class StatsRequest extends FormRequest
             'variable_y_id' => ['nullable', 'uuid'],
             'chart_type' => ['nullable', 'string', Rule::in(self::ALL_UNIVARIABLE_CHARTS)],
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'filters' => ['nullable', 'array'],
+            'filters.*.column' => ['required_with:filters', 'string'],
+            'filters.*.operator' => ['required_with:filters', 'string', Rule::in(['eq', 'neq', 'in', 'not_in', 'gt', 'gte', 'lt', 'lte', 'between', 'contains', 'not_contains'])],
+            'filters.*.value' => ['required_with:filters'],
         ];
     }
 

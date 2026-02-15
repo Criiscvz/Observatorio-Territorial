@@ -11,6 +11,7 @@ final class UnivariableStatsDTO
         public readonly string $variableId,
         public readonly ?string $chartType = null,
         public readonly int $limit = 20,
+        public readonly ?array $filters = null,
     ) {}
 
     public static function fromArray(array $data): self
@@ -20,6 +21,7 @@ final class UnivariableStatsDTO
             variableId: $data['variable_id'],
             chartType: $data['chart_type'] ?? null,
             limit: (int) ($data['limit'] ?? 20),
+            filters: $data['filters'] ?? null,
         );
     }
 }

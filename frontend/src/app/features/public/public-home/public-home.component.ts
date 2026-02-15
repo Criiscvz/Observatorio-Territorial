@@ -7,7 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { APP_CONFIG } from '@core/config';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
@@ -22,7 +22,6 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [
     CommonModule,
     RouterLink,
-    RouterLinkActive,
     MatButtonModule,
     MatDividerModule,
     MatIconModule,

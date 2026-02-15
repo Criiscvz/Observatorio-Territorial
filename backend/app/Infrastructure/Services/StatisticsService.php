@@ -9,17 +9,96 @@ use Illuminate\Support\Facades\DB;
 
 class StatisticsService implements StatisticsServiceInterface
 {
-    public function getNumericStats(string $datasetId, string $column, int $limit): array
+    /**
+     * Whitelist pattern for column names to prevent SQL injection
+     */
+    private function sanitizeColumn(string $column): string
     {
-        $stats = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("
+        if (!preg_match('/^[a-zA-Z0-9_\x{00C0}-\x{024F}\s\-\.]+$/u', $column)) {
+            throw new \InvalidArgumentException("Nombre de columna inválido: {$column}");
+        }
+        return $column;
+    }
+
+    /**
+     * Apply JSONB filters to a query builder
+     */
+    private function applyFilters($query, ?array $filters): mixed
+    {
+        if (empty($filters)) {
+            return $query;
+        }
+
+        foreach ($filters as $filter) {
+            $col = $this->sanitizeColumn($filter['column']);
+            $operator = $filter['operator'];
+            $value = $filter['value'];
+
+            switch ($operator) {
+                case 'eq':
+                    $query->whereRaw("data->>? = ?", [$col, (string)$value]);
+                    break;
+                case 'neq':
+                    $query->whereRaw("data->>? != ?", [$col, (string)$value]);
+                    break;
+                case 'in':
+                    if (is_array($value)) {
+                        $placeholders = implode(',', array_fill(0, count($value), '?'));
+                        $params = array_merge([$col], array_map('strval', $value));
+                        $query->whereRaw("data->>? IN ($placeholders)", $params);
+                    }
+                    break;
+                case 'not_in':
+                    if (is_array($value)) {
+                        $placeholders = implode(',', array_fill(0, count($value), '?'));
+                        $params = array_merge([$col], array_map('strval', $value));
+                        $query->whereRaw("data->>? NOT IN ($placeholders)", $params);
+                    }
+                    break;
+                case 'gt':
+                    $query->whereRaw("(data->>?)::numeric > ?", [$col, (float)$value]);
+                    break;
+                case 'gte':
+                    $query->whereRaw("(data->>?)::numeric >= ?", [$col, (float)$value]);
+                    break;
+                case 'lt':
+                    $query->whereRaw("(data->>?)::numeric < ?", [$col, (float)$value]);
+                    break;
+                case 'lte':
+                    $query->whereRaw("(data->>?)::numeric <= ?", [$col, (float)$value]);
+                    break;
+                case 'between':
+                    if (is_array($value) && count($value) === 2) {
+                        $query->whereRaw("(data->>?)::numeric BETWEEN ? AND ?", [$col, (float)$value[0], (float)$value[1]]);
+                    }
+                    break;
+                case 'contains':
+                    $query->whereRaw("data->>? ILIKE ?", [$col, '%' . $value . '%']);
+                    break;
+                case 'not_contains':
+                    $query->whereRaw("data->>? NOT ILIKE ?", [$col, '%' . $value . '%']);
+                    break;
+            }
+        }
+
+        return $query;
+    }
+
+    public function getNumericStats(string $datasetId, string $column, int $limit, ?array $filters = null): array
+    {
+        $col = $this->sanitizeColumn($column);
+
+        $query = DB::table('registros_datos')
+            ->where('dataset_id', $datasetId);
+        $query = $this->applyFilters($query, $filters);
+
+        $stats = $query->selectRaw("
                 COUNT(*) as count,
-                AVG((data->>'$column')::numeric) as mean,
-                MIN((data->>'$column')::numeric) as min,
-                MAX((data->>'$column')::numeric) as max,
-                SUM((data->>'$column')::numeric) as sum
-            ")
+                AVG((data->>?)::numeric) as mean,
+                MIN((data->>?)::numeric) as min,
+                MAX((data->>?)::numeric) as max,
+                SUM((data->>?)::numeric) as sum
+            ", [$col, $col, $col, $col])
             ->first();
 
         $min = $stats->min ?? 0;
@@ -28,12 +107,14 @@ class StatisticsService implements StatisticsServiceInterface
         $bins = min(20, max(5, (int) sqrt($stats->count ?? 10)));
         $binSize = $range > 0 ? $range / $bins : 1;
 
-        $histogram = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("
-                FLOOR(((data->>'$column')::numeric - $min) / $binSize) as bin,
+        $histQuery = DB::table('registros_datos')
+            ->where('dataset_id', $datasetId);
+        $histQuery = $this->applyFilters($histQuery, $filters);
+
+        $histogram = $histQuery->selectRaw("
+                FLOOR(((data->>?)::numeric - ?) / ?) as bin,
                 COUNT(*) as count
-            ")
+            ", [$col, $min, $binSize])
             ->groupBy('bin')
             ->orderBy('bin')
             ->get();
@@ -63,11 +144,15 @@ class StatisticsService implements StatisticsServiceInterface
         ];
     }
 
-    public function getCategoricalStats(string $datasetId, string $column, int $limit): array
+    public function getCategoricalStats(string $datasetId, string $column, int $limit, ?array $filters = null): array
     {
-        $data = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("data->>'$column' as categoria, COUNT(*) as count")
+        $col = $this->sanitizeColumn($column);
+
+        $query = DB::table('registros_datos')
+            ->where('dataset_id', $datasetId);
+        $query = $this->applyFilters($query, $filters);
+
+        $data = $query->selectRaw("data->>? as categoria, COUNT(*) as count", [$col])
             ->groupBy('categoria')
             ->orderByDesc('count')
             ->limit($limit)
@@ -85,13 +170,18 @@ class StatisticsService implements StatisticsServiceInterface
         ];
     }
 
-    public function getScatterData(string $datasetId, string $columnX, string $columnY, int $limit): array
+    public function getScatterData(string $datasetId, string $columnX, string $columnY, int $limit, ?array $filters = null): array
     {
-        $points = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("(data->>'$columnX')::numeric as x, (data->>'$columnY')::numeric as y")
-            ->whereNotNull(DB::raw("data->>'$columnX'"))
-            ->whereNotNull(DB::raw("data->>'$columnY'"))
+        $colX = $this->sanitizeColumn($columnX);
+        $colY = $this->sanitizeColumn($columnY);
+
+        $query = DB::table('registros_datos')
+            ->where('dataset_id', $datasetId);
+        $query = $this->applyFilters($query, $filters);
+
+        $points = $query->selectRaw("(data->>?)::numeric as x, (data->>?)::numeric as y", [$colX, $colY])
+            ->whereRaw("data->>? IS NOT NULL", [$colX])
+            ->whereRaw("data->>? IS NOT NULL", [$colY])
             ->limit(1000)
             ->get()
             ->map(fn($p) => [(float) $p->x, (float) $p->y])
@@ -111,15 +201,20 @@ class StatisticsService implements StatisticsServiceInterface
         ];
     }
 
-    public function getGroupedBarData(string $datasetId, string $catColumn, string $numColumn, int $limit): array
+    public function getGroupedBarData(string $datasetId, string $catColumn, string $numColumn, int $limit, ?array $filters = null): array
     {
-        $data = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("
-                data->>'$catColumn' as categoria,
-                AVG((data->>'$numColumn')::numeric) as avg_value,
+        $cat = $this->sanitizeColumn($catColumn);
+        $num = $this->sanitizeColumn($numColumn);
+
+        $query = DB::table('registros_datos')
+            ->where('dataset_id', $datasetId);
+        $query = $this->applyFilters($query, $filters);
+
+        $data = $query->selectRaw("
+                data->>? as categoria,
+                AVG((data->>?)::numeric) as avg_value,
                 COUNT(*) as count
-            ")
+            ", [$cat, $num])
             ->groupBy('categoria')
             ->orderByDesc('count')
             ->limit($limit)
@@ -137,27 +232,32 @@ class StatisticsService implements StatisticsServiceInterface
         ];
     }
 
-    public function getHeatmapData(string $datasetId, string $columnX, string $columnY, int $limit): array
+    public function getHeatmapData(string $datasetId, string $columnX, string $columnY, int $limit, ?array $filters = null): array
     {
-        $labelsX = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("DISTINCT data->>'$columnX' as cat")
+        $colX = $this->sanitizeColumn($columnX);
+        $colY = $this->sanitizeColumn($columnY);
+
+        $baseQuery = fn() => $this->applyFilters(
+            DB::table('registros_datos')->where('dataset_id', $datasetId),
+            $filters
+        );
+
+        $labelsX = $baseQuery()
+            ->selectRaw("DISTINCT data->>? as cat", [$colX])
             ->orderBy('cat')
             ->limit($limit)
             ->pluck('cat')
             ->toArray();
 
-        $labelsY = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("DISTINCT data->>'$columnY' as cat")
+        $labelsY = $baseQuery()
+            ->selectRaw("DISTINCT data->>? as cat", [$colY])
             ->orderBy('cat')
             ->limit($limit)
             ->pluck('cat')
             ->toArray();
 
-        $counts = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("data->>'$columnX' as cat_x, data->>'$columnY' as cat_y, COUNT(*) as count")
+        $counts = $baseQuery()
+            ->selectRaw("data->>? as cat_x, data->>? as cat_y, COUNT(*) as count", [$colX, $colY])
             ->groupBy('cat_x', 'cat_y')
             ->get();
 
@@ -182,17 +282,22 @@ class StatisticsService implements StatisticsServiceInterface
         ];
     }
 
-    public function getTimeSeriesData(string $datasetId, string $dateColumn, string $numColumn, int $limit): array
+    public function getTimeSeriesData(string $datasetId, string $dateColumn, string $numColumn, int $limit, ?array $filters = null): array
     {
-        $data = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("
-                DATE(data->>'$dateColumn') as fecha,
-                AVG((data->>'$numColumn')::numeric) as avg_value,
+        $date = $this->sanitizeColumn($dateColumn);
+        $num = $this->sanitizeColumn($numColumn);
+
+        $query = DB::table('registros_datos')
+            ->where('dataset_id', $datasetId);
+        $query = $this->applyFilters($query, $filters);
+
+        $data = $query->selectRaw("
+                DATE(data->>?) as fecha,
+                AVG((data->>?)::numeric) as avg_value,
                 COUNT(*) as count
-            ")
-            ->whereNotNull(DB::raw("data->>'$dateColumn'"))
-            ->whereNotNull(DB::raw("data->>'$numColumn'"))
+            ", [$date, $num])
+            ->whereRaw("data->>? IS NOT NULL", [$date])
+            ->whereRaw("data->>? IS NOT NULL", [$num])
             ->groupBy('fecha')
             ->orderBy('fecha')
             ->limit($limit)
@@ -211,39 +316,44 @@ class StatisticsService implements StatisticsServiceInterface
         ];
     }
 
-    public function getStackedBarData(string $datasetId, string $dateColumn, string $catColumn, int $limit): array
+    public function getStackedBarData(string $datasetId, string $dateColumn, string $catColumn, int $limit, ?array $filters = null): array
     {
-        $categories = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("DISTINCT data->>'$catColumn' as cat")
+        $date = $this->sanitizeColumn($dateColumn);
+        $cat = $this->sanitizeColumn($catColumn);
+
+        $baseQuery = fn() => $this->applyFilters(
+            DB::table('registros_datos')->where('dataset_id', $datasetId),
+            $filters
+        );
+
+        $categories = $baseQuery()
+            ->selectRaw("DISTINCT data->>? as cat", [$cat])
             ->orderBy('cat')
             ->limit(10)
             ->pluck('cat')
             ->toArray();
 
-        $dates = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("DISTINCT DATE(data->>'$dateColumn') as fecha")
+        $dates = $baseQuery()
+            ->selectRaw("DISTINCT DATE(data->>?) as fecha", [$date])
             ->orderBy('fecha')
             ->limit($limit)
             ->pluck('fecha')
             ->toArray();
 
-        $counts = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->selectRaw("DATE(data->>'$dateColumn') as fecha, data->>'$catColumn' as categoria, COUNT(*) as count")
+        $counts = $baseQuery()
+            ->selectRaw("DATE(data->>?) as fecha, data->>? as categoria, COUNT(*) as count", [$date, $cat])
             ->groupBy('fecha', 'categoria')
             ->get();
 
         $series = [];
-        foreach ($categories as $cat) {
+        foreach ($categories as $catVal) {
             $seriesData = [];
-            foreach ($dates as $date) {
-                $count = $counts->where('fecha', $date)->where('categoria', $cat)->first();
+            foreach ($dates as $dateVal) {
+                $count = $counts->where('fecha', $dateVal)->where('categoria', $catVal)->first();
                 $seriesData[] = $count ? (int) $count->count : 0;
             }
             $series[] = [
-                'name' => $cat ?? 'Sin valor',
+                'name' => $catVal ?? 'Sin valor',
                 'data' => $seriesData,
             ];
         }
@@ -259,6 +369,90 @@ class StatisticsService implements StatisticsServiceInterface
                 'count' => $counts->sum('count'),
                 'periods' => count($dates),
                 'categories' => count($categories),
+            ],
+        ];
+    }
+
+    public function getWordCloudData(string $datasetId, string $column, int $limit, ?array $filters = null): array
+    {
+        $col = $this->sanitizeColumn($column);
+
+        $query = DB::table('registros_datos')
+            ->where('dataset_id', $datasetId);
+        $query = $this->applyFilters($query, $filters);
+
+        // Get all text values from the column
+        $texts = $query->selectRaw("data->>? as texto", [$col])
+            ->whereRaw("data->>? IS NOT NULL", [$col])
+            ->limit(5000)
+            ->pluck('texto')
+            ->toArray();
+
+        // Spanish and English stopwords
+        $stopwords = array_flip([
+            // Spanish
+            'de', 'la', 'el', 'en', 'y', 'a', 'los', 'del', 'se', 'las', 'por', 'un', 'para', 'con',
+            'no', 'una', 'su', 'al', 'es', 'lo', 'como', 'pero', 'sus', 'le', 'ya', 'o', 'fue',
+            'este', 'ha', 'si', 'porque', 'esta', 'son', 'entre', 'cuando', 'muy', 'sin', 'sobre',
+            'ser', 'me', 'hasta', 'hay', 'donde', 'han', 'quien', 'desde',
+            'todo', 'nos', 'durante', 'todos', 'uno', 'les', 'ni', 'contra', 'otros', 'fueron',
+            'ese', 'eso', 'ante', 'ellos', 'esto', 'antes', 'algunos', 'unos', 'yo',
+            'otro', 'otras', 'otra', 'tanto', 'esa', 'estos', 'mucho', 'nada', 'muchos',
+            'cual', 'sea', 'poco', 'ella', 'estar', 'haber', 'estas', 'era', 'forma', 'parte', 'cada',
+            'bien', 'puede', 'mismo', 'dos', 'que', 'mas',
+            // English
+            'the', 'be', 'to', 'of', 'and', 'in', 'that', 'have', 'it', 'for', 'not', 'on', 'with',
+            'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say',
+            'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what',
+            'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can',
+            'like', 'no', 'just', 'him', 'know', 'take', 'into', 'your', 'some', 'could', 'them', 'see',
+            'other', 'than', 'then', 'now', 'look', 'only', 'its', 'over', 'also', 'after', 'use', 'how',
+            'our', 'any', 'these', 'most', 'us', 'is', 'are', 'was', 'were', 'been', 'has', 'had',
+        ]);
+
+        // Count word frequencies
+        $wordCounts = [];
+        foreach ($texts as $text) {
+            if (empty($text)) continue;
+
+            // Normalize: lowercase, remove punctuation, split
+            $text = mb_strtolower(trim($text));
+            $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text);
+            $words = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+
+            foreach ($words as $word) {
+                if (mb_strlen($word) < 3) continue;
+                if (isset($stopwords[$word])) continue;
+
+                $wordCounts[$word] = ($wordCounts[$word] ?? 0) + 1;
+            }
+        }
+
+        // Sort by frequency and take top N
+        arsort($wordCounts);
+        $wordCounts = array_slice($wordCounts, 0, $limit, true);
+
+        // Format for word cloud
+        $words = [];
+        $maxCount = !empty($wordCounts) ? max($wordCounts) : 1;
+        foreach ($wordCounts as $word => $count) {
+            $words[] = [
+                'name' => $word,
+                'value' => $count,
+                'weight' => round($count / $maxCount, 3),
+            ];
+        }
+
+        return [
+            'data' => [
+                'words' => $words,
+                'labels' => array_column($words, 'name'),
+                'values' => array_column($words, 'value'),
+            ],
+            'stats' => [
+                'total_texts' => count($texts),
+                'unique_words' => count($wordCounts),
+                'total_words' => array_sum($wordCounts),
             ],
         ];
     }

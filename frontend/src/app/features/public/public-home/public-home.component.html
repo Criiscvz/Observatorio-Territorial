@@ -20,13 +20,13 @@
         {{ 'public.home.nav.geoViewer' | translate }}
       </a>
 
-      <!-- Menú de Observatorios -->
-      <button class="nav-link" [matMenuTriggerFor]="observatoriesMenu">
-        <mat-icon>visibility</mat-icon>
-        {{ 'public.home.nav.observatories' | translate }}
+      <!-- Menú de Dimensiones -->
+      <button class="nav-link" [matMenuTriggerFor]="dimensionsMenu">
+        <mat-icon>category</mat-icon>
+        {{ 'public.home.nav.dimensions' | translate }}
         <mat-icon class="dropdown-arrow">expand_more</mat-icon>
       </button>
-      <mat-menu #observatoriesMenu="matMenu" class="observatories-menu">
+      <mat-menu #dimensionsMenu="matMenu" class="observatories-menu">
         @for (depto of departamentos(); track depto.id) {
           <a mat-menu-item [routerLink]="['/publico/departamentos', depto.id]">
             <mat-icon>{{ depto.icono || 'folder' }}</mat-icon>
@@ -41,11 +41,26 @@
         }
       </mat-menu>
 
-      <!-- Datasets -->
-      <a routerLink="/publico/departamentos" routerLinkActive="active" class="nav-link">
-        <mat-icon>table_chart</mat-icon>
-        {{ 'public.home.nav.datasets' | translate }}
-      </a>
+      <!-- Menú Barómetro -->
+      <button class="nav-link" [matMenuTriggerFor]="barometerMenu">
+        <mat-icon>speed</mat-icon>
+        {{ 'public.home.nav.barometer' | translate }}
+        <mat-icon class="dropdown-arrow">expand_more</mat-icon>
+      </button>
+      <mat-menu #barometerMenu="matMenu">
+        <a mat-menu-item routerLink="/publico/barometro/investigacion">
+          <mat-icon>science</mat-icon>
+          <span>{{ 'public.home.nav.barometerResearch' | translate }}</span>
+        </a>
+        <a mat-menu-item routerLink="/publico/barometro/vinculacion">
+          <mat-icon>handshake</mat-icon>
+          <span>{{ 'public.home.nav.barometerLinkage' | translate }}</span>
+        </a>
+        <a mat-menu-item routerLink="/publico/barometro/barometro">
+          <mat-icon>speed</mat-icon>
+          <span>{{ 'public.home.nav.barometerUleam' | translate }}</span>
+        </a>
+      </mat-menu>
     </nav>
 
     <div class="header-actions">

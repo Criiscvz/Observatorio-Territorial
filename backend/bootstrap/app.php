@@ -1,5 +1,6 @@
 <?php
 
+use App\Domain\Shared\Exceptions\ApiException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -32,6 +33,13 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Handle ApiException - structured error responses
+        $exceptions->render(function (ApiException $e, Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                return response()->json($e->toArray(), $e->getCode());
+            }
+        });
+
         // Manejar AuthenticationException para API - devolver JSON en lugar de redirigir
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {

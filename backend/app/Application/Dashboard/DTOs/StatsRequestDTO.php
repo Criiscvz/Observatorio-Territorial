@@ -12,6 +12,7 @@ final readonly class StatsRequestDTO
         public int $userId,
         public ?string $chartType = null,
         public ?int $limit = null,
+        public ?array $filters = null,
     ) {}
 
     public static function fromArray(array $data, int $userId): self
@@ -22,6 +23,7 @@ final readonly class StatsRequestDTO
             userId: $userId,
             chartType: $data['chart_type'] ?? null,
             limit: $data['limit'] ?? null,
+            filters: $data['filters'] ?? null,
         );
     }
 }

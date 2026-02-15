@@ -1,5 +1,6 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, computed, inject, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, PLATFORM_ID, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -7,17 +8,21 @@ import { MatIconModule } from '@angular/material/icon';
 import { PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { ChartData, VariableMetadato } from '@core/models';
+import { ChartData, DatasetFuente, GraficoPredeterminado, VariableMetadato } from '@core/models';
+import { CategoriaService } from '@core/services/categoria.service';
 import { DashboardService } from '@core/services/dashboard.service';
 import { BivariableResponse } from '@core/services/interfaces';
+import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import {
-    ChartsGridComponent,
-    ChartTypeSelectorComponent,
-    DataTableComponent,
-    VariableSelectorComponent,
+  ChartFiltersComponent,
+  ChartsGridComponent,
+  ChartTypeSelectorComponent,
+  DataTableComponent,
+  VariableSelectorComponent,
 } from '@shared/components/charts';
 import { ActiveChart, CHART_TYPES, ChartType, ColumnWithUniqueId } from '@shared/models';
 
@@ -33,9 +38,11 @@ import { ActiveChart, CHART_TYPES, ChartType, ColumnWithUniqueId } from '@shared
     MatTabsModule,
     MatProgressSpinnerModule,
     MatDividerModule,
+    MatTooltipModule,
     TranslateModule,
     ChartTypeSelectorComponent,
     VariableSelectorComponent,
+    ChartFiltersComponent,
     ChartsGridComponent,
     DataTableComponent,
   ],
@@ -45,7 +52,9 @@ import { ActiveChart, CHART_TYPES, ChartType, ColumnWithUniqueId } from '@shared
 export class PublicDatasetViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private dashboardService = inject(DashboardService);
+  private categoriaService = inject(CategoriaService);
   private platformId = inject(PLATFORM_ID);
+  private destroyRef = inject(DestroyRef);
 
   variableSelector = viewChild<VariableSelectorComponent>('variableSelector');
 
@@ -63,6 +72,14 @@ export class PublicDatasetViewComponent implements OnInit {
   activeCharts = signal<ActiveChart[]>([]);
   addingChart = signal(false);
 
+  // Filters
+  activeFilters = signal<ChartFilter[]>([]);
+
+  // Predefined charts & sources
+  predefinedCharts = signal<GraficoPredeterminado[]>([]);
+  fuentes = signal<DatasetFuente[]>([]);
+  showPercentages = signal(false);
+
   // Columns with unique IDs for mat-table
   visibleColumns = computed<ColumnWithUniqueId[]>(() => {
     const cols = this.variables().filter((v) => v.es_visible);
@@ -77,8 +94,16 @@ export class PublicDatasetViewComponent implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.datasetId.set(this.route.snapshot.params['id']);
-      this.loadData();
+      this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+        const id = params['id'];
+        if (id && id !== this.datasetId()) {
+          this.datasetId.set(id);
+          this.activeCharts.set([]);
+          this.predefinedCharts.set([]);
+          this.fuentes.set([]);
+          this.loadData();
+        }
+      });
     } else {
       this.loading.set(false);
     }
@@ -96,9 +121,35 @@ export class PublicDatasetViewComponent implements OnInit {
           this.departamentoId.set(res.dataset.departamento_id);
         }
         this.loading.set(false);
+
+        // Load predefined charts & sources
+        this.loadPredefinedCharts();
+        this.loadFuentes();
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  private loadPredefinedCharts(): void {
+    this.categoriaService.getGraficosPredeterminados(this.datasetId()).subscribe({
+      next: (charts) => this.predefinedCharts.set(charts || []),
+      error: () => {},
+    });
+  }
+
+  private loadFuentes(): void {
+    this.categoriaService.getFuentes(this.datasetId()).subscribe({
+      next: (fuentes) => this.fuentes.set(fuentes || []),
+      error: () => {},
+    });
+  }
+
+  onFiltersChange(filters: ChartFilter[]): void {
+    this.activeFilters.set(filters);
+  }
+
+  togglePercentages(): void {
+    this.showPercentages.update((v) => !v);
   }
 
   onPageChange(event: PageEvent): void {
@@ -140,6 +191,7 @@ export class PublicDatasetViewComponent implements OnInit {
         dataset_id: this.datasetId(),
         variable_id: chart.variableX.id,
         chart_type: chart.chartType.id,
+        filters: this.activeFilters().length > 0 ? this.activeFilters() : undefined,
       })
       .subscribe({
         next: (res) => {
@@ -170,6 +222,7 @@ export class PublicDatasetViewComponent implements OnInit {
         variable_x_id: chart.variableX.id,
         variable_y_id: chart.variableY.id,
         chart_type: chart.chartType.id,
+        filters: this.activeFilters().length > 0 ? this.activeFilters() : undefined,
       })
       .subscribe({
         next: (res) => this.updateChartData(chart.id, res),
@@ -224,8 +277,41 @@ export class PublicDatasetViewComponent implements OnInit {
         return this.chartTypes.find((t) => t.id === 'histogram');
       case 'FECHA':
         return this.chartTypes.find((t) => t.id === 'line');
+      case 'TEXTO':
+        return this.chartTypes.find((t) => t.id === 'bar');
       default:
         return undefined;
+    }
+  }
+
+  loadPredefinedChart(pre: GraficoPredeterminado): void {
+    const varX = this.variables().find((v) => v.id === pre.variable_x_id);
+    if (!varX) return;
+
+    const chartType = this.chartTypes.find((t) => t.id === pre.tipo_grafico);
+    if (!chartType) return;
+
+    const varY = pre.variable_y_id
+      ? this.variables().find((v) => v.id === pre.variable_y_id)
+      : undefined;
+
+    const chart: ActiveChart = {
+      id: `pre-${pre.id}`,
+      title: pre.titulo,
+      chartType,
+      variableX: varX,
+      variableY: varY,
+      data: null,
+      loading: true,
+    };
+
+    this.activeCharts.update((charts) => [...charts, chart]);
+    this.addingChart.set(true);
+
+    if (chartType.bivariable && varY) {
+      this.loadBivariableData(chart);
+    } else {
+      this.loadUnivariableData(chart);
     }
   }
 }

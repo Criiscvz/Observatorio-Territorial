@@ -98,6 +98,13 @@ export const CHART_TYPES: ChartType[] = [
     description: 'Múltiples ejes',
     forTypes: ['CATEGORICO'],
   },
+  {
+    id: 'wordcloud',
+    name: 'Nube de Palabras',
+    icon: 'cloud',
+    description: 'Frecuencia de texto',
+    forTypes: ['TEXTO', 'CATEGORICO'],
+  },
   // Bivariables
   {
     id: 'scatter',
@@ -156,7 +163,7 @@ export function getUnivariableChartTypes(tipoDato: DataType): ChartType[] {
   // Normalizar TEXTO a CATEGORICO
   const normalizedType = tipoDato === 'TEXTO' ? 'CATEGORICO' : tipoDato;
   return CHART_TYPES.filter(
-    (chart) => !chart.bivariable && chart.forTypes.includes(normalizedType)
+    (chart) => !chart.bivariable && chart.forTypes.includes(normalizedType),
   );
 }
 
@@ -192,8 +199,7 @@ export function getBivariableChartTypes(tipoX: DataType, tipoY: DataType): Chart
     // Line time: fecha + numérica
     if (chart.id === 'line_time') {
       return (
-        (normX === 'FECHA' && normY === 'NUMERICO') ||
-        (normX === 'NUMERICO' && normY === 'FECHA')
+        (normX === 'FECHA' && normY === 'NUMERICO') || (normX === 'NUMERICO' && normY === 'FECHA')
       );
     }
 
@@ -214,7 +220,7 @@ export function getBivariableChartTypes(tipoX: DataType, tipoY: DataType): Chart
  */
 export function getDefaultUnivariableChartType(tipoDato: DataType): ChartType | undefined {
   const normalizedType = tipoDato === 'TEXTO' ? 'CATEGORICO' : tipoDato;
-  
+
   switch (normalizedType) {
     case 'NUMERICO':
       return CHART_TYPES.find((t) => t.id === 'histogram');
@@ -230,7 +236,10 @@ export function getDefaultUnivariableChartType(tipoDato: DataType): ChartType | 
 /**
  * Obtiene el tipo de gráfico bivariable por defecto según los tipos de datos
  */
-export function getDefaultBivariableChartType(tipoX: DataType, tipoY: DataType): ChartType | undefined {
+export function getDefaultBivariableChartType(
+  tipoX: DataType,
+  tipoY: DataType,
+): ChartType | undefined {
   const normX = tipoX === 'TEXTO' ? 'CATEGORICO' : tipoX;
   const normY = tipoY === 'TEXTO' ? 'CATEGORICO' : tipoY;
 
@@ -238,8 +247,10 @@ export function getDefaultBivariableChartType(tipoX: DataType, tipoY: DataType):
     return CHART_TYPES.find((t) => t.id === 'scatter');
   }
 
-  if ((normX === 'CATEGORICO' && normY === 'NUMERICO') ||
-      (normX === 'NUMERICO' && normY === 'CATEGORICO')) {
+  if (
+    (normX === 'CATEGORICO' && normY === 'NUMERICO') ||
+    (normX === 'NUMERICO' && normY === 'CATEGORICO')
+  ) {
     return CHART_TYPES.find((t) => t.id === 'grouped_bar');
   }
 
@@ -247,13 +258,14 @@ export function getDefaultBivariableChartType(tipoX: DataType, tipoY: DataType):
     return CHART_TYPES.find((t) => t.id === 'heatmap');
   }
 
-  if ((normX === 'FECHA' && normY === 'NUMERICO') ||
-      (normX === 'NUMERICO' && normY === 'FECHA')) {
+  if ((normX === 'FECHA' && normY === 'NUMERICO') || (normX === 'NUMERICO' && normY === 'FECHA')) {
     return CHART_TYPES.find((t) => t.id === 'line_time');
   }
 
-  if ((normX === 'FECHA' && normY === 'CATEGORICO') ||
-      (normX === 'CATEGORICO' && normY === 'FECHA')) {
+  if (
+    (normX === 'FECHA' && normY === 'CATEGORICO') ||
+    (normX === 'CATEGORICO' && normY === 'FECHA')
+  ) {
     return CHART_TYPES.find((t) => t.id === 'stacked_bar');
   }
 

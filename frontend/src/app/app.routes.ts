@@ -11,7 +11,7 @@ export const routes: Routes = [
       import('./features/public/public-home/public-home.component').then(
         (m) => m.PublicHomeComponent,
       ),
-    title: 'Inicio - Observatorio',
+    title: 'Inicio - Dimensiones',
   },
 
   // Public routes with public layout
@@ -36,7 +36,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/profile/profile.component').then((m) => m.ProfileComponent),
     canActivate: [authGuard],
-    title: 'Mi Perfil - Observatorio',
+    title: 'Mi Perfil - Dimensiones',
   },
 
   // Protected admin routes with main layout

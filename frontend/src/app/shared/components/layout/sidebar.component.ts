@@ -153,6 +153,12 @@ interface NavItem {
           </div>
           <span class="nav-text">{{ 'layout.sidebar.allDatasets' | translate }}</span>
         </a>
+        <a class="nav-item" routerLink="/publico" (click)="navigate.emit()">
+          <div class="nav-icon-wrapper">
+            <mat-icon class="nav-icon">public</mat-icon>
+          </div>
+          <span class="nav-text">{{ 'layout.sidebar.publicView' | translate }}</span>
+        </a>
       </div>
     </nav>
   `,

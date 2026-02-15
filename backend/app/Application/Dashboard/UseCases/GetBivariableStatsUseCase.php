@@ -54,10 +54,10 @@ class GetBivariableStatsUseCase
         $chartType = $dto->chartType ?? $this->determineChartType($variableX->tipoDato, $variableY->tipoDato);
         $limit = $dto->limit ?? 20;
 
-        return $this->generateBivariableData($variableX, $variableY, $chartType, $limit);
+        return $this->generateBivariableData($variableX, $variableY, $chartType, $limit, $dto->filters);
     }
 
-    private function generateBivariableData($variableX, $variableY, string $chartType, int $limit): BivariableResponseDTO
+    private function generateBivariableData($variableX, $variableY, string $chartType, int $limit, ?array $filters = null): BivariableResponseDTO
     {
         $datasetId = $variableX->datasetId;
 
@@ -71,7 +71,8 @@ class GetBivariableStatsUseCase
                 $datasetId,
                 $variableX->nombreColumna,
                 $variableY->nombreColumna,
-                1000
+                1000,
+                $filters
             );
 
             return new BivariableResponseDTO(
@@ -91,7 +92,8 @@ class GetBivariableStatsUseCase
                 $datasetId,
                 $variableX->nombreColumna,
                 $variableY->nombreColumna,
-                $limit
+                $limit,
+                $filters
             );
 
             return new BivariableResponseDTO(
@@ -111,7 +113,8 @@ class GetBivariableStatsUseCase
                 $datasetId,
                 $variableY->nombreColumna,
                 $variableX->nombreColumna,
-                $limit
+                $limit,
+                $filters
             );
 
             return new BivariableResponseDTO(
@@ -131,7 +134,8 @@ class GetBivariableStatsUseCase
                 $datasetId,
                 $variableX->nombreColumna,
                 $variableY->nombreColumna,
-                $limit
+                $limit,
+                $filters
             );
 
             return new BivariableResponseDTO(
@@ -155,7 +159,8 @@ class GetBivariableStatsUseCase
                 $datasetId,
                 $dateColumn,
                 $numColumn,
-                $limit
+                $limit,
+                $filters
             );
 
             return new BivariableResponseDTO(
@@ -179,7 +184,8 @@ class GetBivariableStatsUseCase
                 $datasetId,
                 $dateColumn,
                 $catColumn,
-                $limit
+                $limit,
+                $filters
             );
 
             return new BivariableResponseDTO(
@@ -198,7 +204,8 @@ class GetBivariableStatsUseCase
             $datasetId,
             $variableX->nombreColumna,
             $variableY->nombreColumna,
-            $limit
+            $limit,
+            $filters
         );
 
         return new BivariableResponseDTO(

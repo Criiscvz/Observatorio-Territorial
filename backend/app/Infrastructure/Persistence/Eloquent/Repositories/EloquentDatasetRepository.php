@@ -74,10 +74,12 @@ class EloquentDatasetRepository implements DatasetRepositoryInterface
     {
         $model = $this->model->create([
             'departamento_id' => $dataset->departamentoId,
+            'categoria_id' => $dataset->categoriaId,
             'subido_por' => $dataset->subidoPor,
             'nombre' => $dataset->nombre,
             'nombre_archivo' => $dataset->nombreArchivo,
             'descripcion' => $dataset->descripcion,
+            'enlace_fuente' => $dataset->enlaceFuente,
             'estado' => $dataset->estado,
             'total_registros' => $dataset->totalRegistros,
             'fecha_carga' => $dataset->fechaCarga,
@@ -93,6 +95,8 @@ class EloquentDatasetRepository implements DatasetRepositoryInterface
         $model->update([
             'nombre' => $dataset->nombre,
             'descripcion' => $dataset->descripcion,
+            'enlace_fuente' => $dataset->enlaceFuente,
+            'categoria_id' => $dataset->categoriaId,
             'estado' => $dataset->estado,
             'total_registros' => $dataset->totalRegistros,
         ]);
@@ -128,10 +132,12 @@ class EloquentDatasetRepository implements DatasetRepositoryInterface
         return new Dataset(
             id: $model->id,
             departamentoId: $model->departamento_id,
+            categoriaId: $model->categoria_id,
             subidoPor: $model->subido_por,
             nombre: $model->nombre,
             nombreArchivo: $model->nombre_archivo,
             descripcion: $model->descripcion,
+            enlaceFuente: $model->enlace_fuente,
             estado: $model->estado,
             totalRegistros: $model->total_registros ?? 0,
             fechaCarga: $model->fecha_carga ? new \DateTimeImmutable($model->fecha_carga->toDateTimeString()) : null,

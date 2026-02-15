@@ -6,9 +6,9 @@ import { AppConfig } from './app-config.interface';
  */
 export const APP_CONFIG: AppConfig = {
   app: {
-    name: 'Observatorio Territorial Multidisciplinario',
-    shortName: 'OTM',
-    description: 'Sistema de Información y Observatorio Territorial',
+    name: 'Dimensiones Territoriales Multidisciplinario',
+    shortName: 'DTM',
+    description: 'Sistema de Información y Dimensiones Territoriales',
   },
   university: {
     name: 'Universidad Laica Eloy Alfaro de Manabí',

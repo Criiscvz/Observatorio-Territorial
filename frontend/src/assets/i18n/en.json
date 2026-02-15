@@ -41,7 +41,10 @@
       "profile": "Profile",
       "visible": "Visible",
       "public": "Public",
-      "private": "Private"
+      "private": "Private",
+      "source": "Source",
+      "sources": "Sources",
+      "category": "Category"
     },
     "messages": {
       "loading": "Loading...",
@@ -90,7 +93,7 @@
   },
   "auth": {
     "login": {
-      "title": "ULEAM Observatory",
+      "title": "ULEAM Dimensions",
       "subtitle": "Sign in to your account",
       "email": "Email",
       "emailPlaceholder": "email@uleam.edu.ec",
@@ -107,7 +110,7 @@
     },
     "register": {
       "title": "Create Account",
-      "subtitle": "Register at ULEAM Observatory",
+      "subtitle": "Register at ULEAM Dimensions",
       "fullName": "Full name",
       "fullNamePlaceholder": "John Doe",
       "email": "Email",
@@ -173,7 +176,7 @@
   },
   "layout": {
     "header": {
-      "brand": "Territorial Observatory",
+      "brand": "Territorial Dimensions",
       "brandSubtitle": "Multidisciplinary",
       "menu": "Menu",
       "themeLight": "Light mode",
@@ -192,16 +195,20 @@
       "newDepartment": "New dimension",
       "allDatasets": "All Datasets",
       "noDepartments": "No dimensions",
-      "createOne": "Create one"
+      "createOne": "Create one",
+      "barometer": "Barometer",
+      "research": "ULEAM Research",
+      "linkage": "ULEAM Linkage",
+      "barometerUleam": "ULEAM Barometer"
     },
     "footer": {
-      "copyright": "© {{year}} ULEAM Observatory. All rights reserved.",
+      "copyright": "© {{year}} ULEAM Dimensions. All rights reserved.",
       "university": "Laica Eloy Alfaro University of Manabí"
     }
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcome": "Welcome to the Observatory",
+    "welcome": "Welcome to Dimensions",
     "welcomeMessage": "Manage your dimensions and datasets efficiently",
     "stats": {
       "totalDepartments": "Dimensions",
@@ -240,6 +247,7 @@
       "columns": {
         "name": "Name",
         "department": "Dimension",
+        "category": "Category",
         "status": "Status",
         "records": "Records",
         "date": "Date"
@@ -261,9 +269,13 @@
       "form": {
         "department": "Dimension",
         "selectDepartment": "Select a dimension",
+        "category": "Category",
+        "selectCategory": "Select a category",
         "name": "Dataset Name",
         "namePlaceholder": "E.g.: Survey 2025",
-        "description": "Description"
+        "description": "Description",
+        "sourceUrl": "Source URL (optional)",
+        "sourceUrlPlaceholder": "https://example.com/data-source"
       },
       "dropzone": {
         "title": "Drag your file here",
@@ -301,10 +313,10 @@
         "viewData": "View Data and Charts"
       },
       "errors": {
-        "analyzeFailed": "Failed to analyze file",
-        "uploadFailed": "Failed to upload file",
-        "noColumns": "You must include at least one column",
-        "importFailed": "Import failed"
+        "analyzeFailed": "Failed to analyze the file. Verify the format is valid (.xlsx, .xls, .csv).",
+        "uploadFailed": "Failed to upload the file. Check the connection and that the file doesn't exceed 10MB.",
+        "noColumns": "You must include at least one column to continue the import.",
+        "importFailed": "Failed to import the data. Verify that the columns are correctly configured."
       }
     },
     "view": {
@@ -349,7 +361,25 @@
         "noChartsMessage": "Select a chart type and variable to start",
         "noCompatibleVariables": "No compatible variables",
         "variablesAvailable": "{{count}} variables available",
-        "variablesCompatible": "{{count}} compatible variables"
+        "variablesCompatible": "{{count}} compatible variables",
+        "filters": "Filters",
+        "activeFilters": "{{count}} active filter(s)",
+        "noFilters": "No filters applied",
+        "addFilter": "Add filter",
+        "clearFilters": "Clear filters",
+        "filterBy": "Filter by",
+        "filterValues": "Values",
+        "filterRange": "Range",
+        "filterMin": "Minimum",
+        "filterMax": "Maximum",
+        "filterContains": "Contains",
+        "applyFilters": "Apply filters",
+        "showPercentages": "Show percentages",
+        "saveAsDefault": "Save as predefined",
+        "predefinedCharts": "Predefined Charts",
+        "noPredefinedCharts": "No predefined charts configured",
+        "chartSaved": "Chart saved as predefined",
+        "chartDeleted": "Predefined chart deleted"
       },
       "pendingWarning": {
         "title": "Incomplete dataset",
@@ -359,6 +389,17 @@
         "confirmDelete": "Are you sure you want to delete the dataset \"{{name}}\"? This action cannot be undone.",
         "deleteSuccess": "Dataset deleted successfully",
         "deleteError": "Error deleting dataset"
+      },
+      "sources": {
+        "title": "Information Sources",
+        "addSource": "Add source",
+        "sourceTitle": "Title",
+        "sourceUrl": "URL",
+        "sourceDescription": "Description (optional)",
+        "noSources": "No sources registered for this dataset",
+        "sourceAdded": "Source added successfully",
+        "sourceDeleted": "Source deleted",
+        "sourceError": "Error managing the source"
       }
     },
     "status": {
@@ -366,6 +407,12 @@
       "processing": "PROCESSING",
       "pending": "PENDING",
       "error": "ERROR"
+    },
+    "categories": {
+      "research": "ULEAM Research Results",
+      "linkage": "ULEAM Linkage Results",
+      "barometer": "ULEAM Barometer",
+      "uncategorized": "Uncategorized"
     }
   },
   "departamentos": {
@@ -455,8 +502,8 @@
     },
     "home": {
       "hero": {
-        "title": "Multidisciplinary Territorial",
-        "titleHighlight": "Observatory ULEAM",
+        "title": "Territorial Dimensions",
+        "titleHighlight": "Multidisciplinary ULEAM",
         "subtitle": "Transform your Excel files into interactive dashboards automatically. Analyze, visualize, and share data intelligently.",
         "exploreData": "Explore Public Data",
         "createAccount": "Create Free Account",
@@ -501,7 +548,7 @@
         "empty": "No public dimensions available"
       },
       "cta": {
-        "title": "Join the Territorial Observatory",
+        "title": "Join Territorial Dimensions",
         "subtitle": "Access territorial data, multidisciplinary analysis, and visualization tools for informed decision-making.",
         "button": "Create Free Account"
       },
@@ -511,7 +558,11 @@
       },
       "nav": {
         "geoViewer": "Geographic Viewer",
-        "observatories": "Observatories",
+        "dimensions": "Dimensions",
+        "barometer": "Barometer",
+        "barometerResearch": "ULEAM Research Results",
+        "barometerLinkage": "ULEAM Linkage Results",
+        "barometerUleam": "ULEAM Barometer",
         "aboutOtm": "About OTM",
         "sapereAude": "Sapere Aude Program",
         "analysis": "Analysis & Proposals",
@@ -522,7 +573,7 @@
     },
     "departments": {
       "title": "Public Dimensions",
-      "subtitle": "Explore data shared by observatory dimensions",
+      "subtitle": "Explore data shared by the dimensions",
       "search": "Search dimensions...",
       "resultsCount": "{{count}} dimension(s) found",
       "loading": "Loading dimensions...",
@@ -577,6 +628,28 @@
         "message": "The dataset you're looking for doesn't exist or isn't publicly available",
         "backButton": "Back to departments"
       }
+    },
+    "barometer": {
+      "title": "Barometer",
+      "research": {
+        "title": "ULEAM Research Results",
+        "subtitle": "Data and analysis from university research",
+        "empty": "No research datasets available"
+      },
+      "linkage": {
+        "title": "ULEAM Linkage Results",
+        "subtitle": "Data and analysis from community linkage projects",
+        "empty": "No linkage datasets available"
+      },
+      "barometerUleam": {
+        "title": "ULEAM Barometer",
+        "subtitle": "Institutional indicators and metrics",
+        "empty": "No barometer datasets available"
+      },
+      "loading": "Loading barometer data...",
+      "viewDataset": "View data and charts",
+      "predefinedCharts": "Predefined Charts",
+      "dataTable": "Data Table"
     }
   },
   "charts": {
@@ -644,6 +717,26 @@
       "stackedBar": {
         "name": "Stacked Bar",
         "description": "Categories by time"
+      },
+      "wordcloud": {
+        "name": "Word Cloud",
+        "description": "Word frequency in text"
+      },
+      "grouped_bar": {
+        "name": "Grouped Bar",
+        "description": "Average by category"
+      },
+      "box_compare": {
+        "name": "Compare Averages",
+        "description": "Average by category"
+      },
+      "line_time": {
+        "name": "Time Series",
+        "description": "Evolution over time"
+      },
+      "stacked_bar": {
+        "name": "Stacked Bar",
+        "description": "Categories by time"
       }
     },
     "stats": {
@@ -657,7 +750,29 @@
       "correlation": "Correlation"
     },
     "errors": {
-      "loadFailed": "Failed to load data"
+      "loadFailed": "Failed to load chart data.",
+      "invalidDataType": "The variable data type is not compatible with this chart type.",
+      "noDataForFilter": "No data found with the applied filters. Try changing the filter criteria.",
+      "variableNotFound": "The selected variable was not found in the dataset.",
+      "datasetNotFound": "The requested dataset does not exist or you don't have access.",
+      "statsQueryError": "Error processing the statistical query. Verify that the dataset data is valid.",
+      "columnCastError": "Error converting column data. Some values may not be of the expected type.",
+      "accessDenied": "You don't have permission to access this data.",
+      "serverError": "Internal server error. Please try again later.",
+      "connectionError": "Connection error with the server. Check your internet connection."
+    },
+    "predefined": {
+      "title": "Chart title",
+      "description": "Description or analysis",
+      "descriptionPlaceholder": "Write a description or analysis of what this chart shows...",
+      "source": "Source",
+      "sourcePlaceholder": "E.g.: National Survey 2025, INE",
+      "save": "Save predefined chart",
+      "edit": "Edit predefined chart",
+      "delete": "Delete predefined chart",
+      "confirmDelete": "Delete this predefined chart?",
+      "visible": "Visible to users",
+      "order": "Display order"
     }
   },
   "dataTypes": {
@@ -757,5 +872,43 @@
       "roleError": "Error changing role",
       "noUsers": "No registered users"
     }
+  },
+  "errors": {
+    "codes": {
+      "DATASET_NOT_FOUND": "The requested dataset was not found.",
+      "VARIABLE_NOT_FOUND": "The selected variable does not exist in this dataset.",
+      "ACCESS_DENIED": "You don't have access to this resource. Check your permissions.",
+      "INVALID_CHART_TYPE": "The selected chart type is not valid.",
+      "STATS_QUERY_ERROR": "Error processing the statistical query. Verify the data is valid for this analysis.",
+      "INVALID_DATA_TYPE": "The variable data type is not compatible with the requested operation.",
+      "COLUMN_CAST_ERROR": "Error processing column data. Some values are not of the expected type.",
+      "VALIDATION_ERROR": "The provided data is not valid. Check the marked fields.",
+      "RATE_LIMIT": "Too many requests. Please wait a moment and try again.",
+      "SERVER_ERROR": "Internal server error. If the problem persists, contact the administrator.",
+      "FILTER_ERROR": "Error applying the selected filters."
+    }
+  },
+  "filters": {
+    "operators": {
+      "eq": "Equal to",
+      "neq": "Not equal to",
+      "gt": "Greater than",
+      "gte": "Greater or equal",
+      "lt": "Less than",
+      "lte": "Less or equal",
+      "between": "Between",
+      "in": "Includes",
+      "notIn": "Does not include",
+      "contains": "Contains",
+      "notContains": "Does not contain"
+    },
+    "column": "Column",
+    "operator": "Operator",
+    "value": "Value",
+    "valueFrom": "From",
+    "valueTo": "To",
+    "add": "Add filter",
+    "clear": "Clear all",
+    "apply": "Apply filters"
   }
 }

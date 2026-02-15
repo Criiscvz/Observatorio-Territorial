@@ -40,7 +40,9 @@ Route::get('/avatars/{filename}', function (string $filename) {
     
     return response($file, 200)
         ->header('Content-Type', $mimeType)
-        ->header('Cache-Control', 'public, max-age=31536000');
+        ->header('Cache-Control', 'public, max-age=31536000')
+        ->header('Access-Control-Allow-Origin', '*')
+        ->header('Cross-Origin-Resource-Policy', 'cross-origin');
 })->where('filename', '.*');
 
 // ============ AUTH ============
@@ -64,3 +66,8 @@ Route::prefix('datasets')->group(__DIR__ . '/modules/datasets.php');
 Route::prefix('variables')->group(__DIR__ . '/modules/variables.php');
 Route::prefix('stats')->group(__DIR__ . '/modules/stats.php');
 Route::prefix('users')->group(__DIR__ . '/modules/users.php');
+
+// ============ CATEGORÍAS Y RECURSOS RELACIONADOS ============
+Route::prefix('categorias')->group(__DIR__ . '/modules/categorias.php');
+require __DIR__ . '/modules/graficos.php';
+require __DIR__ . '/modules/fuentes.php';

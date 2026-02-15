@@ -1,5 +1,6 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -30,6 +31,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly route = inject(ActivatedRoute);
   private readonly deptoService = inject(DepartamentoService);
+  private readonly destroyRef = inject(DestroyRef);
 
   departamento = signal<Departamento | null>(null);
   loading = signal(true);
@@ -59,8 +61,12 @@ export class PublicDepartamentoDetailComponent implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      const id = this.route.snapshot.params['id'];
-      this.loadDepartamento(id);
+      this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+        const id = params['id'];
+        if (id) {
+          this.loadDepartamento(id);
+        }
+      });
     } else {
       this.loading.set(false);
     }

@@ -3,6 +3,7 @@ import { ChartData } from '@core/models';
 import { ChartThemeService } from '@core/services/chart-theme.service';
 import { BivariableResponse } from '@core/services/interfaces';
 import { EChartsOption } from 'echarts';
+import 'echarts-wordcloud';
 
 @Injectable({ providedIn: 'root' })
 export class ChartOptionsService {
@@ -55,6 +56,8 @@ export class ChartOptionsService {
         return this.getGaugeOptions(baseOptions, title, values, colors, cfg, data.stats, total);
       case 'radar':
         return this.getRadarOptions(baseOptions, title, labels, values, colors, cfg, maxValue);
+      case 'wordcloud':
+        return this.getWordCloudOptions(baseOptions, title, labels, values, colors, cfg);
       default:
         return {};
     }
@@ -442,6 +445,53 @@ export class ChartOptionsService {
         },
       ],
     };
+  }
+
+  private getWordCloudOptions(
+    base: EChartsOption,
+    title: string,
+    labels: string[],
+    values: number[],
+    colors: string[],
+    cfg: any,
+  ): EChartsOption {
+    const wordData = labels.map((label, i) => ({
+      name: label,
+      value: values[i] || 1,
+    }));
+
+    return {
+      ...base,
+      title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
+      tooltip: {
+        ...(base.tooltip as any),
+        formatter: (params: any) => `${params.name}: ${params.value}`,
+      },
+      series: [
+        {
+          type: 'wordCloud',
+          shape: 'circle',
+          sizeRange: [14, 60],
+          rotationRange: [-45, 45],
+          rotationStep: 15,
+          gridSize: 8,
+          drawOutOfBound: false,
+          layoutAnimation: true,
+          textStyle: {
+            fontFamily: 'Inter, sans-serif',
+            fontWeight: 'bold',
+            color: () => colors[Math.floor(Math.random() * colors.length)],
+          },
+          emphasis: {
+            textStyle: {
+              shadowBlur: 10,
+              shadowColor: '#333',
+            },
+          },
+          data: wordData,
+        },
+      ],
+    } as any;
   }
 
   private getLineTimeOptions(

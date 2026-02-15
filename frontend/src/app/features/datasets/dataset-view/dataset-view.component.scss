@@ -604,3 +604,200 @@
 .charts-empty-state p {
   color: var(--text-tertiary);
 }
+
+/* ================================================
+   PREDEFINED CHARTS
+   ================================================ */
+.predefined-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-xl);
+  padding: 1.25rem;
+}
+
+.section-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+
+  mat-icon {
+    color: var(--primary-500);
+  }
+}
+
+.predefined-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.predefined-chip-container {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+.predefined-chip {
+  border-radius: var(--radius-lg) !important;
+}
+
+.delete-predefined-btn {
+  width: 24px !important;
+  height: 24px !important;
+  line-height: 24px !important;
+  margin-left: -8px;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: var(--text-tertiary);
+  }
+
+  &:hover mat-icon {
+    color: var(--error-color);
+  }
+}
+
+/* ================================================
+   OVERLAY FORMS
+   ================================================ */
+.overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.floating-form {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--card-bg);
+  border-radius: var(--radius-xl);
+  padding: 1.5rem;
+  min-width: 400px;
+  max-width: 90vw;
+  z-index: 101;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 1rem 0;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* ================================================
+   SOURCES TAB
+   ================================================ */
+.source-form-card {
+  border: 2px dashed var(--primary-300);
+  background: var(--primary-50);
+
+  :host-context(.dark) & {
+    background: rgba(99, 102, 241, 0.08);
+  }
+}
+
+.sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.source-item {
+  transition: box-shadow var(--transition-fast);
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.source-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--primary-50);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    color: var(--primary-500);
+  }
+
+  :host-context(.dark) & {
+    background: rgba(99, 102, 241, 0.15);
+  }
+}
+
+.source-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.source-description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.source-url {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--primary-500);
+  font-size: 0.8125rem;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  .url-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.source-actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+/* Alert */
+.alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+}
+
+.alert-warning {
+  background: var(--warning-bg);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-border);
+}

@@ -17,10 +17,12 @@ class Dataset extends Model
 
     protected $fillable = [
         'departamento_id',
+        'categoria_id',
         'subido_por',
         'nombre',
         'nombre_archivo',
         'descripcion',
+        'enlace_fuente',
         'estado',
         'total_registros',
         'fecha_carga',

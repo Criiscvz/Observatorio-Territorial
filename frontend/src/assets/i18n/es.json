@@ -41,7 +41,10 @@
       "profile": "Perfil",
       "visible": "Visible",
       "public": "Público",
-      "private": "Privado"
+      "private": "Privado",
+      "source": "Fuente",
+      "sources": "Fuentes",
+      "category": "Categoría"
     },
     "messages": {
       "loading": "Cargando...",
@@ -90,7 +93,7 @@
   },
   "auth": {
     "login": {
-      "title": "Observatorio ULEAM",
+      "title": "Dimensiones ULEAM",
       "subtitle": "Ingresa a tu cuenta",
       "email": "Correo electrónico",
       "emailPlaceholder": "correo@uleam.edu.ec",
@@ -107,7 +110,7 @@
     },
     "register": {
       "title": "Crear Cuenta",
-      "subtitle": "Regístrate en el Observatorio ULEAM",
+      "subtitle": "Regístrate en Dimensiones ULEAM",
       "fullName": "Nombre completo",
       "fullNamePlaceholder": "Juan Pérez",
       "email": "Correo electrónico",
@@ -173,7 +176,7 @@
   },
   "layout": {
     "header": {
-      "brand": "Observatorio Territorial",
+      "brand": "Dimensiones Territoriales",
       "brandSubtitle": "Multidisciplinario",
       "menu": "Menú",
       "themeLight": "Modo claro",
@@ -192,16 +195,20 @@
       "newDepartment": "Nueva dimensión",
       "allDatasets": "Todos los Datasets",
       "noDepartments": "Sin dimensiones",
-      "createOne": "Crear una"
+      "createOne": "Crear una",
+      "barometer": "Barómetro",
+      "research": "Investigación ULEAM",
+      "linkage": "Vinculación ULEAM",
+      "barometerUleam": "Barómetro ULEAM"
     },
     "footer": {
-      "copyright": "© {{year}} Observatorio ULEAM. Todos los derechos reservados.",
+      "copyright": "© {{year}} Dimensiones ULEAM. Todos los derechos reservados.",
       "university": "Universidad Laica Eloy Alfaro de Manabí"
     }
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcome": "Bienvenido al Observatorio",
+    "welcome": "Bienvenido a Dimensiones",
     "welcomeMessage": "Gestiona tus dimensiones y datasets de manera eficiente",
     "stats": {
       "totalDepartments": "Dimensiones",
@@ -240,6 +247,7 @@
       "columns": {
         "name": "Nombre",
         "department": "Dimensión",
+        "category": "Categoría",
         "status": "Estado",
         "records": "Registros",
         "date": "Fecha"
@@ -261,9 +269,13 @@
       "form": {
         "department": "Dimensión",
         "selectDepartment": "Selecciona una dimensión",
+        "category": "Categoría",
+        "selectCategory": "Selecciona una categoría",
         "name": "Nombre del Dataset",
         "namePlaceholder": "Ej: Encuesta 2025",
-        "description": "Descripción"
+        "description": "Descripción",
+        "sourceUrl": "URL de la fuente (opcional)",
+        "sourceUrlPlaceholder": "https://ejemplo.com/datos-fuente"
       },
       "dropzone": {
         "title": "Arrastra tu archivo aquí",
@@ -301,10 +313,10 @@
         "viewData": "Ver Datos y Gráficos"
       },
       "errors": {
-        "analyzeFailed": "Error al analizar el archivo",
-        "uploadFailed": "Error al subir el archivo",
-        "noColumns": "Debes incluir al menos una columna",
-        "importFailed": "Error al importar"
+        "analyzeFailed": "Error al analizar el archivo. Verifica que el formato sea válido (.xlsx, .xls, .csv).",
+        "uploadFailed": "Error al subir el archivo. Verifica la conexión y que el archivo no exceda 10MB.",
+        "noColumns": "Debes incluir al menos una columna para continuar la importación.",
+        "importFailed": "Error al importar los datos. Verifica que las columnas estén correctamente configuradas."
       }
     },
     "view": {
@@ -349,7 +361,25 @@
         "noChartsMessage": "Selecciona un tipo de gráfico y una variable para comenzar",
         "noCompatibleVariables": "No hay variables compatibles",
         "variablesAvailable": "{{count}} variables disponibles",
-        "variablesCompatible": "{{count}} variables compatibles"
+        "variablesCompatible": "{{count}} variables compatibles",
+        "filters": "Filtros",
+        "activeFilters": "{{count}} filtro(s) activo(s)",
+        "noFilters": "Sin filtros aplicados",
+        "addFilter": "Agregar filtro",
+        "clearFilters": "Limpiar filtros",
+        "filterBy": "Filtrar por",
+        "filterValues": "Valores",
+        "filterRange": "Rango",
+        "filterMin": "Mínimo",
+        "filterMax": "Máximo",
+        "filterContains": "Contiene",
+        "applyFilters": "Aplicar filtros",
+        "showPercentages": "Mostrar porcentajes",
+        "saveAsDefault": "Guardar como predeterminado",
+        "predefinedCharts": "Gráficos Predeterminados",
+        "noPredefinedCharts": "No hay gráficos predeterminados configurados",
+        "chartSaved": "Gráfico guardado como predeterminado",
+        "chartDeleted": "Gráfico predeterminado eliminado"
       },
       "pendingWarning": {
         "title": "Dataset incompleto",
@@ -359,6 +389,17 @@
         "confirmDelete": "¿Estás seguro de eliminar el dataset \"{{name}}\"? Esta acción no se puede deshacer.",
         "deleteSuccess": "Dataset eliminado correctamente",
         "deleteError": "Error al eliminar el dataset"
+      },
+      "sources": {
+        "title": "Fuentes de Información",
+        "addSource": "Agregar fuente",
+        "sourceTitle": "Título",
+        "sourceUrl": "URL",
+        "sourceDescription": "Descripción (opcional)",
+        "noSources": "No se han registrado fuentes para este dataset",
+        "sourceAdded": "Fuente agregada correctamente",
+        "sourceDeleted": "Fuente eliminada",
+        "sourceError": "Error al gestionar la fuente"
       }
     },
     "status": {
@@ -366,6 +407,12 @@
       "processing": "PROCESANDO",
       "pending": "PENDIENTE",
       "error": "ERROR"
+    },
+    "categories": {
+      "research": "Resultados Investigación ULEAM",
+      "linkage": "Resultados Vinculación ULEAM",
+      "barometer": "Barómetro ULEAM",
+      "uncategorized": "Sin categoría"
     }
   },
   "departamentos": {
@@ -455,7 +502,7 @@
     },
     "home": {
       "hero": {
-        "title": "Observatorio Territorial",
+        "title": "Dimensiones Territoriales",
         "titleHighlight": "Multidisciplinario ULEAM",
         "subtitle": "Transforma tus archivos Excel en dashboards interactivos de manera automática. Analiza, visualiza y comparte datos de forma inteligente.",
         "exploreData": "Explorar Datos Públicos",
@@ -501,7 +548,7 @@
         "empty": "No hay dimensiones públicas disponibles"
       },
       "cta": {
-        "title": "Únete al Observatorio Territorial",
+        "title": "Únete a Dimensiones Territoriales",
         "subtitle": "Accede a datos territoriales, análisis multidisciplinarios y herramientas de visualización para la toma de decisiones informadas.",
         "button": "Crear Cuenta Gratis"
       },
@@ -511,7 +558,11 @@
       },
       "nav": {
         "geoViewer": "Visor Geográfico",
-        "observatories": "Observatorios",
+        "dimensions": "Dimensiones",
+        "barometer": "Barómetro",
+        "barometerResearch": "Resultados Investigación ULEAM",
+        "barometerLinkage": "Resultados Vinculación ULEAM",
+        "barometerUleam": "Barómetro ULEAM",
         "aboutOtm": "Acerca del OTM",
         "sapereAude": "Programa Sapere Aude",
         "analysis": "Análisis y Propuestas",
@@ -522,7 +573,7 @@
     },
     "departments": {
       "title": "Dimensiones Públicas",
-      "subtitle": "Explora los datos compartidos por las dimensiones del observatorio",
+      "subtitle": "Explora los datos compartidos por las dimensiones",
       "search": "Buscar dimensiones...",
       "resultsCount": "{{count}} dimensión(es) encontrada(s)",
       "loading": "Cargando dimensiones...",
@@ -577,6 +628,28 @@
         "message": "El dataset que buscas no existe o no está disponible públicamente",
         "backButton": "Volver a departamentos"
       }
+    },
+    "barometer": {
+      "title": "Barómetro",
+      "research": {
+        "title": "Resultados de Investigación ULEAM",
+        "subtitle": "Datos y análisis de investigaciones realizadas por la universidad",
+        "empty": "No hay datasets de investigación disponibles"
+      },
+      "linkage": {
+        "title": "Resultados de Vinculación ULEAM",
+        "subtitle": "Datos y análisis de proyectos de vinculación con la sociedad",
+        "empty": "No hay datasets de vinculación disponibles"
+      },
+      "barometerUleam": {
+        "title": "Barómetro ULEAM",
+        "subtitle": "Indicadores y métricas institucionales",
+        "empty": "No hay datasets de barómetro disponibles"
+      },
+      "loading": "Cargando datos del barómetro...",
+      "viewDataset": "Ver datos y gráficos",
+      "predefinedCharts": "Gráficos Predeterminados",
+      "dataTable": "Tabla de Datos"
     }
   },
   "charts": {
@@ -644,6 +717,26 @@
       "stackedBar": {
         "name": "Barras Apiladas",
         "description": "Categorías por tiempo"
+      },
+      "wordcloud": {
+        "name": "Nube de Palabras",
+        "description": "Frecuencia de términos en texto"
+      },
+      "grouped_bar": {
+        "name": "Barras Agrupadas",
+        "description": "Promedio por categoría"
+      },
+      "box_compare": {
+        "name": "Comparar Promedios",
+        "description": "Promedio por categoría"
+      },
+      "line_time": {
+        "name": "Serie Temporal",
+        "description": "Evolución en el tiempo"
+      },
+      "stacked_bar": {
+        "name": "Barras Apiladas",
+        "description": "Categorías por tiempo"
       }
     },
     "stats": {
@@ -657,7 +750,29 @@
       "correlation": "Correlación"
     },
     "errors": {
-      "loadFailed": "No se pudieron cargar los datos"
+      "loadFailed": "No se pudieron cargar los datos del gráfico.",
+      "invalidDataType": "El tipo de dato de la variable no es compatible con este tipo de gráfico.",
+      "noDataForFilter": "No se encontraron datos con los filtros aplicados. Intenta cambiar los criterios de filtrado.",
+      "variableNotFound": "La variable seleccionada no fue encontrada en el dataset.",
+      "datasetNotFound": "El dataset solicitado no existe o no tienes acceso.",
+      "statsQueryError": "Error al procesar la consulta estadística. Verifica que los datos del dataset sean válidos.",
+      "columnCastError": "Error al convertir los datos de la columna. Algunos valores pueden no ser del tipo esperado.",
+      "accessDenied": "No tienes permisos para acceder a estos datos.",
+      "serverError": "Error interno del servidor. Intenta de nuevo más tarde.",
+      "connectionError": "Error de conexión con el servidor. Verifica tu conexión a internet."
+    },
+    "predefined": {
+      "title": "Título del gráfico",
+      "description": "Descripción o análisis",
+      "descriptionPlaceholder": "Escribe una descripción o análisis de lo que muestra este gráfico...",
+      "source": "Fuente",
+      "sourcePlaceholder": "Ej: Encuesta Nacional 2025, INE",
+      "save": "Guardar gráfico predeterminado",
+      "edit": "Editar gráfico predeterminado",
+      "delete": "Eliminar gráfico predeterminado",
+      "confirmDelete": "¿Eliminar este gráfico predeterminado?",
+      "visible": "Visible para usuarios",
+      "order": "Orden de visualización"
     }
   },
   "dataTypes": {
@@ -757,5 +872,43 @@
       "roleError": "Error al cambiar el rol",
       "noUsers": "No hay usuarios registrados"
     }
+  },
+  "errors": {
+    "codes": {
+      "DATASET_NOT_FOUND": "El dataset solicitado no fue encontrado.",
+      "VARIABLE_NOT_FOUND": "La variable seleccionada no existe en este dataset.",
+      "ACCESS_DENIED": "No tienes acceso a este recurso. Verifica tus permisos.",
+      "INVALID_CHART_TYPE": "El tipo de gráfico seleccionado no es válido.",
+      "STATS_QUERY_ERROR": "Error al procesar la consulta estadística. Verifica que los datos sean válidos para este análisis.",
+      "INVALID_DATA_TYPE": "El tipo de dato de la variable no es compatible con la operación solicitada.",
+      "COLUMN_CAST_ERROR": "Error al procesar los datos de la columna. Algunos valores no son del tipo esperado.",
+      "VALIDATION_ERROR": "Los datos proporcionados no son válidos. Verifica los campos marcados.",
+      "RATE_LIMIT": "Has realizado demasiadas solicitudes. Espera un momento e intenta de nuevo.",
+      "SERVER_ERROR": "Error interno del servidor. Si el problema persiste, contacta al administrador.",
+      "FILTER_ERROR": "Error al aplicar los filtros seleccionados."
+    }
+  },
+  "filters": {
+    "operators": {
+      "eq": "Igual a",
+      "neq": "Diferente de",
+      "gt": "Mayor que",
+      "gte": "Mayor o igual",
+      "lt": "Menor que",
+      "lte": "Menor o igual",
+      "between": "Entre",
+      "in": "Incluye",
+      "notIn": "No incluye",
+      "contains": "Contiene",
+      "notContains": "No contiene"
+    },
+    "column": "Columna",
+    "operator": "Operador",
+    "value": "Valor",
+    "valueFrom": "Desde",
+    "valueTo": "Hasta",
+    "add": "Agregar filtro",
+    "clear": "Limpiar todo",
+    "apply": "Aplicar filtros"
   }
 }

@@ -48,7 +48,8 @@ class GetBivariableStatsUseCase
             $varY,
             $tipoX,
             $tipoY,
-            $dto->limit
+            $dto->limit,
+            $dto->filters
         );
 
         return new ChartDataDTO(
@@ -73,12 +74,13 @@ class GetBivariableStatsUseCase
         object $varY,
         string $tipoX,
         string $tipoY,
-        int $limit
+        int $limit,
+        ?array $filters = null
     ): array {
         // Ambas numéricas -> scatter
         if ($tipoX === 'NUMERICO' && $tipoY === 'NUMERICO') {
             return [
-                $this->statisticsService->getScatterData($datasetId, $varX->nombreColumna, $varY->nombreColumna, $limit),
+                $this->statisticsService->getScatterData($datasetId, $varX->nombreColumna, $varY->nombreColumna, $limit, $filters),
                 'scatter'
             ];
         }
@@ -91,7 +93,7 @@ class GetBivariableStatsUseCase
             $numVar = $tipoX === 'NUMERICO' ? $varX : $varY;
 
             return [
-                $this->statisticsService->getGroupedBarData($datasetId, $catVar->nombreColumna, $numVar->nombreColumna, $limit),
+                $this->statisticsService->getGroupedBarData($datasetId, $catVar->nombreColumna, $numVar->nombreColumna, $limit, $filters),
                 'grouped_bar'
             ];
         }
@@ -99,7 +101,7 @@ class GetBivariableStatsUseCase
         // Ambas categóricas -> heatmap
         if ($tipoX === 'CATEGORICO' && $tipoY === 'CATEGORICO') {
             return [
-                $this->statisticsService->getHeatmapData($datasetId, $varX->nombreColumna, $varY->nombreColumna, $limit),
+                $this->statisticsService->getHeatmapData($datasetId, $varX->nombreColumna, $varY->nombreColumna, $limit, $filters),
                 'heatmap'
             ];
         }
@@ -112,7 +114,7 @@ class GetBivariableStatsUseCase
             $numVar = $tipoX === 'NUMERICO' ? $varX : $varY;
 
             return [
-                $this->statisticsService->getTimeSeriesData($datasetId, $dateVar->nombreColumna, $numVar->nombreColumna, $limit),
+                $this->statisticsService->getTimeSeriesData($datasetId, $dateVar->nombreColumna, $numVar->nombreColumna, $limit, $filters),
                 'line_time'
             ];
         }
@@ -125,7 +127,7 @@ class GetBivariableStatsUseCase
             $catVar = $tipoX === 'CATEGORICO' ? $varX : $varY;
 
             return [
-                $this->statisticsService->getStackedBarData($datasetId, $dateVar->nombreColumna, $catVar->nombreColumna, $limit),
+                $this->statisticsService->getStackedBarData($datasetId, $dateVar->nombreColumna, $catVar->nombreColumna, $limit, $filters),
                 'stacked_bar'
             ];
         }
@@ -133,7 +135,7 @@ class GetBivariableStatsUseCase
         // FECHA + FECHA -> línea temporal
         if ($tipoX === 'FECHA' && $tipoY === 'FECHA') {
             return [
-                $this->statisticsService->getTimeSeriesData($datasetId, $varX->nombreColumna, $varY->nombreColumna, $limit),
+                $this->statisticsService->getTimeSeriesData($datasetId, $varX->nombreColumna, $varY->nombreColumna, $limit, $filters),
                 'line_time'
             ];
         }

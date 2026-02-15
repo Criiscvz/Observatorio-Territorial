@@ -7,7 +7,7 @@ export const PUBLIC_ROUTES: Routes = [
       import('../features/public/public-departamentos/public-departamentos.component').then(
         (m) => m.PublicDepartamentosComponent,
       ),
-    title: 'Departamentos - Observatorio',
+    title: 'Dimensiones - Dimensiones ULEAM',
   },
   {
     path: 'departamentos/:id',
@@ -15,7 +15,7 @@ export const PUBLIC_ROUTES: Routes = [
       import('../features/public/public-departamento-detail/public-departamento-detail.component').then(
         (m) => m.PublicDepartamentoDetailComponent,
       ),
-    title: 'Detalle del Departamento - Observatorio',
+    title: 'Detalle de Dimensión - Dimensiones ULEAM',
   },
   {
     path: 'datasets/:id',
@@ -23,7 +23,15 @@ export const PUBLIC_ROUTES: Routes = [
       import('../features/public/public-dataset-view/public-dataset-view.component').then(
         (m) => m.PublicDatasetViewComponent,
       ),
-    title: 'Visualización de Dataset - Observatorio',
+    title: 'Visualización de Dataset - Dimensiones ULEAM',
+  },
+  {
+    path: 'barometro/:codigo',
+    loadComponent: () =>
+      import('../features/public/barometer-view/barometer-view.component').then(
+        (m) => m.BarometerViewComponent,
+      ),
+    title: 'Barómetro - Dimensiones ULEAM',
   },
   {
     path: '',

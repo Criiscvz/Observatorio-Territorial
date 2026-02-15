@@ -12,7 +12,7 @@ export const ADMIN_ROUTES: Routes = [
     path: 'dashboard',
     loadComponent: () =>
       import('../features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-    title: 'Dashboard - Panel de Administración',
+    title: 'Dashboard - Dimensiones',
   },
 
   // Departamentos
@@ -23,7 +23,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.DepartamentoFormComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Nuevo Departamento - Panel de Administración',
+    title: 'Nuevo Departamento - Dimensiones',
   },
   {
     path: 'departamentos/:id/editar',
@@ -32,7 +32,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.DepartamentoFormComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Editar Departamento - Panel de Administración',
+    title: 'Editar Departamento - Dimensiones',
   },
   {
     path: 'departamentos/:id',
@@ -40,7 +40,7 @@ export const ADMIN_ROUTES: Routes = [
       import('../features/departamentos/departamento-detail/departamento-detail.component').then(
         (m) => m.DepartamentoDetailComponent,
       ),
-    title: 'Detalle del Departamento - Panel de Administración',
+    title: 'Detalle del Departamento - Dimensiones',
   },
 
   // Datasets
@@ -50,7 +50,7 @@ export const ADMIN_ROUTES: Routes = [
       import('../features/datasets/dataset-list/dataset-list.component').then(
         (m) => m.DatasetListComponent,
       ),
-    title: 'Datasets - Panel de Administración',
+    title: 'Datasets - Dimensiones',
   },
   {
     path: 'datasets/nuevo',
@@ -59,7 +59,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.DatasetUploadComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Subir Dataset - Panel de Administración',
+    title: 'Subir Dataset - Dimensiones',
   },
   {
     path: 'datasets/:id',
@@ -67,7 +67,7 @@ export const ADMIN_ROUTES: Routes = [
       import('../features/datasets/dataset-view/dataset-view.component').then(
         (m) => m.DatasetViewComponent,
       ),
-    title: 'Visualización de Dataset - Panel de Administración',
+    title: 'Visualización de Dataset - Dimensiones',
   },
 
   // Usuarios (solo admin)
@@ -78,7 +78,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.UsuarioListComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Usuarios - Panel de Administración',
+    title: 'Usuarios - Dimensiones',
   },
   {
     path: 'usuarios/nuevo',
@@ -87,7 +87,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.UsuarioFormComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Nuevo Usuario - Panel de Administración',
+    title: 'Nuevo Usuario - Dimensiones',
   },
   {
     path: 'usuarios/:id',
@@ -96,6 +96,6 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.UsuarioFormComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Editar Usuario - Panel de Administración',
+    title: 'Editar Usuario - Dimensiones',
   },
 ];

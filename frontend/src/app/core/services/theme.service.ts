@@ -52,7 +52,7 @@ export class ThemeService {
   }
 
   /**
-   * Obtiene el tema inicial desde localStorage o preferencia del sistema
+   * Obtiene el tema inicial desde localStorage o usa light como predeterminado
    */
   private getInitialTheme(): Theme {
     // Solo acceder a localStorage si estamos en el navegador
@@ -66,11 +66,7 @@ export class ThemeService {
       return stored;
     }
 
-    // Si no hay preferencia guardada, usar preferencia del sistema
-    if (window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-
+    // Por defecto usar light
     return 'light';
   }
 

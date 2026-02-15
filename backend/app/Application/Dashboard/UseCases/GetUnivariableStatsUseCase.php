@@ -58,17 +58,26 @@ class GetUnivariableStatsUseCase
         $limit = $dto->limit ?? 20;
 
         // Usar el servicio compartido de estadísticas
-        if ($variable->isNumerico()) {
+        if ($chartType === 'wordcloud' && ($variable->tipoDato === 'TEXTO' || $variable->tipoDato === 'CATEGORICO')) {
+            $result = $this->statisticsService->getWordCloudData(
+                $variable->datasetId,
+                $variable->nombreColumna,
+                $limit,
+                $dto->filters
+            );
+        } elseif ($variable->isNumerico()) {
             $result = $this->statisticsService->getNumericStats(
                 $variable->datasetId, 
                 $variable->nombreColumna, 
-                $limit
+                $limit,
+                $dto->filters
             );
         } else {
             $result = $this->statisticsService->getCategoricalStats(
                 $variable->datasetId, 
                 $variable->nombreColumna, 
-                $limit
+                $limit,
+                $dto->filters
             );
         }
 
