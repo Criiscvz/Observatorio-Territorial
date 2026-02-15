@@ -74,23 +74,27 @@
               </h3>
               <div class="predefined-grid">
                 @for (pre of predefinedCharts(); track pre.id) {
-                  <button
-                    mat-stroked-button
-                    class="predefined-chip"
-                    (click)="loadPredefinedChart(pre)"
-                    [matTooltip]="pre.descripcion || ''"
-                  >
-                    <mat-icon>{{
-                      pre.tipo_grafico === 'bar'
-                        ? 'bar_chart'
-                        : pre.tipo_grafico === 'pie'
-                          ? 'pie_chart'
-                          : pre.tipo_grafico === 'line'
-                            ? 'show_chart'
-                            : 'analytics'
-                    }}</mat-icon>
-                    {{ pre.titulo }}
-                  </button>
+                  <div class="predefined-item">
+                    <button
+                      mat-stroked-button
+                      class="predefined-chip"
+                      (click)="loadPredefinedChart(pre)"
+                    >
+                      <mat-icon>{{
+                        pre.tipo_grafico === 'bar'
+                          ? 'bar_chart'
+                          : pre.tipo_grafico === 'pie'
+                            ? 'pie_chart'
+                            : pre.tipo_grafico === 'line'
+                              ? 'show_chart'
+                              : 'analytics'
+                      }}</mat-icon>
+                      {{ pre.titulo }}
+                    </button>
+                    @if (pre.descripcion) {
+                      <p class="predefined-description">{{ pre.descripcion }}</p>
+                    }
+                  </div>
                 }
               </div>
             </div>

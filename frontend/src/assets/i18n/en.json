@@ -557,6 +557,7 @@
         "departmentsLink": "Dimensions"
       },
       "nav": {
+        "home": "Home",
         "geoViewer": "Geographic Viewer",
         "dimensions": "Dimensions",
         "barometer": "Barometer",

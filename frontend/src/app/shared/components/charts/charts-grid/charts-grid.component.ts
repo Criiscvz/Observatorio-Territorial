@@ -14,7 +14,12 @@ import { ChartCardComponent } from '../chart-card/chart-card.component';
     @if (charts().length > 0) {
       <div class="charts-grid">
         @for (chart of charts(); track chart.id) {
-          <app-chart-card [chart]="chart" (remove)="removeChart.emit($event)" />
+          <app-chart-card
+            [chart]="chart"
+            [showSave]="showSave()"
+            (remove)="removeChart.emit($event)"
+            (save)="saveChart.emit($event)"
+          />
         }
       </div>
     } @else {
@@ -68,5 +73,7 @@ import { ChartCardComponent } from '../chart-card/chart-card.component';
 })
 export class ChartsGridComponent {
   charts = input.required<ActiveChart[]>();
+  showSave = input<boolean>(false);
   removeChart = output<string>();
+  saveChart = output<ActiveChart>();
 }

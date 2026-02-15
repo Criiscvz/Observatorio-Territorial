@@ -26,13 +26,22 @@
                   <mat-spinner diameter="40"></mat-spinner>
                 </div>
               } @else if (avatarUrl()) {
-                <img [src]="avatarUrl()" alt="Avatar" class="avatar-image" />
+                <img
+                  [src]="avatarUrl()"
+                  alt="Avatar"
+                  class="avatar-image"
+                  crossorigin="anonymous"
+                />
               } @else {
                 <div class="avatar-placeholder">
                   <span>{{ user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
                 </div>
               }
-              <button class="avatar-edit-btn" (click)="triggerFileInput()" [disabled]="uploadingAvatar()">
+              <button
+                class="avatar-edit-btn"
+                (click)="triggerFileInput()"
+                [disabled]="uploadingAvatar()"
+              >
                 <mat-icon>camera_alt</mat-icon>
               </button>
             </div>
@@ -53,11 +62,7 @@
           </div>
 
           <div class="avatar-actions">
-            <button
-              mat-stroked-button
-              (click)="triggerFileInput()"
-              [disabled]="uploadingAvatar()"
-            >
+            <button mat-stroked-button (click)="triggerFileInput()" [disabled]="uploadingAvatar()">
               <mat-icon>upload</mat-icon>
               {{ 'profile.avatar.upload' | translate }}
             </button>
@@ -133,7 +138,9 @@
                   [placeholder]="'profile.placeholders.bio' | translate"
                 ></textarea>
                 <mat-icon matPrefix>description</mat-icon>
-                <mat-hint align="end">{{ profileForm.get('bio')?.value?.length || 0 }}/500</mat-hint>
+                <mat-hint align="end"
+                  >{{ profileForm.get('bio')?.value?.length || 0 }}/500</mat-hint
+                >
                 @if (profileForm.get('bio')?.hasError('maxlength')) {
                   <mat-error>{{ 'profile.validation.bioMaxLength' | translate }}</mat-error>
                 }
@@ -178,7 +185,7 @@
             </div>
             <div class="info-item">
               <span class="info-label">{{ 'profile.fields.createdAt' | translate }}</span>
-              <span class="info-value">{{ user()?.created_at | date:'medium' }}</span>
+              <span class="info-value">{{ user()?.created_at | date: 'medium' }}</span>
             </div>
           </div>
         </mat-card-content>

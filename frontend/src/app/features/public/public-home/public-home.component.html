@@ -99,7 +99,12 @@
         <button class="user-btn" [matMenuTriggerFor]="userMenu">
           <div class="user-avatar">
             @if (authService.user()?.perfil?.avatar) {
-              <img [src]="authService.user()?.perfil?.avatar" alt="Avatar" class="avatar-img" />
+              <img
+                [src]="authService.user()?.perfil?.avatar"
+                alt="Avatar"
+                class="avatar-img"
+                crossorigin="anonymous"
+              />
             } @else {
               <span>{{ authService.user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
             }
@@ -112,7 +117,12 @@
           <div class="menu-header">
             <div class="menu-avatar">
               @if (authService.user()?.perfil?.avatar) {
-                <img [src]="authService.user()?.perfil?.avatar" alt="Avatar" class="avatar-img" />
+                <img
+                  [src]="authService.user()?.perfil?.avatar"
+                  alt="Avatar"
+                  class="avatar-img"
+                  crossorigin="anonymous"
+                />
               } @else {
                 <span>{{ authService.user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
               }

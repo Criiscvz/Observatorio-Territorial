@@ -9,7 +9,7 @@
       <div class="flex items-center gap-4">
         <a
           mat-icon-button
-          [routerLink]="['/departamentos', departamentoId()]"
+          [routerLink]="['/admin/departamentos', departamentoId()]"
           [matTooltip]="'common.buttons.back' | translate"
         >
           <mat-icon>arrow_back</mat-icon>
@@ -329,7 +329,9 @@
           <!-- Charts Grid (shared) -->
           <app-charts-grid
             [charts]="activeCharts()"
+            [showSave]="true"
             (removeChart)="removeChart($event)"
+            (saveChart)="saveChartAsPredefined($event)"
           />
 
           <!-- Save as predefined dialog -->
@@ -339,13 +341,19 @@
               <h3>{{ 'charts.predefined.save' | translate }}</h3>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>{{ 'charts.predefined.title' | translate }}</mat-label>
-                <input matInput [value]="predefinedForm().titulo"
-                  (input)="predefinedForm.set({...predefinedForm(), titulo: $any($event.target).value})" />
+                <input
+                  matInput
+                  [value]="predefinedForm().titulo"
+                  (input)="predefinedForm.set({...predefinedForm(), titulo: $any($event.target).value})"
+                />
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>{{ 'charts.predefined.description' | translate }}</mat-label>
-                <input matInput [value]="predefinedForm().descripcion"
-                  (input)="predefinedForm.set({...predefinedForm(), descripcion: $any($event.target).value})" />
+                <input
+                  matInput
+                  [value]="predefinedForm().descripcion"
+                  (input)="predefinedForm.set({...predefinedForm(), descripcion: $any($event.target).value})"
+                />
               </mat-form-field>
               <div class="form-actions">
                 <button mat-stroked-button (click)="cancelPredefinedForm()">
@@ -382,26 +390,39 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <mat-form-field appearance="outline">
                     <mat-label>{{ 'datasets.view.sources.sourceTitle' | translate }}</mat-label>
-                    <input matInput [value]="sourceForm().titulo"
-                      (input)="sourceForm.set({...sourceForm(), titulo: $any($event.target).value})" />
+                    <input
+                      matInput
+                      [value]="sourceForm().titulo"
+                      (input)="sourceForm.set({...sourceForm(), titulo: $any($event.target).value})"
+                    />
                   </mat-form-field>
                   <mat-form-field appearance="outline">
                     <mat-label>{{ 'datasets.view.sources.sourceUrl' | translate }}</mat-label>
-                    <input matInput [value]="sourceForm().url"
-                      (input)="sourceForm.set({...sourceForm(), url: $any($event.target).value})" />
+                    <input
+                      matInput
+                      [value]="sourceForm().url"
+                      (input)="sourceForm.set({...sourceForm(), url: $any($event.target).value})"
+                    />
                   </mat-form-field>
                 </div>
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>{{ 'datasets.view.sources.sourceDescription' | translate }}</mat-label>
-                  <input matInput [value]="sourceForm().descripcion"
-                    (input)="sourceForm.set({...sourceForm(), descripcion: $any($event.target).value})" />
+                  <input
+                    matInput
+                    [value]="sourceForm().descripcion"
+                    (input)="sourceForm.set({...sourceForm(), descripcion: $any($event.target).value})"
+                  />
                 </mat-form-field>
                 <div class="form-actions">
                   <button mat-stroked-button (click)="closeSourceForm()">
                     {{ 'common.buttons.cancel' | translate }}
                   </button>
-                  <button mat-raised-button color="primary" (click)="saveSource()"
-                    [disabled]="!sourceForm().titulo || !sourceForm().url">
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="saveSource()"
+                    [disabled]="!sourceForm().titulo || !sourceForm().url"
+                  >
                     {{ 'common.buttons.save' | translate }}
                   </button>
                 </div>
@@ -423,19 +444,30 @@
                       @if (fuente.descripcion) {
                         <p class="source-description">{{ fuente.descripcion }}</p>
                       }
-                      <a [href]="fuente.url" target="_blank" rel="noopener noreferrer"
-                        class="source-url">
+                      <a
+                        [href]="fuente.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="source-url"
+                      >
                         {{ fuente.url }}
                         <mat-icon class="url-icon">open_in_new</mat-icon>
                       </a>
                     </div>
                     <div class="source-actions">
-                      <button mat-icon-button (click)="openSourceForm(fuente)"
-                        [matTooltip]="'common.buttons.edit' | translate">
+                      <button
+                        mat-icon-button
+                        (click)="openSourceForm(fuente)"
+                        [matTooltip]="'common.buttons.edit' | translate"
+                      >
                         <mat-icon>edit</mat-icon>
                       </button>
-                      <button mat-icon-button color="warn" (click)="deleteSource(fuente)"
-                        [matTooltip]="'common.buttons.delete' | translate">
+                      <button
+                        mat-icon-button
+                        color="warn"
+                        (click)="deleteSource(fuente)"
+                        [matTooltip]="'common.buttons.delete' | translate"
+                      >
                         <mat-icon>delete</mat-icon>
                       </button>
                     </div>

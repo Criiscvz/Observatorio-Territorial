@@ -155,6 +155,24 @@ export class PublicDatasetViewComponent implements OnInit {
 
   onFiltersChange(filters: ChartFilter[]): void {
     this.activeFilters.set(filters);
+    // Reload all existing charts with new filters
+    this.reloadActiveCharts();
+  }
+
+  private reloadActiveCharts(): void {
+    const charts = this.activeCharts();
+    charts.forEach((chart) => {
+      if (chart.data) {
+        this.activeCharts.update((all) =>
+          all.map((c) => (c.id === chart.id ? { ...c, loading: true } : c)),
+        );
+        if (chart.chartType.bivariable && chart.variableY) {
+          this.loadBivariableData(chart);
+        } else {
+          this.loadUnivariableData(chart);
+        }
+      }
+    });
   }
 
   togglePercentages(): void {

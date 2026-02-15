@@ -61,7 +61,13 @@ class DatasetFuenteController extends Controller
     )]
     public function store(Request $request, string $datasetId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        // Normalize URL: add https:// if no protocol specified
+        $input = $request->all();
+        if (!empty($input['url']) && !preg_match('#^https?://#i', $input['url'])) {
+            $input['url'] = 'https://' . $input['url'];
+        }
+
+        $validator = Validator::make($input, [
             'titulo' => 'required|string|max:255',
             'url' => 'required|url|max:500',
             'descripcion' => 'nullable|string|max:500',
@@ -104,7 +110,13 @@ class DatasetFuenteController extends Controller
             return response()->json(['message' => 'Fuente no encontrada'], 404);
         }
 
-        $validator = Validator::make($request->all(), [
+        // Normalize URL: add https:// if no protocol specified
+        $input = $request->all();
+        if (!empty($input['url']) && !preg_match('#^https?://#i', $input['url'])) {
+            $input['url'] = 'https://' . $input['url'];
+        }
+
+        $validator = Validator::make($input, [
             'titulo' => 'sometimes|string|max:255',
             'url' => 'sometimes|url|max:500',
             'descripcion' => 'nullable|string|max:500',
