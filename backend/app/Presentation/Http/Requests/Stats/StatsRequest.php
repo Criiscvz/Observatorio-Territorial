@@ -10,13 +10,13 @@ use Illuminate\Validation\Rule;
 class StatsRequest extends FormRequest
 {
     // Gráficos para variables numéricas
-    public const NUMERIC_CHARTS = ['histogram', 'bar', 'line', 'area', 'gauge'];
+    public const NUMERIC_CHARTS = ['histogram', 'bar', 'line', 'area', 'gauge', 'horizontal_bar', 'pictorial_bar'];
     
     // Gráficos para variables categóricas
-    public const CATEGORICAL_CHARTS = ['bar', 'pie', 'donut', 'funnel', 'treemap', 'radar', 'line', 'area'];
+    public const CATEGORICAL_CHARTS = ['bar', 'pie', 'donut', 'funnel', 'treemap', 'radar', 'line', 'area', 'horizontal_bar', 'rose', 'polar_bar', 'pictorial_bar'];
     
     // Todos los gráficos univariables permitidos
-    public const ALL_UNIVARIABLE_CHARTS = ['bar', 'pie', 'donut', 'histogram', 'line', 'area', 'funnel', 'treemap', 'gauge', 'radar', 'wordcloud'];
+    public const ALL_UNIVARIABLE_CHARTS = ['bar', 'pie', 'donut', 'histogram', 'line', 'area', 'funnel', 'treemap', 'gauge', 'radar', 'wordcloud', 'horizontal_bar', 'rose', 'polar_bar', 'pictorial_bar'];
 
     public function authorize(): bool
     {

@@ -724,6 +724,30 @@
         "name": "Word Cloud",
         "description": "Word frequency in text"
       },
+      "horizontal_bar": {
+        "name": "Horizontal Bar",
+        "description": "Categories with long labels"
+      },
+      "rose": {
+        "name": "Nightingale Rose",
+        "description": "Polar proportions"
+      },
+      "polar_bar": {
+        "name": "Polar Bar",
+        "description": "Circular bars"
+      },
+      "pictorial_bar": {
+        "name": "Pictorial Bar",
+        "description": "Decorative bars"
+      },
+      "bubble": {
+        "name": "Bubble",
+        "description": "Scatter with size"
+      },
+      "stacked_area": {
+        "name": "Stacked Area",
+        "description": "Stacked trends"
+      },
       "grouped_bar": {
         "name": "Grouped Bar",
         "description": "Average by category"

@@ -62,6 +62,14 @@ export class ChartOptionsService {
         return this.getRadarOptions(baseOptions, title, labels, values, colors, cfg, maxValue);
       case 'wordcloud':
         return this.getWordCloudOptions(baseOptions, title, labels, values, colors, cfg);
+      case 'horizontal_bar':
+        return this.getHorizontalBarOptions(baseOptions, title, labels, values, colors, cfg);
+      case 'rose':
+        return this.getRoseOptions(baseOptions, title, labels, values, colors, cfg);
+      case 'polar_bar':
+        return this.getPolarBarOptions(baseOptions, title, labels, values, colors, cfg);
+      case 'pictorial_bar':
+        return this.getPictorialBarOptions(baseOptions, title, labels, values, colors, cfg);
       default:
         return {};
     }
@@ -82,6 +90,16 @@ export class ChartOptionsService {
     // LINE_TIME (serie temporal)
     if (type === 'line_time' || (d.labels && d.values && !d.points && !d.heatmap && !d.series)) {
       return this.getLineTimeOptions(baseOptions, d, varY, colors, cfg);
+    }
+
+    // BUBBLE (dispersión con tamaño variable)
+    if (type === 'bubble' && d.points && d.points.length > 0) {
+      return this.getBubbleOptions(baseOptions, d, varX, varY, correlation, colors, cfg);
+    }
+
+    // STACKED_AREA (áreas apiladas, misma estructura que stacked_bar)
+    if (type === 'stacked_area' && d.series && Array.isArray(d.series) && d.labels_x) {
+      return this.getStackedAreaOptions(baseOptions, d, varX, varY, colors, cfg);
     }
 
     // SCATTER (2 numéricas)
@@ -757,6 +775,285 @@ export class ChartOptionsService {
         },
       ],
       grid: { bottom: categories.length > 5 ? 90 : 50, left: 70, right: 20, top: 70 },
+    };
+  }
+
+  private getHorizontalBarOptions(
+    base: EChartsOption,
+    title: string,
+    labels: string[],
+    values: number[],
+    colors: string[],
+    cfg: any,
+  ): EChartsOption {
+    return {
+      ...base,
+      title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
+      yAxis: {
+        type: 'category',
+        data: labels,
+        axisLabel: { color: cfg.textColorSecondary, width: 100, overflow: 'truncate' },
+      },
+      xAxis: {
+        type: 'value',
+        axisLabel: { color: cfg.textColorSecondary },
+        splitLine: { lineStyle: { color: cfg.splitLineColor } },
+      },
+      series: [
+        {
+          type: 'bar',
+          data: values.map((v, i) => ({
+            value: v,
+            itemStyle: { color: colors[i % colors.length], borderRadius: [0, 4, 4, 0] },
+          })),
+        },
+      ],
+      grid: { bottom: 40, left: 120, right: 30, top: 60 },
+    };
+  }
+
+  private getRoseOptions(
+    base: EChartsOption,
+    title: string,
+    labels: string[],
+    values: number[],
+    colors: string[],
+    cfg: any,
+  ): EChartsOption {
+    return {
+      ...base,
+      title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
+      legend: { bottom: 10, textStyle: { color: cfg.textColorSecondary }, type: 'scroll' },
+      series: [
+        {
+          type: 'pie',
+          radius: ['20%', '70%'],
+          center: ['50%', '50%'],
+          roseType: 'radius',
+          itemStyle: { borderRadius: 5, borderColor: cfg.tooltipBg, borderWidth: 2 },
+          data: labels.map((l, i) => ({
+            name: l,
+            value: values[i],
+            itemStyle: { color: colors[i % colors.length] },
+          })),
+          label: { show: true, color: cfg.textColorSecondary },
+          emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } },
+        },
+      ],
+    };
+  }
+
+  private getPolarBarOptions(
+    base: EChartsOption,
+    title: string,
+    labels: string[],
+    values: number[],
+    colors: string[],
+    cfg: any,
+  ): EChartsOption {
+    return {
+      ...base,
+      title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
+      polar: { radius: [30, '80%'] },
+      angleAxis: {
+        max: Math.max(...values) * 1.2,
+        startAngle: 90,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { show: false },
+        splitLine: { lineStyle: { color: cfg.splitLineColor } },
+      },
+      radiusAxis: {
+        type: 'category',
+        data: labels,
+        axisLine: { show: false },
+        axisTick: { show: false },
+        axisLabel: { color: cfg.textColorSecondary },
+      },
+      tooltip: {
+        ...(base.tooltip as any),
+        trigger: 'item',
+        formatter: (params: any) => `${params.name}: ${params.value}`,
+      },
+      series: [
+        {
+          type: 'bar',
+          coordinateSystem: 'polar',
+          data: values.map((v, i) => ({
+            value: v,
+            itemStyle: {
+              color: {
+                type: 'linear',
+                x: 0,
+                y: 0,
+                x2: 1,
+                y2: 0,
+                colorStops: [
+                  { offset: 0, color: `${colors[i % colors.length]}80` },
+                  { offset: 1, color: colors[i % colors.length] },
+                ],
+              },
+              borderRadius: 4,
+            },
+          })),
+          barWidth: '60%',
+        },
+      ],
+    } as any;
+  }
+
+  private getPictorialBarOptions(
+    base: EChartsOption,
+    title: string,
+    labels: string[],
+    values: number[],
+    colors: string[],
+    cfg: any,
+  ): EChartsOption {
+    return {
+      ...base,
+      title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
+      xAxis: {
+        type: 'category',
+        data: labels,
+        axisLabel: { color: cfg.textColorSecondary, rotate: labels.length > 6 ? 45 : 0 },
+        axisTick: { show: false },
+        axisLine: { lineStyle: { color: cfg.splitLineColor } },
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: { color: cfg.textColorSecondary },
+        splitLine: { lineStyle: { color: cfg.splitLineColor } },
+      },
+      series: [
+        {
+          type: 'pictorialBar',
+          symbol: 'roundRect',
+          symbolRepeat: true,
+          symbolSize: ['80%', 10],
+          symbolMargin: 2,
+          data: values.map((v, i) => ({
+            value: v,
+            itemStyle: { color: colors[i % colors.length] },
+          })),
+        },
+      ],
+      grid: { bottom: labels.length > 6 ? 80 : 40, left: 60, right: 20, top: 60 },
+    } as any;
+  }
+
+  private getBubbleOptions(
+    base: EChartsOption,
+    d: any,
+    varX: string,
+    varY: string,
+    correlation: number | undefined,
+    colors: string[],
+    cfg: any,
+  ): EChartsOption {
+    const points: [number, number][] = d.points || [];
+    const allX = points.map((p) => Math.abs(p[0]));
+    const allY = points.map((p) => Math.abs(p[1]));
+    const maxMag = Math.max(...allX, ...allY, 1);
+    const correlationText = correlation !== undefined ? correlation.toFixed(3) : 'N/A';
+
+    return {
+      ...base,
+      title: {
+        text: `${varX} vs ${varY}`,
+        subtext: `Correlación: ${correlationText}`,
+        left: 'center',
+        textStyle: { color: cfg.textColor },
+        subtextStyle: { color: cfg.textColorSecondary },
+      },
+      xAxis: {
+        type: 'value',
+        name: varX,
+        scale: true,
+        axisLabel: { color: cfg.textColorSecondary },
+        splitLine: { lineStyle: { color: cfg.splitLineColor } },
+      },
+      yAxis: {
+        type: 'value',
+        name: varY,
+        scale: true,
+        axisLabel: { color: cfg.textColorSecondary },
+        splitLine: { lineStyle: { color: cfg.splitLineColor } },
+      },
+      series: [
+        {
+          type: 'scatter',
+          data: points.map((p) => [p[0], p[1], Math.abs(p[0]) + Math.abs(p[1])]),
+          symbolSize: (data: number[]) => {
+            const ratio = data[2] / maxMag;
+            return Math.max(8, Math.min(50, ratio * 35 + 8));
+          },
+          itemStyle: {
+            color: (params: any) => {
+              const c = colors[params.dataIndex % colors.length];
+              return `${c}BB`;
+            },
+          },
+          emphasis: { itemStyle: { opacity: 1, borderColor: '#fff', borderWidth: 2 } },
+        },
+      ],
+      grid: { bottom: 50, left: 60, right: 30, top: 70 },
+    } as any;
+  }
+
+  private getStackedAreaOptions(
+    base: EChartsOption,
+    d: any,
+    varX: string,
+    varY: string,
+    colors: string[],
+    cfg: any,
+  ): EChartsOption {
+    return {
+      ...base,
+      title: {
+        text: `${varY} por ${varX}`,
+        left: 'center',
+        textStyle: { color: cfg.textColor },
+      },
+      legend: { bottom: 10, textStyle: { color: cfg.textColorSecondary }, type: 'scroll' },
+      xAxis: {
+        type: 'category',
+        data: d.labels_x,
+        boundaryGap: false,
+        axisLabel: {
+          color: cfg.textColorSecondary,
+          rotate: d.labels_x.length > 6 ? 45 : 0,
+        },
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: { color: cfg.textColorSecondary },
+        splitLine: { lineStyle: { color: cfg.splitLineColor } },
+      },
+      series: d.series.map((s: any, i: number) => ({
+        name: s.name,
+        type: 'line',
+        stack: 'total',
+        smooth: true,
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              { offset: 0, color: `${colors[i % colors.length]}60` },
+              { offset: 1, color: `${colors[i % colors.length]}10` },
+            ],
+          },
+        },
+        data: s.data,
+        itemStyle: { color: colors[i % colors.length] },
+        emphasis: { focus: 'series' },
+      })),
+      grid: { bottom: 70, left: 60, right: 20, top: 60 },
     };
   }
 

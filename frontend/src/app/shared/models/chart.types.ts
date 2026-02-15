@@ -105,6 +105,34 @@ export const CHART_TYPES: ChartType[] = [
     description: 'Frecuencia de texto',
     forTypes: ['TEXTO', 'CATEGORICO'],
   },
+  {
+    id: 'horizontal_bar',
+    name: 'Barras Horizontales',
+    icon: 'align_horizontal_left',
+    description: 'Categorías con etiquetas largas',
+    forTypes: ['CATEGORICO', 'TEXTO'],
+  },
+  {
+    id: 'rose',
+    name: 'Rosa de Nightingale',
+    icon: 'flare',
+    description: 'Proporciones polares',
+    forTypes: ['CATEGORICO'],
+  },
+  {
+    id: 'polar_bar',
+    name: 'Barras Polares',
+    icon: 'track_changes',
+    description: 'Barras circulares',
+    forTypes: ['CATEGORICO'],
+  },
+  {
+    id: 'pictorial_bar',
+    name: 'Barras Pictóricas',
+    icon: 'insert_chart',
+    description: 'Barras decorativas',
+    forTypes: ['CATEGORICO', 'NUMERICO'],
+  },
   // Bivariables
   {
     id: 'scatter',
@@ -154,6 +182,22 @@ export const CHART_TYPES: ChartType[] = [
     forTypes: ['FECHA', 'CATEGORICO'],
     bivariable: true,
   },
+  {
+    id: 'bubble',
+    name: 'Burbujas',
+    icon: 'bubble_chart',
+    description: 'Dispersión con tamaño',
+    forTypes: ['NUMERICO'],
+    bivariable: true,
+  },
+  {
+    id: 'stacked_area',
+    name: 'Área Apilada',
+    icon: 'stacked_line_chart',
+    description: 'Tendencias apiladas',
+    forTypes: ['FECHA', 'CATEGORICO'],
+    bivariable: true,
+  },
 ];
 
 /**
@@ -183,6 +227,11 @@ export function getBivariableChartTypes(tipoX: DataType, tipoY: DataType): Chart
       return normX === 'NUMERICO' && normY === 'NUMERICO';
     }
 
+    // Bubble: ambas numéricas (dispersión con tamaño)
+    if (chart.id === 'bubble') {
+      return normX === 'NUMERICO' && normY === 'NUMERICO';
+    }
+
     // Grouped bar / box_compare: una categórica y una numérica
     if (chart.id === 'grouped_bar' || chart.id === 'box_compare') {
       return (
@@ -205,6 +254,14 @@ export function getBivariableChartTypes(tipoX: DataType, tipoY: DataType): Chart
 
     // Stacked bar: fecha + categórica
     if (chart.id === 'stacked_bar') {
+      return (
+        (normX === 'FECHA' && normY === 'CATEGORICO') ||
+        (normX === 'CATEGORICO' && normY === 'FECHA')
+      );
+    }
+
+    // Stacked area: fecha + categórica (mismo patrón que stacked bar)
+    if (chart.id === 'stacked_area') {
       return (
         (normX === 'FECHA' && normY === 'CATEGORICO') ||
         (normX === 'CATEGORICO' && normY === 'FECHA')

@@ -724,6 +724,30 @@
         "name": "Nube de Palabras",
         "description": "Frecuencia de términos en texto"
       },
+      "horizontal_bar": {
+        "name": "Barras Horizontales",
+        "description": "Categorías con etiquetas largas"
+      },
+      "rose": {
+        "name": "Rosa de Nightingale",
+        "description": "Proporciones polares"
+      },
+      "polar_bar": {
+        "name": "Barras Polares",
+        "description": "Barras circulares"
+      },
+      "pictorial_bar": {
+        "name": "Barras Pictóricas",
+        "description": "Barras decorativas"
+      },
+      "bubble": {
+        "name": "Burbujas",
+        "description": "Dispersión con tamaño"
+      },
+      "stacked_area": {
+        "name": "Área Apilada",
+        "description": "Tendencias apiladas"
+      },
       "grouped_bar": {
         "name": "Barras Agrupadas",
         "description": "Promedio por categoría"
