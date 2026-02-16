@@ -32,11 +32,7 @@
       <mat-form-field appearance="outline" class="search-field">
         <mat-icon matPrefix>search</mat-icon>
         <mat-label>{{ 'public.allDatasets.search' | translate }}</mat-label>
-        <input
-          matInput
-          [value]="searchTerm()"
-          (input)="onSearch($any($event.target).value)"
-        />
+        <input matInput [value]="searchTerm()" (input)="onSearch($any($event.target).value)" />
         @if (searchTerm()) {
           <button matSuffix mat-icon-button (click)="clearSearch()">
             <mat-icon>close</mat-icon>
