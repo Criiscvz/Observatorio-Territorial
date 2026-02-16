@@ -1,6 +1,6 @@
 import { ChartData, VariableMetadato } from '@core/models';
-import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { BivariableResponse } from '@core/services/interfaces';
+import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 
 export type DataType = 'NUMERICO' | 'CATEGORICO' | 'FECHA' | 'TEXTO';
 
@@ -209,9 +209,7 @@ export function getUnivariableChartTypes(tipoDato: DataType): ChartType[] {
   // For TEXTO, show only chart types that explicitly list TEXTO in forTypes
   // (wordcloud, bar, horizontal_bar, treemap, funnel)
   // For other types, filter normally
-  return CHART_TYPES.filter(
-    (chart) => !chart.bivariable && chart.forTypes.includes(tipoDato),
-  );
+  return CHART_TYPES.filter((chart) => !chart.bivariable && chart.forTypes.includes(tipoDato));
 }
 
 /**

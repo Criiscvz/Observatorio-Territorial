@@ -6,14 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChartData, VariableMetadato } from '@core/models';
-import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { BivariableResponse } from '@core/services/interfaces';
+import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActiveChart } from '@shared/models';
-import { ChartFiltersComponent } from '../chart-filters/chart-filters.component';
 import { ChartOptionsService } from '@shared/services/chart-options.service';
 import { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
+import { ChartFiltersComponent } from '../chart-filters/chart-filters.component';
 
 @Component({
   selector: 'app-chart-card',
