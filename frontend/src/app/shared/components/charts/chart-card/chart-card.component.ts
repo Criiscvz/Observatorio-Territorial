@@ -66,6 +66,9 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
           'charts.types.' + chart().chartType.id + '.name' | translate
         }}</mat-card-subtitle>
       </mat-card-header>
+      @if (chart().description) {
+        <p class="chart-description">{{ chart().description }}</p>
+      }
       <mat-card-content>
         @if (showFilters()) {
           <app-chart-filters
@@ -83,6 +86,12 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
           <div class="chart-error">
             <mat-icon>error_outline</mat-icon>
             <p>{{ 'charts.errors.loadFailed' | translate }}</p>
+          </div>
+        }
+        @if (chart().analisis) {
+          <div class="chart-analysis">
+            <mat-icon>psychology</mat-icon>
+            <p>{{ chart().analisis }}</p>
           </div>
         }
       </mat-card-content>
@@ -133,6 +142,40 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
 
       .chart-canvas {
         height: 280px;
+      }
+
+      .chart-description {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        margin: 0 16px 8px;
+        line-height: 1.4;
+      }
+
+      .chart-analysis {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        margin-top: 0.5rem;
+        background: var(--surface-variant, rgba(0, 0, 0, 0.03));
+        border-radius: var(--radius-md, 8px);
+        border-left: 3px solid var(--primary-600);
+      }
+
+      .chart-analysis mat-icon {
+        color: var(--primary-600);
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .chart-analysis p {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.5;
+        font-style: italic;
       }
 
       .chart-loading,

@@ -16,6 +16,8 @@ export interface ChartType {
 export interface ActiveChart {
   id: string;
   title: string;
+  description?: string;
+  analisis?: string;
   chartType: ChartType;
   variableX: VariableMetadato;
   variableY?: VariableMetadato;

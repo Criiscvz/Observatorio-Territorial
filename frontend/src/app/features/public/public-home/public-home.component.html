@@ -20,7 +20,7 @@
         {{ 'public.home.nav.geoViewer' | translate }}
       </a>
 
-      <!-- Menú de Dimensiones -->
+      <!-- Menú de Observatorios -->
       <button class="nav-link" [matMenuTriggerFor]="dimensionsMenu">
         <mat-icon>category</mat-icon>
         {{ 'public.home.nav.dimensions' | translate }}
@@ -40,6 +40,12 @@
           </button>
         }
       </mat-menu>
+
+      <!-- Datasets -->
+      <a routerLink="/publico/datasets" class="nav-link">
+        <mat-icon>table_chart</mat-icon>
+        {{ 'public.home.nav.datasets' | translate }}
+      </a>
 
       <!-- Menú Barómetro -->
       <button class="nav-link" [matMenuTriggerFor]="barometerMenu">

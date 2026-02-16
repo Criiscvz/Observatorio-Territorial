@@ -12,7 +12,7 @@ export const ADMIN_ROUTES: Routes = [
     path: 'dashboard',
     loadComponent: () =>
       import('../features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
-    title: 'Dashboard - Dimensiones',
+    title: 'Dashboard - Observatorio',
   },
 
   // Departamentos
@@ -23,7 +23,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.DepartamentoFormComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Nuevo Departamento - Dimensiones',
+    title: 'Nuevo Departamento - Observatorio',
   },
   {
     path: 'departamentos/:id/editar',
@@ -32,7 +32,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.DepartamentoFormComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Editar Departamento - Dimensiones',
+    title: 'Editar Departamento - Observatorio',
   },
   {
     path: 'departamentos/:id',
@@ -40,7 +40,7 @@ export const ADMIN_ROUTES: Routes = [
       import('../features/departamentos/departamento-detail/departamento-detail.component').then(
         (m) => m.DepartamentoDetailComponent,
       ),
-    title: 'Detalle del Departamento - Dimensiones',
+    title: 'Detalle del Departamento - Observatorio',
   },
 
   // Datasets
@@ -50,7 +50,7 @@ export const ADMIN_ROUTES: Routes = [
       import('../features/datasets/dataset-list/dataset-list.component').then(
         (m) => m.DatasetListComponent,
       ),
-    title: 'Datasets - Dimensiones',
+    title: 'Datasets - Observatorio',
   },
   {
     path: 'datasets/nuevo',
@@ -59,7 +59,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.DatasetUploadComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Subir Dataset - Dimensiones',
+    title: 'Subir Dataset - Observatorio',
   },
   {
     path: 'datasets/:id',
@@ -67,7 +67,7 @@ export const ADMIN_ROUTES: Routes = [
       import('../features/datasets/dataset-view/dataset-view.component').then(
         (m) => m.DatasetViewComponent,
       ),
-    title: 'Visualización de Dataset - Dimensiones',
+    title: 'Visualización de Dataset - Observatorio',
   },
 
   // Usuarios (solo admin)
@@ -78,7 +78,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.UsuarioListComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Usuarios - Dimensiones',
+    title: 'Usuarios - Observatorio',
   },
   {
     path: 'usuarios/nuevo',
@@ -87,7 +87,7 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.UsuarioFormComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Nuevo Usuario - Dimensiones',
+    title: 'Nuevo Usuario - Observatorio',
   },
   {
     path: 'usuarios/:id',
@@ -96,6 +96,6 @@ export const ADMIN_ROUTES: Routes = [
         (m) => m.UsuarioFormComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Editar Usuario - Dimensiones',
+    title: 'Editar Usuario - Observatorio',
   },
 ];

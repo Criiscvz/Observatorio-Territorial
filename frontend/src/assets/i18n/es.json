@@ -93,7 +93,7 @@
   },
   "auth": {
     "login": {
-      "title": "Dimensiones ULEAM",
+      "title": "Observatorio ULEAM",
       "subtitle": "Ingresa a tu cuenta",
       "email": "Correo electrónico",
       "emailPlaceholder": "correo@uleam.edu.ec",
@@ -110,7 +110,7 @@
     },
     "register": {
       "title": "Crear Cuenta",
-      "subtitle": "Regístrate en Dimensiones ULEAM",
+      "subtitle": "Regístrate en Observatorio ULEAM",
       "fullName": "Nombre completo",
       "fullNamePlaceholder": "Juan Pérez",
       "email": "Correo electrónico",
@@ -176,7 +176,7 @@
   },
   "layout": {
     "header": {
-      "brand": "Dimensiones Territoriales",
+      "brand": "Observatorio Territorial",
       "brandSubtitle": "Multidisciplinario",
       "menu": "Menú",
       "themeLight": "Modo claro",
@@ -191,11 +191,11 @@
       "dashboard": "Dashboard",
       "uploadDataset": "Subir Dataset",
       "users": "Usuarios",
-      "departments": "Dimensiones",
-      "newDepartment": "Nueva dimensión",
+      "departments": "Observatorios",
+      "newDepartment": "Nueva observatorio",
       "allDatasets": "Todos los Datasets",
       "publicView": "Vista Pública",
-      "noDepartments": "Sin dimensiones",
+      "noDepartments": "Sin observatorios",
       "createOne": "Crear una",
       "barometer": "Barómetro",
       "research": "Investigación ULEAM",
@@ -203,33 +203,33 @@
       "barometerUleam": "Barómetro ULEAM"
     },
     "footer": {
-      "copyright": "© {{year}} Dimensiones ULEAM. Todos los derechos reservados.",
+      "copyright": "© {{year}} Observatorio ULEAM. Todos los derechos reservados.",
       "university": "Universidad Laica Eloy Alfaro de Manabí"
     }
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcome": "Bienvenido a Dimensiones",
-    "welcomeMessage": "Gestiona tus dimensiones y datasets de manera eficiente",
+    "welcome": "Bienvenido a Observatorios",
+    "welcomeMessage": "Gestiona tus observatorios y datasets de manera eficiente",
     "stats": {
-      "totalDepartments": "Dimensiones",
+      "totalDepartments": "Observatorios",
       "totalDatasets": "Datasets",
       "totalRecords": "Registros Totales",
-      "publicDepartments": "Dimensiones Públicas"
+      "publicDepartments": "Observatorios Públicos"
     },
     "quickActions": {
       "title": "Acciones Rápidas",
-      "newDepartment": "Nueva Dimensión",
-      "newDepartmentDesc": "Crea una nueva dimensión para organizar tus datos",
+      "newDepartment": "Nueva Observatorio",
+      "newDepartmentDesc": "Crea un nuevo observatorio para organizar tus datos",
       "uploadDataset": "Subir Dataset",
       "uploadDatasetDesc": "Importa un archivo Excel o CSV para analizar",
       "viewAll": "Ver Todos",
       "viewAllDesc": "Explora todos los datasets disponibles"
     },
     "recentDepartments": {
-      "title": "Dimensiones Recientes",
+      "title": "Observatorios Recientes",
       "viewAll": "Ver todas",
-      "empty": "No hay dimensiones aún"
+      "empty": "No hay observatorios aún"
     },
     "recentDatasets": {
       "title": "Datasets Recientes",
@@ -247,7 +247,7 @@
       "importDataset": "Importar Dataset",
       "columns": {
         "name": "Nombre",
-        "department": "Dimensión",
+        "department": "Observatorio",
         "category": "Categoría",
         "status": "Estado",
         "records": "Registros",
@@ -268,8 +268,8 @@
         "complete": "Completado"
       },
       "form": {
-        "department": "Dimensión",
-        "selectDepartment": "Selecciona una dimensión",
+        "department": "Observatorio",
+        "selectDepartment": "Selecciona un observatorio",
         "category": "Categoría",
         "selectCategory": "Selecciona una categoría",
         "name": "Nombre del Dataset",
@@ -418,31 +418,31 @@
     }
   },
   "departamentos": {
-    "title": "Dimensiones",
+    "title": "Observatorios",
     "list": {
-      "title": "Dimensiones",
-      "newDepartment": "Nueva Dimensión",
-      "empty": "No hay dimensiones",
-      "emptyDescription": "Crea tu primera dimensión"
+      "title": "Observatorios",
+      "newDepartment": "Nueva Observatorio",
+      "empty": "No hay observatorios",
+      "emptyDescription": "Crea tu primera observatorio"
     },
     "form": {
-      "titleEdit": "Editar Dimensión",
-      "titleNew": "Nueva Dimensión",
-      "name": "Nombre de la Dimensión",
+      "titleEdit": "Editar Observatorio",
+      "titleNew": "Nueva Observatorio",
+      "name": "Nombre de la Observatorio",
       "namePlaceholder": "Ej: Vitalidad Ecológica",
       "code": "Código Interno",
       "codePlaceholder": "Ej: VITALIDAD-2024",
-      "codeHint": "Identificador único de la dimensión",
+      "codeHint": "Identificador único del observatorio",
       "description": "Descripción (opcional)",
-      "descriptionPlaceholder": "Describe el propósito de la dimensión...",
-      "public": "Dimensión Pública",
-      "publicDescription": "Las dimensiones públicas pueden ser vistas por usuarios externos sin autenticación.",
+      "descriptionPlaceholder": "Describe el propósito del observatorio...",
+      "public": "Observatorio Pública",
+      "publicDescription": "Los observatorios públicos pueden ser vistos por usuarios externos sin autenticación.",
       "icon": "Icono",
       "noIcon": "Sin icono",
-      "iconHint": "El icono se mostrará en las tarjetas de la dimensión",
+      "iconHint": "El icono se mostrará en las tarjetas del observatorio",
       "selectIcon": "Selecciona un icono",
       "saveChanges": "Guardar Cambios",
-      "createDepartment": "Crear Dimensión",
+      "createDepartment": "Crear Observatorio",
       "saving": "Guardando...",
       "validation": {
         "nameRequired": "El nombre es requerido",
@@ -459,24 +459,24 @@
         "unexpectedError": "Ocurrió un error inesperado. Intenta de nuevo."
       },
       "success": {
-        "created": "Dimensión creada exitosamente",
-        "updated": "Dimensión actualizada exitosamente"
+        "created": "Observatorio creada exitosamente",
+        "updated": "Observatorio actualizada exitosamente"
       }
     },
     "detail": {
-      "title": "Dimensión",
+      "title": "Observatorio",
       "noDescription": "Sin descripción",
       "code": "Código",
       "publicBadge": "Pública",
-      "datasets": "Datasets de la Dimensión",
+      "datasets": "Datasets del Observatorio",
       "records": "registros",
       "noDatasets": "Sin datasets",
       "noDatasetsMessage": "Importa un archivo Excel para comenzar el análisis",
       "importDataset": "Importar Dataset",
       "viewAnalysis": "Ver Análisis",
-      "confirmDelete": "¿Estás seguro de que deseas eliminar la dimensión \"{{name}}\"? Esta acción no se puede deshacer.",
-      "deleted": "Dimensión eliminada exitosamente",
-      "deleteError": "Error al eliminar la dimensión"
+      "confirmDelete": "¿Estás seguro de que deseas eliminar el observatorio \"{{name}}\"? Esta acción no se puede deshacer.",
+      "deleted": "Observatorio eliminada exitosamente",
+      "deleteError": "Error al eliminar el observatorio"
     },
     "icons": {
       "social": "Social / Grupos",
@@ -504,7 +504,7 @@
     },
     "home": {
       "hero": {
-        "title": "Dimensiones Territoriales",
+        "title": "Observatorio Territorial",
         "titleHighlight": "Multidisciplinario ULEAM",
         "subtitle": "Transforma tus archivos Excel en dashboards interactivos de manera automática. Analiza, visualiza y comparte datos de forma inteligente.",
         "exploreData": "Explorar Datos Públicos",
@@ -542,26 +542,26 @@
         }
       },
       "departments": {
-        "title": "Dimensiones Territoriales",
+        "title": "Observatorio Territorial",
         "subtitle": "Explora los datos compartidos por la comunidad universitaria",
-        "loading": "Cargando dimensiones...",
+        "loading": "Cargando observatorios...",
         "noDescription": "Sin descripción",
-        "viewAll": "Ver todas las dimensiones",
-        "empty": "No hay dimensiones públicas disponibles"
+        "viewAll": "Ver todas los observatorios",
+        "empty": "No hay observatorios públicos disponibles"
       },
       "cta": {
-        "title": "Únete a Dimensiones Territoriales",
+        "title": "Únete a Observatorio Territorial",
         "subtitle": "Accede a datos territoriales, análisis multidisciplinarios y herramientas de visualización para la toma de decisiones informadas.",
         "button": "Crear Cuenta Gratis"
       },
       "footer": {
         "websiteLink": "Sitio Web ULEAM",
-        "departmentsLink": "Dimensiones"
+        "departmentsLink": "Observatorios"
       },
       "nav": {
         "home": "Inicio",
         "geoViewer": "Visor Geográfico",
-        "dimensions": "Dimensiones",
+        "dimensions": "Observatorios",
         "barometer": "Barómetro",
         "barometerResearch": "Resultados Investigación ULEAM",
         "barometerLinkage": "Resultados Vinculación ULEAM",
@@ -575,16 +575,28 @@
       }
     },
     "departments": {
-      "title": "Dimensiones Públicas",
-      "subtitle": "Explora los datos compartidos por las dimensiones",
-      "search": "Buscar dimensiones...",
-      "resultsCount": "{{count}} dimensión(es) encontrada(s)",
-      "loading": "Cargando dimensiones...",
-      "empty": "No hay dimensiones públicas disponibles",
+      "title": "Observatorios Públicos",
+      "subtitle": "Explora los datos compartidos por los observatorios",
+      "search": "Buscar observatorios...",
+      "resultsCount": "{{count}} observatorio(es) encontrado(s)",
+      "loading": "Cargando observatorios...",
+      "empty": "No hay observatorios públicos disponibles",
       "viewDetails": "Ver detalles"
     },
+    "allDatasets": {
+      "title": "Todos los Datasets",
+      "subtitle": "Explora todos los datasets públicos disponibles",
+      "search": "Buscar datasets por nombre...",
+      "resultsCount": "{{count}} dataset(s) encontrado(s)",
+      "loading": "Cargando datasets...",
+      "empty": "No hay datasets públicos disponibles",
+      "datasetsCount": "datasets",
+      "records": "registros",
+      "viewDataset": "Ver dataset",
+      "department": "Observatorio"
+    },
     "departmentDetail": {
-      "backToDepartments": "Dimensiones",
+      "backToDepartments": "Observatorios",
       "noDescription": "Sin descripción",
       "stats": {
         "datasets": "datasets",
@@ -593,17 +605,17 @@
       "datasets": {
         "title": "Datasets Disponibles",
         "empty": "Sin datasets",
-        "emptyMessage": "Esta dimensión aún no tiene datasets públicos disponibles"
+        "emptyMessage": "Este observatorio aún no tiene datasets públicos disponibles"
       },
       "notFound": {
-        "title": "Dimensión no encontrada",
-        "message": "La dimensión que buscas no existe o no está disponible públicamente",
-        "backButton": "Volver a dimensiones"
+        "title": "Observatorio no encontrado",
+        "message": "El observatorio que buscas no existe o no está disponible públicamente",
+        "backButton": "Volver a observatorios"
       }
     },
     "datasetView": {
       "loading": "Cargando dataset...",
-      "backToDepartment": "Volver a la dimensión",
+      "backToDepartment": "Volver al observatorio",
       "stats": {
         "records": "registros",
         "variables": "variables"

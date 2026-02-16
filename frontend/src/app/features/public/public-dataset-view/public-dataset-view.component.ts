@@ -348,6 +348,8 @@ export class PublicDatasetViewComponent implements OnInit {
     const chart: ActiveChart = {
       id: `pre-${pre.id}`,
       title: pre.titulo,
+      description: pre.descripcion,
+      analisis: pre.analisis,
       chartType,
       variableX: varX,
       variableY: varY,

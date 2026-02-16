@@ -10,7 +10,7 @@ const SSR_TRANSLATIONS: Record<string, Translation> = {
     common: { messages: { loading: 'Cargando...' } },
     public: {
       home: {
-        hero: { title: 'Dimensiones Territoriales', titleHighlight: 'Multidisciplinario ULEAM' },
+        hero: { title: 'Observatorio Territorial', titleHighlight: 'Multidisciplinario ULEAM' },
       },
     },
   },
@@ -18,7 +18,7 @@ const SSR_TRANSLATIONS: Record<string, Translation> = {
     common: { messages: { loading: 'Loading...' } },
     public: {
       home: {
-        hero: { title: 'University Data', titleHighlight: 'Observatory ULEAM' },
+        hero: { title: 'Territorial', titleHighlight: 'Observatory ULEAM' },
       },
     },
   },

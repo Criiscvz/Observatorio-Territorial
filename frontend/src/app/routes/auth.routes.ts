@@ -7,14 +7,14 @@ export const AUTH_ROUTES: Routes = [
     loadComponent: () =>
       import('../features/auth/login/login.component').then((m) => m.LoginComponent),
     canActivate: [guestGuard],
-    title: 'Iniciar Sesión - Dimensiones',
+    title: 'Iniciar Sesión - Observatorio',
   },
   {
     path: 'register',
     loadComponent: () =>
       import('../features/auth/register/register.component').then((m) => m.RegisterComponent),
     canActivate: [guestGuard],
-    title: 'Registro - Dimensiones',
+    title: 'Registro - Observatorio',
   },
   {
     path: '',
