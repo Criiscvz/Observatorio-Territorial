@@ -218,7 +218,7 @@ export class PublicDatasetViewComponent implements OnInit {
         dataset_id: this.datasetId(),
         variable_id: chart.variableX.id,
         chart_type: chart.chartType.id,
-        filters: this.activeFilters().length > 0 ? this.activeFilters() : undefined,
+        filters: this.getCombinedFilters(chart),
       })
       .subscribe({
         next: (res) => {
@@ -249,7 +249,7 @@ export class PublicDatasetViewComponent implements OnInit {
         variable_x_id: chart.variableX.id,
         variable_y_id: chart.variableY.id,
         chart_type: chart.chartType.id,
-        filters: this.activeFilters().length > 0 ? this.activeFilters() : undefined,
+        filters: this.getCombinedFilters(chart),
       })
       .subscribe({
         next: (res) => this.updateChartData(chart.id, res),
@@ -266,6 +266,29 @@ export class PublicDatasetViewComponent implements OnInit {
 
   removeChart(chartId: string): void {
     this.activeCharts.update((charts) => charts.filter((c) => c.id !== chartId));
+  }
+
+  onChartFiltersChange(event: { chartId: string; filters: ChartFilter[] }): void {
+    this.activeCharts.update((charts) =>
+      charts.map((c) =>
+        c.id === event.chartId ? { ...c, filters: event.filters, loading: true } : c,
+      ),
+    );
+    const chart = this.activeCharts().find((c) => c.id === event.chartId);
+    if (chart) {
+      if (chart.chartType.bivariable && chart.variableY) {
+        this.loadBivariableData(chart);
+      } else {
+        this.loadUnivariableData(chart);
+      }
+    }
+  }
+
+  private getCombinedFilters(chart: ActiveChart): ChartFilter[] | undefined {
+    const global = this.activeFilters();
+    const local = chart.filters || [];
+    const combined = [...global, ...local];
+    return combined.length > 0 ? combined : undefined;
   }
 
   clearAllCharts(): void {
@@ -305,7 +328,7 @@ export class PublicDatasetViewComponent implements OnInit {
       case 'FECHA':
         return this.chartTypes.find((t) => t.id === 'line');
       case 'TEXTO':
-        return this.chartTypes.find((t) => t.id === 'bar');
+        return this.chartTypes.find((t) => t.id === 'wordcloud');
       default:
         return undefined;
     }

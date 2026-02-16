@@ -51,6 +51,7 @@ class GraficoPredeterminadoController extends Controller
                 properties: [
                     new OA\Property(property: 'titulo', type: 'string'),
                     new OA\Property(property: 'descripcion', type: 'string'),
+                    new OA\Property(property: 'analisis', type: 'string'),
                     new OA\Property(property: 'tipo_grafico', type: 'string'),
                     new OA\Property(property: 'tipo_analisis', type: 'string', enum: ['univariable', 'bivariable']),
                     new OA\Property(property: 'variable_x_id', type: 'string', format: 'uuid'),
@@ -71,6 +72,7 @@ class GraficoPredeterminadoController extends Controller
         $validator = Validator::make($request->all(), [
             'titulo' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
+            'analisis' => 'nullable|string|max:5000',
             'tipo_grafico' => 'required|string|max:50',
             'tipo_analisis' => 'required|string|in:univariable,bivariable',
             'variable_x_id' => 'required|uuid|exists:variables_metadatos,id',
@@ -121,6 +123,7 @@ class GraficoPredeterminadoController extends Controller
         $validator = Validator::make($request->all(), [
             'titulo' => 'sometimes|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
+            'analisis' => 'nullable|string|max:5000',
             'tipo_grafico' => 'sometimes|string|max:50',
             'tipo_analisis' => 'sometimes|string|in:univariable,bivariable',
             'variable_x_id' => 'sometimes|uuid|exists:variables_metadatos,id',

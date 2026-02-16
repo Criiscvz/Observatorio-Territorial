@@ -1,4 +1,5 @@
 import { ChartData, VariableMetadato } from '@core/models';
+import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { BivariableResponse } from '@core/services/interfaces';
 
 export type DataType = 'NUMERICO' | 'CATEGORICO' | 'FECHA' | 'TEXTO';
@@ -20,6 +21,7 @@ export interface ActiveChart {
   variableY?: VariableMetadato;
   data: ChartData | BivariableResponse | null;
   loading: boolean;
+  filters?: ChartFilter[];
 }
 
 export interface ColumnWithUniqueId extends VariableMetadato {
@@ -75,14 +77,14 @@ export const CHART_TYPES: ChartType[] = [
     name: 'Embudo',
     icon: 'filter_list',
     description: 'Procesos',
-    forTypes: ['CATEGORICO'],
+    forTypes: ['CATEGORICO', 'TEXTO'],
   },
   {
     id: 'treemap',
     name: 'Treemap',
     icon: 'grid_view',
     description: 'Jerarquía',
-    forTypes: ['CATEGORICO'],
+    forTypes: ['CATEGORICO', 'TEXTO'],
   },
   {
     id: 'gauge',
@@ -204,10 +206,11 @@ export const CHART_TYPES: ChartType[] = [
  * Filtra los tipos de gráficos univariables según el tipo de dato
  */
 export function getUnivariableChartTypes(tipoDato: DataType): ChartType[] {
-  // Normalizar TEXTO a CATEGORICO
-  const normalizedType = tipoDato === 'TEXTO' ? 'CATEGORICO' : tipoDato;
+  // For TEXTO, show only chart types that explicitly list TEXTO in forTypes
+  // (wordcloud, bar, horizontal_bar, treemap, funnel)
+  // For other types, filter normally
   return CHART_TYPES.filter(
-    (chart) => !chart.bivariable && chart.forTypes.includes(normalizedType),
+    (chart) => !chart.bivariable && chart.forTypes.includes(tipoDato),
   );
 }
 
@@ -276,13 +279,13 @@ export function getBivariableChartTypes(tipoX: DataType, tipoY: DataType): Chart
  * Obtiene el tipo de gráfico por defecto según el tipo de dato
  */
 export function getDefaultUnivariableChartType(tipoDato: DataType): ChartType | undefined {
-  const normalizedType = tipoDato === 'TEXTO' ? 'CATEGORICO' : tipoDato;
-
-  switch (normalizedType) {
+  switch (tipoDato) {
     case 'NUMERICO':
       return CHART_TYPES.find((t) => t.id === 'histogram');
     case 'CATEGORICO':
       return CHART_TYPES.find((t) => t.id === 'bar');
+    case 'TEXTO':
+      return CHART_TYPES.find((t) => t.id === 'wordcloud');
     case 'FECHA':
       return CHART_TYPES.find((t) => t.id === 'line');
     default:

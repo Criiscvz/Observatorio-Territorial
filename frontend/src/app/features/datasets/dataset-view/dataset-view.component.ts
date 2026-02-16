@@ -132,7 +132,7 @@ export class DatasetViewComponent implements OnInit {
 
   // Predefined chart form
   showPredefinedForm = signal(false);
-  predefinedForm = signal({ titulo: '', descripcion: '' });
+  predefinedForm = signal({ titulo: '', descripcion: '', analisis: '' });
 
   // Computed
   visibleColumns = computed<ColumnWithUniqueId[]>(() => {
@@ -278,6 +278,30 @@ export class DatasetViewComponent implements OnInit {
     this.reloadActiveCharts();
   }
 
+  onChartFiltersChange(event: { chartId: string; filters: ChartFilter[] }): void {
+    // Store local filters on the chart and reload only that chart
+    this.activeCharts.update((charts) =>
+      charts.map((c) =>
+        c.id === event.chartId ? { ...c, filters: event.filters, loading: true } : c,
+      ),
+    );
+    const chart = this.activeCharts().find((c) => c.id === event.chartId);
+    if (chart) {
+      if (chart.chartType.bivariable && chart.variableY) {
+        this.loadBivariableData(chart);
+      } else {
+        this.loadUnivariableData(chart);
+      }
+    }
+  }
+
+  private getCombinedFilters(chart: ActiveChart): ChartFilter[] | undefined {
+    const global = this.activeFilters();
+    const local = chart.filters || [];
+    const combined = [...global, ...local];
+    return combined.length > 0 ? combined : undefined;
+  }
+
   private reloadActiveCharts(): void {
     const charts = this.activeCharts();
     charts.forEach((chart) => {
@@ -329,7 +353,7 @@ export class DatasetViewComponent implements OnInit {
         dataset_id: this.datasetId(),
         variable_id: chart.variableX.id,
         chart_type: chart.chartType.id,
-        filters: this.activeFilters().length > 0 ? this.activeFilters() : undefined,
+        filters: this.getCombinedFilters(chart),
       })
       .subscribe({
         next: (res) => {
@@ -363,7 +387,7 @@ export class DatasetViewComponent implements OnInit {
         variable_x_id: chart.variableX.id,
         variable_y_id: chart.variableY.id,
         chart_type: chart.chartType.id,
-        filters: this.activeFilters().length > 0 ? this.activeFilters() : undefined,
+        filters: this.getCombinedFilters(chart),
       })
       .subscribe({
         next: (res) => this.updateChartData(chart.id, res),
@@ -413,8 +437,9 @@ export class DatasetViewComponent implements OnInit {
   private getDefaultChartType(tipoDato: string): ChartType | undefined {
     switch (tipoDato) {
       case 'CATEGORICO':
-      case 'TEXTO':
         return this.chartTypes.find((t) => t.id === 'bar');
+      case 'TEXTO':
+        return this.chartTypes.find((t) => t.id === 'wordcloud');
       case 'NUMERICO':
         return this.chartTypes.find((t) => t.id === 'histogram');
       case 'FECHA':
@@ -458,7 +483,7 @@ export class DatasetViewComponent implements OnInit {
   }
 
   saveChartAsPredefined(chart: ActiveChart): void {
-    this.predefinedForm.set({ titulo: chart.title, descripcion: '' });
+    this.predefinedForm.set({ titulo: chart.title, descripcion: '', analisis: '' });
     this.showPredefinedForm.set(true);
 
     // Store the chart reference temporarily
@@ -475,6 +500,7 @@ export class DatasetViewComponent implements OnInit {
       .createGraficoPredeterminado(this.datasetId(), {
         titulo: form.titulo,
         descripcion: form.descripcion || undefined,
+        analisis: form.analisis || undefined,
         tipo_grafico: chart.chartType.id,
         tipo_analisis: chart.variableY ? 'bivariable' : 'univariable',
         variable_x_id: chart.variableX.id,

@@ -193,6 +193,11 @@ export class ChartOptionsService {
       ...base,
       title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
       legend: { bottom: 10, textStyle: { color: cfg.textColorSecondary }, type: 'scroll' },
+      tooltip: {
+        ...(base.tooltip as any),
+        trigger: 'item',
+        formatter: '{b}: {c} ({d}%)',
+      },
       series: [
         {
           type: 'pie',
@@ -203,7 +208,11 @@ export class ChartOptionsService {
             value: values[i],
             itemStyle: { color: colors[i % colors.length] },
           })),
-          label: { show: true, color: cfg.textColorSecondary },
+          label: {
+            show: true,
+            color: cfg.textColorSecondary,
+            formatter: '{b}: {d}%',
+          },
           emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } },
         },
       ],
@@ -824,6 +833,11 @@ export class ChartOptionsService {
       ...base,
       title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
       legend: { bottom: 10, textStyle: { color: cfg.textColorSecondary }, type: 'scroll' },
+      tooltip: {
+        ...(base.tooltip as any),
+        trigger: 'item',
+        formatter: '{b}: {c} ({d}%)',
+      },
       series: [
         {
           type: 'pie',
@@ -836,7 +850,11 @@ export class ChartOptionsService {
             value: values[i],
             itemStyle: { color: colors[i % colors.length] },
           })),
-          label: { show: true, color: cfg.textColorSecondary },
+          label: {
+            show: true,
+            color: cfg.textColorSecondary,
+            formatter: '{b}: {d}%',
+          },
           emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } },
         },
       ],

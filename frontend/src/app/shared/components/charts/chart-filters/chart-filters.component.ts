@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -57,6 +58,7 @@ const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
     FormsModule,
     MatFormFieldModule,
     MatSelectModule,
+    MatAutocompleteModule,
     MatInputModule,
     MatButtonModule,
     MatIconModule,
@@ -90,11 +92,22 @@ const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
           <!-- Column selector -->
           <mat-form-field appearance="outline" class="filter-field column-field">
             <mat-label>{{ 'filters.column' | translate }}</mat-label>
-            <mat-select [ngModel]="row.column" (ngModelChange)="updateRow(i, 'column', $event)">
-              @for (v of variables(); track v.id) {
+            <input
+              matInput
+              [value]="getColumnSearchTerm(i)"
+              (input)="onColumnSearch(i, $any($event.target).value)"
+              (focus)="onColumnFocus(i)"
+              [matAutocomplete]="colAuto"
+            />
+            <mat-autocomplete
+              #colAuto="matAutocomplete"
+              (optionSelected)="updateRow(i, 'column', $event.option.value)"
+              [displayWith]="displayColumnFn.bind(this)"
+            >
+              @for (v of getFilteredColumns(i); track v.id) {
                 <mat-option [value]="v.nombre_columna">{{ v.nombre_original }}</mat-option>
               }
-            </mat-select>
+            </mat-autocomplete>
           </mat-form-field>
 
           <!-- Operator -->
@@ -291,6 +304,7 @@ export class ChartFiltersComponent {
   filtersChange = output<ChartFilter[]>();
 
   filterRows = signal<FilterRow[]>([]);
+  columnSearchTerms = signal<Record<string, string>>({});
 
   private variablesMap = new Map<string, VariableMetadato>();
 
@@ -336,6 +350,12 @@ export class ChartFiltersComponent {
           updated.operator = type === 'NUMERICO' || type === 'FECHA' ? 'eq' : 'eq';
           updated.value = '';
           updated.valueTo = undefined;
+          // Clear the search term and show the display name
+          this.columnSearchTerms.update((t) => {
+            const copy = { ...t };
+            delete copy[row.id];
+            return copy;
+          });
         }
         // Reset valueTo when operator changes from 'between'
         if (field === 'operator' && value !== 'between') {
@@ -344,6 +364,38 @@ export class ChartFiltersComponent {
         return updated;
       }),
     );
+  }
+
+  displayColumnFn(colName: string): string {
+    if (!colName) return '';
+    const v = this.variablesMap.get(colName);
+    return v ? v.nombre_original : colName;
+  }
+
+  getColumnSearchTerm(index: number): string {
+    const row = this.filterRows()[index];
+    const terms = this.columnSearchTerms();
+    if (terms[row.id] !== undefined) return terms[row.id];
+    return this.displayColumnFn(row.column);
+  }
+
+  onColumnSearch(index: number, term: string): void {
+    const row = this.filterRows()[index];
+    this.columnSearchTerms.update((t) => ({ ...t, [row.id]: term }));
+  }
+
+  onColumnFocus(index: number): void {
+    const row = this.filterRows()[index];
+    this.columnSearchTerms.update((t) => ({ ...t, [row.id]: '' }));
+  }
+
+  getFilteredColumns(index: number): VariableMetadato[] {
+    const row = this.filterRows()[index];
+    const terms = this.columnSearchTerms();
+    const term = (terms[row.id] || '').toLowerCase();
+    const vars = this.variables();
+    if (!term) return vars;
+    return vars.filter((v) => v.nombre_original.toLowerCase().includes(term));
   }
 
   getColumnType(column: string): string {

@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { VariableMetadato } from '@core/models';
+import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActiveChart } from '@shared/models';
 import { ChartCardComponent } from '../chart-card/chart-card.component';
@@ -17,8 +19,10 @@ import { ChartCardComponent } from '../chart-card/chart-card.component';
           <app-chart-card
             [chart]="chart"
             [showSave]="showSave()"
+            [variables]="variables()"
             (remove)="removeChart.emit($event)"
             (save)="saveChart.emit($event)"
+            (filtersChange)="chartFiltersChange.emit($event)"
           />
         }
       </div>
@@ -74,6 +78,8 @@ import { ChartCardComponent } from '../chart-card/chart-card.component';
 export class ChartsGridComponent {
   charts = input.required<ActiveChart[]>();
   showSave = input<boolean>(false);
+  variables = input<VariableMetadato[]>([]);
   removeChart = output<string>();
   saveChart = output<ActiveChart>();
+  chartFiltersChange = output<{ chartId: string; filters: ChartFilter[] }>();
 }

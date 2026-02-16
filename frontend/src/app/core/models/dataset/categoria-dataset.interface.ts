@@ -31,6 +31,7 @@ export interface GraficoPredeterminado {
   dataset_id: string;
   titulo: string;
   descripcion?: string;
+  analisis?: string;
   tipo_grafico: string;
   tipo_analisis: 'univariable' | 'bivariable';
   variable_x_id: string;

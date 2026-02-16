@@ -94,6 +94,9 @@
                     @if (pre.descripcion) {
                       <p class="predefined-description">{{ pre.descripcion }}</p>
                     }
+                    @if (pre.analisis) {
+                      <p class="predefined-analysis">{{ pre.analisis }}</p>
+                    }
                   </div>
                 }
               </div>
@@ -159,7 +162,12 @@
           </div>
 
           <!-- Charts Grid -->
-          <app-charts-grid [charts]="activeCharts()" (removeChart)="removeChart($event)" />
+          <app-charts-grid
+            [charts]="activeCharts()"
+            [variables]="variables()"
+            (removeChart)="removeChart($event)"
+            (chartFiltersChange)="onChartFiltersChange($event)"
+          />
         </div>
       </mat-tab>
 

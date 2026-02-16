@@ -330,8 +330,10 @@
           <app-charts-grid
             [charts]="activeCharts()"
             [showSave]="true"
+            [variables]="variables()"
             (removeChart)="removeChart($event)"
             (saveChart)="saveChartAsPredefined($event)"
+            (chartFiltersChange)="onChartFiltersChange($event)"
           />
 
           <!-- Save as predefined dialog -->
@@ -349,11 +351,22 @@
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>{{ 'charts.predefined.description' | translate }}</mat-label>
-                <input
+                <textarea
                   matInput
+                  rows="2"
                   [value]="predefinedForm().descripcion"
                   (input)="predefinedForm.set({...predefinedForm(), descripcion: $any($event.target).value})"
-                />
+                ></textarea>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>{{ 'charts.predefined.analysis' | translate }}</mat-label>
+                <textarea
+                  matInput
+                  rows="4"
+                  [value]="predefinedForm().analisis"
+                  (input)="predefinedForm.set({...predefinedForm(), analisis: $any($event.target).value})"
+                  [placeholder]="'charts.predefined.analysisPlaceholder' | translate"
+                ></textarea>
               </mat-form-field>
               <div class="form-actions">
                 <button mat-stroked-button (click)="cancelPredefinedForm()">

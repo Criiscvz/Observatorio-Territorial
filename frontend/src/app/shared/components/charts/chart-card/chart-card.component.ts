@@ -1,14 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, output } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ChartData } from '@core/models';
+import { ChartData, VariableMetadato } from '@core/models';
+import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { BivariableResponse } from '@core/services/interfaces';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActiveChart } from '@shared/models';
+import { ChartFiltersComponent } from '../chart-filters/chart-filters.component';
 import { ChartOptionsService } from '@shared/services/chart-options.service';
 import { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -25,10 +27,24 @@ import { NgxEchartsDirective } from 'ngx-echarts';
     MatTooltipModule,
     NgxEchartsDirective,
     TranslateModule,
+    ChartFiltersComponent,
   ],
   template: `
     <mat-card class="chart-card">
       <div class="chart-actions">
+        @if (variables().length > 0) {
+          <button
+            mat-icon-button
+            class="filter-chart"
+            (click)="toggleFilters()"
+            [matTooltip]="'datasets.view.analysis.filters' | translate"
+          >
+            <mat-icon [class.has-filters]="hasLocalFilters()">filter_list</mat-icon>
+            @if (hasLocalFilters()) {
+              <span class="filter-badge">{{ chart().filters?.length }}</span>
+            }
+          </button>
+        }
         @if (showSave()) {
           <button
             mat-icon-button
@@ -51,6 +67,12 @@ import { NgxEchartsDirective } from 'ngx-echarts';
         }}</mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
+        @if (showFilters()) {
+          <app-chart-filters
+            [variables]="variables()"
+            (filtersChange)="onLocalFiltersChange($event)"
+          />
+        }
         @if (chart().loading) {
           <div class="chart-loading">
             <mat-spinner diameter="32"></mat-spinner>
@@ -85,6 +107,30 @@ import { NgxEchartsDirective } from 'ngx-echarts';
         color: var(--primary-600);
       }
 
+      .filter-chart {
+        position: relative;
+      }
+
+      .filter-chart .has-filters {
+        color: var(--primary-600);
+      }
+
+      .filter-badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--primary-600);
+        color: white;
+        font-size: 0.625rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
       .chart-canvas {
         height: 280px;
       }
@@ -106,8 +152,24 @@ export class ChartCardComponent {
 
   chart = input.required<ActiveChart>();
   showSave = input<boolean>(false);
+  variables = input<VariableMetadato[]>([]);
   remove = output<string>();
   save = output<ActiveChart>();
+  filtersChange = output<{ chartId: string; filters: ChartFilter[] }>();
+
+  showFilters = signal(false);
+
+  hasLocalFilters(): boolean {
+    return (this.chart().filters?.length ?? 0) > 0;
+  }
+
+  toggleFilters(): void {
+    this.showFilters.update((v) => !v);
+  }
+
+  onLocalFiltersChange(filters: ChartFilter[]): void {
+    this.filtersChange.emit({ chartId: this.chart().id, filters });
+  }
 
   chartOptions(): EChartsOption {
     const chartData = this.chart();

@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelectModule } from '@angular/material/select';
+import { MatInputModule } from '@angular/material/input';
 import { VariableMetadato } from '@core/models';
 import { TranslateModule } from '@ngx-translate/core';
 import { ChartType } from '@shared/models';
@@ -16,7 +17,8 @@ import { ChartType } from '@shared/models';
     CommonModule,
     FormsModule,
     MatFormFieldModule,
-    MatSelectModule,
+    MatAutocompleteModule,
+    MatInputModule,
     MatButtonModule,
     MatIconModule,
     TranslateModule,
@@ -25,14 +27,28 @@ import { ChartType } from '@shared/models';
     <div class="variable-selection">
       <mat-form-field appearance="outline">
         <mat-label>{{ 'datasets.view.analysis.variableX' | translate }}</mat-label>
-        <mat-select [(value)]="variableX" (selectionChange)="onVariableXChange()">
-          @for (v of compatibleVariablesX(); track v.id) {
+        <input
+          matInput
+          type="text"
+          [matAutocomplete]="autoX"
+          [value]="searchTermX()"
+          (input)="onSearchX($any($event.target).value)"
+          (focus)="onFocusX()"
+          placeholder="{{ 'datasets.view.analysis.searchVariable' | translate }}"
+        />
+        <mat-icon matSuffix>search</mat-icon>
+        <mat-autocomplete
+          #autoX="matAutocomplete"
+          (optionSelected)="onSelectVariableX($event.option.value)"
+          [displayWith]="displayVariableFn"
+        >
+          @for (v of filteredVariablesX(); track v.id) {
             <mat-option [value]="v">
               {{ v.nombre_original }}
               <span class="option-type">({{ v.tipo_dato }})</span>
             </mat-option>
           }
-        </mat-select>
+        </mat-autocomplete>
         @if (compatibleVariablesX().length === 0) {
           <mat-hint class="hint-error">{{ incompatibilityMessageX() }}</mat-hint>
         } @else {
@@ -46,14 +62,28 @@ import { ChartType } from '@shared/models';
       @if (selectedChartType()?.bivariable) {
         <mat-form-field appearance="outline">
           <mat-label>{{ 'datasets.view.analysis.variableY' | translate }}</mat-label>
-          <mat-select [(value)]="variableY">
-            @for (v of compatibleVariablesY(); track v.id) {
+          <input
+            matInput
+            type="text"
+            [matAutocomplete]="autoY"
+            [value]="searchTermY()"
+            (input)="onSearchY($any($event.target).value)"
+            (focus)="onFocusY()"
+            placeholder="{{ 'datasets.view.analysis.searchVariable' | translate }}"
+          />
+          <mat-icon matSuffix>search</mat-icon>
+          <mat-autocomplete
+            #autoY="matAutocomplete"
+            (optionSelected)="onSelectVariableY($event.option.value)"
+            [displayWith]="displayVariableFn"
+          >
+            @for (v of filteredVariablesY(); track v.id) {
               <mat-option [value]="v">
                 {{ v.nombre_original }}
                 <span class="option-type">({{ v.tipo_dato }})</span>
               </mat-option>
             }
-          </mat-select>
+          </mat-autocomplete>
           @if (variableX && compatibleVariablesY().length === 0) {
             <mat-hint class="hint-error">{{ incompatibilityMessageY() }}</mat-hint>
           } @else if (compatibleVariablesY().length > 0) {
@@ -109,8 +139,15 @@ export class VariableSelectorComponent {
   variableX: VariableMetadato | null = null;
   variableY: VariableMetadato | null = null;
 
+  searchTermX = signal('');
+  searchTermY = signal('');
+
   addChart = output<{ variableX: VariableMetadato; variableY?: VariableMetadato }>();
   variableXChanged = output<VariableMetadato | null>();
+
+  displayVariableFn = (v: VariableMetadato | null): string => {
+    return v ? v.nombre_original : '';
+  };
 
   // Variables compatibles con el tipo de gráfico seleccionado (Variable X)
   compatibleVariablesX = computed(() => {
@@ -123,16 +160,22 @@ export class VariableSelectorComponent {
         case 'scatter':
         case 'histogram':
         case 'gauge':
+        case 'bubble':
           return v.tipo_dato === 'NUMERICO';
         case 'pie':
         case 'donut':
         case 'funnel':
         case 'treemap':
         case 'radar':
+        case 'rose':
+        case 'polar_bar':
           return v.tipo_dato === 'CATEGORICO' || v.tipo_dato === 'TEXTO';
         case 'bar':
+        case 'horizontal_bar':
+        case 'pictorial_bar':
         case 'heatmap':
         case 'stacked_bar':
+        case 'stacked_area':
           return v.tipo_dato === 'CATEGORICO' || v.tipo_dato === 'TEXTO';
         case 'grouped_bar':
         case 'box_compare':
@@ -146,10 +189,27 @@ export class VariableSelectorComponent {
           return (
             v.tipo_dato === 'FECHA' || v.tipo_dato === 'NUMERICO' || v.tipo_dato === 'CATEGORICO'
           );
+        case 'wordcloud':
+          return v.tipo_dato === 'TEXTO' || v.tipo_dato === 'CATEGORICO';
         default:
           return true;
       }
     });
+  });
+
+  // Filtered by search term for autocomplete
+  filteredVariablesX = computed(() => {
+    const term = this.searchTermX().toLowerCase();
+    const vars = this.compatibleVariablesX();
+    if (!term) return vars;
+    return vars.filter((v) => v.nombre_original.toLowerCase().includes(term));
+  });
+
+  filteredVariablesY = computed(() => {
+    const term = this.searchTermY().toLowerCase();
+    const vars = this.compatibleVariablesY();
+    if (!term) return vars;
+    return vars.filter((v) => v.nombre_original.toLowerCase().includes(term));
   });
 
   // Variables compatibles para Y (solo bivariables)
@@ -238,10 +298,43 @@ export class VariableSelectorComponent {
     return true;
   }
 
-  onVariableXChange(): void {
-    this.variableXChanged.emit(this.variableX);
+  onSearchX(term: string): void {
+    this.searchTermX.set(term);
+    // If user clears the input, also clear the selection
+    if (!term) {
+      this.variableX = null;
+      this.variableXChanged.emit(null);
+    }
+  }
+
+  onSearchY(term: string): void {
+    this.searchTermY.set(term);
+    if (!term) {
+      this.variableY = null;
+    }
+  }
+
+  onFocusX(): void {
+    // Show all options on focus
+    this.searchTermX.set('');
+  }
+
+  onFocusY(): void {
+    this.searchTermY.set('');
+  }
+
+  onSelectVariableX(v: VariableMetadato): void {
+    this.variableX = v;
+    this.searchTermX.set(v.nombre_original);
+    this.variableXChanged.emit(v);
     // Reset Y when X changes
     this.variableY = null;
+    this.searchTermY.set('');
+  }
+
+  onSelectVariableY(v: VariableMetadato): void {
+    this.variableY = v;
+    this.searchTermY.set(v.nombre_original);
   }
 
   onAddChart(): void {
@@ -255,5 +348,7 @@ export class VariableSelectorComponent {
   reset(): void {
     this.variableX = null;
     this.variableY = null;
+    this.searchTermX.set('');
+    this.searchTermY.set('');
   }
 }

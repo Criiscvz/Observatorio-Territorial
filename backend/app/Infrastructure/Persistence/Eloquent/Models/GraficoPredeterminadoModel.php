@@ -18,6 +18,7 @@ class GraficoPredeterminadoModel extends Model
         'dataset_id',
         'titulo',
         'descripcion',
+        'analisis',
         'tipo_grafico',
         'tipo_analisis',
         'variable_x_id',
