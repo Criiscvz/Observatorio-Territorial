@@ -27,10 +27,13 @@
       </a>
 
       <!-- Datasets -->
+
+      <!--
       <a routerLink="/publico/datasets" routerLinkActive="active" class="nav-link">
         <mat-icon>table_chart</mat-icon>
         {{ 'public.home.nav.datasets' | translate }}
       </a>
+        -->
 
       <!-- Menú Barómetro -->
       <button class="nav-link" [matMenuTriggerFor]="barometerMenu">
@@ -47,7 +50,7 @@
           <mat-icon>handshake</mat-icon>
           <span>{{ 'public.home.nav.barometerLinkage' | translate }}</span>
         </a>
-        <a mat-menu-item routerLink="/publico/barometro/barometro">
+        <a mat-menu-item routerLink="/publico/datasets">
           <mat-icon>speed</mat-icon>
           <span>{{ 'public.home.nav.barometerUleam' | translate }}</span>
         </a>
