@@ -1,15 +1,10 @@
 .mat-mdc-table {
   background: transparent;
 }
-::ng-deep .mat-mdc-form-field-subscript-wrapper {
-  display: none;
-}
 
 /* ================================================
    CONTROLES DE NAVEGACIÓN HORIZONTAL DE LA TABLA
    ================================================ */
-
-/* Barra de controles superior */
 .table-nav-controls {
   display: flex;
   align-items: center;
@@ -30,14 +25,12 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Contenedor wrapper con flechas flotantes */
 .table-scroll-wrapper {
   position: relative;
   display: flex;
   align-items: stretch;
 }
 
-/* Flechas flotantes a los lados */
 .scroll-arrow {
   position: absolute;
   top: 50%;
@@ -61,15 +54,12 @@
   opacity: 0;
   pointer-events: none;
 }
-
 .scroll-arrow-left {
   left: 0;
 }
-
 .scroll-arrow-right {
   right: 0;
 }
-
 .scroll-arrow mat-icon {
   font-size: 24px;
   width: 24px;
@@ -77,7 +67,7 @@
 }
 
 /* ================================================
-   SCROLL HORIZONTAL PARA TABLAS CON MUCHAS COLUMNAS
+   SCROLL HORIZONTAL PARA TABLAS
    ================================================ */
 .table-scroll-container {
   overflow-x: auto;
@@ -85,38 +75,28 @@
   max-width: 100%;
   flex: 1;
   position: relative;
-  margin: 0 48px; /* Espacio para las flechas */
-
-  /* Asegurar que el scrollbar sea siempre visible */
+  margin: 0 48px;
   scrollbar-width: thin;
   scrollbar-color: var(--primary-400) var(--bg-tertiary);
-
-  /* Padding inferior para que el scrollbar no tape contenido */
   padding-bottom: 8px;
   margin-bottom: 8px;
 }
 
-/* Scrollbar personalizado para Webkit (Chrome, Safari, Edge) */
 .table-scroll-container::-webkit-scrollbar {
   height: 12px;
 }
-
 .table-scroll-container::-webkit-scrollbar-track {
   background: var(--bg-tertiary);
   border-radius: 6px;
 }
-
 .table-scroll-container::-webkit-scrollbar-thumb {
   background: var(--primary-400);
   border-radius: 6px;
   border: 2px solid var(--bg-tertiary);
 }
-
 .table-scroll-container::-webkit-scrollbar-thumb:hover {
   background: var(--primary-500);
 }
-
-/* Tabla dentro del contenedor de scroll */
 .table-scroll-container table {
   min-width: max-content;
 }
@@ -145,17 +125,15 @@
 }
 
 /* Chip de estado */
-.status-chip {
-  &.pending {
-    background: var(--warning-bg) !important;
-    color: var(--warning-color) !important;
+.status-chip.pending {
+  background: var(--warning-bg) !important;
+  color: var(--warning-color) !important;
 
-    mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-      margin-right: 4px;
-    }
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
   }
 }
 
@@ -185,18 +163,15 @@
   height: 32px;
   color: var(--warning-color);
 }
-
 .warning-content {
   flex: 1;
 }
-
 .warning-title {
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 0.5rem 0;
 }
-
 .warning-message {
   color: var(--text-secondary);
   margin: 0 0 1rem 0;
@@ -243,18 +218,6 @@
   gap: 0.75rem;
 }
 
-@media (min-width: 768px) {
-  .chart-type-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .chart-type-grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
-}
-
 .chart-type-card {
   padding: 0.75rem;
   border-radius: var(--radius-lg);
@@ -269,12 +232,10 @@
   border-color: var(--primary-300);
   background: var(--hover-bg);
 }
-
 .chart-type-card.selected {
   border-color: var(--primary-500);
   background: var(--primary-50);
 }
-
 :host-context(.dark) .chart-type-card.selected {
   background: rgba(99, 102, 241, 0.15);
 }
@@ -285,22 +246,18 @@
   height: 32px;
   color: var(--text-secondary);
 }
-
 .chart-type-icon.selected {
   color: var(--primary-600);
 }
-
 :host-context(.dark) .chart-type-icon.selected {
   color: var(--primary-400);
 }
-
 .chart-type-name {
   font-weight: 500;
   font-size: 0.875rem;
   margin-top: 0.25rem;
   color: var(--text-primary);
 }
-
 .chart-type-desc {
   font-size: 0.75rem;
   color: var(--text-tertiary);
@@ -324,15 +281,12 @@
 .stat-box.stat-info {
   background: var(--info-bg);
 }
-
 .stat-box.stat-success {
   background: var(--success-bg);
 }
-
 .stat-box.stat-warning {
   background: var(--warning-bg);
 }
-
 .stat-box.stat-error {
   background: var(--error-bg);
 }
@@ -342,7 +296,6 @@
   font-size: 0.75rem;
   color: var(--text-secondary);
 }
-
 .stat-value {
   font-weight: 700;
   color: var(--text-primary);
@@ -361,61 +314,6 @@
   color: var(--error-color);
 }
 
-/* Contenedor del gráfico */
-.chart-container {
-  height: 256px;
-}
-
-.chart-loading {
-  height: 256px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chart-empty {
-  height: 256px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-tertiary);
-  gap: 0.5rem;
-}
-
-.chart-empty mat-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  opacity: 0.5;
-}
-
-.chart-error {
-  height: 256px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 1rem;
-  gap: 0.75rem;
-}
-
-.chart-error mat-icon {
-  font-size: 48px;
-  width: 48px;
-  height: 48px;
-  color: var(--error-color);
-  opacity: 0.7;
-}
-
-.chart-error .error-message {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin: 0;
-  max-width: 280px;
-}
-
 /* Barra de acciones */
 .actions-bar {
   display: flex;
@@ -423,18 +321,13 @@
   gap: 0.5rem;
   align-items: center;
 }
-
 .charts-count {
   color: var(--text-secondary);
 }
 
 /* ================================================
-   SELECTOR DE VARIABLES MEJORADO
+   SELECTOR DE VARIABLES
    ================================================ */
-.variable-selector-panel {
-  max-height: 400px !important;
-}
-
 .variable-search-container {
   padding: 0.75rem;
   border-bottom: 1px solid var(--border-color);
@@ -462,11 +355,9 @@
   border-color: var(--primary-500);
   box-shadow: 0 0 0 2px var(--primary-100);
 }
-
 :host-context(.dark) .variable-search-input:focus {
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
-
 .variable-search-input::placeholder {
   color: var(--text-tertiary);
 }
@@ -488,11 +379,9 @@
 .variable-option:hover {
   background: var(--hover-bg);
 }
-
 .variable-option.selected {
   background: var(--primary-50);
 }
-
 :host-context(.dark) .variable-option.selected {
   background: rgba(99, 102, 241, 0.15);
 }
@@ -501,7 +390,6 @@
   font-weight: 500;
   color: var(--text-primary);
 }
-
 .no-results {
   padding: 1rem;
   text-align: center;
@@ -509,17 +397,11 @@
   font-size: 0.875rem;
 }
 
-/* Estilos adicionales para el selector de variables */
-.variable-select {
-  position: relative;
-}
-
 .variable-select .search-icon {
   color: var(--text-tertiary);
   font-size: 18px;
   cursor: pointer;
 }
-
 .selected-variable-display {
   display: flex;
   align-items: center;
@@ -540,69 +422,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .no-results-text {
   color: var(--text-tertiary);
   font-style: italic;
 }
 
-/* Panel del selector con scroll mejorado */
-::ng-deep .variable-selector-panel {
-  max-height: 350px !important;
-
-  .mat-mdc-option {
-    min-height: 48px;
-    padding: 0.5rem 1rem;
-  }
-
-  /* Scrollbar mejorado para el panel */
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: var(--bg-tertiary);
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--primary-300);
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: var(--primary-400);
-  }
-}
-
-/* Badge de tipo pequeño para el trigger */
+/* Badge de tipo pequeño */
 .type-badge.small {
   font-size: 0.625rem;
   padding: 0.125rem 0.25rem;
-}
-
-/* Estado vacío de gráficos */
-.charts-empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-}
-
-.charts-empty-state mat-icon {
-  font-size: 64px;
-  width: 64px;
-  height: 64px;
-  color: var(--text-tertiary);
-  opacity: 0.5;
-}
-
-.charts-empty-state h3 {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
-  margin-top: 1rem;
-}
-
-.charts-empty-state p {
-  color: var(--text-tertiary);
 }
 
 /* ================================================
@@ -634,13 +462,11 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
 .predefined-chip-container {
   display: inline-flex;
   align-items: center;
   position: relative;
 }
-
 .predefined-chip {
   border-radius: var(--radius-lg) !important;
 }
@@ -657,51 +483,9 @@
     height: 14px;
     color: var(--text-tertiary);
   }
-
   &:hover mat-icon {
     color: var(--error-color);
   }
-}
-
-/* ================================================
-   OVERLAY FORMS
-   ================================================ */
-.overlay-backdrop {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 100;
-}
-
-.floating-form {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--card-bg);
-  border-radius: var(--radius-xl);
-  padding: 1.5rem;
-  min-width: 400px;
-  max-width: 90vw;
-  z-index: 101;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-
-  h3 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 1rem 0;
-  }
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
 }
 
 /* ================================================
@@ -710,7 +494,6 @@
 .source-form-card {
   border: 2px dashed var(--primary-300);
   background: var(--primary-50);
-
   :host-context(.dark) & {
     background: rgba(99, 102, 241, 0.08);
   }
@@ -724,80 +507,19 @@
 
 .source-item {
   transition: box-shadow var(--transition-fast);
-
   &:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 }
 
-.source-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-lg);
-  background: var(--primary-50);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  mat-icon {
-    color: var(--primary-500);
-  }
-
-  :host-context(.dark) & {
-    background: rgba(99, 102, 241, 0.15);
+/* Responsive */
+@media (min-width: 768px) {
+  .chart-type-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
-
-.source-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 0.25rem 0;
-}
-
-.source-description {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  margin: 0 0 0.25rem 0;
-}
-
-.source-url {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--primary-500);
-  font-size: 0.8125rem;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
+@media (min-width: 1024px) {
+  .chart-type-grid {
+    grid-template-columns: repeat(6, 1fr);
   }
-
-  .url-icon {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
-  }
-}
-
-.source-actions {
-  display: flex;
-  gap: 0.25rem;
-  flex-shrink: 0;
-}
-
-/* Alert */
-.alert {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-lg);
-  font-size: 0.875rem;
-}
-
-.alert-warning {
-  background: var(--warning-bg);
-  color: var(--warning-color);
-  border: 1px solid var(--warning-border);
 }
