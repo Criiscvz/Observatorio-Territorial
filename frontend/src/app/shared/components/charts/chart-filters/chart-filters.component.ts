@@ -1,8 +1,10 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
+import { provideNativeDateAdapter } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -39,6 +41,8 @@ const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
   TEXTO: [
     { value: 'eq', label: 'filters.operators.eq' },
     { value: 'neq', label: 'filters.operators.neq' },
+    { value: 'in', label: 'filters.operators.in' },
+    { value: 'not_in', label: 'filters.operators.notIn' },
     { value: 'contains', label: 'filters.operators.contains' },
     { value: 'not_contains', label: 'filters.operators.notContains' },
   ],
@@ -63,8 +67,10 @@ const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
+    MatDatepickerModule,
     TranslateModule,
   ],
+  providers: [provideNativeDateAdapter(), DatePipe],
   template: `
     <div class="filters-container">
       <div class="filters-header">
@@ -122,6 +128,7 @@ const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
 
           <!-- Value -->
           @if (row.operator === 'in' || row.operator === 'not_in') {
+            <!-- Multi-select for in/not_in operators -->
             <mat-form-field appearance="outline" class="filter-field value-field">
               <mat-label>{{ 'filters.value' | translate }}</mat-label>
               <mat-select
@@ -134,7 +141,52 @@ const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
                 }
               </mat-select>
             </mat-form-field>
+          } @else if (row.operator === 'between' && getColumnType(row.column) === 'FECHA') {
+            <!-- Date range pickers for between + FECHA -->
+            <mat-form-field appearance="outline" class="filter-field value-field-half">
+              <mat-label>{{ 'filters.valueFrom' | translate }}</mat-label>
+              <input
+                matInput
+                [matDatepicker]="dpFrom"
+                [ngModel]="parseDateValue(row.value)"
+                (dateChange)="updateRow(i, 'value', formatDate($event.value))"
+              />
+              <mat-datepicker-toggle matIconSuffix [for]="dpFrom"></mat-datepicker-toggle>
+              <mat-datepicker #dpFrom></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field value-field-half">
+              <mat-label>{{ 'filters.valueTo' | translate }}</mat-label>
+              <input
+                matInput
+                [matDatepicker]="dpTo"
+                [ngModel]="parseDateValue(row.valueTo)"
+                (dateChange)="updateRow(i, 'valueTo', formatDate($event.value))"
+              />
+              <mat-datepicker-toggle matIconSuffix [for]="dpTo"></mat-datepicker-toggle>
+              <mat-datepicker #dpTo></mat-datepicker>
+            </mat-form-field>
+          } @else if (row.operator === 'between' && getColumnType(row.column) === 'NUMERICO') {
+            <!-- Numeric range for between + NUMERICO -->
+            <mat-form-field appearance="outline" class="filter-field value-field-half">
+              <mat-label>{{ 'filters.valueFrom' | translate }}</mat-label>
+              <input
+                matInput
+                type="number"
+                [ngModel]="row.value"
+                (ngModelChange)="updateRow(i, 'value', $event)"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="filter-field value-field-half">
+              <mat-label>{{ 'filters.valueTo' | translate }}</mat-label>
+              <input
+                matInput
+                type="number"
+                [ngModel]="row.valueTo"
+                (ngModelChange)="updateRow(i, 'valueTo', $event)"
+              />
+            </mat-form-field>
           } @else if (row.operator === 'between') {
+            <!-- Generic between (fallback) -->
             <mat-form-field appearance="outline" class="filter-field value-field-half">
               <mat-label>{{ 'filters.valueFrom' | translate }}</mat-label>
               <input
@@ -152,6 +204,7 @@ const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
               />
             </mat-form-field>
           } @else if (getColumnType(row.column) === 'CATEGORICO') {
+            <!-- Dropdown for CATEGORICO -->
             <mat-form-field appearance="outline" class="filter-field value-field">
               <mat-label>{{ 'filters.value' | translate }}</mat-label>
               <mat-select [ngModel]="row.value" (ngModelChange)="updateRow(i, 'value', $event)">
@@ -160,7 +213,52 @@ const OPERATORS_BY_TYPE: Record<string, { value: string; label: string }[]> = {
                 }
               </mat-select>
             </mat-form-field>
+          } @else if (getColumnType(row.column) === 'FECHA') {
+            <!-- Date picker for FECHA -->
+            <mat-form-field appearance="outline" class="filter-field value-field">
+              <mat-label>{{ 'filters.value' | translate }}</mat-label>
+              <input
+                matInput
+                [matDatepicker]="dpSingle"
+                [ngModel]="parseDateValue(row.value)"
+                (dateChange)="updateRow(i, 'value', formatDate($event.value))"
+              />
+              <mat-datepicker-toggle matIconSuffix [for]="dpSingle"></mat-datepicker-toggle>
+              <mat-datepicker #dpSingle></mat-datepicker>
+            </mat-form-field>
+          } @else if (getColumnType(row.column) === 'NUMERICO') {
+            <!-- Number input for NUMERICO -->
+            <mat-form-field appearance="outline" class="filter-field value-field">
+              <mat-label>{{ 'filters.value' | translate }}</mat-label>
+              <input
+                matInput
+                type="number"
+                [ngModel]="row.value"
+                (ngModelChange)="updateRow(i, 'value', $event)"
+              />
+            </mat-form-field>
+          } @else if (
+            getColumnType(row.column) === 'TEXTO' &&
+            hasOptions(row.column) &&
+            (row.operator === 'eq' || row.operator === 'neq')
+          ) {
+            <!-- Autocomplete dropdown for TEXTO with options (eq/neq) -->
+            <mat-form-field appearance="outline" class="filter-field value-field">
+              <mat-label>{{ 'filters.value' | translate }}</mat-label>
+              <input
+                matInput
+                [ngModel]="row.value"
+                (ngModelChange)="updateRow(i, 'value', $event)"
+                [matAutocomplete]="textAuto"
+              />
+              <mat-autocomplete #textAuto="matAutocomplete">
+                @for (opt of getFilteredOptions(row.column, row.value); track opt) {
+                  <mat-option [value]="opt">{{ opt }}</mat-option>
+                }
+              </mat-autocomplete>
+            </mat-form-field>
           } @else {
+            <!-- Generic text input (TEXTO and fallback) -->
             <mat-form-field appearance="outline" class="filter-field value-field">
               <mat-label>{{ 'filters.value' | translate }}</mat-label>
               <input
@@ -307,6 +405,7 @@ export class ChartFiltersComponent {
   columnSearchTerms = signal<Record<string, string>>({});
 
   private variablesMap = new Map<string, VariableMetadato>();
+  private datePipe = new DatePipe('en-US');
 
   constructor() {
     effect(() => {
@@ -314,6 +413,22 @@ export class ChartFiltersComponent {
       this.variablesMap.clear();
       vars.forEach((v) => this.variablesMap.set(v.nombre_columna, v));
     });
+  }
+
+  /** Parse a YYYY-MM-DD string into a Date object for the datepicker */
+  parseDateValue(value: string | undefined): Date | null {
+    if (!value) return null;
+    const parts = value.split('-');
+    if (parts.length === 3) {
+      return new Date(+parts[0], +parts[1] - 1, +parts[2]);
+    }
+    return null;
+  }
+
+  /** Format a Date object into YYYY-MM-DD string for the backend */
+  formatDate(date: Date | null): string {
+    if (!date) return '';
+    return this.datePipe.transform(date, 'yyyy-MM-dd') || '';
   }
 
   addFilter(): void {
@@ -411,6 +526,18 @@ export class ChartFiltersComponent {
     return this.variablesMap.get(column)?.opciones || [];
   }
 
+  hasOptions(column: string): boolean {
+    const opts = this.variablesMap.get(column)?.opciones;
+    return !!opts && opts.length > 0;
+  }
+
+  getFilteredOptions(column: string, searchTerm: string): string[] {
+    const options = this.getOptions(column);
+    if (!searchTerm) return options;
+    const term = searchTerm.toLowerCase();
+    return options.filter((opt) => opt.toLowerCase().includes(term));
+  }
+
   splitValues(val: string): string[] {
     return val ? val.split('|||') : [];
   }
@@ -429,10 +556,12 @@ export class ChartFiltersComponent {
         } else if (row.operator === 'in' || row.operator === 'not_in') {
           value = row.value.split('|||');
         }
+        const type = this.getColumnType(row.column) as ChartFilter['type'];
         return {
           column: row.column,
           operator: row.operator as ChartFilter['operator'],
           value,
+          type,
         };
       });
     this.filtersChange.emit(filters);

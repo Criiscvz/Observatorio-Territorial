@@ -126,6 +126,7 @@ class EloquentDatasetRepository implements DatasetRepositoryInterface
                 'tipo_detectado' => $v->tipo_detectado,
                 'es_visible' => $v->es_visible,
                 'orden' => $v->orden,
+                'opciones' => $v->opciones,
             ])->toArray();
         }
 

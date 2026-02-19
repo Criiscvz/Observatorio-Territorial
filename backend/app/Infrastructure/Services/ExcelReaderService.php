@@ -66,14 +66,14 @@ class ExcelReaderService
 
         for ($row = 2; $row <= $highestRow; $row++) {
             $rowData = $worksheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, null, true, true, true)[$row];
-            
+
             $registro = [];
             foreach ($headers as $col => $nombreColumna) {
                 if (!isset($columnasMap[$nombreColumna])) continue;
-                
+
                 $valor = $rowData[$col] ?? null;
                 $tipoDato = $columnasMap[$nombreColumna]['tipo_dato'];
-                
+
                 $registro[$nombreColumna] = $this->convertValue($valor, $tipoDato);
             }
 
@@ -87,7 +87,7 @@ class ExcelReaderService
     {
         $headers = [];
         $headerRow = $worksheet->rangeToArray('A1:' . $highestColumn . '1', null, true, true, true)[1];
-        
+
         foreach ($headerRow as $col => $value) {
             if ($value !== null && $value !== '') {
                 $headers[$col] = [
@@ -114,11 +114,26 @@ class ExcelReaderService
             }
 
             $tipoDetectado = $this->detectType($valores);
-            
+
             $opciones = null;
             if ($tipoDetectado === 'CATEGORICO') {
                 $opciones = array_values(array_unique(array_filter($valores, fn($v) => $v !== null && $v !== '')));
                 sort($opciones);
+            } elseif ($tipoDetectado === 'TEXTO') {
+                // For TEXTO: extract top frequent values for filter dropdowns
+                $uniqueValues = array_filter($valores, fn($v) => $v !== null && $v !== '');
+                $uniqueCount = count(array_unique($uniqueValues));
+
+                if ($uniqueCount <= 100) {
+                    // Few unique values: store all (similar to CATEGORICO)
+                    $opciones = array_values(array_unique($uniqueValues));
+                    sort($opciones);
+                } elseif ($uniqueCount > 100) {
+                    // Many unique values: store top 50 most frequent
+                    $freq = array_count_values(array_map('strval', $uniqueValues));
+                    arsort($freq);
+                    $opciones = array_values(array_slice(array_keys($freq), 0, 50));
+                }
             }
 
             $columnas[] = [
@@ -146,7 +161,7 @@ class ExcelReaderService
 
         foreach ($dataRange as $row) {
             if ($rowIndex >= $previewRows) break;
-            
+
             $fila = [];
             foreach ($headers as $col => $header) {
                 $fila[$header['normalized']] = $row[$col] ?? null;
@@ -161,7 +176,7 @@ class ExcelReaderService
     private function detectType(array $valores): string
     {
         $valoresNoVacios = array_filter($valores, fn($v) => $v !== null && $v !== '');
-        
+
         if (empty($valoresNoVacios)) {
             return 'TEXTO';
         }
@@ -259,7 +274,7 @@ class ExcelReaderService
     private function normalizeColumnName(string $nombre): string
     {
         $normalizado = Str::slug($nombre, '_');
-        
+
         if (preg_match('/^\d/', $normalizado)) {
             $normalizado = 'col_' . $normalizado;
         }

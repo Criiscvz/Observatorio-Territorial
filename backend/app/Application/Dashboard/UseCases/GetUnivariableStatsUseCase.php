@@ -27,7 +27,7 @@ class GetUnivariableStatsUseCase
     {
         // Obtener variable
         $variable = $this->variableRepository->findById($dto->variableId);
-        
+
         if (!$variable) {
             throw new HttpException(Response::HTTP_NOT_FOUND, 'Variable no encontrada');
         }
@@ -39,7 +39,7 @@ class GetUnivariableStatsUseCase
         }
 
         $departamento = $this->departamentoRepository->findById($dataset->departamentoId);
-        $hasAccess = $departamento?->publico || 
+        $hasAccess = $departamento?->publico ||
             $this->departamentoRepository->existsForUser($dataset->departamentoId, $dto->userId);
 
         if (!$hasAccess) {
@@ -49,12 +49,12 @@ class GetUnivariableStatsUseCase
         // Determinar tipo de gráfico
         $defaultChartType = $this->getDefaultChartType($variable->tipoDato);
         $chartType = $dto->chartType ?? $defaultChartType;
-        
+
         // Validar compatibilidad
         if (!StatsRequest::isChartCompatible($chartType, $variable->tipoDato)) {
             $chartType = $defaultChartType;
         }
-        
+
         $limit = $dto->limit ?? 20;
 
         // Usar el servicio compartido de estadísticas
@@ -67,15 +67,29 @@ class GetUnivariableStatsUseCase
             );
         } elseif ($variable->isNumerico()) {
             $result = $this->statisticsService->getNumericStats(
-                $variable->datasetId, 
-                $variable->nombreColumna, 
+                $variable->datasetId,
+                $variable->nombreColumna,
+                $limit,
+                $dto->filters
+            );
+        } elseif ($variable->isFecha()) {
+            $result = $this->statisticsService->getDateStats(
+                $variable->datasetId,
+                $variable->nombreColumna,
+                $limit,
+                $dto->filters
+            );
+        } elseif ($variable->tipoDato === 'TEXTO') {
+            $result = $this->statisticsService->getTextSummaryStats(
+                $variable->datasetId,
+                $variable->nombreColumna,
                 $limit,
                 $dto->filters
             );
         } else {
             $result = $this->statisticsService->getCategoricalStats(
-                $variable->datasetId, 
-                $variable->nombreColumna, 
+                $variable->datasetId,
+                $variable->nombreColumna,
                 $limit,
                 $dto->filters
             );

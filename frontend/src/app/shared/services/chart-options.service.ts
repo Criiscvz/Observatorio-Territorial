@@ -21,6 +21,17 @@ export class ChartOptionsService {
     return this.chartTheme.config();
   }
 
+  /** Truncate a label to maxLen chars with ellipsis */
+  private truncateLabel(label: string, maxLen = 30): string {
+    if (!label || label.length <= maxLen) return label;
+    return label.substring(0, maxLen) + '...';
+  }
+
+  /** Truncate an array of labels */
+  private truncateLabels(labels: string[], maxLen = 30): string[] {
+    return labels.map((l) => this.truncateLabel(l, maxLen));
+  }
+
   getUnivariableOptions(data: ChartData, type: string): EChartsOption {
     const cfg = this.config;
     const colors = this.colors;
@@ -154,13 +165,29 @@ export class ChartOptionsService {
     colors: string[],
     cfg: any,
   ): EChartsOption {
+    const displayLabels = this.truncateLabels(labels, 25);
     return {
       ...base,
       title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
+      tooltip: {
+        ...(base.tooltip as any),
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const p = Array.isArray(params) ? params[0] : params;
+          const idx = p.dataIndex;
+          const fullLabel = labels[idx] || p.name;
+          return `<strong>${fullLabel}</strong><br/>${p.value}`;
+        },
+      },
       xAxis: {
         type: 'category',
-        data: labels,
-        axisLabel: { color: cfg.textColorSecondary, rotate: labels.length > 6 ? 45 : 0 },
+        data: displayLabels,
+        axisLabel: {
+          color: cfg.textColorSecondary,
+          rotate: displayLabels.length > 6 ? 45 : 0,
+          width: 100,
+          overflow: 'truncate',
+        },
       },
       yAxis: {
         type: 'value',
@@ -176,7 +203,7 @@ export class ChartOptionsService {
           })),
         },
       ],
-      grid: { bottom: labels.length > 6 ? 80 : 40, left: 60, right: 20, top: 60 },
+      grid: { bottom: displayLabels.length > 6 ? 80 : 40, left: 60, right: 20, top: 60 },
     };
   }
 
@@ -196,7 +223,12 @@ export class ChartOptionsService {
       tooltip: {
         ...(base.tooltip as any),
         trigger: 'item',
-        formatter: '{b}: {c} ({d}%)',
+        formatter: (params: any) => {
+          const idx = params.dataIndex;
+          const fullLabel = labels[idx] || params.name;
+          const percent = params.percent;
+          return `<strong>${fullLabel}</strong><br/>${params.value} (${percent}%)`;
+        },
       },
       series: [
         {
@@ -204,14 +236,18 @@ export class ChartOptionsService {
           radius: isDonut ? ['40%', '70%'] : '70%',
           center: ['50%', '50%'],
           data: labels.map((l, i) => ({
-            name: l,
+            name: this.truncateLabel(l, 30),
             value: values[i],
             itemStyle: { color: colors[i % colors.length] },
           })),
           label: {
             show: true,
             color: cfg.textColorSecondary,
-            formatter: '{b}: {d}%',
+            formatter: (params: any) => {
+              const idx = params.dataIndex;
+              const displayName = this.truncateLabel(labels[idx] || params.name, 20);
+              return `${displayName}: ${params.percent}%`;
+            },
           },
           emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.2)' } },
         },
@@ -795,13 +831,24 @@ export class ChartOptionsService {
     colors: string[],
     cfg: any,
   ): EChartsOption {
+    const displayLabels = this.truncateLabels(labels, 20);
     return {
       ...base,
       title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
+      tooltip: {
+        ...(base.tooltip as any),
+        trigger: 'axis',
+        formatter: (params: any) => {
+          const p = Array.isArray(params) ? params[0] : params;
+          const idx = p.dataIndex;
+          const fullLabel = labels[idx] || p.name;
+          return `<strong>${fullLabel}</strong><br/>${p.value}`;
+        },
+      },
       yAxis: {
         type: 'category',
-        data: labels,
-        axisLabel: { color: cfg.textColorSecondary, width: 100, overflow: 'truncate' },
+        data: displayLabels,
+        axisLabel: { color: cfg.textColorSecondary, width: 120, overflow: 'truncate' },
       },
       xAxis: {
         type: 'value',

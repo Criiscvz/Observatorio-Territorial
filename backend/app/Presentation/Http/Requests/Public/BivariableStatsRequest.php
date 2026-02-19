@@ -26,6 +26,7 @@ class BivariableStatsRequest extends FormRequest
             'filters.*.column' => ['required_with:filters', 'string'],
             'filters.*.operator' => ['required_with:filters', 'string', Rule::in(['eq', 'neq', 'in', 'not_in', 'gt', 'gte', 'lt', 'lte', 'between', 'contains', 'not_contains'])],
             'filters.*.value' => ['required_with:filters'],
+            'filters.*.type' => ['nullable', 'string', Rule::in(['NUMERICO', 'CATEGORICO', 'FECHA', 'TEXTO'])],
         ];
     }
 }

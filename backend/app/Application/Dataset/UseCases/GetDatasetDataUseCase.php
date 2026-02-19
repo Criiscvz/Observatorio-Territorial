@@ -30,8 +30,8 @@ class GetDatasetDataUseCase
 
         // Verificar acceso al departamento
         $departamento = $this->departamentoRepository->findById($dataset->departamentoId);
-        
-        $hasAccess = $departamento?->publico || 
+
+        $hasAccess = $departamento?->publico ||
             $this->departamentoRepository->existsForUser($dataset->departamentoId, $userId);
 
         if (!$hasAccess) {
@@ -48,15 +48,18 @@ class GetDatasetDataUseCase
                 'total_registros' => $dataset->totalRegistros,
                 'departamento_id' => $dataset->departamentoId,
             ],
-            'variables' => $variables->map(fn ($v) => [
+            'variables' => $variables->map(fn($v) => [
                 'id' => $v->id,
                 'dataset_id' => $v->datasetId,
                 'nombre_columna' => $v->nombreColumna,
                 'nombre_original' => $v->nombreOriginal,
                 'tipo_dato' => $v->tipoDato,
+                'tipo_detectado' => $v->tipoDetectado,
                 'es_visible' => $v->esVisible,
+                'orden' => $v->orden,
+                'opciones' => $v->opciones,
             ])->values()->toArray(),
-            'data' => collect($paginator->items())->map(fn ($item) => [
+            'data' => collect($paginator->items())->map(fn($item) => [
                 'id' => $item->id,
                 'data' => $item->data,
             ])->toArray(),

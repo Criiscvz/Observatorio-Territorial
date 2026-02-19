@@ -13,6 +13,7 @@ export interface ChartFilter {
     | 'contains'
     | 'not_contains';
   value: any;
+  type?: 'NUMERICO' | 'CATEGORICO' | 'FECHA' | 'TEXTO';
 }
 
 export interface UnivariableRequest {

@@ -45,4 +45,14 @@ interface StatisticsServiceInterface
      * Obtiene datos para nube de palabras (variables de texto)
      */
     public function getWordCloudData(string $datasetId, string $column, int $limit, ?array $filters = null): array;
+
+    /**
+     * Obtiene estadísticas de fecha (agrupación temporal, min/max, etc.)
+     */
+    public function getDateStats(string $datasetId, string $column, int $limit, ?array $filters = null): array;
+
+    /**
+     * Obtiene estadísticas de texto resumidas (agrupa por keywords dominantes para textos largos)
+     */
+    public function getTextSummaryStats(string $datasetId, string $column, int $limit, ?array $filters = null): array;
 }

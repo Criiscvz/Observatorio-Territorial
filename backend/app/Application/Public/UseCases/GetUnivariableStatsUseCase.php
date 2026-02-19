@@ -40,13 +40,19 @@ class GetUnivariableStatsUseCase
 
         // Obtener estadísticas según tipo
         $chartType = $dto->chartType;
-        
+
         if ($chartType === 'wordcloud' && ($tipo === 'TEXTO' || $tipo === 'CATEGORICO')) {
             $result = $this->statisticsService->getWordCloudData($dto->datasetId, $columna, $dto->limit, $dto->filters);
             $chartType = 'wordcloud';
         } elseif ($tipo === 'NUMERICO') {
             $result = $this->statisticsService->getNumericStats($dto->datasetId, $columna, $dto->limit, $dto->filters);
             $chartType = $chartType ?? 'histogram';
+        } elseif ($tipo === 'FECHA') {
+            $result = $this->statisticsService->getDateStats($dto->datasetId, $columna, $dto->limit, $dto->filters);
+            $chartType = $chartType ?? 'line';
+        } elseif ($tipo === 'TEXTO') {
+            $result = $this->statisticsService->getTextSummaryStats($dto->datasetId, $columna, $dto->limit, $dto->filters);
+            $chartType = $chartType ?? 'bar';
         } else {
             $result = $this->statisticsService->getCategoricalStats($dto->datasetId, $columna, $dto->limit, $dto->filters);
             $chartType = $chartType ?? 'bar';
