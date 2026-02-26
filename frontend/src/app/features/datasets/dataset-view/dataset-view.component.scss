@@ -124,6 +124,14 @@
   margin: 0;
 }
 
+.dataset-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0.25rem 0 0.25rem;
+  line-height: 1.5;
+  max-width: 600px;
+}
+
 /* Chip de estado */
 .status-chip.pending {
   background: var(--warning-bg) !important;

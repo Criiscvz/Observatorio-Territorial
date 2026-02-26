@@ -58,7 +58,12 @@ export class PublicDatasetViewComponent implements OnInit {
   loading = signal(true);
   datasetId = signal('');
   departamentoId = signal('');
-  datasetInfo = signal<{ id: string; nombre: string; total_registros: number } | null>(null);
+  datasetInfo = signal<{
+    id: string;
+    nombre: string;
+    descripcion?: string;
+    total_registros: number;
+  } | null>(null);
   variables = signal<VariableMetadato[]>([]);
   tableData = signal<{ id: number; data: Record<string, any> }[]>([]);
   pagination = signal({ current_page: 1, last_page: 1, per_page: 50, total: 0 });

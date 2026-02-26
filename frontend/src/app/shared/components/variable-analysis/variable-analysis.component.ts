@@ -29,6 +29,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ChartData, GraficoPredeterminado, VariableMetadato } from '@core/models';
 import { CategoriaService } from '@core/services/categoria.service';
 import { DashboardService } from '@core/services/dashboard.service';
+import { DepartamentoService } from '@core/services/departamento.service';
 import { BivariableResponse } from '@core/services/interfaces';
 import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { ChartCardComponent } from '@shared/components/charts';
@@ -74,6 +75,7 @@ export class VariableAnalysisComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dashboardService = inject(DashboardService);
+  private departamentoService = inject(DepartamentoService);
   private categoriaService = inject(CategoriaService);
   private snackBar = inject(MatSnackBar);
   private translate = inject(TranslateService);
@@ -92,6 +94,7 @@ export class VariableAnalysisComponent implements OnInit {
   variableId = signal('');
   datasetName = signal('');
   departamentoId = signal('');
+  departamentoName = signal('');
   totalRecords = signal(0);
 
   variable = signal<VariableMetadato | null>(null);
@@ -171,6 +174,18 @@ export class VariableAnalysisComponent implements OnInit {
     return [prefix + '/datasets', this.datasetId()];
   });
 
+  // Departamento route for breadcrumb
+  departamentoRoute = computed(() => {
+    const prefix = this.routePrefix();
+    const isAdm = this.isAdmin();
+    const deptoId = this.departamentoId();
+    if (!deptoId) return null;
+    if (isAdm) {
+      return ['/admin/departamentos', deptoId];
+    }
+    return [prefix + '/departamentos', deptoId];
+  });
+
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
       this.loading.set(false);
@@ -202,6 +217,7 @@ export class VariableAnalysisComponent implements OnInit {
         this.totalRecords.set(res.dataset?.total_registros || 0);
         if (res.dataset?.departamento_id) {
           this.departamentoId.set(res.dataset.departamento_id);
+          this.loadDepartamentoName(res.dataset.departamento_id);
         }
         this.allVariables.set(res.variables || []);
 
@@ -216,6 +232,16 @@ export class VariableAnalysisComponent implements OnInit {
         }
       },
       error: () => this.loading.set(false),
+    });
+  }
+
+  private loadDepartamentoName(deptoId: string): void {
+    const fetchFn = this.isAdmin()
+      ? this.departamentoService.getById(deptoId)
+      : this.departamentoService.getPublicById(deptoId);
+    fetchFn.subscribe({
+      next: (depto) => this.departamentoName.set(depto.nombre || ''),
+      error: () => {},
     });
   }
 

@@ -605,7 +605,8 @@
       "datasets": {
         "title": "Available Datasets",
         "empty": "No datasets",
-        "emptyMessage": "This observatory doesn't have any public datasets yet"
+        "emptyMessage": "This observatory doesn't have any public datasets yet",
+        "search": "Search dataset..."
       },
       "notFound": {
         "title": "Observatory not found",
@@ -814,6 +815,10 @@
       "confirmDelete": "Delete this predefined chart?",
       "visible": "Visible to users",
       "order": "Display order"
+    },
+    "export": {
+      "png": "Export as PNG image",
+      "csv": "Export data as CSV"
     }
   },
   "dataTypes": {
@@ -987,6 +992,19 @@
       "title": "Variable not found",
       "message": "The requested variable does not exist or does not belong to this dataset."
     }
+  },
+  "textInsights": {
+    "analyzing": "Analyzing text...",
+    "sentiment": "Sentiment analysis",
+    "topPhrases": "Most frequent phrases",
+    "words": "words",
+    "topKeywords": "Top keywords",
+    "textStats": "Text statistics",
+    "noPhrases": "No frequent phrases found",
+    "totalTexts": "Texts analyzed",
+    "uniqueWords": "Unique words",
+    "avgLength": "Average length",
+    "phrasesFound": "Phrases found"
   },
   "frequencyTable": {
     "title": "Frequency table",

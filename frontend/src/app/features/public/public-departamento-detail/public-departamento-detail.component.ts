@@ -1,10 +1,13 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, DestroyRef, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
@@ -17,9 +20,12 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [
     CommonModule,
     RouterLink,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
+    MatFormFieldModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatChipsModule,
     TranslateModule,
@@ -35,6 +41,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
 
   departamento = signal<Departamento | null>(null);
   loading = signal(true);
+  datasetSearchTerm = '';
 
   deptoGradient = 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)';
 
@@ -52,7 +59,10 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   ];
 
   get datasets(): Dataset[] {
-    return this.departamento()?.datasets || [];
+    const all = this.departamento()?.datasets || [];
+    if (!this.datasetSearchTerm.trim()) return all;
+    const term = this.datasetSearchTerm.toLowerCase().trim();
+    return all.filter((ds) => ds.nombre.toLowerCase().includes(term));
   }
 
   get totalRegistros(): number {

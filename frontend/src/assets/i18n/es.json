@@ -605,7 +605,8 @@
       "datasets": {
         "title": "Datasets Disponibles",
         "empty": "Sin datasets",
-        "emptyMessage": "Este observatorio aún no tiene datasets públicos disponibles"
+        "emptyMessage": "Este observatorio aún no tiene datasets públicos disponibles",
+        "search": "Buscar dataset..."
       },
       "notFound": {
         "title": "Observatorio no encontrado",
@@ -814,6 +815,10 @@
       "confirmDelete": "¿Eliminar este gráfico predeterminado?",
       "visible": "Visible para usuarios",
       "order": "Orden de visualización"
+    },
+    "export": {
+      "png": "Exportar como imagen PNG",
+      "csv": "Exportar datos como CSV"
     }
   },
   "dataTypes": {

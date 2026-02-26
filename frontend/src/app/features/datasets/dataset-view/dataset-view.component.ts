@@ -81,6 +81,7 @@ export class DatasetViewComponent implements OnInit {
   datasetInfo = signal<{
     id: string;
     nombre: string;
+    descripcion?: string;
     total_registros: number;
     estado?: 'PENDIENTE' | 'PROCESANDO' | 'COMPLETADO' | 'ERROR';
   } | null>(null);
@@ -146,6 +147,7 @@ export class DatasetViewComponent implements OnInit {
             this.datasetInfo.set({
               id: dsRes.id,
               nombre: dsRes.nombre,
+              descripcion: dsRes.descripcion,
               total_registros: dsRes.total_registros,
               estado: dsRes.estado,
             });

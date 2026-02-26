@@ -43,10 +43,27 @@
 
     <!-- Datasets Section -->
     <section class="datasets-section">
-      <h2 class="section-title">
-        <mat-icon>folder_open</mat-icon>
-        {{ 'public.departmentDetail.datasets.title' | translate }}
-      </h2>
+      <div class="section-header">
+        <h2 class="section-title">
+          <mat-icon>folder_open</mat-icon>
+          {{ 'public.departmentDetail.datasets.title' | translate }}
+        </h2>
+        @if ((departamento()?.datasets?.length || 0) > 3) {
+          <mat-form-field appearance="outline" class="dataset-search-field">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              [(ngModel)]="datasetSearchTerm"
+              [placeholder]="'public.departmentDetail.datasets.search' | translate"
+            />
+            @if (datasetSearchTerm) {
+              <button matSuffix mat-icon-button (click)="datasetSearchTerm = ''">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+        }
+      </div>
 
       @if (datasets.length > 0) {
         <div class="datasets-grid">

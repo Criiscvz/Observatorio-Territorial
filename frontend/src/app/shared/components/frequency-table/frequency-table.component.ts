@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule } from '@ngx-translate/core';
+import { ExportService } from '@shared/services/export.service';
 
 export interface FrequencyRow {
   label: string;
@@ -14,7 +17,15 @@ export interface FrequencyRow {
 @Component({
   selector: 'app-frequency-table',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatSortModule, MatIconModule, TranslateModule],
+  imports: [
+    CommonModule,
+    MatTableModule,
+    MatSortModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
+    TranslateModule,
+  ],
   template: `
     <div class="frequency-table-container">
       <div class="table-header">
@@ -23,6 +34,14 @@ export interface FrequencyRow {
           {{ title() || ('frequencyTable.title' | translate) }}
         </h4>
         <span class="total-badge"> Total: {{ total() | number }} </span>
+        <button
+          mat-icon-button
+          class="export-btn"
+          (click)="exportCsv()"
+          [matTooltip]="'charts.export.csv' | translate"
+        >
+          <mat-icon>download</mat-icon>
+        </button>
       </div>
 
       <div class="table-wrapper">
@@ -134,6 +153,21 @@ export interface FrequencyRow {
         border-radius: 999px;
       }
 
+      .export-btn {
+        margin-left: auto;
+      }
+
+      .export-btn mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: var(--text-tertiary);
+      }
+
+      .export-btn:hover mat-icon {
+        color: var(--primary-600);
+      }
+
       :host-context(.dark) .total-badge {
         background: rgba(99, 102, 241, 0.15);
         color: var(--primary-400);
@@ -202,6 +236,8 @@ export interface FrequencyRow {
   ],
 })
 export class FrequencyTableComponent {
+  private exportService = inject(ExportService);
+
   labels = input.required<string[]>();
   values = input.required<number[]>();
   title = input<string>('');
@@ -251,6 +287,14 @@ export class FrequencyTableComponent {
 
   sortData(sort: Sort): void {
     this.currentSort = { active: sort.active, direction: sort.direction };
+  }
+
+  exportCsv(): void {
+    this.exportService.downloadFrequencyCsv(
+      this.labels(),
+      this.values(),
+      this.title() || 'frecuencias',
+    );
   }
 }
 

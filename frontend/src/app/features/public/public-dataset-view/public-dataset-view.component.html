@@ -20,6 +20,9 @@
       </div>
       <div class="header-info">
         <h1>{{ datasetInfo()?.nombre }}</h1>
+        @if (datasetInfo()?.descripcion) {
+          <p class="dataset-description">{{ datasetInfo()?.descripcion }}</p>
+        }
         <div class="header-stats">
           <span class="stat">
             <mat-icon>grid_on</mat-icon>

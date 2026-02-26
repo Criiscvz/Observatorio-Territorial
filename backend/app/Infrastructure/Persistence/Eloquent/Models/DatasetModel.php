@@ -25,6 +25,7 @@ class DatasetModel extends Model
         'nombre_archivo',
         'descripcion',
         'enlace_fuente',
+        'opciones',
         'estado',
         'total_registros',
         'fecha_carga',
@@ -33,6 +34,7 @@ class DatasetModel extends Model
     protected $casts = [
         'fecha_carga' => 'datetime',
         'total_registros' => 'integer',
+        'opciones' => 'array',
     ];
 
     public function departamento(): BelongsTo

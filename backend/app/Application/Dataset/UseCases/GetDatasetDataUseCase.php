@@ -45,6 +45,7 @@ class GetDatasetDataUseCase
             'dataset' => [
                 'id' => $dataset->id,
                 'nombre' => $dataset->nombre,
+                'descripcion' => $dataset->descripcion,
                 'total_registros' => $dataset->totalRegistros,
                 'departamento_id' => $dataset->departamentoId,
             ],

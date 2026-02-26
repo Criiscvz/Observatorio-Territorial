@@ -16,6 +16,9 @@
         </a>
         <div>
           <h1 class="dataset-title">{{ datasetInfo()?.nombre }}</h1>
+          @if (datasetInfo()?.descripcion) {
+            <p class="dataset-description">{{ datasetInfo()?.descripcion }}</p>
+          }
           <p class="dataset-subtitle">
             {{ datasetInfo()?.total_registros | number }} {{ 'common.units.records' | translate }}
           </p>

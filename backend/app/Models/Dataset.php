@@ -23,6 +23,7 @@ class Dataset extends Model
         'nombre_archivo',
         'descripcion',
         'enlace_fuente',
+        'opciones',
         'estado',
         'total_registros',
         'fecha_carga',
@@ -31,6 +32,7 @@ class Dataset extends Model
     protected $casts = [
         'fecha_carga' => 'datetime',
         'total_registros' => 'integer',
+        'opciones' => 'array',
     ];
 
     /**

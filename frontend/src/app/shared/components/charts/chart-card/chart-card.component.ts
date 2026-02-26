@@ -11,6 +11,7 @@ import { ChartFilter } from '@core/services/interfaces/stats/univariable-request
 import { TranslateModule } from '@ngx-translate/core';
 import { ActiveChart } from '@shared/models';
 import { ChartOptionsService } from '@shared/services/chart-options.service';
+import { ExportService } from '@shared/services/export.service';
 import { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { ChartFiltersComponent } from '../chart-filters/chart-filters.component';
@@ -32,6 +33,22 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
   template: `
     <mat-card class="chart-card">
       <div class="chart-actions">
+        <button
+          mat-icon-button
+          class="export-chart"
+          (click)="exportPng()"
+          [matTooltip]="'charts.export.png' | translate"
+        >
+          <mat-icon>image</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          class="export-chart"
+          (click)="exportCsv()"
+          [matTooltip]="'charts.export.csv' | translate"
+        >
+          <mat-icon>download</mat-icon>
+        </button>
         @if (variables().length > 0) {
           <button
             mat-icon-button
@@ -81,7 +98,12 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
             <mat-spinner diameter="32"></mat-spinner>
           </div>
         } @else if (chart().data) {
-          <div echarts [options]="chartOptions()" class="chart-canvas"></div>
+          <div
+            echarts
+            [options]="chartOptions()"
+            (chartInit)="onChartInit($event)"
+            class="chart-canvas"
+          ></div>
         } @else {
           <div class="chart-error">
             <mat-icon>error_outline</mat-icon>
@@ -113,6 +135,15 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
       }
 
       .save-chart mat-icon {
+        color: var(--primary-600);
+      }
+
+      .export-chart mat-icon {
+        color: var(--text-tertiary);
+        font-size: 20px;
+      }
+
+      .export-chart:hover mat-icon {
         color: var(--primary-600);
       }
 
@@ -201,6 +232,7 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
 })
 export class ChartCardComponent {
   private chartOptionsService = inject(ChartOptionsService);
+  private exportService = inject(ExportService);
 
   chart = input.required<ActiveChart>();
   showSave = input<boolean>(false);
@@ -211,6 +243,33 @@ export class ChartCardComponent {
   filtersChange = output<{ chartId: string; filters: ChartFilter[] }>();
 
   showFilters = signal(false);
+  private echartsInstance: any = null;
+
+  onChartInit(instance: any): void {
+    this.echartsInstance = instance;
+  }
+
+  exportPng(): void {
+    if (!this.echartsInstance) return;
+    const dataUrl = this.echartsInstance.getDataURL({
+      type: 'png',
+      pixelRatio: 2,
+      backgroundColor: '#fff',
+    });
+    const name = this.chart().title || 'grafico';
+    this.exportService.downloadChartPng(dataUrl, name);
+  }
+
+  exportCsv(): void {
+    const data = this.chart().data;
+    if (!data) return;
+    const name = this.chart().title || 'datos';
+
+    if ('labels' in data && 'values' in data) {
+      const chartData = data as ChartData;
+      this.exportService.downloadFrequencyCsv(chartData.labels || [], chartData.values || [], name);
+    }
+  }
 
   hasLocalFilters(): boolean {
     return (this.chart().filters?.length ?? 0) > 0;

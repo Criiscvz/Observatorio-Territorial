@@ -7,8 +7,14 @@
   } @else if (variable()) {
     <!-- Breadcrumb -->
     <nav class="breadcrumb">
-      <a [routerLink]="backRoute()">
-        <mat-icon>arrow_back</mat-icon>
+      @if (departamentoRoute() && departamentoName()) {
+        <a [routerLink]="departamentoRoute()">
+          <mat-icon>home</mat-icon>
+          {{ departamentoName() }}
+        </a>
+        <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+      }
+      <a [routerLink]="backRoute()" class="breadcrumb-link">
         {{ datasetName() }}
       </a>
       <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
