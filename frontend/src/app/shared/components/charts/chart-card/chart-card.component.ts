@@ -265,9 +265,13 @@ export class ChartCardComponent {
     if (!data) return;
     const name = this.chart().title || 'datos';
 
-    if ('labels' in data && 'values' in data) {
+    if ('data' in data && data.data && 'labels' in data.data && 'values' in data.data) {
       const chartData = data as ChartData;
-      this.exportService.downloadFrequencyCsv(chartData.labels || [], chartData.values || [], name);
+      this.exportService.downloadFrequencyCsv(
+        chartData.data.labels || [],
+        chartData.data.values || [],
+        name,
+      );
     }
   }
 

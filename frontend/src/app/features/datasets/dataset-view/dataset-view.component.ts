@@ -346,28 +346,32 @@ export class DatasetViewComponent implements OnInit {
   // =========== BULK VARIABLE OPERATIONS ===========
 
   onBulkAction(action: BulkAction): void {
-    const data: Record<string, any> = {};
+    const data: Partial<VariableMetadato> = {};
     if (action.action === 'visibility') {
-      data['es_visible'] = action.value;
+      data.es_visible = action.value as boolean;
     } else if (action.action === 'type') {
-      data['tipo_dato'] = action.value;
+      data.tipo_dato = action.value as VariableMetadato['tipo_dato'];
     }
 
     this.dashboardService.bulkUpdateVariables(action.variableIds, data).subscribe({
       next: (result) => {
         // Update local variables state
-        this.variables.update((vars) =>
-          vars.map((v) => {
-            if (action.variableIds.includes(v.id)) {
-              return {
-                ...v,
-                ...(action.action === 'visibility' ? { es_visible: action.value as boolean } : {}),
-                ...(action.action === 'type' ? { tipo_dato: action.value as string } : {}),
-              };
+        this.variables.update((vars) => {
+          const nextTipo =
+            action.action === 'type' ? (action.value as VariableMetadato['tipo_dato']) : null;
+
+          return vars.map((v): VariableMetadato => {
+            if (!action.variableIds.includes(v.id)) {
+              return v;
             }
-            return v;
-          }),
-        );
+
+            if (action.action === 'visibility') {
+              return { ...v, es_visible: action.value as boolean };
+            }
+
+            return { ...v, tipo_dato: nextTipo ?? v.tipo_dato };
+          });
+        });
         this.snackBar.open(
           `${result.updated} ${this.translate.instant('variableList.bulk.updated')}`,
           this.translate.instant('common.buttons.close'),
