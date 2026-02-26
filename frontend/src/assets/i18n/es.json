@@ -951,5 +951,48 @@
     "add": "Agregar filtro",
     "clear": "Limpiar todo",
     "apply": "Aplicar filtros"
+  },
+  "variableList": {
+    "search": "Buscar variable",
+    "searchPlaceholder": "Nombre de variable...",
+    "of": "de",
+    "variables": "variables",
+    "options": "opciones",
+    "noResults": "No se encontraron variables con ese filtro."
+  },
+  "variableAnalysis": {
+    "loading": "Cargando análisis...",
+    "records": "registros",
+    "uniqueValues": "valores únicos",
+    "filterByValue": "Filtrar por valor",
+    "allValues": "Todos",
+    "crossWith": "Cruzar con",
+    "selectVariable": "Seleccionar variable",
+    "predefinedCharts": "Gráficos predeterminados",
+    "frequencyTable": "Tabla de frecuencias",
+    "statistics": "Estadísticas",
+    "stats": {
+      "count": "Conteo",
+      "mean": "Media",
+      "median": "Mediana",
+      "min": "Mínimo",
+      "max": "Máximo",
+      "sum": "Suma"
+    },
+    "addChart": "Agregar gráfico",
+    "selectChartType": "Seleccionar tipo de gráfico",
+    "crossAnalysis": "Análisis cruzado",
+    "chartSaved": "Gráfico guardado como predeterminado",
+    "notFound": {
+      "title": "Variable no encontrada",
+      "message": "La variable solicitada no existe o no pertenece a este dataset."
+    }
+  },
+  "frequencyTable": {
+    "title": "Tabla de frecuencias",
+    "value": "Valor",
+    "total": "Total",
+    "frequency": "Frecuencia",
+    "percentage": "Porcentaje"
   }
 }

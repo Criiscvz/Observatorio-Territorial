@@ -144,6 +144,10 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
         height: 280px;
       }
 
+      .chart-canvas.compact {
+        height: 200px;
+      }
+
       .chart-description {
         font-size: 0.8125rem;
         color: var(--text-secondary);
@@ -178,6 +182,11 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
         font-style: italic;
       }
 
+      :host-context(.compact) .chart-loading,
+      :host-context(.compact) .chart-error {
+        height: 200px;
+      }
+
       .chart-loading,
       .chart-error {
         height: 280px;
@@ -196,6 +205,7 @@ export class ChartCardComponent {
   chart = input.required<ActiveChart>();
   showSave = input<boolean>(false);
   variables = input<VariableMetadato[]>([]);
+  compact = input<boolean>(false);
   remove = output<string>();
   save = output<ActiveChart>();
   filtersChange = output<{ chartId: string; filters: ChartFilter[] }>();

@@ -7,7 +7,6 @@ import {
   OnInit,
   PLATFORM_ID,
   signal,
-  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,22 +17,15 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { ChartData, DatasetFuente, GraficoPredeterminado, VariableMetadato } from '@core/models';
+import { DatasetFuente, VariableMetadato } from '@core/models';
 import { CategoriaService } from '@core/services/categoria.service';
 import { DashboardService } from '@core/services/dashboard.service';
-import { BivariableResponse } from '@core/services/interfaces';
-import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
-import {
-  ChartFiltersComponent,
-  ChartsGridComponent,
-  ChartTypeSelectorComponent,
-  DataTableComponent,
-  VariableSelectorComponent,
-} from '@shared/components/charts';
-import { ActiveChart, CHART_TYPES, ChartType, ColumnWithUniqueId } from '@shared/models';
+import { DataTableComponent } from '@shared/components/charts';
+import { VariableListComponent } from '@shared/components/variable-list/variable-list.component';
+import { ColumnWithUniqueId } from '@shared/models';
 
 @Component({
   selector: 'app-public-dataset-view',
@@ -49,25 +41,19 @@ import { ActiveChart, CHART_TYPES, ChartType, ColumnWithUniqueId } from '@shared
     MatDividerModule,
     MatTooltipModule,
     TranslateModule,
-    ChartTypeSelectorComponent,
-    VariableSelectorComponent,
-    ChartFiltersComponent,
-    ChartsGridComponent,
     DataTableComponent,
+    VariableListComponent,
   ],
   templateUrl: './public-dataset-view.component.html',
   styleUrl: './public-dataset-view.component.scss',
 })
 export class PublicDatasetViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private dashboardService = inject(DashboardService);
   private categoriaService = inject(CategoriaService);
   private platformId = inject(PLATFORM_ID);
   private destroyRef = inject(DestroyRef);
-
-  variableSelector = viewChild<VariableSelectorComponent>('variableSelector');
-
-  readonly chartTypes = CHART_TYPES;
 
   loading = signal(true);
   datasetId = signal('');
@@ -77,17 +63,8 @@ export class PublicDatasetViewComponent implements OnInit {
   tableData = signal<{ id: number; data: Record<string, any> }[]>([]);
   pagination = signal({ current_page: 1, last_page: 1, per_page: 50, total: 0 });
 
-  selectedChartType = signal<ChartType | null>(null);
-  activeCharts = signal<ActiveChart[]>([]);
-  addingChart = signal(false);
-
-  // Filters
-  activeFilters = signal<ChartFilter[]>([]);
-
-  // Predefined charts & sources
-  predefinedCharts = signal<GraficoPredeterminado[]>([]);
+  // Sources
   fuentes = signal<DatasetFuente[]>([]);
-  showPercentages = signal(false);
 
   // Columns with unique IDs for mat-table
   visibleColumns = computed<ColumnWithUniqueId[]>(() => {
@@ -107,8 +84,6 @@ export class PublicDatasetViewComponent implements OnInit {
         const id = params['id'];
         if (id && id !== this.datasetId()) {
           this.datasetId.set(id);
-          this.activeCharts.set([]);
-          this.predefinedCharts.set([]);
           this.fuentes.set([]);
           this.loadData();
         }
@@ -130,19 +105,9 @@ export class PublicDatasetViewComponent implements OnInit {
           this.departamentoId.set(res.dataset.departamento_id);
         }
         this.loading.set(false);
-
-        // Load predefined charts & sources
-        this.loadPredefinedCharts();
         this.loadFuentes();
       },
       error: () => this.loading.set(false),
-    });
-  }
-
-  private loadPredefinedCharts(): void {
-    this.categoriaService.getGraficosPredeterminados(this.datasetId()).subscribe({
-      next: (charts) => this.predefinedCharts.set(charts || []),
-      error: () => {},
     });
   }
 
@@ -153,217 +118,12 @@ export class PublicDatasetViewComponent implements OnInit {
     });
   }
 
-  onFiltersChange(filters: ChartFilter[]): void {
-    this.activeFilters.set(filters);
-    // Reload all existing charts with new filters
-    this.reloadActiveCharts();
-  }
-
-  private reloadActiveCharts(): void {
-    const charts = this.activeCharts();
-    charts.forEach((chart) => {
-      if (chart.data) {
-        this.activeCharts.update((all) =>
-          all.map((c) => (c.id === chart.id ? { ...c, loading: true } : c)),
-        );
-        if (chart.chartType.bivariable && chart.variableY) {
-          this.loadBivariableData(chart);
-        } else {
-          this.loadUnivariableData(chart);
-        }
-      }
-    });
-  }
-
-  togglePercentages(): void {
-    this.showPercentages.update((v) => !v);
-  }
-
   onPageChange(event: PageEvent): void {
     this.loadData(event.pageIndex + 1);
   }
 
-  addChart(event: { variableX: VariableMetadato; variableY?: VariableMetadato }): void {
-    const type = this.selectedChartType();
-    if (!type) return;
-
-    const chartId = `chart-${Date.now()}`;
-    const title = event.variableY
-      ? `${event.variableX.nombre_original} vs ${event.variableY.nombre_original}`
-      : event.variableX.nombre_original;
-
-    const newChart: ActiveChart = {
-      id: chartId,
-      title,
-      chartType: type,
-      variableX: event.variableX,
-      variableY: event.variableY,
-      data: null,
-      loading: true,
-    };
-
-    this.activeCharts.update((charts) => [...charts, newChart]);
-    this.addingChart.set(true);
-
-    if (type.bivariable && event.variableY) {
-      this.loadBivariableData(newChart);
-    } else {
-      this.loadUnivariableData(newChart);
-    }
-  }
-
-  private loadUnivariableData(chart: ActiveChart): void {
-    this.dashboardService
-      .getPublicUnivariableStats({
-        dataset_id: this.datasetId(),
-        variable_id: chart.variableX.id,
-        chart_type: chart.chartType.id,
-        filters: this.getCombinedFilters(chart),
-      })
-      .subscribe({
-        next: (res) => {
-          const chartData: ChartData = {
-            variable: res.nombre_variable,
-            tipo:
-              chart.variableX.tipo_dato === 'NUMERICO'
-                ? 'numeric'
-                : chart.variableX.tipo_dato === 'FECHA'
-                  ? 'date'
-                  : 'categorical',
-            chart_type: res.chart_type as any,
-            data: { labels: res.data?.labels || [], values: res.data?.values || [] },
-            stats: res.stats,
-          };
-          this.updateChartData(chart.id, chartData);
-        },
-        error: () => this.updateChartData(chart.id, null),
-      });
-  }
-
-  private loadBivariableData(chart: ActiveChart): void {
-    if (!chart.variableY) return;
-
-    this.dashboardService
-      .getPublicBivariableStats({
-        dataset_id: this.datasetId(),
-        variable_x_id: chart.variableX.id,
-        variable_y_id: chart.variableY.id,
-        chart_type: chart.chartType.id,
-        filters: this.getCombinedFilters(chart),
-      })
-      .subscribe({
-        next: (res) => this.updateChartData(chart.id, res),
-        error: () => this.updateChartData(chart.id, null),
-      });
-  }
-
-  private updateChartData(chartId: string, data: ChartData | BivariableResponse | null): void {
-    this.activeCharts.update((charts) =>
-      charts.map((c) => (c.id === chartId ? { ...c, data, loading: false } : c)),
-    );
-    this.addingChart.set(false);
-  }
-
-  removeChart(chartId: string): void {
-    this.activeCharts.update((charts) => charts.filter((c) => c.id !== chartId));
-  }
-
-  onChartFiltersChange(event: { chartId: string; filters: ChartFilter[] }): void {
-    this.activeCharts.update((charts) =>
-      charts.map((c) =>
-        c.id === event.chartId ? { ...c, filters: event.filters, loading: true } : c,
-      ),
-    );
-    const chart = this.activeCharts().find((c) => c.id === event.chartId);
-    if (chart) {
-      if (chart.chartType.bivariable && chart.variableY) {
-        this.loadBivariableData(chart);
-      } else {
-        this.loadUnivariableData(chart);
-      }
-    }
-  }
-
-  private getCombinedFilters(chart: ActiveChart): ChartFilter[] | undefined {
-    const global = this.activeFilters();
-    const local = chart.filters || [];
-    const combined = [...global, ...local];
-    return combined.length > 0 ? combined : undefined;
-  }
-
-  clearAllCharts(): void {
-    this.activeCharts.set([]);
-  }
-
-  addAllUnivariate(): void {
-    const vars = this.analysableVariables();
-    this.addingChart.set(true);
-
-    vars.forEach((variable, i) => {
-      setTimeout(() => {
-        const type = this.getDefaultChartType(variable.tipo_dato);
-        if (!type) return;
-
-        const chart: ActiveChart = {
-          id: `chart-auto-${Date.now()}-${i}`,
-          title: variable.nombre_original,
-          chartType: type,
-          variableX: variable,
-          data: null,
-          loading: true,
-        };
-
-        this.activeCharts.update((charts) => [...charts, chart]);
-        this.loadUnivariableData(chart);
-      }, i * 100);
-    });
-  }
-
-  private getDefaultChartType(tipo: string): ChartType | undefined {
-    switch (tipo) {
-      case 'CATEGORICO':
-        return this.chartTypes.find((t) => t.id === 'bar');
-      case 'NUMERICO':
-        return this.chartTypes.find((t) => t.id === 'histogram');
-      case 'FECHA':
-        return this.chartTypes.find((t) => t.id === 'line');
-      case 'TEXTO':
-        return this.chartTypes.find((t) => t.id === 'wordcloud');
-      default:
-        return undefined;
-    }
-  }
-
-  loadPredefinedChart(pre: GraficoPredeterminado): void {
-    const varX = this.variables().find((v) => v.id === pre.variable_x_id);
-    if (!varX) return;
-
-    const chartType = this.chartTypes.find((t) => t.id === pre.tipo_grafico);
-    if (!chartType) return;
-
-    const varY = pre.variable_y_id
-      ? this.variables().find((v) => v.id === pre.variable_y_id)
-      : undefined;
-
-    const chart: ActiveChart = {
-      id: `pre-${pre.id}`,
-      title: pre.titulo,
-      description: pre.descripcion,
-      analisis: pre.analisis,
-      chartType,
-      variableX: varX,
-      variableY: varY,
-      data: null,
-      loading: true,
-    };
-
-    this.activeCharts.update((charts) => [...charts, chart]);
-    this.addingChart.set(true);
-
-    if (chartType.bivariable && varY) {
-      this.loadBivariableData(chart);
-    } else {
-      this.loadUnivariableData(chart);
-    }
+  /** Navigate to variable analysis page */
+  onVariableSelected(variable: VariableMetadato): void {
+    this.router.navigate(['/publico/datasets', this.datasetId(), 'variable', variable.id]);
   }
 }

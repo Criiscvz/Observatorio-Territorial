@@ -34,6 +34,14 @@ export const PUBLIC_ROUTES: Routes = [
     title: 'Visualización de Dataset - Observatorio ULEAM',
   },
   {
+    path: 'datasets/:id/variable/:variableId',
+    loadComponent: () =>
+      import('../features/public/public-variable-analysis/public-variable-analysis.component').then(
+        (m) => m.PublicVariableAnalysisComponent,
+      ),
+    title: 'Análisis de Variable - Observatorio ULEAM',
+  },
+  {
     path: 'barometro/:codigo',
     loadComponent: () =>
       import('../features/public/barometer-view/barometer-view.component').then(

@@ -951,5 +951,48 @@
     "add": "Add filter",
     "clear": "Clear all",
     "apply": "Apply filters"
+  },
+  "variableList": {
+    "search": "Search variable",
+    "searchPlaceholder": "Variable name...",
+    "of": "of",
+    "variables": "variables",
+    "options": "options",
+    "noResults": "No variables found matching that filter."
+  },
+  "variableAnalysis": {
+    "loading": "Loading analysis...",
+    "records": "records",
+    "uniqueValues": "unique values",
+    "filterByValue": "Filter by value",
+    "allValues": "All",
+    "crossWith": "Cross with",
+    "selectVariable": "Select variable",
+    "predefinedCharts": "Predefined charts",
+    "frequencyTable": "Frequency table",
+    "statistics": "Statistics",
+    "stats": {
+      "count": "Count",
+      "mean": "Mean",
+      "median": "Median",
+      "min": "Min",
+      "max": "Max",
+      "sum": "Sum"
+    },
+    "addChart": "Add chart",
+    "selectChartType": "Select chart type",
+    "crossAnalysis": "Cross analysis",
+    "chartSaved": "Chart saved as predefined",
+    "notFound": {
+      "title": "Variable not found",
+      "message": "The requested variable does not exist or does not belong to this dataset."
+    }
+  },
+  "frequencyTable": {
+    "title": "Frequency table",
+    "value": "Value",
+    "total": "Total",
+    "frequency": "Frequency",
+    "percentage": "Percentage"
   }
 }

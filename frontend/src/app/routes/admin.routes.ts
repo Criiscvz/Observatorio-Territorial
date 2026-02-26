@@ -69,6 +69,14 @@ export const ADMIN_ROUTES: Routes = [
       ),
     title: 'Visualización de Dataset - Observatorio',
   },
+  {
+    path: 'datasets/:id/variable/:variableId',
+    loadComponent: () =>
+      import('../features/datasets/admin-variable-analysis/admin-variable-analysis.component').then(
+        (m) => m.AdminVariableAnalysisComponent,
+      ),
+    title: 'Análisis de Variable - Observatorio',
+  },
 
   // Usuarios (solo admin)
   {
