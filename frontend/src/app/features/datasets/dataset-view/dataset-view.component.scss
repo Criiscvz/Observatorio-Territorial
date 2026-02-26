@@ -130,6 +130,50 @@
   margin: 0.25rem 0 0.25rem;
   line-height: 1.5;
   max-width: 600px;
+
+  &.placeholder {
+    font-style: italic;
+    opacity: 0.6;
+  }
+}
+
+.description-display {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+
+  .edit-description-btn {
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  &:hover .edit-description-btn {
+    opacity: 0.7;
+  }
+}
+
+.description-edit {
+  margin: 0.25rem 0;
+
+  .description-field {
+    width: 100%;
+    max-width: 600px;
+  }
+}
+
+.description-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: -0.5rem;
 }
 
 /* Chip de estado */

@@ -67,6 +67,16 @@ export class DashboardService {
     return this.api.put<VariableMetadato>(`/variables/${variableId}`, data);
   }
 
+  bulkUpdateVariables(
+    variableIds: string[],
+    data: { es_visible?: boolean; tipo_dato?: string },
+  ): Observable<{ updated: number; errors: number; variables: any[] }> {
+    return this.api.post<{ updated: number; errors: number; variables: any[] }>(
+      '/variables/bulk-update',
+      { variable_ids: variableIds, ...data },
+    );
+  }
+
   // =========== MÉTODOS PÚBLICOS (sin auth) ===========
 
   getPublicDatasetData(

@@ -34,7 +34,7 @@ import { CategoriaService } from '@core/services/categoria.service';
 import { DashboardService } from '@core/services/dashboard.service';
 import { DatasetService } from '@core/services/dataset.service';
 import { StopwordsManagerComponent } from '@shared/components/stopwords-manager/stopwords-manager.component';
-import { VariableListComponent } from '@shared/components/variable-list/variable-list.component';
+import { BulkAction, VariableListComponent } from '@shared/components/variable-list/variable-list.component';
 import { ColumnWithUniqueId } from '@shared/models';
 
 @Component({
@@ -90,6 +90,11 @@ export class DatasetViewComponent implements OnInit {
   variables = signal<VariableMetadato[]>([]);
   tableData = signal<{ id: number; data: Record<string, any> }[]>([]);
   pagination = signal({ current_page: 1, last_page: 1, per_page: 50, total: 0 });
+
+  // Inline editing
+  editingDescription = signal(false);
+  editDescriptionValue = signal('');
+  savingDescription = signal(false);
 
   // Scroll horizontal de la tabla
   tableScrollContainer = viewChild<ElementRef<HTMLDivElement>>('tableScrollContainer');
@@ -336,6 +341,87 @@ export class DatasetViewComponent implements OnInit {
             duration: 2000,
           }),
       });
+  }
+
+  // =========== BULK VARIABLE OPERATIONS ===========
+
+  onBulkAction(action: BulkAction): void {
+    const data: Record<string, any> = {};
+    if (action.action === 'visibility') {
+      data['es_visible'] = action.value;
+    } else if (action.action === 'type') {
+      data['tipo_dato'] = action.value;
+    }
+
+    this.dashboardService.bulkUpdateVariables(action.variableIds, data).subscribe({
+      next: (result) => {
+        // Update local variables state
+        this.variables.update((vars) =>
+          vars.map((v) => {
+            if (action.variableIds.includes(v.id)) {
+              return {
+                ...v,
+                ...(action.action === 'visibility' ? { es_visible: action.value as boolean } : {}),
+                ...(action.action === 'type' ? { tipo_dato: action.value as string } : {}),
+              };
+            }
+            return v;
+          }),
+        );
+        this.snackBar.open(
+          `${result.updated} ${this.translate.instant('variableList.bulk.updated')}`,
+          this.translate.instant('common.buttons.close'),
+          { duration: 3000 },
+        );
+      },
+      error: () => {
+        this.snackBar.open(
+          this.translate.instant('common.messages.error'),
+          this.translate.instant('common.buttons.close'),
+          { duration: 3000 },
+        );
+      },
+    });
+  }
+
+  // =========== DESCRIPTION EDITING ===========
+
+  startEditDescription(): void {
+    this.editDescriptionValue.set(this.datasetInfo()?.descripcion || '');
+    this.editingDescription.set(true);
+  }
+
+  cancelEditDescription(): void {
+    this.editingDescription.set(false);
+  }
+
+  saveDescription(): void {
+    this.savingDescription.set(true);
+    this.datasetService.update(this.datasetId(), {
+      descripcion: this.editDescriptionValue(),
+    }).subscribe({
+      next: () => {
+        const current = this.datasetInfo();
+        if (current) {
+          this.datasetInfo.set({ ...current, descripcion: this.editDescriptionValue() });
+        }
+        this.editingDescription.set(false);
+        this.savingDescription.set(false);
+        this.snackBar.open(
+          this.translate.instant('common.messages.success'),
+          this.translate.instant('common.buttons.close'),
+          { duration: 2000 },
+        );
+      },
+      error: () => {
+        this.savingDescription.set(false);
+        this.snackBar.open(
+          this.translate.instant('common.messages.error'),
+          this.translate.instant('common.buttons.close'),
+          { duration: 3000 },
+        );
+      },
+    });
   }
 
   getTipoClass(tipo: string): string {

@@ -51,4 +51,8 @@ export class DatasetService {
   delete(id: string): Observable<{ message: string }> {
     return this.api.delete<{ message: string }>(`/datasets/${id}`);
   }
+
+  update(id: string, data: { nombre?: string; descripcion?: string; enlace_fuente?: string }): Observable<Dataset> {
+    return this.api.put<Dataset>(`/datasets/${id}`, data);
+  }
 }

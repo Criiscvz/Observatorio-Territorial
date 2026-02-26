@@ -39,8 +39,8 @@
             <span class="stat-value">{{ departamentos().length }}</span>
           </div>
           <div class="stat-trend positive">
-            <mat-icon>trending_up</mat-icon>
-            <span>{{ 'common.labels.public' | translate }}</span>
+            <mat-icon>visibility</mat-icon>
+            <span>{{ departamentosPublicos() }} {{ 'common.labels.public' | translate }}</span>
           </div>
         </div>
 
@@ -54,8 +54,8 @@
             <span class="stat-value">{{ totalDatasets() }}</span>
           </div>
           <div class="stat-trend">
-            <mat-icon>storage</mat-icon>
-            <span>{{ 'common.units.datasets' | translate }}</span>
+            <mat-icon>check_circle</mat-icon>
+            <span>{{ completionRate() }}% {{ 'dashboard.stats.completed' | translate }}</span>
           </div>
         </div>
 
@@ -70,7 +70,7 @@
           </div>
           <div class="stat-trend">
             <mat-icon>data_usage</mat-icon>
-            <span>{{ 'common.labels.total' | translate }}</span>
+            <span>{{ totalVariables() }} {{ 'dashboard.stats.variables' | translate }}</span>
           </div>
         </div>
 
@@ -84,8 +84,100 @@
             <span class="stat-value">{{ departamentosPublicos() }}</span>
           </div>
           <div class="stat-trend">
-            <mat-icon>visibility</mat-icon>
-            <span>{{ 'common.labels.visible' | translate }}</span>
+            @if (departamentos().length > 0) {
+              <span>{{ (departamentosPublicos() * 100 / departamentos().length) | number:'1.0-0' }}% {{ 'common.labels.visible' | translate }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Overview Section -->
+    <section class="data-overview">
+      <div class="overview-grid">
+        <!-- Dataset Distribution Chart -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon teal">
+                <mat-icon>bar_chart</mat-icon>
+              </div>
+              <div>
+                <h3 class="card-title">{{ 'dashboard.distribution.title' | translate }}</h3>
+                <p class="card-subtitle">{{ 'dashboard.distribution.subtitle' | translate }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body chart-body">
+            @if (departamentos().length > 0) {
+              <div echarts [options]="distributionChartOptions()"
+                   class="distribution-chart"></div>
+            } @else {
+              <div class="empty-state mini">
+                <mat-icon>bar_chart</mat-icon>
+                <p>{{ 'dashboard.distribution.empty' | translate }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Data Health / Status Overview -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon orange">
+                <mat-icon>monitor_heart</mat-icon>
+              </div>
+              <div>
+                <h3 class="card-title">{{ 'dashboard.health.title' | translate }}</h3>
+                <p class="card-subtitle">{{ 'dashboard.health.subtitle' | translate }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body health-body">
+            @if (totalDatasets() > 0) {
+              <div class="health-grid">
+                <div class="health-chart-wrapper">
+                  <div echarts [options]="statusChartOptions()"
+                       class="status-chart"></div>
+                  <div class="health-center-label">
+                    <span class="health-percent">{{ completionRate() }}%</span>
+                    <span class="health-text">{{ 'dashboard.health.healthy' | translate }}</span>
+                  </div>
+                </div>
+                <div class="health-details">
+                  <div class="health-row">
+                    <span class="health-dot" style="background: #10b981"></span>
+                    <span class="health-label">{{ 'datasets.status.completed' | translate }}</span>
+                    <span class="health-value">{{ datasetsByStatus()['COMPLETADO'] }}</span>
+                  </div>
+                  <div class="health-row">
+                    <span class="health-dot" style="background: #f59e0b"></span>
+                    <span class="health-label">{{ 'datasets.status.processing' | translate }}</span>
+                    <span class="health-value">{{ datasetsByStatus()['PROCESANDO'] }}</span>
+                  </div>
+                  @if (datasetsByStatus()['ERROR'] > 0) {
+                    <div class="health-row error">
+                      <span class="health-dot" style="background: #ef4444"></span>
+                      <span class="health-label">{{ 'datasets.status.error' | translate }}</span>
+                      <span class="health-value">{{ datasetsByStatus()['ERROR'] }}</span>
+                    </div>
+                  }
+                  @if (datasetsByStatus()['PENDIENTE'] > 0) {
+                    <div class="health-row">
+                      <span class="health-dot" style="background: #94a3b8"></span>
+                      <span class="health-label">{{ 'datasets.status.pending' | translate }}</span>
+                      <span class="health-value">{{ datasetsByStatus()['PENDIENTE'] }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="empty-state mini">
+                <mat-icon>monitor_heart</mat-icon>
+                <p>{{ 'dashboard.health.empty' | translate }}</p>
+              </div>
+            }
           </div>
         </div>
       </div>

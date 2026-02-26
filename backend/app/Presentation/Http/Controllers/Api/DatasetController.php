@@ -8,11 +8,13 @@ use OpenApi\Attributes as OA;
 use App\Application\Dataset\DTOs\ConfirmImportDTO;
 use App\Application\Dataset\DTOs\UploadDatasetDTO;
 use App\Application\Dataset\UseCases\AnalyzeDatasetUseCase;
+use App\Application\Dataset\UseCases\BulkUpdateVariablesUseCase;
 use App\Application\Dataset\UseCases\ConfirmImportUseCase;
 use App\Application\Dataset\UseCases\DeleteDatasetUseCase;
 use App\Application\Dataset\UseCases\GetDatasetDataUseCase;
 use App\Application\Dataset\UseCases\GetDatasetsUseCase;
 use App\Application\Dataset\UseCases\GetDatasetUseCase;
+use App\Application\Dataset\UseCases\UpdateDatasetUseCase;
 use App\Application\Dataset\UseCases\UpdateVariableUseCase;
 use App\Application\Dataset\UseCases\UploadDatasetUseCase;
 use App\Http\Controllers\Controller;
@@ -34,6 +36,8 @@ class DatasetController extends Controller
         private readonly ConfirmImportUseCase $confirmImportUseCase,
         private readonly GetDatasetDataUseCase $getDatasetDataUseCase,
         private readonly UpdateVariableUseCase $updateVariableUseCase,
+        private readonly UpdateDatasetUseCase $updateDatasetUseCase,
+        private readonly BulkUpdateVariablesUseCase $bulkUpdateVariablesUseCase,
         private readonly DeleteDatasetUseCase $deleteDatasetUseCase,
     ) {}
 
@@ -227,7 +231,82 @@ class DatasetController extends Controller
             $request->validated()
         );
 
+        return response()->json($result);
+    }
+
+    #[OA\Put(
+        path: '/datasets/{id}',
+        summary: 'Actualizar dataset',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string', format: 'uuid'))
+        ],
+        requestBody: new OA\RequestBody(
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'nombre', type: 'string'),
+                    new OA\Property(property: 'descripcion', type: 'string'),
+                    new OA\Property(property: 'enlace_fuente', type: 'string')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Dataset actualizado'),
+            new OA\Response(response: 403, description: 'Sin permisos'),
+            new OA\Response(response: 404, description: 'No encontrado')
+        ]
+    )]
+    public function update(Request $request, string $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'nombre' => 'sometimes|string|max:255',
+            'descripcion' => 'nullable|string|max:2000',
+            'enlace_fuente' => 'nullable|string|url|max:500',
+        ]);
+
+        $result = $this->updateDatasetUseCase->execute($id, $request->user()->id, $validated);
+
         return response()->json($result->toArray());
+    }
+
+    #[OA\Post(
+        path: '/variables/bulk-update',
+        summary: 'Actualizar múltiples variables',
+        security: [['sanctum' => []]],
+        tags: ['Datasets'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['variable_ids'],
+                properties: [
+                    new OA\Property(property: 'variable_ids', type: 'array', items: new OA\Items(type: 'string', format: 'uuid')),
+                    new OA\Property(property: 'es_visible', type: 'boolean'),
+                    new OA\Property(property: 'tipo_dato', type: 'string', enum: ['NUMERICO', 'CATEGORICO', 'TEXTO', 'FECHA'])
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Variables actualizadas'),
+            new OA\Response(response: 403, description: 'Sin permisos')
+        ]
+    )]
+    public function bulkUpdateVariables(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'variable_ids' => 'required|array|min:1|max:200',
+            'variable_ids.*' => 'required|string|uuid',
+            'es_visible' => 'sometimes|boolean',
+            'tipo_dato' => 'sometimes|string|in:NUMERICO,CATEGORICO,TEXTO,FECHA',
+        ]);
+
+        $result = $this->bulkUpdateVariablesUseCase->execute(
+            $validated['variable_ids'],
+            $request->user()->id,
+            array_filter($validated, fn($key) => $key !== 'variable_ids', ARRAY_FILTER_USE_KEY),
+        );
+
+        return response()->json($result);
     }
 
     #[OA\Delete(

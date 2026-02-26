@@ -215,7 +215,9 @@
       "totalDepartments": "Observatorios",
       "totalDatasets": "Datasets",
       "totalRecords": "Registros Totales",
-      "publicDepartments": "Observatorios Públicos"
+      "publicDepartments": "Observatorios Públicos",
+      "completed": "completados",
+      "variables": "variables"
     },
     "quickActions": {
       "title": "Acciones Rápidas",
@@ -235,6 +237,17 @@
       "title": "Datasets Recientes",
       "viewAll": "Ver todos",
       "empty": "No hay datasets aún"
+    },
+    "distribution": {
+      "title": "Distribución de Datasets",
+      "subtitle": "Datasets por observatorio",
+      "empty": "Sin datos de distribución"
+    },
+    "health": {
+      "title": "Estado de los Datos",
+      "subtitle": "Resumen de procesamiento",
+      "healthy": "Completado",
+      "empty": "Sin datasets para analizar"
     }
   },
   "datasets": {
@@ -322,6 +335,7 @@
     },
     "view": {
       "title": "Dataset",
+      "addDescription": "Agregar descripción...",
       "tabs": {
         "data": "Datos",
         "variables": "Variables",
@@ -964,7 +978,17 @@
     "of": "de",
     "variables": "variables",
     "options": "opciones",
-    "noResults": "No se encontraron variables con ese filtro."
+    "noResults": "No se encontraron variables con ese filtro.",
+    "selectMultiple": "Seleccionar",
+    "cancelSelection": "Cancelar",
+    "selected": "seleccionadas",
+    "selectAll": "Seleccionar todo",
+    "bulk": {
+      "showAll": "Mostrar",
+      "hideAll": "Ocultar",
+      "changeType": "Cambiar tipo",
+      "updated": "variables actualizadas"
+    }
   },
   "variableAnalysis": {
     "loading": "Cargando análisis...",

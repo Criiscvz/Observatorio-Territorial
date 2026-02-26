@@ -1,14 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { VariableMetadato } from '@core/models';
 import { TranslateModule } from '@ngx-translate/core';
+
+export interface BulkAction {
+  variableIds: string[];
+  action: 'visibility' | 'type';
+  value: boolean | string;
+}
 
 @Component({
   selector: 'app-variable-list',
@@ -16,39 +25,93 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [
     CommonModule,
     FormsModule,
+    MatButtonModule,
     MatCardModule,
+    MatCheckboxModule,
+    MatChipsModule,
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
-    MatChipsModule,
+    MatMenuModule,
     MatTooltipModule,
     TranslateModule,
   ],
   template: `
     <div class="variable-list-container">
-      <!-- Search -->
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-icon matPrefix>search</mat-icon>
-        <mat-label>{{ 'variableList.search' | translate }}</mat-label>
-        <input
-          matInput
-          [ngModel]="searchTerm()"
-          (ngModelChange)="searchTerm.set($event)"
-          [placeholder]="'variableList.searchPlaceholder' | translate"
-        />
-        @if (searchTerm()) {
-          <button matSuffix mat-icon-button (click)="searchTerm.set('')">
-            <mat-icon>close</mat-icon>
+      <!-- Search + Bulk Toggle -->
+      <div class="toolbar-row">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-icon matPrefix>search</mat-icon>
+          <mat-label>{{ 'variableList.search' | translate }}</mat-label>
+          <input
+            matInput
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+            [placeholder]="'variableList.searchPlaceholder' | translate"
+          />
+          @if (searchTerm()) {
+            <button matSuffix mat-icon-button (click)="searchTerm.set('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
+        @if (enableBulkActions()) {
+          <button mat-stroked-button
+            class="select-toggle-btn"
+            (click)="toggleSelectionMode()">
+            <mat-icon>{{ selectionMode() ? 'close' : 'checklist' }}</mat-icon>
+            {{ selectionMode() ? ('variableList.cancelSelection' | translate) : ('variableList.selectMultiple' | translate) }}
           </button>
         }
-      </mat-form-field>
+      </div>
+
+      <!-- Bulk Actions Bar -->
+      @if (selectionMode() && selectedIds().size > 0) {
+        <div class="bulk-actions-bar">
+          <span class="bulk-count">
+            {{ selectedIds().size }} {{ 'variableList.selected' | translate }}
+          </span>
+          <div class="bulk-buttons">
+            <button mat-stroked-button (click)="bulkSetVisibility(true)">
+              <mat-icon>visibility</mat-icon>
+              {{ 'variableList.bulk.showAll' | translate }}
+            </button>
+            <button mat-stroked-button (click)="bulkSetVisibility(false)">
+              <mat-icon>visibility_off</mat-icon>
+              {{ 'variableList.bulk.hideAll' | translate }}
+            </button>
+            <button mat-stroked-button [matMenuTriggerFor]="typeMenu">
+              <mat-icon>category</mat-icon>
+              {{ 'variableList.bulk.changeType' | translate }}
+            </button>
+          </div>
+          <mat-menu #typeMenu="matMenu">
+            @for (type of typeFilters; track type.value) {
+              <button mat-menu-item (click)="bulkSetType(type.value)">
+                <mat-icon>{{ type.icon }}</mat-icon>
+                <span>{{ type.label }}</span>
+              </button>
+            }
+          </mat-menu>
+        </div>
+      }
 
       <!-- Stats bar -->
       <div class="stats-bar">
-        <span class="stats-text">
-          {{ filteredVariables().length }} {{ 'variableList.of' | translate }}
-          {{ variables().length }} {{ 'variableList.variables' | translate }}
-        </span>
+        <div class="stats-left">
+          @if (selectionMode()) {
+            <mat-checkbox
+              [checked]="allFilteredSelected()"
+              [indeterminate]="someFilteredSelected() && !allFilteredSelected()"
+              (change)="toggleSelectAll()">
+              {{ 'variableList.selectAll' | translate }}
+            </mat-checkbox>
+          }
+          <span class="stats-text">
+            {{ filteredVariables().length }} {{ 'variableList.of' | translate }}
+            {{ variables().length }} {{ 'variableList.variables' | translate }}
+          </span>
+        </div>
         <div class="type-filters">
           @for (type of typeFilters; track type.value) {
             <button
@@ -70,12 +133,21 @@ import { TranslateModule } from '@ngx-translate/core';
           @for (variable of filteredVariables(); track variable.id) {
             <div
               class="variable-card"
-              (click)="variableSelected.emit(variable)"
-              (keydown.enter)="variableSelected.emit(variable)"
+              [class.selected]="selectionMode() && selectedIds().has(variable.id)"
+              (click)="onCardClick(variable, $event)"
+              (keydown.enter)="onCardClick(variable, $event)"
               tabindex="0"
               role="button"
             >
               <div class="variable-card-header">
+                @if (selectionMode()) {
+                  <mat-checkbox
+                    [checked]="selectedIds().has(variable.id)"
+                    (change)="toggleSelection(variable.id)"
+                    (click)="$event.stopPropagation()"
+                    class="variable-checkbox">
+                  </mat-checkbox>
+                }
                 <div class="variable-icon" [class]="'type-' + variable.tipo_dato.toLowerCase()">
                   <mat-icon>{{ getTypeIcon(variable.tipo_dato) }}</mat-icon>
                 </div>
@@ -85,7 +157,9 @@ import { TranslateModule } from '@ngx-translate/core';
                     {{ getTypeLabel(variable.tipo_dato) }}
                   </span>
                 </div>
-                <mat-icon class="arrow-icon">chevron_right</mat-icon>
+                @if (!selectionMode()) {
+                  <mat-icon class="arrow-icon">chevron_right</mat-icon>
+                }
               </div>
               @if (variable.tipo_dato === 'CATEGORICO' && variable.opciones?.length) {
                 <div class="variable-options">
@@ -120,9 +194,53 @@ import { TranslateModule } from '@ngx-translate/core';
       gap: 1rem;
     }
 
+    .toolbar-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
     .search-field {
       width: 100%;
       max-width: 400px;
+    }
+
+    .select-toggle-btn {
+      margin-top: 0.375rem;
+      white-space: nowrap;
+    }
+
+    .bulk-actions-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--primary-50);
+      border: 1px solid var(--primary-200);
+      border-radius: var(--radius-lg);
+      flex-wrap: wrap;
+    }
+
+    :host-context(.dark) .bulk-actions-bar {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .bulk-count {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--primary-700);
+    }
+
+    :host-context(.dark) .bulk-count {
+      color: var(--primary-400);
+    }
+
+    .bulk-buttons {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .stats-bar {
@@ -130,6 +248,12 @@ import { TranslateModule } from '@ngx-translate/core';
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .stats-left {
+      display: flex;
+      align-items: center;
       gap: 0.75rem;
     }
 
@@ -202,6 +326,19 @@ import { TranslateModule } from '@ngx-translate/core';
       border-color: var(--primary-400);
       box-shadow: 0 4px 12px var(--shadow-color);
       transform: translateY(-1px);
+    }
+
+    .variable-card.selected {
+      border-color: var(--primary-500);
+      background: var(--primary-50);
+    }
+
+    :host-context(.dark) .variable-card.selected {
+      background: rgba(99, 102, 241, 0.08);
+    }
+
+    .variable-checkbox {
+      flex-shrink: 0;
     }
 
     .variable-card:focus-visible {
@@ -378,10 +515,14 @@ import { TranslateModule } from '@ngx-translate/core';
 })
 export class VariableListComponent {
   variables = input.required<VariableMetadato[]>();
+  enableBulkActions = input(false);
   variableSelected = output<VariableMetadato>();
+  bulkActionRequested = output<BulkAction>();
 
   searchTerm = signal('');
   activeTypeFilter = signal<string | null>(null);
+  selectionMode = signal(false);
+  selectedIds = signal<Set<string>>(new Set());
 
   readonly typeFilters = [
     { value: 'CATEGORICO', label: 'Categórico', icon: 'category' },
@@ -409,6 +550,77 @@ export class VariableListComponent {
 
     return vars;
   });
+
+  allFilteredSelected = computed(() => {
+    const filtered = this.filteredVariables();
+    const selected = this.selectedIds();
+    return filtered.length > 0 && filtered.every((v) => selected.has(v.id));
+  });
+
+  someFilteredSelected = computed(() => {
+    const filtered = this.filteredVariables();
+    const selected = this.selectedIds();
+    return filtered.some((v) => selected.has(v.id));
+  });
+
+  toggleSelectionMode(): void {
+    const newMode = !this.selectionMode();
+    this.selectionMode.set(newMode);
+    if (!newMode) {
+      this.selectedIds.set(new Set());
+    }
+  }
+
+  toggleSelection(id: string): void {
+    this.selectedIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  toggleSelectAll(): void {
+    if (this.allFilteredSelected()) {
+      // Deselect all filtered
+      const filteredIds = new Set(this.filteredVariables().map((v) => v.id));
+      this.selectedIds.update((current) => {
+        const next = new Set(current);
+        filteredIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      // Select all filtered
+      this.selectedIds.update((current) => {
+        const next = new Set(current);
+        this.filteredVariables().forEach((v) => next.add(v.id));
+        return next;
+      });
+    }
+  }
+
+  onCardClick(variable: VariableMetadato, event: Event): void {
+    if (this.selectionMode()) {
+      this.toggleSelection(variable.id);
+    } else {
+      this.variableSelected.emit(variable);
+    }
+  }
+
+  bulkSetVisibility(visible: boolean): void {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+    this.bulkActionRequested.emit({ variableIds: ids, action: 'visibility', value: visible });
+  }
+
+  bulkSetType(type: string): void {
+    const ids = Array.from(this.selectedIds());
+    if (ids.length === 0) return;
+    this.bulkActionRequested.emit({ variableIds: ids, action: 'type', value: type });
+  }
 
   toggleTypeFilter(type: string): void {
     this.activeTypeFilter.update((current) => (current === type ? null : type));

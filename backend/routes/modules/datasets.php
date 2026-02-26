@@ -18,6 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Escritura - solo admin
     Route::middleware('role:ADMIN')->group(function () {
         Route::post('/', [DatasetController::class, 'store']);
+        Route::put('/{dataset}', [DatasetController::class, 'update']);
         Route::post('/{dataset}/analyze', [DatasetController::class, 'analyze']);
         Route::post('/{dataset}/import', [DatasetController::class, 'import']);
         Route::delete('/{dataset}', [DatasetController::class, 'destroy']);

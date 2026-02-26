@@ -16,8 +16,42 @@
         </a>
         <div>
           <h1 class="dataset-title">{{ datasetInfo()?.nombre }}</h1>
-          @if (datasetInfo()?.descripcion) {
-            <p class="dataset-description">{{ datasetInfo()?.descripcion }}</p>
+          @if (editingDescription()) {
+            <div class="description-edit">
+              <mat-form-field appearance="outline" class="description-field">
+                <mat-label>{{ 'common.labels.description' | translate }}</mat-label>
+                <textarea matInput
+                  [ngModel]="editDescriptionValue()"
+                  (ngModelChange)="editDescriptionValue.set($event)"
+                  rows="2"
+                  maxlength="2000"
+                ></textarea>
+              </mat-form-field>
+              <div class="description-actions">
+                <button mat-flat-button color="primary"
+                  [disabled]="savingDescription()"
+                  (click)="saveDescription()">
+                  <mat-icon>check</mat-icon>
+                  {{ 'common.buttons.save' | translate }}
+                </button>
+                <button mat-button (click)="cancelEditDescription()">
+                  {{ 'common.buttons.cancel' | translate }}
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="description-display">
+              @if (datasetInfo()?.descripcion) {
+                <p class="dataset-description">{{ datasetInfo()?.descripcion }}</p>
+              } @else {
+                <p class="dataset-description placeholder">{{ 'datasets.view.addDescription' | translate }}</p>
+              }
+              <button mat-icon-button class="edit-description-btn"
+                [matTooltip]="'common.buttons.edit' | translate"
+                (click)="startEditDescription()">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
           }
           <p class="dataset-subtitle">
             {{ datasetInfo()?.total_registros | number }} {{ 'common.units.records' | translate }}
@@ -236,7 +270,9 @@
         <div class="py-4">
           <app-variable-list
             [variables]="analysableVariables()"
+            [enableBulkActions]="true"
             (variableSelected)="onVariableSelected($event)"
+            (bulkActionRequested)="onBulkAction($event)"
           />
         </div>
       </mat-tab>

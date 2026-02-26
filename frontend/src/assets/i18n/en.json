@@ -215,7 +215,9 @@
       "totalDepartments": "Observatories",
       "totalDatasets": "Datasets",
       "totalRecords": "Total Records",
-      "publicDepartments": "Public Observatories"
+      "publicDepartments": "Public Observatories",
+      "completed": "completed",
+      "variables": "variables"
     },
     "quickActions": {
       "title": "Quick Actions",
@@ -235,6 +237,17 @@
       "title": "Recent Datasets",
       "viewAll": "View all",
       "empty": "No datasets yet"
+    },
+    "distribution": {
+      "title": "Dataset Distribution",
+      "subtitle": "Datasets per observatory",
+      "empty": "No distribution data"
+    },
+    "health": {
+      "title": "Data Health",
+      "subtitle": "Processing summary",
+      "healthy": "Completed",
+      "empty": "No datasets to analyze"
     }
   },
   "datasets": {
@@ -322,6 +335,7 @@
     },
     "view": {
       "title": "Dataset",
+      "addDescription": "Add description...",
       "tabs": {
         "data": "Data",
         "variables": "Variables",
@@ -964,7 +978,17 @@
     "of": "of",
     "variables": "variables",
     "options": "options",
-    "noResults": "No variables found matching that filter."
+    "noResults": "No variables found matching that filter.",
+    "selectMultiple": "Select",
+    "cancelSelection": "Cancel",
+    "selected": "selected",
+    "selectAll": "Select all",
+    "bulk": {
+      "showAll": "Show",
+      "hideAll": "Hide",
+      "changeType": "Change type",
+      "updated": "variables updated"
+    }
   },
   "variableAnalysis": {
     "loading": "Loading analysis...",

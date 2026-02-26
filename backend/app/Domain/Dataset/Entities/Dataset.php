@@ -132,6 +132,26 @@ class Dataset
         return $this->estado === self::ESTADO_COMPLETADO;
     }
 
+    public function withUpdatedFields(?string $nombre = null, ?string $descripcion = null, ?string $enlaceFuente = null): self
+    {
+        return new self(
+            id: $this->id,
+            departamentoId: $this->departamentoId,
+            categoriaId: $this->categoriaId,
+            subidoPor: $this->subidoPor,
+            nombre: $nombre ?? $this->nombre,
+            nombreArchivo: $this->nombreArchivo,
+            descripcion: $descripcion !== null ? $descripcion : $this->descripcion,
+            enlaceFuente: $enlaceFuente !== null ? $enlaceFuente : $this->enlaceFuente,
+            estado: $this->estado,
+            totalRegistros: $this->totalRegistros,
+            fechaCarga: $this->fechaCarga,
+            createdAt: $this->createdAt,
+            updatedAt: new \DateTimeImmutable(),
+            variablesMetadatos: $this->variablesMetadatos,
+        );
+    }
+
     public function toArray(): array
     {
         return [
