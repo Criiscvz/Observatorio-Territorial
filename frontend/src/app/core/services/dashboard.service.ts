@@ -117,4 +117,22 @@ export class DashboardService {
   getPublicTextAnalysis(request: TextAnalysisRequest): Observable<TextAnalysisResponse> {
     return this.api.post<TextAnalysisResponse>('/publico/stats/text-analysis', request);
   }
+
+  // =========== CUSTOM STOPWORDS ===========
+
+  getDatasetStopwords(datasetId: string): Observable<{ stopwords: string[]; count: number }> {
+    return this.api.get<{ stopwords: string[]; count: number }>(
+      `/stats/datasets/${datasetId}/stopwords`,
+    );
+  }
+
+  updateDatasetStopwords(
+    datasetId: string,
+    stopwords: string[],
+  ): Observable<{ stopwords: string[]; count: number }> {
+    return this.api.put<{ stopwords: string[]; count: number }>(
+      `/stats/datasets/${datasetId}/stopwords`,
+      { stopwords },
+    );
+  }
 }

@@ -325,7 +325,8 @@
       "tabs": {
         "data": "Datos",
         "variables": "Variables",
-        "analysis": "Análisis"
+        "analysis": "Análisis",
+        "settings": "Configuración"
       },
       "data": {
         "noData": "No hay datos disponibles",
@@ -1005,6 +1006,13 @@
     "uniqueWords": "Palabras únicas",
     "avgLength": "Longitud promedio",
     "phrasesFound": "Frases encontradas"
+  },
+  "stopwords": {
+    "title": "Palabras vacías personalizadas",
+    "description": "Agrega palabras que deben ignorarse en el análisis de texto (nubes de palabras, frases, etc.)",
+    "addPlaceholder": "Escribir palabra...",
+    "add": "Agregar",
+    "empty": "No hay palabras vacías personalizadas"
   },
   "frequencyTable": {
     "title": "Tabla de frecuencias",

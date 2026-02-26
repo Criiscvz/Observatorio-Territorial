@@ -13,4 +13,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/univariable', [DashboardController::class, 'univariable']);
     Route::post('/bivariable', [DashboardController::class, 'bivariable']);
     Route::post('/text-analysis', [DashboardController::class, 'textAnalysis']);
+    Route::get('/datasets/{datasetId}/stopwords', [DashboardController::class, 'getStopwords']);
+    Route::put('/datasets/{datasetId}/stopwords', [DashboardController::class, 'updateStopwords']);
 });

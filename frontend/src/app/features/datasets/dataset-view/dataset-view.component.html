@@ -358,6 +358,17 @@
           }
         </div>
       </mat-tab>
+
+      <!-- Tab: Configuración -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">settings</mat-icon>
+          {{ 'datasets.view.tabs.settings' | translate }}
+        </ng-template>
+        <div class="py-4 settings-content">
+          <app-stopwords-manager [datasetId]="datasetId()" />
+        </div>
+      </mat-tab>
     </mat-tab-group>
   }
 </div>

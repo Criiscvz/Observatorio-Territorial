@@ -325,7 +325,8 @@
       "tabs": {
         "data": "Data",
         "variables": "Variables",
-        "analysis": "Analysis"
+        "analysis": "Analysis",
+        "settings": "Settings"
       },
       "data": {
         "noData": "No data available",
@@ -1005,6 +1006,13 @@
     "uniqueWords": "Unique words",
     "avgLength": "Average length",
     "phrasesFound": "Phrases found"
+  },
+  "stopwords": {
+    "title": "Custom stopwords",
+    "description": "Add words that should be ignored in text analysis (word clouds, phrases, etc.)",
+    "addPlaceholder": "Type a word...",
+    "add": "Add",
+    "empty": "No custom stopwords"
   },
   "frequencyTable": {
     "title": "Frequency table",

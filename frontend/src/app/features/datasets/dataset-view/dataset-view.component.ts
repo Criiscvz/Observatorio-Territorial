@@ -33,6 +33,7 @@ import { DatasetFuente, VariableMetadato } from '@core/models';
 import { CategoriaService } from '@core/services/categoria.service';
 import { DashboardService } from '@core/services/dashboard.service';
 import { DatasetService } from '@core/services/dataset.service';
+import { StopwordsManagerComponent } from '@shared/components/stopwords-manager/stopwords-manager.component';
 import { VariableListComponent } from '@shared/components/variable-list/variable-list.component';
 import { ColumnWithUniqueId } from '@shared/models';
 
@@ -60,6 +61,7 @@ import { ColumnWithUniqueId } from '@shared/models';
     MatDividerModule,
     TranslateModule,
     VariableListComponent,
+    StopwordsManagerComponent,
   ],
   templateUrl: './dataset-view.component.html',
   styleUrl: './dataset-view.component.scss',
