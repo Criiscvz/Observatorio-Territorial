@@ -34,7 +34,10 @@ import { CategoriaService } from '@core/services/categoria.service';
 import { DashboardService } from '@core/services/dashboard.service';
 import { DatasetService } from '@core/services/dataset.service';
 import { StopwordsManagerComponent } from '@shared/components/stopwords-manager/stopwords-manager.component';
-import { BulkAction, VariableListComponent } from '@shared/components/variable-list/variable-list.component';
+import {
+  BulkAction,
+  VariableListComponent,
+} from '@shared/components/variable-list/variable-list.component';
 import { ColumnWithUniqueId } from '@shared/models';
 
 @Component({
@@ -401,31 +404,33 @@ export class DatasetViewComponent implements OnInit {
 
   saveDescription(): void {
     this.savingDescription.set(true);
-    this.datasetService.update(this.datasetId(), {
-      descripcion: this.editDescriptionValue(),
-    }).subscribe({
-      next: () => {
-        const current = this.datasetInfo();
-        if (current) {
-          this.datasetInfo.set({ ...current, descripcion: this.editDescriptionValue() });
-        }
-        this.editingDescription.set(false);
-        this.savingDescription.set(false);
-        this.snackBar.open(
-          this.translate.instant('common.messages.success'),
-          this.translate.instant('common.buttons.close'),
-          { duration: 2000 },
-        );
-      },
-      error: () => {
-        this.savingDescription.set(false);
-        this.snackBar.open(
-          this.translate.instant('common.messages.error'),
-          this.translate.instant('common.buttons.close'),
-          { duration: 3000 },
-        );
-      },
-    });
+    this.datasetService
+      .update(this.datasetId(), {
+        descripcion: this.editDescriptionValue(),
+      })
+      .subscribe({
+        next: () => {
+          const current = this.datasetInfo();
+          if (current) {
+            this.datasetInfo.set({ ...current, descripcion: this.editDescriptionValue() });
+          }
+          this.editingDescription.set(false);
+          this.savingDescription.set(false);
+          this.snackBar.open(
+            this.translate.instant('common.messages.success'),
+            this.translate.instant('common.buttons.close'),
+            { duration: 2000 },
+          );
+        },
+        error: () => {
+          this.savingDescription.set(false);
+          this.snackBar.open(
+            this.translate.instant('common.messages.error'),
+            this.translate.instant('common.buttons.close'),
+            { duration: 3000 },
+          );
+        },
+      });
   }
 
   getTipoClass(tipo: string): string {
