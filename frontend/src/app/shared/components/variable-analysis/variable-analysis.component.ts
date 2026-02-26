@@ -33,6 +33,7 @@ import { BivariableResponse } from '@core/services/interfaces';
 import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { ChartCardComponent } from '@shared/components/charts';
 import { FrequencyTableComponent } from '@shared/components/frequency-table/frequency-table.component';
+import { TextInsightsPanelComponent } from '@shared/components/text-insights-panel/text-insights-panel.component';
 import {
   ActiveChart,
   CHART_TYPES,
@@ -64,6 +65,7 @@ import {
     TranslateModule,
     ChartCardComponent,
     FrequencyTableComponent,
+    TextInsightsPanelComponent,
   ],
   templateUrl: './variable-analysis.component.html',
   styleUrl: './variable-analysis.component.scss',
@@ -137,6 +139,9 @@ export class VariableAnalysisComponent implements OnInit {
     if (!v) return [];
     return getUnivariableChartTypes(v.tipo_dato);
   });
+
+  // Whether this is a TEXT variable (shows NLP insights panel)
+  isTextVariable = computed(() => this.variable()?.tipo_dato === 'TEXTO');
 
   // Other variables for cross-analysis
   crossableVariables = computed(() => {

@@ -988,6 +988,19 @@
       "message": "La variable solicitada no existe o no pertenece a este dataset."
     }
   },
+  "textInsights": {
+    "analyzing": "Analizando texto...",
+    "sentiment": "Análisis de sentimiento",
+    "topPhrases": "Frases más frecuentes",
+    "words": "palabras",
+    "topKeywords": "Palabras clave principales",
+    "textStats": "Estadísticas de texto",
+    "noPhrases": "No se encontraron frases frecuentes",
+    "totalTexts": "Textos analizados",
+    "uniqueWords": "Palabras únicas",
+    "avgLength": "Longitud promedio",
+    "phrasesFound": "Frases encontradas"
+  },
   "frequencyTable": {
     "title": "Tabla de frecuencias",
     "value": "Valor",

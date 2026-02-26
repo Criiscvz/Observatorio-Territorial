@@ -6,6 +6,8 @@ import {
   BivariableRequest,
   BivariableResponse,
   DatasetDataResponse,
+  TextAnalysisRequest,
+  TextAnalysisResponse,
   UnivariableRequest,
   UnivariableResponse,
 } from './interfaces';
@@ -104,5 +106,15 @@ export class DashboardService {
         },
       })),
     );
+  }
+
+  // =========== TEXT ANALYSIS (NLP) ===========
+
+  getTextAnalysis(request: TextAnalysisRequest): Observable<TextAnalysisResponse> {
+    return this.api.post<TextAnalysisResponse>('/stats/text-analysis', request);
+  }
+
+  getPublicTextAnalysis(request: TextAnalysisRequest): Observable<TextAnalysisResponse> {
+    return this.api.post<TextAnalysisResponse>('/publico/stats/text-analysis', request);
   }
 }

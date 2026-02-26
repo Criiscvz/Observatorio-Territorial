@@ -196,6 +196,16 @@
             </div>
           </div>
         }
+
+        <!-- Text Insights Panel (NLP analysis for TEXT variables) -->
+        @if (isTextVariable()) {
+          <app-text-insights-panel
+            [datasetId]="datasetId()"
+            [variableId]="variableId()"
+            [isAdmin]="isAdmin()"
+            [filters]="activeFilters()"
+          />
+        }
       </div>
 
       <!-- Right: Charts -->

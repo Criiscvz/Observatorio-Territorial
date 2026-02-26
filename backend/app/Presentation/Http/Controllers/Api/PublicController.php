@@ -6,10 +6,12 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use OpenApi\Attributes as OA;
 use App\Application\Public\DTOs\BivariableStatsDTO;
+use App\Application\Public\DTOs\TextAnalysisDTO;
 use App\Application\Public\DTOs\UnivariableStatsDTO;
 use App\Application\Public\UseCases\GetBivariableStatsUseCase;
 use App\Application\Public\UseCases\GetPublicDatasetDataUseCase;
 use App\Application\Public\UseCases\GetPublicDepartamentosUseCase;
+use App\Application\Public\UseCases\GetTextAnalysisUseCase;
 use App\Application\Public\UseCases\GetUnivariableStatsUseCase;
 use App\Http\Controllers\Controller;
 use App\Presentation\Http\Requests\Public\BivariableStatsRequest;
@@ -25,6 +27,7 @@ class PublicController extends Controller
         private readonly GetPublicDatasetDataUseCase $getDatasetDataUseCase,
         private readonly GetUnivariableStatsUseCase $getUnivariableStatsUseCase,
         private readonly GetBivariableStatsUseCase $getBivariableStatsUseCase,
+        private readonly GetTextAnalysisUseCase $getTextAnalysisUseCase,
     ) {}
 
     #[OA\Get(
@@ -146,5 +149,36 @@ class PublicController extends Controller
         $result = $this->getBivariableStatsUseCase->execute($dto);
 
         return response()->json($result->toArray());
+    }
+
+    #[OA\Post(
+        path: '/publico/stats/text-analysis',
+        summary: 'Análisis completo de texto (NLP) - Público',
+        description: 'Obtiene análisis avanzado de texto para datasets públicos: nube de palabras con stemming y n-grams, sentimiento, clasificación TF-IDF y frases frecuentes.',
+        tags: ['Público'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['dataset_id', 'variable_id'],
+                properties: [
+                    new OA\Property(property: 'dataset_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'variable_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'limit', type: 'integer', default: 50),
+                    new OA\Property(property: 'filters', type: 'array', items: new OA\Items(type: 'object'))
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Análisis de texto completo'),
+            new OA\Response(response: 400, description: 'Variable no es de tipo TEXTO'),
+            new OA\Response(response: 404, description: 'Dataset o variable no encontrados'),
+        ]
+    )]
+    public function textAnalysis(UnivariableStatsRequest $request): JsonResponse
+    {
+        $dto = TextAnalysisDTO::fromArray($request->validated());
+        $result = $this->getTextAnalysisUseCase->execute($dto);
+
+        return response()->json($result);
     }
 }

@@ -7,7 +7,9 @@ namespace App\Presentation\Http\Controllers\Api;
 use OpenApi\Attributes as OA;
 use App\Application\Dashboard\DTOs\BivariableRequestDTO;
 use App\Application\Dashboard\DTOs\StatsRequestDTO;
+use App\Application\Dashboard\DTOs\TextAnalysisRequestDTO;
 use App\Application\Dashboard\UseCases\GetBivariableStatsUseCase;
+use App\Application\Dashboard\UseCases\GetTextAnalysisUseCase;
 use App\Application\Dashboard\UseCases\GetUnivariableStatsUseCase;
 use App\Http\Controllers\Controller;
 use App\Presentation\Http\Requests\Stats\BivariableRequest;
@@ -21,6 +23,7 @@ class DashboardController extends Controller
     public function __construct(
         private readonly GetUnivariableStatsUseCase $univariableStatsUseCase,
         private readonly GetBivariableStatsUseCase $bivariableStatsUseCase,
+        private readonly GetTextAnalysisUseCase $textAnalysisUseCase,
     ) {}
 
     #[OA\Post(
@@ -88,5 +91,40 @@ class DashboardController extends Controller
         $result = $this->bivariableStatsUseCase->execute($dto);
 
         return response()->json(new ChartDataResource($result));
+    }
+
+    #[OA\Post(
+        path: '/stats/text-analysis',
+        summary: 'Análisis completo de texto (NLP)',
+        description: 'Obtiene análisis avanzado de texto: nube de palabras con stemming y n-grams, sentimiento, clasificación TF-IDF y frases frecuentes.',
+        security: [['sanctum' => []]],
+        tags: ['Dashboard'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['dataset_id', 'variable_id'],
+                properties: [
+                    new OA\Property(property: 'dataset_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'variable_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'limit', type: 'integer', default: 50),
+                    new OA\Property(property: 'filters', type: 'array', items: new OA\Items(type: 'object'))
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Análisis de texto completo'),
+            new OA\Response(response: 400, description: 'Variable no es de tipo TEXTO'),
+        ]
+    )]
+    public function textAnalysis(StatsRequest $request): JsonResponse
+    {
+        $dto = TextAnalysisRequestDTO::fromArray(
+            $request->validated(),
+            $request->user()->id
+        );
+
+        $result = $this->textAnalysisUseCase->execute($dto);
+
+        return response()->json($result);
     }
 }

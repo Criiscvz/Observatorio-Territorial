@@ -19,3 +19,4 @@ Route::get('/datasets/{id}/data', [PublicController::class, 'datasetData']);
 // Estadísticas públicas
 Route::post('/stats/univariable', [PublicController::class, 'univariable']);
 Route::post('/stats/bivariable', [PublicController::class, 'bivariable']);
+Route::post('/stats/text-analysis', [PublicController::class, 'textAnalysis']);

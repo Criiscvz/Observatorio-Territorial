@@ -55,4 +55,9 @@ interface StatisticsServiceInterface
      * Obtiene estadísticas de texto resumidas (agrupa por keywords dominantes para textos largos)
      */
     public function getTextSummaryStats(string $datasetId, string $column, int $limit, ?array $filters = null): array;
+
+    /**
+     * Obtiene análisis completo de texto: nube de palabras + sentimiento + clasificación + n-grams
+     */
+    public function getTextAnalysis(string $datasetId, string $column, int $limit, ?array $filters = null): array;
 }

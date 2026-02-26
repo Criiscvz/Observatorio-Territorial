@@ -522,9 +522,14 @@ export class ChartOptionsService {
     colors: string[],
     cfg: any,
   ): EChartsOption {
+    const maxValue = Math.max(...values, 1);
     const wordData = labels.map((label, i) => ({
       name: label,
       value: values[i] || 1,
+      // Scale text opacity by relative value for visual hierarchy
+      textStyle: {
+        color: this.getWordCloudColor(values[i] || 1, maxValue, colors),
+      },
     }));
 
     return {
@@ -532,33 +537,54 @@ export class ChartOptionsService {
       title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
       tooltip: {
         ...(base.tooltip as any),
-        formatter: (params: any) => `${params.name}: ${params.value}`,
+        formatter: (params: any) => {
+          const pct = ((params.value / maxValue) * 100).toFixed(1);
+          return `<strong>${params.name}</strong><br/>Frecuencia: ${params.value}<br/>Relevancia: ${pct}%`;
+        },
       },
       series: [
         {
           type: 'wordCloud',
-          shape: 'circle',
-          sizeRange: [14, 60],
-          rotationRange: [-45, 45],
+          shape: 'diamond',
+          sizeRange: [12, 72],
+          rotationRange: [-30, 30],
           rotationStep: 15,
-          gridSize: 8,
+          gridSize: 6,
           drawOutOfBound: false,
+          shrinkToFit: true,
           layoutAnimation: true,
+          keepAspect: false,
           textStyle: {
             fontFamily: 'Inter, sans-serif',
-            fontWeight: 'bold',
-            color: () => colors[Math.floor(Math.random() * colors.length)],
+            fontWeight: (params: any) => {
+              // Heavier weight for more frequent words
+              const ratio = (params.value || 1) / maxValue;
+              return ratio > 0.6 ? 'bold' : ratio > 0.3 ? '600' : 'normal';
+            },
           },
           emphasis: {
+            focus: 'self',
             textStyle: {
-              shadowBlur: 10,
-              shadowColor: '#333',
+              shadowBlur: 12,
+              shadowColor: 'rgba(0, 0, 0, 0.25)',
+              fontWeight: 'bold',
             },
           },
           data: wordData,
         },
       ],
     } as any;
+  }
+
+  /**
+   * Generate a color for a word based on its frequency relative to the maximum.
+   * High-frequency words get warm/saturated colors; low-frequency get cool/muted.
+   */
+  private getWordCloudColor(value: number, maxValue: number, colors: string[]): string {
+    const ratio = value / maxValue;
+    // Use the first few colors for high-frequency, later colors for low
+    const index = Math.floor((1 - ratio) * (colors.length - 1));
+    return colors[Math.min(index, colors.length - 1)];
   }
 
   private getLineTimeOptions(

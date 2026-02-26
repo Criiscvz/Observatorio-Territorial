@@ -21,6 +21,7 @@ use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentRegistroDatoRep
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentVariableMetadatoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentUserRepository;
 use App\Infrastructure\Services\StatisticsService;
+use App\Infrastructure\Services\TextProcessingService;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -48,6 +49,9 @@ class RepositoryServiceProvider extends ServiceProvider
         foreach ($this->bindings as $interface => $implementation) {
             $this->app->bind($interface, $implementation);
         }
+
+        // Singleton services
+        $this->app->singleton(TextProcessingService::class);
     }
 
     /**

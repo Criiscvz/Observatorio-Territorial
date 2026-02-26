@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\DB;
 
 class StatisticsService implements StatisticsServiceInterface
 {
+    public function __construct(
+        private readonly TextProcessingService $textProcessor,
+    ) {}
+
     /**
      * Whitelist pattern for column names to prevent SQL injection
      */
@@ -505,224 +509,49 @@ class StatisticsService implements StatisticsServiceInterface
             ->where('dataset_id', $datasetId);
         $query = $this->applyFilters($query, $filters);
 
+        $maxRecords = config('nlp.max_records', 5000);
+
         // Get all text values from the column
         $texts = $query->selectRaw("data->>? as texto", [$col])
             ->whereRaw("data->>? IS NOT NULL", [$col])
-            ->limit(5000)
+            ->limit($maxRecords)
             ->pluck('texto')
             ->toArray();
 
-        // Spanish and English stopwords
-        $stopwords = array_flip([
-            // Spanish
-            'de',
-            'la',
-            'el',
-            'en',
-            'y',
-            'a',
-            'los',
-            'del',
-            'se',
-            'las',
-            'por',
-            'un',
-            'para',
-            'con',
-            'no',
-            'una',
-            'su',
-            'al',
-            'es',
-            'lo',
-            'como',
-            'pero',
-            'sus',
-            'le',
-            'ya',
-            'o',
-            'fue',
-            'este',
-            'ha',
-            'si',
-            'porque',
-            'esta',
-            'son',
-            'entre',
-            'cuando',
-            'muy',
-            'sin',
-            'sobre',
-            'ser',
-            'me',
-            'hasta',
-            'hay',
-            'donde',
-            'han',
-            'quien',
-            'desde',
-            'todo',
-            'nos',
-            'durante',
-            'todos',
-            'uno',
-            'les',
-            'ni',
-            'contra',
-            'otros',
-            'fueron',
-            'ese',
-            'eso',
-            'ante',
-            'ellos',
-            'esto',
-            'antes',
-            'algunos',
-            'unos',
-            'yo',
-            'otro',
-            'otras',
-            'otra',
-            'tanto',
-            'esa',
-            'estos',
-            'mucho',
-            'nada',
-            'muchos',
-            'cual',
-            'sea',
-            'poco',
-            'ella',
-            'estar',
-            'haber',
-            'estas',
-            'era',
-            'forma',
-            'parte',
-            'cada',
-            'bien',
-            'puede',
-            'mismo',
-            'dos',
-            'que',
-            'mas',
-            // English
-            'the',
-            'be',
-            'to',
-            'of',
-            'and',
-            'in',
-            'that',
-            'have',
-            'it',
-            'for',
-            'not',
-            'on',
-            'with',
-            'he',
-            'as',
-            'you',
-            'do',
-            'at',
-            'this',
-            'but',
-            'his',
-            'by',
-            'from',
-            'they',
-            'we',
-            'say',
-            'her',
-            'she',
-            'or',
-            'an',
-            'will',
-            'my',
-            'one',
-            'all',
-            'would',
-            'there',
-            'their',
-            'what',
-            'so',
-            'up',
-            'out',
-            'if',
-            'about',
-            'who',
-            'get',
-            'which',
-            'go',
-            'me',
-            'when',
-            'make',
-            'can',
-            'like',
-            'no',
-            'just',
-            'him',
-            'know',
-            'take',
-            'into',
-            'your',
-            'some',
-            'could',
-            'them',
-            'see',
-            'other',
-            'than',
-            'then',
-            'now',
-            'look',
-            'only',
-            'its',
-            'over',
-            'also',
-            'after',
-            'use',
-            'how',
-            'our',
-            'any',
-            'these',
-            'most',
-            'us',
-            'is',
-            'are',
-            'was',
-            'were',
-            'been',
-            'has',
-            'had',
-        ]);
+        // Get dataset-specific stopwords if any
+        $extraStopwords = $this->getDatasetStopwords($datasetId);
 
-        // Count word frequencies
-        $wordCounts = [];
-        foreach ($texts as $text) {
-            if (empty($text)) continue;
+        $useStemming = config('nlp.stemming.enabled', true);
+        $maxNgram = config('nlp.ngrams.enabled', true) ? config('nlp.ngrams.max_n', 3) : 1;
 
-            // Normalize: lowercase, remove punctuation, split
-            $text = mb_strtolower(trim($text));
-            $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text);
-            $words = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
+        // Use TextProcessingService for advanced frequency counting
+        $freq = $this->textProcessor->countFrequencies($texts, $useStemming, $maxNgram, $extraStopwords);
 
-            foreach ($words as $word) {
-                if (mb_strlen($word) < 3) continue;
-                if (isset($stopwords[$word])) continue;
+        // Merge unigrams (use display form) with significant bigrams
+        $words = [];
 
-                $wordCounts[$word] = ($wordCounts[$word] ?? 0) + 1;
-            }
+        // Add unigrams (mapped to display form if stemmed)
+        $unigramSlice = array_slice($freq['unigrams'], 0, $limit, true);
+        foreach ($unigramSlice as $stem => $count) {
+            $display = $freq['stemToDisplay'][$stem] ?? $stem;
+            $words[$display] = ($words[$display] ?? 0) + $count;
         }
 
-        // Sort by frequency and take top N
-        arsort($wordCounts);
-        $wordCounts = array_slice($wordCounts, 0, $limit, true);
+        // Add top bigrams (they often carry more meaning)
+        $bigramSlice = array_slice($freq['bigrams'], 0, (int) ceil($limit / 3), true);
+        foreach ($bigramSlice as $bigram => $count) {
+            $words[$bigram] = $count;
+        }
+
+        // Sort by frequency and cap at limit
+        arsort($words);
+        $words = array_slice($words, 0, $limit, true);
 
         // Format for word cloud
-        $words = [];
-        $maxCount = !empty($wordCounts) ? max($wordCounts) : 1;
-        foreach ($wordCounts as $word => $count) {
-            $words[] = [
+        $result = [];
+        $maxCount = !empty($words) ? max($words) : 1;
+        foreach ($words as $word => $count) {
+            $result[] = [
                 'name' => $word,
                 'value' => $count,
                 'weight' => round($count / $maxCount, 3),
@@ -731,14 +560,15 @@ class StatisticsService implements StatisticsServiceInterface
 
         return [
             'data' => [
-                'words' => $words,
-                'labels' => array_column($words, 'name'),
-                'values' => array_column($words, 'value'),
+                'words' => $result,
+                'labels' => array_column($result, 'name'),
+                'values' => array_column($result, 'value'),
             ],
             'stats' => [
                 'total_texts' => count($texts),
-                'unique_words' => count($wordCounts),
-                'total_words' => array_sum($wordCounts),
+                'unique_words' => count($freq['unigrams']),
+                'total_words' => array_sum($freq['unigrams']),
+                'bigrams_found' => count($freq['bigrams']),
             ],
         ];
     }
@@ -765,7 +595,7 @@ class StatisticsService implements StatisticsServiceInterface
     /**
      * Get text summary stats: groups long texts by their dominant keywords.
      * Short unique texts with <= 50 unique values use regular categorical counting.
-     * Long/diverse texts are classified by their top keywords.
+     * Long/diverse texts are classified by TF-IDF weighted keywords.
      */
     public function getTextSummaryStats(string $datasetId, string $column, int $limit, ?array $filters = null): array
     {
@@ -777,21 +607,24 @@ class StatisticsService implements StatisticsServiceInterface
         );
 
         // Count unique values to determine strategy
+        $maxCategories = config('nlp.classification.max_categories', 50);
         $uniqueCount = $baseQuery()
             ->selectRaw("COUNT(DISTINCT data->>?) as unique_count", [$col])
             ->whereRaw("data->>? IS NOT NULL AND data->>? != ''", [$col, $col])
             ->value('unique_count');
 
         // If few unique values, use regular categorical stats (short texts like categories)
-        if ($uniqueCount <= 50) {
+        if ($uniqueCount <= $maxCategories) {
             return $this->getCategoricalStats($datasetId, $column, $limit, $filters);
         }
 
-        // For diverse/long texts: classify by dominant keywords
+        $maxRecords = config('nlp.max_records', 5000);
+
+        // For diverse/long texts: classify by dominant keywords using TF-IDF
         $texts = $baseQuery()
             ->selectRaw("data->>? as texto", [$col])
             ->whereRaw("data->>? IS NOT NULL AND data->>? != ''", [$col, $col])
-            ->limit(5000)
+            ->limit($maxRecords)
             ->pluck('texto')
             ->toArray();
 
@@ -802,248 +635,25 @@ class StatisticsService implements StatisticsServiceInterface
             ];
         }
 
-        // Spanish and English stopwords
-        $stopwords = array_flip([
-            'de',
-            'la',
-            'el',
-            'en',
-            'y',
-            'a',
-            'los',
-            'del',
-            'se',
-            'las',
-            'por',
-            'un',
-            'para',
-            'con',
-            'no',
-            'una',
-            'su',
-            'al',
-            'es',
-            'lo',
-            'como',
-            'pero',
-            'sus',
-            'le',
-            'ya',
-            'o',
-            'fue',
-            'este',
-            'ha',
-            'si',
-            'porque',
-            'esta',
-            'son',
-            'entre',
-            'cuando',
-            'muy',
-            'sin',
-            'sobre',
-            'ser',
-            'me',
-            'hasta',
-            'hay',
-            'donde',
-            'han',
-            'quien',
-            'desde',
-            'todo',
-            'nos',
-            'durante',
-            'todos',
-            'uno',
-            'les',
-            'ni',
-            'contra',
-            'otros',
-            'fueron',
-            'ese',
-            'eso',
-            'ante',
-            'ellos',
-            'esto',
-            'antes',
-            'algunos',
-            'unos',
-            'yo',
-            'otro',
-            'otras',
-            'otra',
-            'tanto',
-            'esa',
-            'estos',
-            'mucho',
-            'nada',
-            'muchos',
-            'cual',
-            'sea',
-            'poco',
-            'ella',
-            'estar',
-            'haber',
-            'estas',
-            'era',
-            'forma',
-            'parte',
-            'cada',
-            'bien',
-            'puede',
-            'mismo',
-            'dos',
-            'que',
-            'mas',
-            'the',
-            'be',
-            'to',
-            'of',
-            'and',
-            'in',
-            'that',
-            'have',
-            'it',
-            'for',
-            'not',
-            'on',
-            'with',
-            'he',
-            'as',
-            'you',
-            'do',
-            'at',
-            'this',
-            'but',
-            'his',
-            'by',
-            'from',
-            'they',
-            'we',
-            'say',
-            'her',
-            'she',
-            'or',
-            'an',
-            'will',
-            'my',
-            'one',
-            'all',
-            'would',
-            'there',
-            'their',
-            'what',
-            'so',
-            'up',
-            'out',
-            'if',
-            'about',
-            'who',
-            'get',
-            'which',
-            'go',
-            'me',
-            'when',
-            'make',
-            'can',
-            'like',
-            'no',
-            'just',
-            'him',
-            'know',
-            'take',
-            'into',
-            'your',
-            'some',
-            'could',
-            'them',
-            'see',
-            'other',
-            'than',
-            'then',
-            'now',
-            'look',
-            'only',
-            'its',
-            'over',
-            'also',
-            'after',
-            'use',
-            'how',
-            'our',
-            'any',
-            'these',
-            'most',
-            'us',
-            'is',
-            'are',
-            'was',
-            'were',
-            'been',
-            'has',
-            'had',
-        ]);
+        $extraStopwords = $this->getDatasetStopwords($datasetId);
 
-        // First pass: get global top keywords
-        $globalWordCounts = [];
-        foreach ($texts as $text) {
-            if (empty($text)) continue;
-            $normalized = mb_strtolower(trim($text));
-            $normalized = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $normalized);
-            $words = preg_split('/\s+/', $normalized, -1, PREG_SPLIT_NO_EMPTY);
+        // Use TextProcessingService for TF-IDF classification
+        $classification = $this->textProcessor->classifyTexts($texts, $limit, $extraStopwords);
 
-            foreach ($words as $word) {
-                if (mb_strlen($word) < 3) continue;
-                if (isset($stopwords[$word])) continue;
-                $globalWordCounts[$word] = ($globalWordCounts[$word] ?? 0) + 1;
-            }
-        }
-
-        arsort($globalWordCounts);
-        $topKeywords = array_slice(array_keys($globalWordCounts), 0, $limit);
-
-        if (empty($topKeywords)) {
-            return $this->getCategoricalStats($datasetId, $column, $limit, $filters);
-        }
-
-        // Second pass: classify each text by its dominant keyword
-        $categoryCounts = array_fill_keys($topKeywords, 0);
-        $otherCount = 0;
-
-        foreach ($texts as $text) {
-            if (empty($text)) continue;
-            $normalized = mb_strtolower(trim($text));
-            $matched = false;
-
-            foreach ($topKeywords as $keyword) {
-                if (mb_strpos($normalized, $keyword) !== false) {
-                    $categoryCounts[$keyword]++;
-                    $matched = true;
-                    break;
-                }
-            }
-
-            if (!$matched) {
-                $otherCount++;
-            }
-        }
-
-        // Sort by frequency
-        arsort($categoryCounts);
-
-        // Add "Otros" if there are unmatched texts
-        if ($otherCount > 0) {
-            $categoryCounts['(Otros)'] = $otherCount;
-        }
-
-        // Capitalize keyword labels
+        // Build output
         $labels = [];
         $values = [];
-        foreach ($categoryCounts as $keyword => $count) {
+        foreach ($classification['categories'] as $keyword => $count) {
             if ($count > 0) {
                 $labels[] = mb_convert_case($keyword, MB_CASE_TITLE, 'UTF-8');
                 $values[] = $count;
             }
+        }
+
+        // Add unclassified
+        if ($classification['unclassified'] > 0) {
+            $labels[] = '(Otros)';
+            $values[] = $classification['unclassified'];
         }
 
         return [
@@ -1054,8 +664,130 @@ class StatisticsService implements StatisticsServiceInterface
             'stats' => [
                 'count' => count($texts),
                 'unique' => (int) $uniqueCount,
-                'classified_by' => 'keywords',
+                'classified_by' => 'tfidf_keywords',
+                'keywords_used' => count($classification['keywords_used']),
             ],
         ];
+    }
+
+    /**
+     * Full text analysis: word cloud + sentiment + classification + n-grams.
+     * This is a comprehensive endpoint for the text insights panel.
+     */
+    public function getTextAnalysis(string $datasetId, string $column, int $limit, ?array $filters = null): array
+    {
+        $col = $this->sanitizeColumn($column);
+
+        $baseQuery = fn() => $this->applyFilters(
+            DB::table('registros_datos')->where('dataset_id', $datasetId),
+            $filters
+        );
+
+        $maxRecords = config('nlp.max_records', 5000);
+
+        $texts = $baseQuery()
+            ->selectRaw("data->>? as texto", [$col])
+            ->whereRaw("data->>? IS NOT NULL AND data->>? != ''", [$col, $col])
+            ->limit($maxRecords)
+            ->pluck('texto')
+            ->toArray();
+
+        if (empty($texts)) {
+            return [
+                'wordcloud' => ['words' => [], 'labels' => [], 'values' => []],
+                'sentiment' => ['overall' => 'neutral', 'score' => 0, 'distribution' => ['positive' => 0, 'negative' => 0, 'neutral' => 0], 'total' => 0],
+                'keywords' => ['categories' => [], 'unclassified' => 0],
+                'ngrams' => ['bigrams' => [], 'trigrams' => []],
+                'stats' => ['total_texts' => 0, 'avg_length' => 0],
+            ];
+        }
+
+        $extraStopwords = $this->getDatasetStopwords($datasetId);
+
+        // 1. Frequency analysis (with stemming + n-grams)
+        $useStemming = config('nlp.stemming.enabled', true);
+        $maxNgram = config('nlp.ngrams.enabled', true) ? config('nlp.ngrams.max_n', 3) : 1;
+        $freq = $this->textProcessor->countFrequencies($texts, $useStemming, $maxNgram, $extraStopwords);
+
+        // Build word cloud data
+        $words = [];
+        $unigramSlice = array_slice($freq['unigrams'], 0, $limit, true);
+        foreach ($unigramSlice as $stem => $count) {
+            $display = $freq['stemToDisplay'][$stem] ?? $stem;
+            $words[$display] = ($words[$display] ?? 0) + $count;
+        }
+        $bigramSlice = array_slice($freq['bigrams'], 0, (int) ceil($limit / 3), true);
+        foreach ($bigramSlice as $bigram => $count) {
+            $words[$bigram] = $count;
+        }
+        arsort($words);
+        $words = array_slice($words, 0, $limit, true);
+
+        $wordCloudData = [];
+        $maxCount = !empty($words) ? max($words) : 1;
+        foreach ($words as $word => $count) {
+            $wordCloudData[] = [
+                'name' => $word,
+                'value' => $count,
+                'weight' => round($count / $maxCount, 3),
+            ];
+        }
+
+        // 2. Sentiment analysis
+        $sentiment = $this->textProcessor->analyzeSentiment($texts);
+
+        // 3. Keyword classification
+        $classification = $this->textProcessor->classifyTexts($texts, min($limit, 15), $extraStopwords);
+
+        // 4. Top n-grams
+        $topBigrams = array_slice($freq['bigrams'], 0, 20, true);
+        $topTrigrams = array_slice($freq['trigrams'], 0, 10, true);
+
+        // 5. Text length stats
+        $lengths = array_map(fn($t) => mb_strlen($t), array_filter($texts, fn($t) => !empty($t)));
+        $avgLength = count($lengths) > 0 ? round(array_sum($lengths) / count($lengths), 1) : 0;
+
+        return [
+            'wordcloud' => [
+                'words' => $wordCloudData,
+                'labels' => array_column($wordCloudData, 'name'),
+                'values' => array_column($wordCloudData, 'value'),
+            ],
+            'sentiment' => $sentiment,
+            'keywords' => [
+                'labels' => array_map(fn($k) => mb_convert_case($k, MB_CASE_TITLE, 'UTF-8'), array_keys($classification['categories'])),
+                'values' => array_values($classification['categories']),
+                'unclassified' => $classification['unclassified'],
+            ],
+            'ngrams' => [
+                'bigrams' => array_map(fn($phrase, $count) => ['phrase' => $phrase, 'count' => $count], array_keys($topBigrams), array_values($topBigrams)),
+                'trigrams' => array_map(fn($phrase, $count) => ['phrase' => $phrase, 'count' => $count], array_keys($topTrigrams), array_values($topTrigrams)),
+            ],
+            'stats' => [
+                'total_texts' => count($texts),
+                'unique_words' => count($freq['unigrams']),
+                'total_words' => array_sum($freq['unigrams']),
+                'avg_text_length' => $avgLength,
+                'bigrams_found' => count($freq['bigrams']),
+                'trigrams_found' => count($freq['trigrams']),
+            ],
+        ];
+    }
+
+    /**
+     * Retrieve dataset-specific custom stopwords (from variable metadata options).
+     */
+    private function getDatasetStopwords(string $datasetId): array
+    {
+        $options = DB::table('datasets')
+            ->where('id', $datasetId)
+            ->value('opciones');
+
+        if ($options) {
+            $parsed = is_string($options) ? json_decode($options, true) : $options;
+            return $parsed['custom_stopwords'] ?? [];
+        }
+
+        return [];
     }
 }
