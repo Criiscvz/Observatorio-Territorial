@@ -518,17 +518,19 @@ export class TextInsightsPanelComponent {
 
   activeNgrams = computed((): NgramItem[] => {
     const data = this.analysisData();
-    if (!data) return [];
-    return this.ngramMode() === 'bigrams' ? data.ngrams.bigrams : data.ngrams.trigrams;
+    if (!data?.ngrams) return [];
+    return this.ngramMode() === 'bigrams'
+      ? (data.ngrams.bigrams ?? [])
+      : (data.ngrams.trigrams ?? []);
   });
 
   topKeywords = computed(() => {
     const data = this.analysisData();
-    if (!data) return [];
+    if (!data?.keywords?.labels) return [];
     return data.keywords.labels
       .map((label, i) => ({
         label,
-        count: data.keywords.values[i] ?? 0,
+        count: data.keywords.values?.[i] ?? 0,
       }))
       .slice(0, 15);
   });

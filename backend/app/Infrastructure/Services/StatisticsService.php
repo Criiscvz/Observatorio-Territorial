@@ -18,7 +18,10 @@ class StatisticsService implements StatisticsServiceInterface
      */
     private function sanitizeColumn(string $column): string
     {
-        if (!preg_match('/^[a-zA-Z0-9_\x{00C0}-\x{024F}\s\-\.]+$/u', $column)) {
+        // Permitir cualquier carácter Unicode imprimible (las columnas del CSV pueden tener
+        // signos de interrogación, paréntesis, acentos, etc.). Es seguro porque los nombres
+        // se pasan siempre como bind parameters (data->>?) y no se interpolan en SQL.
+        if (!preg_match('/^[^\x00-\x1F\x7F]+$/u', $column) || mb_strlen($column) > 500) {
             throw new \InvalidArgumentException("Nombre de columna inválido: {$column}");
         }
         return $column;
@@ -696,7 +699,7 @@ class StatisticsService implements StatisticsServiceInterface
             return [
                 'wordcloud' => ['words' => [], 'labels' => [], 'values' => []],
                 'sentiment' => ['overall' => 'neutral', 'score' => 0, 'distribution' => ['positive' => 0, 'negative' => 0, 'neutral' => 0], 'total' => 0],
-                'keywords' => ['categories' => [], 'unclassified' => 0],
+                'keywords' => ['labels' => [], 'values' => [], 'unclassified' => 0],
                 'ngrams' => ['bigrams' => [], 'trigrams' => []],
                 'stats' => ['total_texts' => 0, 'avg_length' => 0],
             ];
