@@ -27,6 +27,15 @@ import { TranslateModule } from '@ngx-translate/core';
           <mat-spinner diameter="32"></mat-spinner>
           <span>{{ 'textInsights.analyzing' | translate }}</span>
         </div>
+      } @else if (hasError()) {
+        <div class="insights-error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ 'textInsights.loadError' | translate }}</span>
+          <button class="retry-btn" (click)="loadAnalysis()">
+            <mat-icon>refresh</mat-icon>
+            {{ 'common.buttons.retry' | translate }}
+          </button>
+        </div>
       } @else if (analysisData()) {
         <!-- Sentiment Card -->
         <div class="insight-card sentiment-card">
@@ -176,6 +185,47 @@ import { TranslateModule } from '@ngx-translate/core';
         padding: 24px;
         justify-content: center;
         color: var(--text-secondary);
+      }
+
+      .insights-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 32px 24px;
+        color: var(--text-secondary);
+
+        mat-icon {
+          font-size: 36px;
+          width: 36px;
+          height: 36px;
+          color: var(--warn, #f44336);
+        }
+
+        .retry-btn {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 6px 16px;
+          border: 1px solid var(--border-color, #e0e0e0);
+          border-radius: 8px;
+          background: transparent;
+          cursor: pointer;
+          font-size: 13px;
+          color: var(--primary);
+          transition: background 0.2s;
+
+          &:hover {
+            background: var(--surface-hover, #f5f5f5);
+          }
+
+          mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+            color: var(--primary);
+          }
+        }
       }
 
       .insight-card {
@@ -483,6 +533,7 @@ export class TextInsightsPanelComponent {
 
   // State
   loading = signal(false);
+  hasError = signal(false);
   analysisData = signal<TextAnalysisResponse | null>(null);
   ngramMode = signal<'bigrams' | 'trigrams'>('bigrams');
 
@@ -558,6 +609,7 @@ export class TextInsightsPanelComponent {
 
   loadAnalysis(): void {
     this.loading.set(true);
+    this.hasError.set(false);
     const request = {
       dataset_id: this.datasetId(),
       variable_id: this.variableId(),
@@ -574,8 +626,10 @@ export class TextInsightsPanelComponent {
         this.analysisData.set(data);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
+        console.warn('[TextInsightsPanel] Error loading analysis:', err);
         this.loading.set(false);
+        this.hasError.set(true);
       },
     });
   }

@@ -5,6 +5,7 @@ import {
   GaugeChart,
   HeatmapChart,
   LineChart,
+  PictorialBarChart,
   PieChart,
   RadarChart,
   ScatterChart,
@@ -38,6 +39,7 @@ echarts.use([
   FunnelChart,
   GaugeChart,
   BoxplotChart,
+  PictorialBarChart,
   // Components
   GridComponent,
   TooltipComponent,

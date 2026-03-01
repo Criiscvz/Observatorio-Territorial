@@ -70,14 +70,14 @@ app/
 
 El sistema usa una estrategia **híbrida relacional + JSONB** para máxima flexibilidad:
 
-| Modelo | Tabla | Descripción |
-|--------|-------|-------------|
-| `User` | `users` | Usuarios con rol global (ADMIN/USER) |
-| `Perfil` | `perfiles` | Extensión 1:1 del perfil de usuario |
-| `Departamento` | `departamentos` | Departamentos/observatorios con flag público |
-| `Dataset` | `datasets` | Metadatos del dataset (nombre, estado, total de registros) |
-| `VariableMetadato` | `variables_metadatos` | Metadatos por columna (tipo detectado, opciones JSON) |
-| `RegistroDato` | `registros_datos` | **Filas del Excel almacenadas como JSONB en `data`** |
+| Modelo             | Tabla                 | Descripción                                                |
+| ------------------ | --------------------- | ---------------------------------------------------------- |
+| `User`             | `users`               | Usuarios con rol global (ADMIN/USER)                       |
+| `Perfil`           | `perfiles`            | Extensión 1:1 del perfil de usuario                        |
+| `Departamento`     | `departamentos`       | Departamentos/observatorios con flag público               |
+| `Dataset`          | `datasets`            | Metadatos del dataset (nombre, estado, total de registros) |
+| `VariableMetadato` | `variables_metadatos` | Metadatos por columna (tipo detectado, opciones JSON)      |
+| `RegistroDato`     | `registros_datos`     | **Filas del Excel almacenadas como JSONB en `data`**       |
 
 **Tabla pivote**: `usuario_departamento` (many-to-many con roles: ADMIN, EDITOR, LECTOR)
 
@@ -106,39 +106,43 @@ La configuración se centraliza en `config/nlp.php`.
 Las rutas están modularizadas en `routes/modules/`:
 
 ### Autenticación (`/api/auth`)
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/login` | Iniciar sesión (Sanctum token) |
-| POST | `/register` | Registro de usuario |
-| POST | `/logout` | Cerrar sesión |
-| GET | `/me` | Obtener usuario autenticado |
+
+| Método | Ruta        | Descripción                    |
+| ------ | ----------- | ------------------------------ |
+| POST   | `/login`    | Iniciar sesión (Sanctum token) |
+| POST   | `/register` | Registro de usuario            |
+| POST   | `/logout`   | Cerrar sesión                  |
+| GET    | `/me`       | Obtener usuario autenticado    |
 
 ### Datasets (`/api/datasets`)
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/` | Listar datasets del usuario |
-| POST | `/upload` | Subir archivo Excel |
-| POST | `/{id}/analyze` | Analizar columnas del archivo |
-| POST | `/{id}/confirm-import` | Confirmar importación con tipos ajustados |
-| GET | `/{id}` | Ver detalle de un dataset |
-| DELETE | `/{id}` | Eliminar dataset |
+
+| Método | Ruta                   | Descripción                               |
+| ------ | ---------------------- | ----------------------------------------- |
+| GET    | `/`                    | Listar datasets del usuario               |
+| POST   | `/upload`              | Subir archivo Excel                       |
+| POST   | `/{id}/analyze`        | Analizar columnas del archivo             |
+| POST   | `/{id}/confirm-import` | Confirmar importación con tipos ajustados |
+| GET    | `/{id}`                | Ver detalle de un dataset                 |
+| DELETE | `/{id}`                | Eliminar dataset                          |
 
 ### Estadísticas (`/api/stats`)
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/univariable` | Estadísticas de una variable |
-| POST | `/bivariable` | Estadísticas de dos variables (cruce) |
-| POST | `/text-analysis` | Análisis NLP completo de una variable de texto |
+
+| Método | Ruta             | Descripción                                    |
+| ------ | ---------------- | ---------------------------------------------- |
+| POST   | `/univariable`   | Estadísticas de una variable                   |
+| POST   | `/bivariable`    | Estadísticas de dos variables (cruce)          |
+| POST   | `/text-analysis` | Análisis NLP completo de una variable de texto |
 
 ### Público (`/api/publico`) — Sin autenticación
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/departamentos` | Listar departamentos públicos |
-| GET | `/departamentos/{id}` | Detalle de departamento público |
-| GET | `/datasets/{id}/data` | Datos de un dataset público |
-| POST | `/stats/univariable` | Estadísticas públicas univariable |
-| POST | `/stats/bivariable` | Estadísticas públicas bivariable |
-| POST | `/stats/text-analysis` | Análisis de texto público |
+
+| Método | Ruta                   | Descripción                       |
+| ------ | ---------------------- | --------------------------------- |
+| GET    | `/departamentos`       | Listar departamentos públicos     |
+| GET    | `/departamentos/{id}`  | Detalle de departamento público   |
+| GET    | `/datasets/{id}/data`  | Datos de un dataset público       |
+| POST   | `/stats/univariable`   | Estadísticas públicas univariable |
+| POST   | `/stats/bivariable`    | Estadísticas públicas bivariable  |
+| POST   | `/stats/text-analysis` | Análisis de texto público         |
 
 > La documentación completa de la API está disponible en Swagger: `http://localhost:8000/api/documentation`
 
@@ -212,6 +216,7 @@ php artisan test --filter=Feature # Solo tests de integración
 ```
 
 El proyecto usa **PHPUnit 11** con la estructura:
+
 - `tests/Unit/` — Tests de dominio y lógica de negocio
 - `tests/Feature/` — Tests de endpoints API
 
@@ -219,12 +224,12 @@ El proyecto usa **PHPUnit 11** con la estructura:
 
 ## ⚙️ Configuración relevante
 
-| Archivo | Descripción |
-|---------|-------------|
-| `config/nlp.php` | Parámetros del pipeline NLP (stemming, n-gramas, stopwords, max records) |
-| `config/cors.php` | Configuración CORS para el frontend |
-| `config/sanctum.php` | Dominios permitidos para autenticación con cookies |
-| `config/l5-swagger.php` | Configuración de la documentación Swagger |
+| Archivo                 | Descripción                                                              |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `config/nlp.php`        | Parámetros del pipeline NLP (stemming, n-gramas, stopwords, max records) |
+| `config/cors.php`       | Configuración CORS para el frontend                                      |
+| `config/sanctum.php`    | Dominios permitidos para autenticación con cookies                       |
+| `config/l5-swagger.php` | Configuración de la documentación Swagger                                |
 
 ---
 

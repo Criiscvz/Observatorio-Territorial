@@ -90,16 +90,16 @@ El frontend implementa un sistema de diseño **Glassmorphism + Neo-SaaS** con:
 
 Los gráficos se renderizan con **ECharts** (vía `ngx-echarts`) y soportan:
 
-| Tipo | Variable | Descripción |
-|------|----------|-------------|
-| Barras | Categórica | Distribución de frecuencias |
-| Pie/Donut | Categórica | Proporciones relativas |
-| Histograma | Numérica | Distribución por rangos |
-| Línea | Fecha | Series temporales |
-| Scatter | Numérica × Numérica | Correlación entre variables |
-| Heatmap | Categórica × Categórica | Tabla cruzada como mapa de calor |
-| Nube de palabras | Texto | Frecuencia de términos (NLP) |
-| Panel de insights | Texto | Sentiment, keywords, n-gramas |
+| Tipo              | Variable                | Descripción                      |
+| ----------------- | ----------------------- | -------------------------------- |
+| Barras            | Categórica              | Distribución de frecuencias      |
+| Pie/Donut         | Categórica              | Proporciones relativas           |
+| Histograma        | Numérica                | Distribución por rangos          |
+| Línea             | Fecha                   | Series temporales                |
+| Scatter           | Numérica × Numérica     | Correlación entre variables      |
+| Heatmap           | Categórica × Categórica | Tabla cruzada como mapa de calor |
+| Nube de palabras  | Texto                   | Frecuencia de términos (NLP)     |
+| Panel de insights | Texto                   | Sentiment, keywords, n-gramas    |
 
 Todos los gráficos son interactivos con zoom, tooltips y exportación.
 
@@ -108,24 +108,26 @@ Todos los gráficos son interactivos con zoom, tooltips y exportación.
 ## 🛣️ Rutas principales
 
 ### Panel administrativo (`/admin/...`) — Requiere autenticación
-| Ruta | Componente | Descripción |
-|------|-----------|-------------|
-| `/admin/dashboard` | DashboardComponent | KPIs y resumen general |
-| `/admin/datasets` | DatasetListComponent | Lista de datasets |
-| `/admin/datasets/nuevo` | DatasetUploadComponent | Subir nuevo Excel |
-| `/admin/datasets/:id` | DatasetViewComponent | Detalle y datos del dataset |
-| `/admin/datasets/:id/variable/:varId` | AdminVariableAnalysis | Análisis de variable con gráficos |
-| `/admin/departamentos/nuevo` | DepartamentoFormComponent | Crear departamento |
-| `/admin/usuarios` | UsuariosComponent | Gestión de usuarios |
+
+| Ruta                                  | Componente                | Descripción                       |
+| ------------------------------------- | ------------------------- | --------------------------------- |
+| `/admin/dashboard`                    | DashboardComponent        | KPIs y resumen general            |
+| `/admin/datasets`                     | DatasetListComponent      | Lista de datasets                 |
+| `/admin/datasets/nuevo`               | DatasetUploadComponent    | Subir nuevo Excel                 |
+| `/admin/datasets/:id`                 | DatasetViewComponent      | Detalle y datos del dataset       |
+| `/admin/datasets/:id/variable/:varId` | AdminVariableAnalysis     | Análisis de variable con gráficos |
+| `/admin/departamentos/nuevo`          | DepartamentoFormComponent | Crear departamento                |
+| `/admin/usuarios`                     | UsuariosComponent         | Gestión de usuarios               |
 
 ### Portal público (`/publico/...`) — Sin autenticación
-| Ruta | Componente | Descripción |
-|------|-----------|-------------|
-| `/publico/departamentos` | PublicDepartamentos | Explorar observatorios |
-| `/publico/departamentos/:id` | PublicDepartamentoDetail | Datasets de un observatorio |
-| `/publico/datasets/:id` | PublicDatasetView | Ver datos y variables |
-| `/publico/datasets/:id/variable/:varId` | PublicVariableAnalysis | Gráficos y análisis público |
-| `/publico/barometro/:codigo` | BarometerView | Vista del barómetro |
+
+| Ruta                                    | Componente               | Descripción                 |
+| --------------------------------------- | ------------------------ | --------------------------- |
+| `/publico/departamentos`                | PublicDepartamentos      | Explorar observatorios      |
+| `/publico/departamentos/:id`            | PublicDepartamentoDetail | Datasets de un observatorio |
+| `/publico/datasets/:id`                 | PublicDatasetView        | Ver datos y variables       |
+| `/publico/datasets/:id/variable/:varId` | PublicVariableAnalysis   | Gráficos y análisis público |
+| `/publico/barometro/:codigo`            | BarometerView            | Vista del barómetro         |
 
 ---
 
@@ -206,13 +208,13 @@ El proyecto incluye `vercel.json` con la configuración necesaria para desplegar
 // src/environments/environment.ts (desarrollo)
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000/api'
+  apiUrl: 'http://localhost:8000/api',
 };
 
 // src/environments/environment.prod.ts (producción)
 export const environment = {
   production: true,
-  apiUrl: 'https://tu-backend.com/api'
+  apiUrl: 'https://tu-backend.com/api',
 };
 ```
 

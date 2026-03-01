@@ -67,20 +67,20 @@ El backend sigue **Domain-Driven Design (DDD)** con arquitectura limpia en 4 cap
 
 ## 🛠️ Tech Stack
 
-| Capa | Tecnología | Versión |
-|------|-----------|---------|
-| Backend | Laravel (PHP) | 12.x (PHP 8.2+) |
-| Frontend | Angular | 21.x |
-| Base de datos | PostgreSQL | 16 (Alpine, Docker) |
-| Autenticación | Laravel Sanctum | 4.x |
-| UI | Angular Material + Tailwind CSS | Material 21.x |
-| Gráficos | ECharts (ngx-echarts) | 5.6.x |
-| Excel Import | maatwebsite/excel | 3.1 |
-| API Docs | L5-Swagger (OpenAPI) | 10.x |
-| Internacionalización | @ngx-translate | 17.x |
-| SSR | Angular SSR + Express | Built-in |
-| Package Manager | Bun (con fallback a npm) | 1.3+ |
-| Testing | PHPUnit 11 / Vitest 4 | — |
+| Capa                 | Tecnología                      | Versión             |
+| -------------------- | ------------------------------- | ------------------- |
+| Backend              | Laravel (PHP)                   | 12.x (PHP 8.2+)     |
+| Frontend             | Angular                         | 21.x                |
+| Base de datos        | PostgreSQL                      | 16 (Alpine, Docker) |
+| Autenticación        | Laravel Sanctum                 | 4.x                 |
+| UI                   | Angular Material + Tailwind CSS | Material 21.x       |
+| Gráficos             | ECharts (ngx-echarts)           | 5.6.x               |
+| Excel Import         | maatwebsite/excel               | 3.1                 |
+| API Docs             | L5-Swagger (OpenAPI)            | 10.x                |
+| Internacionalización | @ngx-translate                  | 17.x                |
+| SSR                  | Angular SSR + Express           | Built-in            |
+| Package Manager      | Bun (con fallback a npm)        | 1.3+                |
+| Testing              | PHPUnit 11 / Vitest 4           | —                   |
 
 ---
 
@@ -172,12 +172,12 @@ SESSION_DOMAIN=localhost
 
 ### 5. URLs de desarrollo
 
-| Servicio | URL |
-|----------|-----|
-| Frontend | http://localhost:4200 |
-| API Backend | http://localhost:8000/api |
+| Servicio          | URL                                     |
+| ----------------- | --------------------------------------- |
+| Frontend          | http://localhost:4200                   |
+| API Backend       | http://localhost:8000/api               |
 | Swagger (OpenAPI) | http://localhost:8000/api/documentation |
-| PostgreSQL | localhost:5432 |
+| PostgreSQL        | localhost:5432                          |
 
 ---
 

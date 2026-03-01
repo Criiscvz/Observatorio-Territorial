@@ -1029,7 +1029,8 @@
     "totalTexts": "Texts analyzed",
     "uniqueWords": "Unique words",
     "avgLength": "Average length",
-    "phrasesFound": "Phrases found"
+    "phrasesFound": "Phrases found",
+    "loadError": "Failed to load text analysis"
   },
   "stopwords": {
     "title": "Custom stopwords",

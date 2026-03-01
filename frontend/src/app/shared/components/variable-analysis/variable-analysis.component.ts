@@ -327,7 +327,10 @@ export class VariableAnalysisComponent implements OnInit {
           this.numericStats.set(res.stats);
         }
       },
-      error: () => this.updateChartData(chart.id, null),
+      error: (err) => {
+        console.warn(`[VariableAnalysis] Error loading chart ${chart.chartType.id}:`, err);
+        this.updateChartData(chart.id, null);
+      },
     });
   }
 

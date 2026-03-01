@@ -1029,7 +1029,8 @@
     "totalTexts": "Textos analizados",
     "uniqueWords": "Palabras únicas",
     "avgLength": "Longitud promedio",
-    "phrasesFound": "Frases encontradas"
+    "phrasesFound": "Frases encontradas",
+    "loadError": "No se pudo cargar el análisis de texto"
   },
   "stopwords": {
     "title": "Palabras vacías personalizadas",
