@@ -1015,7 +1015,8 @@
     "chartSaved": "Gráfico guardado como predeterminado",
     "notFound": {
       "title": "Variable no encontrada",
-      "message": "La variable solicitada no existe o no pertenece a este dataset."
+      "message": "La variable solicitada no existe o no pertenece a este dataset.",
+      "backButton": "Volver al dataset"
     }
   },
   "textInsights": {

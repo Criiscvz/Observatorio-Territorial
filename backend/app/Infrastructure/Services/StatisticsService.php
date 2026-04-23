@@ -144,17 +144,22 @@ class StatisticsService implements StatisticsServiceInterface
     {
         $col = $this->sanitizeColumn($column);
 
+        // Only include rows whose value is actually castable to numeric.
+        // This prevents "invalid input syntax for type numeric" 500s when a NUMERICO
+        // column contains stray strings like "N/A", "-", or unit suffixes.
+        $onlyNumeric = "TRIM(data->>?) ~ '^-?[0-9]+(\.[0-9]+)?$'";
+
         $query = DB::table('registros_datos')
             ->where('dataset_id', $datasetId)
-            ->whereRaw("data->>? IS NOT NULL AND TRIM(data->>?) != ''", [$col, $col]);
+            ->whereRaw($onlyNumeric, [$col]);
         $query = $this->applyFilters($query, $filters);
 
         $stats = $query->selectRaw("
                 COUNT(*) as count,
-                AVG(NULLIF(TRIM(data->>?), '')::numeric) as mean,
-                MIN(NULLIF(TRIM(data->>?), '')::numeric) as min,
-                MAX(NULLIF(TRIM(data->>?), '')::numeric) as max,
-                SUM(NULLIF(TRIM(data->>?), '')::numeric) as sum
+                AVG((TRIM(data->>?))::numeric) as mean,
+                MIN((TRIM(data->>?))::numeric) as min,
+                MAX((TRIM(data->>?))::numeric) as max,
+                SUM((TRIM(data->>?))::numeric) as sum
             ", [$col, $col, $col, $col])
             ->first();
 
@@ -166,11 +171,11 @@ class StatisticsService implements StatisticsServiceInterface
 
         $histQuery = DB::table('registros_datos')
             ->where('dataset_id', $datasetId)
-            ->whereRaw("data->>? IS NOT NULL AND TRIM(data->>?) != ''", [$col, $col]);
+            ->whereRaw($onlyNumeric, [$col]);
         $histQuery = $this->applyFilters($histQuery, $filters);
 
         $histogram = $histQuery->selectRaw("
-                FLOOR(((data->>?)::numeric - ?) / ?) as bin,
+                FLOOR(((TRIM(data->>?))::numeric - ?) / ?) as bin,
                 COUNT(*) as count
             ", [$col, $min, $binSize])
             ->groupBy('bin')
@@ -210,7 +215,10 @@ class StatisticsService implements StatisticsServiceInterface
             ->where('dataset_id', $datasetId);
         $query = $this->applyFilters($query, $filters);
 
-        $data = $query->selectRaw("data->>? as categoria, COUNT(*) as count", [$col])
+        $data = $query->selectRaw("
+                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as categoria,
+                COUNT(*) as count
+            ", [$col])
             ->groupBy('categoria')
             ->orderByDesc('count')
             ->limit($limit)
@@ -232,10 +240,15 @@ class StatisticsService implements StatisticsServiceInterface
     {
         $col = $this->sanitizeColumn($column);
 
+        // Only include rows whose value starts with a YYYY-MM-DD or YYYY/MM/DD pattern.
+        // Prevents "invalid input for type date" 500s when a FECHA column contains
+        // free-form text. DATE() will still parse the matched prefix correctly.
+        $onlyDate = "data->>? ~ '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}'";
+
         $baseQuery = fn() => $this->applyFilters(
             DB::table('registros_datos')->where('dataset_id', $datasetId),
             $filters
-        );
+        )->whereRaw($onlyDate, [$col]);
 
         // Get date range to determine optimal granularity
         $range = $baseQuery()
@@ -244,7 +257,6 @@ class StatisticsService implements StatisticsServiceInterface
                 MAX(DATE(data->>?)) as max_date,
                 COUNT(*) as count
             ", [$col, $col])
-            ->whereRaw("data->>? IS NOT NULL AND data->>? != ''", [$col, $col])
             ->first();
 
         $minDate = $range->min_date ?? null;
@@ -280,7 +292,6 @@ class StatisticsService implements StatisticsServiceInterface
 
         $data = $baseQuery()
             ->selectRaw("{$formatExpr} as periodo, COUNT(*) as count", [$col])
-            ->whereRaw("data->>? IS NOT NULL AND data->>? != ''", [$col, $col])
             ->groupByRaw("{$groupExpr}", [$col])
             ->orderByRaw("{$groupExpr} ASC", [$col])
             ->limit($limit)
@@ -306,13 +317,15 @@ class StatisticsService implements StatisticsServiceInterface
         $colX = $this->sanitizeColumn($columnX);
         $colY = $this->sanitizeColumn($columnY);
 
+        $numericPattern = "^-?[0-9]+(\.[0-9]+)?$";
+
         $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId);
+            ->where('dataset_id', $datasetId)
+            ->whereRaw("TRIM(data->>?) ~ ?", [$colX, $numericPattern])
+            ->whereRaw("TRIM(data->>?) ~ ?", [$colY, $numericPattern]);
         $query = $this->applyFilters($query, $filters);
 
-        $points = $query->selectRaw("(data->>?)::numeric as x, (data->>?)::numeric as y", [$colX, $colY])
-            ->whereRaw("data->>? IS NOT NULL", [$colX])
-            ->whereRaw("data->>? IS NOT NULL", [$colY])
+        $points = $query->selectRaw("(TRIM(data->>?))::numeric as x, (TRIM(data->>?))::numeric as y", [$colX, $colY])
             ->limit(1000)
             ->get()
             ->map(fn($p) => [(float) $p->x, (float) $p->y])
@@ -338,12 +351,13 @@ class StatisticsService implements StatisticsServiceInterface
         $num = $this->sanitizeColumn($numColumn);
 
         $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId);
+            ->where('dataset_id', $datasetId)
+            ->whereRaw("TRIM(data->>?) ~ '^-?[0-9]+(\.[0-9]+)?$'", [$num]);
         $query = $this->applyFilters($query, $filters);
 
         $data = $query->selectRaw("
-                data->>? as categoria,
-                AVG((data->>?)::numeric) as avg_value,
+                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as categoria,
+                AVG((TRIM(data->>?))::numeric) as avg_value,
                 COUNT(*) as count
             ", [$cat, $num])
             ->groupBy('categoria')
@@ -374,21 +388,25 @@ class StatisticsService implements StatisticsServiceInterface
         );
 
         $labelsX = $baseQuery()
-            ->selectRaw("DISTINCT data->>? as cat", [$colX])
+            ->selectRaw("DISTINCT COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat", [$colX])
             ->orderBy('cat')
             ->limit($limit)
             ->pluck('cat')
             ->toArray();
 
         $labelsY = $baseQuery()
-            ->selectRaw("DISTINCT data->>? as cat", [$colY])
+            ->selectRaw("DISTINCT COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat", [$colY])
             ->orderBy('cat')
             ->limit($limit)
             ->pluck('cat')
             ->toArray();
 
         $counts = $baseQuery()
-            ->selectRaw("data->>? as cat_x, data->>? as cat_y, COUNT(*) as count", [$colX, $colY])
+            ->selectRaw("
+                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat_x,
+                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat_y,
+                COUNT(*) as count
+            ", [$colX, $colY])
             ->groupBy('cat_x', 'cat_y')
             ->get();
 
@@ -419,16 +437,16 @@ class StatisticsService implements StatisticsServiceInterface
         $num = $this->sanitizeColumn($numColumn);
 
         $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId);
+            ->where('dataset_id', $datasetId)
+            ->whereRaw("data->>? ~ '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}'", [$date])
+            ->whereRaw("TRIM(data->>?) ~ '^-?[0-9]+(\.[0-9]+)?$'", [$num]);
         $query = $this->applyFilters($query, $filters);
 
         $data = $query->selectRaw("
                 DATE(data->>?) as fecha,
-                AVG((data->>?)::numeric) as avg_value,
+                AVG((TRIM(data->>?))::numeric) as avg_value,
                 COUNT(*) as count
             ", [$date, $num])
-            ->whereRaw("data->>? IS NOT NULL", [$date])
-            ->whereRaw("data->>? IS NOT NULL", [$num])
             ->groupBy('fecha')
             ->orderBy('fecha')
             ->limit($limit)
@@ -455,10 +473,10 @@ class StatisticsService implements StatisticsServiceInterface
         $baseQuery = fn() => $this->applyFilters(
             DB::table('registros_datos')->where('dataset_id', $datasetId),
             $filters
-        );
+        )->whereRaw("data->>? ~ '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}'", [$date]);
 
         $categories = $baseQuery()
-            ->selectRaw("DISTINCT data->>? as cat", [$cat])
+            ->selectRaw("DISTINCT COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat", [$cat])
             ->orderBy('cat')
             ->limit(10)
             ->pluck('cat')
@@ -472,7 +490,11 @@ class StatisticsService implements StatisticsServiceInterface
             ->toArray();
 
         $counts = $baseQuery()
-            ->selectRaw("DATE(data->>?) as fecha, data->>? as categoria, COUNT(*) as count", [$date, $cat])
+            ->selectRaw("
+                DATE(data->>?) as fecha,
+                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as categoria,
+                COUNT(*) as count
+            ", [$date, $cat])
             ->groupBy('fecha', 'categoria')
             ->get();
 

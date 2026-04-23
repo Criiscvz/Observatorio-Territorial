@@ -263,7 +263,7 @@
         </div>
 
         <!-- Cross-variable Charts -->
-        @if (crossCharts().length > 0) {
+        @if (crossVariable()) {
           <mat-divider class="section-divider"></mat-divider>
           <h3 class="section-subtitle cross-title">
             <mat-icon>compare_arrows</mat-icon>
@@ -280,6 +280,42 @@
                 (remove)="removeCrossChart($event)"
                 (save)="saveChartAsPredefined($event)"
               />
+            }
+          </div>
+
+          <!-- Add more cross charts button -->
+          <div class="add-chart-section">
+            @if (!showCrossChartSelector()) {
+              <button
+                mat-stroked-button
+                class="add-chart-btn"
+                (click)="showCrossChartSelector.set(true)"
+                [disabled]="compatibleBivariableChartTypes().length === 0"
+              >
+                <mat-icon>add_chart</mat-icon>
+                {{ 'variableAnalysis.addChart' | translate }}
+              </button>
+            } @else {
+              <div class="mini-chart-selector">
+                <div class="mini-selector-header">
+                  <span>{{ 'variableAnalysis.selectChartType' | translate }}</span>
+                  <button mat-icon-button (click)="showCrossChartSelector.set(false)">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+                <div class="mini-types-grid">
+                  @for (type of compatibleBivariableChartTypes(); track type.id) {
+                    <button
+                      class="mini-type-card"
+                      (click)="addAdditionalCrossChart(type)"
+                      [matTooltip]="type.description"
+                    >
+                      <mat-icon>{{ type.icon }}</mat-icon>
+                      <span>{{ type.name }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
             }
           </div>
         }

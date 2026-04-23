@@ -76,10 +76,14 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
           <mat-icon>close</mat-icon>
         </button>
       </div>
-      <mat-card-header>
-        <mat-icon mat-card-avatar>{{ chart().chartType.icon }}</mat-icon>
-        <mat-card-title>{{ chart().title }}</mat-card-title>
-        <mat-card-subtitle>{{
+      <mat-card-header class="chart-card-header">
+        <div class="chart-card-avatar" aria-hidden="true">
+          <mat-icon>{{ chart().chartType.icon }}</mat-icon>
+        </div>
+        <mat-card-title class="chart-card-title" [title]="chart().title">{{
+          chart().title
+        }}</mat-card-title>
+        <mat-card-subtitle class="chart-card-subtitle">{{
           'charts.types.' + chart().chartType.id + '.name' | translate
         }}</mat-card-subtitle>
       </mat-card-header>
@@ -132,6 +136,61 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
         z-index: 10;
         display: flex;
         gap: 2px;
+      }
+
+      /* Custom header: icon chip + title + subtitle, with right padding reserved
+         for the absolute-positioned .chart-actions buttons. */
+      .chart-card-header {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        grid-template-rows: auto auto;
+        align-items: center;
+        column-gap: 12px;
+        row-gap: 2px;
+        padding-right: 140px; /* space for action buttons */
+        min-height: 48px;
+      }
+
+      .chart-card-avatar {
+        grid-row: 1 / span 2;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--primary-600, #6366f1) 12%, transparent);
+        color: var(--primary-600, #6366f1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .chart-card-avatar mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+      }
+
+      .chart-card-title {
+        grid-column: 2;
+        grid-row: 1;
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.25;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+
+      .chart-card-subtitle {
+        grid-column: 2;
+        grid-row: 2;
+        margin: 0;
+        font-size: 0.75rem;
+        color: var(--text-secondary, rgba(0, 0, 0, 0.6));
+        line-height: 1.2;
       }
 
       .save-chart mat-icon {
