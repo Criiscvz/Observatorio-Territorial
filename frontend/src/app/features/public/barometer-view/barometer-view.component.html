@@ -1,0 +1,126 @@
+<div class="page-container">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>{{ 'public.barometer.loading' | translate }}</p>
+    </div>
+  } @else if (error()) {
+    <!-- Error state -->
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <h2>{{ 'public.departmentDetail.notFound.title' | translate }}</h2>
+      <p>{{ 'public.departmentDetail.notFound.message' | translate }}</p>
+      <a mat-stroked-button routerLink="/publico">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'public.departmentDetail.notFound.backButton' | translate }}
+      </a>
+    </div>
+  } @else {
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a routerLink="/publico">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'public.home.nav.home' | translate }}
+      </a>
+    </nav>
+
+    <!-- Category Header -->
+    <div class="category-header" [style.--accent-color]="categoria()?.color || '#6366F1'">
+      <div
+        class="header-avatar"
+        [style.background]="
+          'linear-gradient(135deg, ' +
+          (categoria()?.color || '#6366F1') +
+          ' 0%, ' +
+          (categoria()?.color || '#4F46E5') +
+          'dd 100%)'
+        "
+      >
+        @if (categoria()?.icono) {
+          <mat-icon>{{ categoria()!.icono }}</mat-icon>
+        } @else {
+          <mat-icon>bar_chart</mat-icon>
+        }
+      </div>
+      <div class="header-info">
+        <h1>{{ 'public.barometer.' + i18nSection + '.title' | translate }}</h1>
+        <p class="description">{{ 'public.barometer.' + i18nSection + '.subtitle' | translate }}</p>
+        <div class="header-stats">
+          <span class="stat">
+            <mat-icon>table_chart</mat-icon>
+            {{ datasets().length }}
+            {{ 'public.departmentDetail.stats.datasets' | translate }}
+          </span>
+          <span class="stat">
+            <mat-icon>storage</mat-icon>
+            {{ totalRegistros | number }}
+            {{ 'public.departmentDetail.stats.records' | translate }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datasets Section -->
+    <section class="datasets-section">
+      <h2 class="section-title">
+        <mat-icon>folder_open</mat-icon>
+        {{ 'public.departmentDetail.datasets.title' | translate }}
+      </h2>
+
+      @if (datasets().length > 0) {
+        <div class="datasets-grid">
+          @for (ds of datasets(); track ds.id; let i = $index) {
+            <a [routerLink]="['/publico/datasets', ds.id]" class="dataset-card">
+              <div class="card-icon" [style.background]="getDatasetColor(i)">
+                <mat-icon>description</mat-icon>
+              </div>
+              <div class="card-content">
+                <h3>{{ ds.nombre }}</h3>
+                @if (ds.descripcion) {
+                  <p class="dataset-description">{{ ds.descripcion }}</p>
+                }
+                <div class="dataset-meta">
+                  <span class="meta-item">
+                    <mat-icon>grid_on</mat-icon>
+                    {{ ds.total_registros | number }}
+                    {{ 'public.departmentDetail.stats.records' | translate }}
+                  </span>
+                  @if (ds.departamento) {
+                    <span class="meta-item">
+                      <mat-icon>business</mat-icon>
+                      {{ ds.departamento.nombre }}
+                    </span>
+                  }
+                  @if (ds.created_at) {
+                    <span class="meta-item">
+                      <mat-icon>calendar_today</mat-icon>
+                      {{ ds.created_at | date: 'dd/MM/yyyy' }}
+                    </span>
+                  }
+                </div>
+                <div class="variables-preview">
+                  @if (ds.variables_metadatos && ds.variables_metadatos.length > 0) {
+                    @for (v of ds.variables_metadatos.slice(0, 4); track v.id) {
+                      <span class="variable-chip" [class]="getTypeClass(v.tipo_dato)">
+                        {{ v.nombre_original }}
+                      </span>
+                    }
+                    @if (ds.variables_metadatos.length > 4) {
+                      <span class="more-chip">+{{ ds.variables_metadatos.length - 4 }}</span>
+                    }
+                  }
+                </div>
+              </div>
+              <mat-icon class="card-arrow">chevron_right</mat-icon>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <mat-icon>folder_off</mat-icon>
+          <h3>{{ 'public.barometer.' + i18nSection + '.empty' | translate }}</h3>
+        </div>
+      }
+    </section>
+  }
+</div>

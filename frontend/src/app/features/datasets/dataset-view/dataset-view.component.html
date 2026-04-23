@@ -1,0 +1,410 @@
+<div class="space-y-6">
+  @if (loading()) {
+    <div class="flex justify-center py-12">
+      <mat-spinner></mat-spinner>
+    </div>
+  } @else if (datasetInfo()) {
+    <!-- Header -->
+    <div class="dataset-header">
+      <div class="flex items-center gap-4">
+        <a
+          mat-icon-button
+          [routerLink]="['/admin/departamentos', departamentoId()]"
+          [matTooltip]="'common.buttons.back' | translate"
+        >
+          <mat-icon>arrow_back</mat-icon>
+        </a>
+        <div>
+          <h1 class="dataset-title">{{ datasetInfo()?.nombre }}</h1>
+          @if (editingDescription()) {
+            <div class="description-edit">
+              <mat-form-field appearance="outline" class="description-field">
+                <mat-label>{{ 'common.labels.description' | translate }}</mat-label>
+                <textarea matInput
+                  [ngModel]="editDescriptionValue()"
+                  (ngModelChange)="editDescriptionValue.set($event)"
+                  rows="2"
+                  maxlength="2000"
+                ></textarea>
+              </mat-form-field>
+              <div class="description-actions">
+                <button mat-flat-button color="primary"
+                  [disabled]="savingDescription()"
+                  (click)="saveDescription()">
+                  <mat-icon>check</mat-icon>
+                  {{ 'common.buttons.save' | translate }}
+                </button>
+                <button mat-button (click)="cancelEditDescription()">
+                  {{ 'common.buttons.cancel' | translate }}
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="description-display">
+              @if (datasetInfo()?.descripcion) {
+                <p class="dataset-description">{{ datasetInfo()?.descripcion }}</p>
+              } @else {
+                <p class="dataset-description placeholder">{{ 'datasets.view.addDescription' | translate }}</p>
+              }
+              <button mat-icon-button class="edit-description-btn"
+                [matTooltip]="'common.buttons.edit' | translate"
+                (click)="startEditDescription()">
+                <mat-icon>edit</mat-icon>
+              </button>
+            </div>
+          }
+          <p class="dataset-subtitle">
+            {{ datasetInfo()?.total_registros | number }} {{ 'common.units.records' | translate }}
+          </p>
+        </div>
+      </div>
+      @if (datasetInfo()?.estado === 'PENDIENTE') {
+        <mat-chip class="status-chip pending">
+          <mat-icon>hourglass_empty</mat-icon>
+          {{ 'datasets.status.pendiente' | translate }}
+        </mat-chip>
+      }
+    </div>
+
+    <!-- Advertencia de dataset pendiente -->
+    @if (isDatasetPending()) {
+      <div class="pending-warning-card">
+        <div class="warning-icon-container">
+          <mat-icon class="warning-icon">warning_amber</mat-icon>
+        </div>
+        <div class="warning-content">
+          <h3 class="warning-title">{{ 'datasets.view.pendingWarning.title' | translate }}</h3>
+          <p class="warning-message">{{ 'datasets.view.pendingWarning.message' | translate }}</p>
+          <div class="warning-actions">
+            <a
+              mat-raised-button
+              color="primary"
+              [routerLink]="['/admin/datasets', datasetId(), 'importar']"
+            >
+              <mat-icon>settings</mat-icon>
+              {{ 'datasets.view.pendingWarning.continueConfig' | translate }}
+            </a>
+            <button mat-stroked-button color="warn" (click)="deleteIncompleteDataset()">
+              <mat-icon>delete</mat-icon>
+              {{ 'datasets.view.pendingWarning.deleteDataset' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Tabs principales -->
+    <mat-tab-group animationDuration="200ms">
+      <!-- Tab: Datos -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">table_chart</mat-icon>
+          {{ 'datasets.view.tabs.data' | translate }}
+        </ng-template>
+        <div class="py-4">
+          <mat-card>
+            <mat-card-content>
+              @if (visibleColumns().length > 0 && tableData().length > 0) {
+                <!-- Controles de navegación horizontal -->
+                @if (visibleColumns().length > 5) {
+                  <div class="table-nav-controls">
+                    <button
+                      mat-mini-fab
+                      color="primary"
+                      class="nav-btn nav-btn-left"
+                      (click)="scrollTableLeft()"
+                      [matTooltip]="'datasets.view.data.scrollLeft' | translate"
+                    >
+                      <mat-icon>chevron_left</mat-icon>
+                    </button>
+                    <span class="nav-hint">{{ 'datasets.view.data.scrollHint' | translate }}</span>
+                    <button
+                      mat-mini-fab
+                      color="primary"
+                      class="nav-btn nav-btn-right"
+                      (click)="scrollTableRight()"
+                      [matTooltip]="'datasets.view.data.scrollRight' | translate"
+                    >
+                      <mat-icon>chevron_right</mat-icon>
+                    </button>
+                  </div>
+                }
+                <div class="table-scroll-wrapper">
+                  @if (visibleColumns().length > 5) {
+                    <button
+                      mat-icon-button
+                      class="scroll-arrow scroll-arrow-left"
+                      (click)="scrollTableLeft()"
+                      [class.hidden]="!canScrollLeft"
+                    >
+                      <mat-icon>keyboard_arrow_left</mat-icon>
+                    </button>
+                  }
+
+                  <div
+                    class="table-scroll-container"
+                    #tableScrollContainer
+                    (scroll)="onTableScroll()"
+                  >
+                    <table mat-table [dataSource]="tableData()" class="w-full">
+                      <ng-container
+                        *ngFor="let col of visibleColumns()"
+                        [matColumnDef]="col._uniqueId"
+                      >
+                        <th mat-header-cell *matHeaderCellDef>
+                          <div class="flex items-center gap-1">
+                            <span>{{ col.nombre_original || col.nombre_columna }}</span>
+                          </div>
+                        </th>
+                        <td mat-cell *matCellDef="let row">{{ row.data[col.nombre_columna] }}</td>
+                      </ng-container>
+                      <tr mat-header-row *matHeaderRowDef="columnNames()"></tr>
+                      <tr mat-row *matRowDef="let row; columns: columnNames()"></tr>
+                    </table>
+                  </div>
+
+                  @if (visibleColumns().length > 5) {
+                    <button
+                      mat-icon-button
+                      class="scroll-arrow scroll-arrow-right"
+                      (click)="scrollTableRight()"
+                      [class.hidden]="!canScrollRight"
+                    >
+                      <mat-icon>keyboard_arrow_right</mat-icon>
+                    </button>
+                  }
+                </div>
+              } @else if (!loading()) {
+                <div class="empty-state">
+                  <mat-icon>table_rows</mat-icon>
+                  <p>{{ 'datasets.view.data.noData' | translate }}</p>
+                </div>
+              }
+              <mat-paginator
+                [length]="pagination().total"
+                [pageSize]="pagination().per_page"
+                [pageIndex]="pagination().current_page - 1"
+                [pageSizeOptions]="[25, 50, 100]"
+                (page)="onPageChange($event)"
+                showFirstLastButtons
+              >
+              </mat-paginator>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Configurar Variables -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">settings</mat-icon>
+          {{ 'datasets.view.tabs.variables' | translate }}
+        </ng-template>
+        <div class="py-4">
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>{{ 'datasets.view.variables.title' | translate }}</mat-card-title>
+              <mat-card-subtitle>{{
+                'datasets.view.variables.subtitle' | translate
+              }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <table mat-table [dataSource]="variables()" class="w-full">
+                <ng-container matColumnDef="nombre">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'datasets.view.variables.column' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let v">
+                    <span class="font-medium">{{ v.nombre_original }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="tipo_dato">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'datasets.view.variables.type' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let v">
+                    <mat-form-field appearance="outline" class="!w-36 !text-sm">
+                      <mat-select [(value)]="v.tipo_dato" (selectionChange)="updateVariable(v)">
+                        <mat-option value="NUMERICO">{{
+                          'dataTypes.numeric' | translate
+                        }}</mat-option>
+                        <mat-option value="CATEGORICO">{{
+                          'dataTypes.categorical' | translate
+                        }}</mat-option>
+                        <mat-option value="FECHA">{{ 'dataTypes.date' | translate }}</mat-option>
+                        <mat-option value="TEXTO">{{ 'dataTypes.text' | translate }}</mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="es_visible">
+                  <th mat-header-cell *matHeaderCellDef>
+                    {{ 'datasets.view.variables.visible' | translate }}
+                  </th>
+                  <td mat-cell *matCellDef="let v">
+                    <mat-checkbox
+                      [(ngModel)]="v.es_visible"
+                      (change)="updateVariable(v)"
+                      color="primary"
+                    >
+                    </mat-checkbox>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['nombre', 'tipo_dato', 'es_visible']"></tr>
+                <tr
+                  mat-row
+                  *matRowDef="let row; columns: ['nombre', 'tipo_dato', 'es_visible']"
+                ></tr>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Análisis y Gráficos -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">analytics</mat-icon>
+          {{ 'datasets.view.tabs.analysis' | translate }}
+        </ng-template>
+        <div class="py-4">
+          <app-variable-list
+            [variables]="analysableVariables()"
+            [enableBulkActions]="true"
+            (variableSelected)="onVariableSelected($event)"
+            (bulkActionRequested)="onBulkAction($event)"
+          />
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Fuentes -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">link</mat-icon>
+          {{ 'datasets.view.sources.title' | translate }}
+        </ng-template>
+        <div class="py-4 space-y-4">
+          <!-- Add source button -->
+          <div class="flex justify-end">
+            <button mat-raised-button color="primary" (click)="openSourceForm()">
+              <mat-icon>add</mat-icon>
+              {{ 'datasets.view.sources.addSource' | translate }}
+            </button>
+          </div>
+
+          <!-- Source form -->
+          @if (showSourceForm()) {
+            <mat-card class="source-form-card">
+              <mat-card-content>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ 'datasets.view.sources.sourceTitle' | translate }}</mat-label>
+                    <input
+                      matInput
+                      [value]="sourceForm().titulo"
+                      (input)="sourceForm.set({...sourceForm(), titulo: $any($event.target).value})"
+                    />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ 'datasets.view.sources.sourceUrl' | translate }}</mat-label>
+                    <input
+                      matInput
+                      [value]="sourceForm().url"
+                      (input)="sourceForm.set({...sourceForm(), url: $any($event.target).value})"
+                    />
+                  </mat-form-field>
+                </div>
+                <mat-form-field appearance="outline" class="w-full">
+                  <mat-label>{{ 'datasets.view.sources.sourceDescription' | translate }}</mat-label>
+                  <input
+                    matInput
+                    [value]="sourceForm().descripcion"
+                    (input)="sourceForm.set({...sourceForm(), descripcion: $any($event.target).value})"
+                  />
+                </mat-form-field>
+                <div class="form-actions">
+                  <button mat-stroked-button (click)="closeSourceForm()">
+                    {{ 'common.buttons.cancel' | translate }}
+                  </button>
+                  <button
+                    mat-raised-button
+                    color="primary"
+                    (click)="saveSource()"
+                    [disabled]="!sourceForm().titulo || !sourceForm().url"
+                  >
+                    {{ 'common.buttons.save' | translate }}
+                  </button>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+
+          <!-- Sources list -->
+          @if (fuentes().length > 0) {
+            <div class="sources-list">
+              @for (fuente of fuentes(); track fuente.id) {
+                <mat-card class="source-item">
+                  <mat-card-content class="flex items-start gap-4">
+                    <div class="source-icon">
+                      <mat-icon>link</mat-icon>
+                    </div>
+                    <div class="flex-grow">
+                      <h4 class="source-title">{{ fuente.titulo }}</h4>
+                      @if (fuente.descripcion) {
+                        <p class="source-description">{{ fuente.descripcion }}</p>
+                      }
+                      <a
+                        [href]="fuente.url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="source-url"
+                      >
+                        {{ fuente.url }}
+                        <mat-icon class="url-icon">open_in_new</mat-icon>
+                      </a>
+                    </div>
+                    <div class="source-actions">
+                      <button
+                        mat-icon-button
+                        (click)="openSourceForm(fuente)"
+                        [matTooltip]="'common.buttons.edit' | translate"
+                      >
+                        <mat-icon>edit</mat-icon>
+                      </button>
+                      <button
+                        mat-icon-button
+                        color="warn"
+                        (click)="deleteSource(fuente)"
+                        [matTooltip]="'common.buttons.delete' | translate"
+                      >
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          } @else {
+            <mat-card>
+              <mat-card-content class="empty-state">
+                <mat-icon>link_off</mat-icon>
+                <p>{{ 'datasets.view.sources.noSources' | translate }}</p>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Configuración -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="mr-2">settings</mat-icon>
+          {{ 'datasets.view.tabs.settings' | translate }}
+        </ng-template>
+        <div class="py-4 settings-content">
+          <app-stopwords-manager [datasetId]="datasetId()" />
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

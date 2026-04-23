@@ -1,0 +1,347 @@
+<div class="dashboard">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="welcome-section">
+        <span class="greeting">{{ getGreeting() }}</span>
+        <h1 class="welcome-title">{{ authService.user()?.name || 'Usuario' }}</h1>
+        <p class="welcome-subtitle">{{ 'dashboard.welcomeMessage' | translate }}</p>
+      </div>
+      <div class="header-actions">
+        <a class="action-btn secondary" routerLink="/admin/datasets/nuevo">
+          <mat-icon>cloud_upload</mat-icon>
+          <span>{{ 'common.buttons.import' | translate }}</span>
+        </a>
+        <a class="action-btn primary" routerLink="/admin/departamentos/nuevo">
+          <mat-icon>add</mat-icon>
+          <span>{{ 'dashboard.quickActions.newDepartment' | translate }}</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>{{ 'common.messages.loading' | translate }}</p>
+    </div>
+  } @else {
+    <!-- Stats Grid -->
+    <section class="stats-section">
+      <div class="stats-grid">
+        <!-- Departamentos -->
+        <div class="stat-card" [style.--accent-color]="'99, 102, 241'">
+          <div class="stat-icon">
+            <mat-icon>folder</mat-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">{{ 'dashboard.stats.totalDepartments' | translate }}</span>
+            <span class="stat-value">{{ departamentos().length }}</span>
+          </div>
+          <div class="stat-trend positive">
+            <mat-icon>visibility</mat-icon>
+            <span>{{ departamentosPublicos() }} {{ 'common.labels.public' | translate }}</span>
+          </div>
+        </div>
+
+        <!-- Datasets -->
+        <div class="stat-card" [style.--accent-color]="'236, 72, 153'">
+          <div class="stat-icon">
+            <mat-icon>table_chart</mat-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">{{ 'dashboard.stats.totalDatasets' | translate }}</span>
+            <span class="stat-value">{{ totalDatasets() }}</span>
+          </div>
+          <div class="stat-trend">
+            <mat-icon>check_circle</mat-icon>
+            <span>{{ completionRate() }}% {{ 'dashboard.stats.completed' | translate }}</span>
+          </div>
+        </div>
+
+        <!-- Registros -->
+        <div class="stat-card" [style.--accent-color]="'20, 184, 166'">
+          <div class="stat-icon">
+            <mat-icon>analytics</mat-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">{{ 'dashboard.stats.totalRecords' | translate }}</span>
+            <span class="stat-value">{{ formatNumber(totalRegistros()) }}</span>
+          </div>
+          <div class="stat-trend">
+            <mat-icon>data_usage</mat-icon>
+            <span>{{ totalVariables() }} {{ 'dashboard.stats.variables' | translate }}</span>
+          </div>
+        </div>
+
+        <!-- Públicos -->
+        <div class="stat-card" [style.--accent-color]="'245, 158, 11'">
+          <div class="stat-icon">
+            <mat-icon>public</mat-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">{{ 'dashboard.stats.publicDepartments' | translate }}</span>
+            <span class="stat-value">{{ departamentosPublicos() }}</span>
+          </div>
+          <div class="stat-trend">
+            @if (departamentos().length > 0) {
+              <span>{{ (departamentosPublicos() * 100 / departamentos().length) | number:'1.0-0' }}% {{ 'common.labels.visible' | translate }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Data Overview Section -->
+    <section class="data-overview">
+      <div class="overview-grid">
+        <!-- Dataset Distribution Chart -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon teal">
+                <mat-icon>bar_chart</mat-icon>
+              </div>
+              <div>
+                <h3 class="card-title">{{ 'dashboard.distribution.title' | translate }}</h3>
+                <p class="card-subtitle">{{ 'dashboard.distribution.subtitle' | translate }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body chart-body">
+            @if (departamentos().length > 0) {
+              <div echarts [options]="distributionChartOptions()"
+                   class="distribution-chart"></div>
+            } @else {
+              <div class="empty-state mini">
+                <mat-icon>bar_chart</mat-icon>
+                <p>{{ 'dashboard.distribution.empty' | translate }}</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Data Health / Status Overview -->
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon orange">
+                <mat-icon>monitor_heart</mat-icon>
+              </div>
+              <div>
+                <h3 class="card-title">{{ 'dashboard.health.title' | translate }}</h3>
+                <p class="card-subtitle">{{ 'dashboard.health.subtitle' | translate }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="card-body health-body">
+            @if (totalDatasets() > 0) {
+              <div class="health-grid">
+                <div class="health-chart-wrapper">
+                  <div echarts [options]="statusChartOptions()"
+                       class="status-chart"></div>
+                  <div class="health-center-label">
+                    <span class="health-percent">{{ completionRate() }}%</span>
+                    <span class="health-text">{{ 'dashboard.health.healthy' | translate }}</span>
+                  </div>
+                </div>
+                <div class="health-details">
+                  <div class="health-row">
+                    <span class="health-dot" style="background: #10b981"></span>
+                    <span class="health-label">{{ 'datasets.status.completed' | translate }}</span>
+                    <span class="health-value">{{ datasetsByStatus()['COMPLETADO'] }}</span>
+                  </div>
+                  <div class="health-row">
+                    <span class="health-dot" style="background: #f59e0b"></span>
+                    <span class="health-label">{{ 'datasets.status.processing' | translate }}</span>
+                    <span class="health-value">{{ datasetsByStatus()['PROCESANDO'] }}</span>
+                  </div>
+                  @if (datasetsByStatus()['ERROR'] > 0) {
+                    <div class="health-row error">
+                      <span class="health-dot" style="background: #ef4444"></span>
+                      <span class="health-label">{{ 'datasets.status.error' | translate }}</span>
+                      <span class="health-value">{{ datasetsByStatus()['ERROR'] }}</span>
+                    </div>
+                  }
+                  @if (datasetsByStatus()['PENDIENTE'] > 0) {
+                    <div class="health-row">
+                      <span class="health-dot" style="background: #94a3b8"></span>
+                      <span class="health-label">{{ 'datasets.status.pending' | translate }}</span>
+                      <span class="health-value">{{ datasetsByStatus()['PENDIENTE'] }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            } @else {
+              <div class="empty-state mini">
+                <mat-icon>monitor_heart</mat-icon>
+                <p>{{ 'dashboard.health.empty' | translate }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <section class="content-grid">
+      <!-- Departamentos Recientes -->
+      <div class="content-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon purple">
+              <mat-icon>folder</mat-icon>
+            </div>
+            <div>
+              <h3 class="card-title">{{ 'dashboard.recentDepartments.title' | translate }}</h3>
+              <p class="card-subtitle">{{ 'dashboard.recentDepartments.viewAll' | translate }}</p>
+            </div>
+          </div>
+          <a class="view-all" routerLink="/admin/dashboard">
+            {{ 'dashboard.recentDepartments.viewAll' | translate }}
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+        </div>
+
+        <div class="card-body">
+          @if (departamentos().length > 0) {
+            <div class="items-list">
+              @for (depto of departamentosRecientes(); track depto.id) {
+                <a class="list-item" [routerLink]="['/admin/departamentos', depto.id]" matRipple>
+                  <div class="item-avatar" [style.background]="getDeptoColor($index)">
+                    @if (depto.icono) {
+                      <mat-icon>{{ depto.icono }}</mat-icon>
+                    } @else {
+                      {{ depto.nombre.charAt(0).toUpperCase() }}
+                    }
+                  </div>
+                  <div class="item-content">
+                    <span class="item-title">{{ depto.nombre }}</span>
+                    <span class="item-meta">
+                      {{ depto.datasets?.length || 0 }} {{ 'common.units.datasets' | translate }}
+                      @if (depto.publico) {
+                        <span class="badge success">{{ 'common.labels.public' | translate }}</span>
+                      }
+                    </span>
+                  </div>
+                  <mat-icon class="item-arrow">chevron_right</mat-icon>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>folder_off</mat-icon>
+              <p>{{ 'dashboard.recentDepartments.empty' | translate }}</p>
+              <a routerLink="/admin/departamentos/nuevo" class="empty-action">{{
+                'layout.sidebar.createOne' | translate
+              }}</a>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Datasets Recientes -->
+      <div class="content-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon blue">
+              <mat-icon>description</mat-icon>
+            </div>
+            <div>
+              <h3 class="card-title">{{ 'dashboard.recentDatasets.title' | translate }}</h3>
+              <p class="card-subtitle">{{ 'dashboard.recentDatasets.viewAll' | translate }}</p>
+            </div>
+          </div>
+          <a class="view-all" routerLink="/admin/datasets">
+            {{ 'dashboard.recentDatasets.viewAll' | translate }}
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+        </div>
+
+        <div class="card-body">
+          @if (datasetsRecientes().length > 0) {
+            <div class="items-list">
+              @for (ds of datasetsRecientes(); track ds.id) {
+                <a class="list-item" [routerLink]="['/admin/datasets', ds.id]" matRipple>
+                  <div class="item-icon blue">
+                    <mat-icon>table_chart</mat-icon>
+                  </div>
+                  <div class="item-content">
+                    <span class="item-title">{{ ds.nombre }}</span>
+                    <span class="item-meta">
+                      {{ ds.total_registros | number }} {{ 'common.units.records' | translate }}
+                      <span class="badge" [class]="getEstadoBadgeClass(ds.estado)">{{
+                        ds.estado
+                      }}</span>
+                    </span>
+                  </div>
+                  <mat-icon class="item-arrow">chevron_right</mat-icon>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>description</mat-icon>
+              <p>{{ 'dashboard.recentDatasets.empty' | translate }}</p>
+              <a routerLink="/admin/datasets/nuevo" class="empty-action">{{
+                'common.buttons.import' | translate
+              }}</a>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+      <h3 class="section-title">{{ 'dashboard.quickActions.title' | translate }}</h3>
+      <div class="actions-grid">
+        <a class="quick-action" routerLink="/admin/departamentos/nuevo" matRipple>
+          <div class="action-icon purple">
+            <mat-icon>add_business</mat-icon>
+          </div>
+          <span class="action-label">{{ 'dashboard.quickActions.newDepartment' | translate }}</span>
+          <p class="action-desc">{{ 'dashboard.quickActions.newDepartmentDesc' | translate }}</p>
+        </a>
+
+        <a class="quick-action" routerLink="/admin/datasets/nuevo" matRipple>
+          <div class="action-icon blue">
+            <mat-icon>cloud_upload</mat-icon>
+          </div>
+          <span class="action-label">{{ 'dashboard.quickActions.uploadDataset' | translate }}</span>
+          <p class="action-desc">{{ 'dashboard.quickActions.uploadDatasetDesc' | translate }}</p>
+        </a>
+
+        <a class="quick-action" routerLink="/admin/datasets" matRipple>
+          <div class="action-icon teal">
+            <mat-icon>folder_open</mat-icon>
+          </div>
+          <span class="action-label">{{ 'dashboard.quickActions.viewAll' | translate }}</span>
+          <p class="action-desc">{{ 'dashboard.quickActions.viewAllDesc' | translate }}</p>
+        </a>
+
+        @if (datasetsRecientes().length > 0) {
+          <a
+            class="quick-action"
+            [routerLink]="['/admin/datasets', datasetsRecientes()[0].id]"
+            matRipple
+          >
+            <div class="action-icon orange">
+              <mat-icon>analytics</mat-icon>
+            </div>
+            <span class="action-label">{{ 'datasets.view.tabs.analysis' | translate }}</span>
+            <p class="action-desc">{{ 'common.messages.processing' | translate }}</p>
+          </a>
+        } @else {
+          <div class="quick-action disabled">
+            <div class="action-icon gray">
+              <mat-icon>analytics</mat-icon>
+            </div>
+            <span class="action-label">{{ 'datasets.view.analysis.noCharts' | translate }}</span>
+            <p class="action-desc">{{ 'datasets.list.emptyDescription' | translate }}</p>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>

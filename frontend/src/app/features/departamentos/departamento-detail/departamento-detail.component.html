@@ -1,0 +1,125 @@
+@if (loading()) {
+  <div class="flex justify-center py-12">
+    <mat-spinner></mat-spinner>
+  </div>
+} @else if (departamento()) {
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-3xl font-bold text-[var(--text-primary)]">{{ departamento()?.nombre }}</h1>
+        <p class="text-[var(--text-secondary)]">
+          {{ departamento()?.descripcion || ('departamentos.detail.noDescription' | translate) }}
+        </p>
+        <p class="text-sm text-[var(--text-tertiary)] mt-1">
+          {{ 'departamentos.detail.code' | translate }}: {{ departamento()?.codigo_interno }}
+          @if (departamento()?.publico) {
+            <span
+              class="ml-2 bg-[var(--success-bg-solid)] text-[var(--success-color)] px-2 py-1 rounded text-xs"
+              >{{ 'departamentos.detail.publicBadge' | translate }}</span
+            >
+          }
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <a mat-button [routerLink]="['/admin/departamentos', departamento()?.id, 'editar']">
+          <mat-icon>edit</mat-icon>
+          {{ 'common.buttons.edit' | translate }}
+        </a>
+        <button mat-button color="warn" (click)="deleteDepartamento()">
+          <mat-icon>delete</mat-icon>
+          {{ 'common.buttons.delete' | translate }}
+        </button>
+        <a
+          mat-raised-button
+          color="primary"
+          [routerLink]="['/admin/datasets/nuevo']"
+          [queryParams]="{ departamento: departamento()?.id }"
+        >
+          <mat-icon>upload</mat-icon>
+          {{ 'departamentos.detail.importDataset' | translate }}
+        </a>
+      </div>
+    </div>
+
+    <!-- Lista de Datasets -->
+    @if (datasets().length > 0) {
+      <div class="space-y-4">
+        <h2 class="text-xl font-semibold text-[var(--text-primary)]">
+          {{ 'departamentos.detail.datasets' | translate }}
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          @for (dataset of datasets(); track dataset.id) {
+            <mat-card class="cursor-pointer hover:shadow-lg transition-shadow">
+              <mat-card-header>
+                <mat-icon mat-card-avatar class="!text-red-500">description</mat-icon>
+                <mat-card-title>{{ dataset.nombre }}</mat-card-title>
+                <mat-card-subtitle>
+                  {{ dataset.total_registros | number }}
+                  {{ 'departamentos.detail.records' | translate }}
+                </mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <p class="text-sm text-[var(--text-secondary)] mb-2">
+                  {{ dataset.descripcion || ('departamentos.detail.noDescription' | translate) }}
+                </p>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs px-2 py-1 rounded" [class]="getEstadoClass(dataset.estado)">
+                    {{ dataset.estado }}
+                  </span>
+                  <span class="text-xs text-[var(--text-tertiary)]">
+                    {{ dataset.fecha_carga | date: 'shortDate' }}
+                  </span>
+                </div>
+              </mat-card-content>
+              <mat-card-actions align="end">
+                <a mat-button color="primary" [routerLink]="['/admin/datasets', dataset.id]">
+                  <mat-icon>analytics</mat-icon>
+                  {{ 'departamentos.detail.viewAnalysis' | translate }}
+                </a>
+                <button
+                  mat-icon-button
+                  [matMenuTriggerFor]="datasetMenu"
+                  (click)="$event.stopPropagation()"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #datasetMenu="matMenu">
+                  <a mat-menu-item [routerLink]="['/admin/datasets', dataset.id]">
+                    <mat-icon>visibility</mat-icon>
+                    <span>{{ 'common.buttons.view' | translate }}</span>
+                  </a>
+                  <button mat-menu-item (click)="deleteDataset(dataset)">
+                    <mat-icon color="warn">delete</mat-icon>
+                    <span class="text-red-500">{{ 'common.buttons.delete' | translate }}</span>
+                  </button>
+                </mat-menu>
+              </mat-card-actions>
+            </mat-card>
+          }
+        </div>
+      </div>
+    } @else {
+      <mat-card>
+        <mat-card-content class="text-center py-12">
+          <mat-icon class="text-6xl text-[var(--text-tertiary)]">insert_chart</mat-icon>
+          <h3 class="text-xl text-[var(--text-secondary)] mt-4">
+            {{ 'departamentos.detail.noDatasets' | translate }}
+          </h3>
+          <p class="text-[var(--text-secondary)] mb-4">
+            {{ 'departamentos.detail.noDatasetsMessage' | translate }}
+          </p>
+          <a
+            mat-raised-button
+            color="primary"
+            [routerLink]="['/admin/datasets/nuevo']"
+            [queryParams]="{ departamento: departamento()?.id }"
+          >
+            <mat-icon>upload</mat-icon>
+            {{ 'departamentos.detail.importDataset' | translate }}
+          </a>
+        </mat-card-content>
+      </mat-card>
+    }
+  </div>
+}

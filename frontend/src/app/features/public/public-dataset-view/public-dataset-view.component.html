@@ -1,0 +1,116 @@
+<div class="page-container">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>{{ 'public.datasetView.loading' | translate }}</p>
+    </div>
+  } @else if (datasetInfo()) {
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a [routerLink]="['/publico/departamentos', departamentoId()]">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'public.datasetView.backToDepartment' | translate }}
+      </a>
+    </nav>
+
+    <!-- Dataset Header -->
+    <div class="dataset-header">
+      <div class="header-icon">
+        <mat-icon>description</mat-icon>
+      </div>
+      <div class="header-info">
+        <h1>{{ datasetInfo()?.nombre }}</h1>
+        @if (datasetInfo()?.descripcion) {
+          <p class="dataset-description">{{ datasetInfo()?.descripcion }}</p>
+        }
+        <div class="header-stats">
+          <span class="stat">
+            <mat-icon>grid_on</mat-icon>
+            {{ datasetInfo()?.total_registros | number }}
+            {{ 'public.datasetView.stats.records' | translate }}
+          </span>
+          <span class="stat">
+            <mat-icon>view_column</mat-icon>
+            {{ variables().length }} {{ 'public.datasetView.stats.variables' | translate }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <mat-tab-group animationDuration="200ms" class="dataset-tabs">
+      <!-- Tab: Datos -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">table_chart</mat-icon>
+          {{ 'public.datasetView.tabs.data' | translate }}
+        </ng-template>
+        <div class="tab-content">
+          <app-data-table
+            [columns]="visibleColumns()"
+            [data]="tableData()"
+            [pagination]="pagination()"
+            (pageChange)="onPageChange($event)"
+          />
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Análisis -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon class="tab-icon">analytics</mat-icon>
+          {{ 'public.datasetView.tabs.analysis' | translate }}
+        </ng-template>
+        <div class="tab-content">
+          <app-variable-list
+            [variables]="analysableVariables()"
+            (variableSelected)="onVariableSelected($event)"
+          />
+        </div>
+      </mat-tab>
+
+      <!-- Tab: Fuentes -->
+      @if (fuentes().length > 0) {
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">link</mat-icon>
+            {{ 'datasets.view.sources.title' | translate }}
+          </ng-template>
+          <div class="tab-content">
+            <div class="sources-list">
+              @for (fuente of fuentes(); track fuente.id) {
+                <a
+                  [href]="fuente.url"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="source-card"
+                >
+                  <div class="source-icon">
+                    <mat-icon>open_in_new</mat-icon>
+                  </div>
+                  <div class="source-content">
+                    <h4>{{ fuente.titulo }}</h4>
+                    @if (fuente.descripcion) {
+                      <p>{{ fuente.descripcion }}</p>
+                    }
+                    <span class="source-url">{{ fuente.url }}</span>
+                  </div>
+                </a>
+              }
+            </div>
+          </div>
+        </mat-tab>
+      }
+    </mat-tab-group>
+  } @else {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <h2>{{ 'public.datasetView.notFound.title' | translate }}</h2>
+      <p>{{ 'public.datasetView.notFound.message' | translate }}</p>
+      <a mat-stroked-button routerLink="/publico/departamentos">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'public.datasetView.notFound.backButton' | translate }}
+      </a>
+    </div>
+  }
+</div>

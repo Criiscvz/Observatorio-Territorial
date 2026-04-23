@@ -1,0 +1,1049 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "delete": "Eliminar",
+      "edit": "Editar",
+      "create": "Crear",
+      "back": "Volver",
+      "next": "Siguiente",
+      "previous": "Anterior",
+      "confirm": "Confirmar",
+      "close": "Cerrar",
+      "search": "Buscar",
+      "filter": "Filtrar",
+      "export": "Exportar",
+      "import": "Importar",
+      "refresh": "Actualizar",
+      "add": "Agregar",
+      "remove": "Quitar",
+      "view": "Ver",
+      "download": "Descargar",
+      "upload": "Subir",
+      "retry": "Reintentar",
+      "clear": "Limpiar"
+    },
+    "labels": {
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "description": "Descripción",
+      "date": "Fecha",
+      "status": "Estado",
+      "type": "Tipo",
+      "actions": "Acciones",
+      "total": "Total",
+      "details": "Detalles",
+      "options": "Opciones",
+      "settings": "Configuración",
+      "profile": "Perfil",
+      "visible": "Visible",
+      "public": "Público",
+      "private": "Privado",
+      "source": "Fuente",
+      "sources": "Fuentes",
+      "category": "Categoría"
+    },
+    "messages": {
+      "loading": "Cargando...",
+      "saving": "Guardando...",
+      "deleting": "Eliminando...",
+      "processing": "Procesando...",
+      "success": "Operación exitosa",
+      "error": "Ha ocurrido un error",
+      "noData": "No hay datos disponibles",
+      "noResults": "No se encontraron resultados",
+      "confirmDelete": "¿Estás seguro de que deseas eliminar este elemento?",
+      "unsavedChanges": "Tienes cambios sin guardar",
+      "connectionError": "Error de conexión. Verifica que el servidor esté funcionando.",
+      "permissionDenied": "No tienes permisos para realizar esta acción.",
+      "unexpectedError": "Ocurrió un error inesperado. Intenta de nuevo."
+    },
+    "validation": {
+      "required": "Este campo es requerido",
+      "minLength": "Debe tener al menos {{min}} caracteres",
+      "maxLength": "No puede exceder {{max}} caracteres",
+      "email": "Ingresa un correo electrónico válido",
+      "pattern": "El formato no es válido",
+      "min": "El valor mínimo es {{min}}",
+      "max": "El valor máximo es {{max}}",
+      "passwordMismatch": "Las contraseñas no coinciden"
+    },
+    "time": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "daysAgo": "Hace {{count}} días",
+      "hoursAgo": "Hace {{count}} horas",
+      "minutesAgo": "Hace {{count}} minutos",
+      "justNow": "Justo ahora"
+    },
+    "units": {
+      "records": "registros",
+      "columns": "columnas",
+      "variables": "variables",
+      "datasets": "datasets",
+      "departments": "departamentos",
+      "bytes": "Bytes",
+      "kb": "KB",
+      "mb": "MB",
+      "gb": "GB"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Observatorio ULEAM",
+      "subtitle": "Ingresa a tu cuenta",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "correo@uleam.edu.ec",
+      "password": "Contraseña",
+      "submit": "Iniciar Sesión",
+      "submitting": "Ingresando...",
+      "noAccount": "¿No tienes cuenta?",
+      "registerLink": "Regístrate aquí",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "errors": {
+        "invalidCredentials": "Credenciales inválidas",
+        "loginFailed": "Error al iniciar sesión"
+      }
+    },
+    "register": {
+      "title": "Crear Cuenta",
+      "subtitle": "Regístrate en Observatorio ULEAM",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Juan Pérez",
+      "email": "Correo electrónico",
+      "emailPlaceholder": "correo@uleam.edu.ec",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "submit": "Crear Cuenta",
+      "submitting": "Creando cuenta...",
+      "hasAccount": "¿Ya tienes cuenta?",
+      "loginLink": "Inicia sesión",
+      "errors": {
+        "registrationFailed": "Error al crear la cuenta"
+      }
+    },
+    "logout": "Cerrar Sesión"
+  },
+  "profile": {
+    "title": "Mi Perfil",
+    "subtitle": "Gestiona tu información personal y configuración de cuenta",
+    "personalInfo": "Información Personal",
+    "personalInfoSubtitle": "Actualiza tu información de perfil",
+    "accountInfo": "Información de la Cuenta",
+    "fields": {
+      "name": "Nombre completo",
+      "email": "Correo electrónico",
+      "telefono": "Teléfono",
+      "cargo": "Cargo o Posición",
+      "bio": "Biografía",
+      "role": "Rol",
+      "createdAt": "Miembro desde"
+    },
+    "placeholders": {
+      "bio": "Cuéntanos un poco sobre ti..."
+    },
+    "hints": {
+      "emailReadOnly": "El correo electrónico no se puede modificar"
+    },
+    "validation": {
+      "nameRequired": "El nombre es requerido",
+      "nameMaxLength": "El nombre no puede exceder 255 caracteres",
+      "telefonoMaxLength": "El teléfono no puede exceder 20 caracteres",
+      "cargoMaxLength": "El cargo no puede exceder 100 caracteres",
+      "bioMaxLength": "La biografía no puede exceder 500 caracteres"
+    },
+    "avatar": {
+      "upload": "Subir Imagen",
+      "delete": "Eliminar",
+      "hint": "Formatos permitidos: JPG, PNG, WebP. Tamaño máximo: 2MB"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "user": "Usuario"
+    },
+    "messages": {
+      "updateSuccess": "Perfil actualizado correctamente",
+      "updateError": "Error al actualizar el perfil",
+      "avatarUpdated": "Imagen de perfil actualizada",
+      "avatarDeleted": "Imagen de perfil eliminada",
+      "avatarError": "Error al actualizar la imagen",
+      "invalidFileType": "Formato de archivo no válido. Usa JPG, PNG o WebP",
+      "fileTooLarge": "El archivo es demasiado grande. Máximo 2MB"
+    }
+  },
+  "layout": {
+    "header": {
+      "brand": "Observatorio Territorial",
+      "brandSubtitle": "Multidisciplinario",
+      "menu": "Menú",
+      "themeLight": "Modo claro",
+      "themeDark": "Modo oscuro",
+      "profile": "Mi Perfil",
+      "settings": "Configuración",
+      "logout": "Cerrar Sesión",
+      "administrator": "Administrador"
+    },
+    "sidebar": {
+      "main": "Principal",
+      "dashboard": "Dashboard",
+      "uploadDataset": "Subir Dataset",
+      "users": "Usuarios",
+      "departments": "Observatorios",
+      "newDepartment": "Nueva observatorio",
+      "allDatasets": "Todos los Datasets",
+      "publicView": "Vista Pública",
+      "noDepartments": "Sin observatorios",
+      "createOne": "Crear una",
+      "barometer": "Barómetro",
+      "research": "Investigación ULEAM",
+      "linkage": "Vinculación ULEAM",
+      "barometerUleam": "Barómetro ULEAM"
+    },
+    "footer": {
+      "copyright": "© {{year}} Observatorio ULEAM. Todos los derechos reservados.",
+      "university": "Universidad Laica Eloy Alfaro de Manabí"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Bienvenido a Observatorios",
+    "welcomeMessage": "Gestiona tus observatorios y datasets de manera eficiente",
+    "stats": {
+      "totalDepartments": "Observatorios",
+      "totalDatasets": "Datasets",
+      "totalRecords": "Registros Totales",
+      "publicDepartments": "Observatorios Públicos",
+      "completed": "completados",
+      "variables": "variables"
+    },
+    "quickActions": {
+      "title": "Acciones Rápidas",
+      "newDepartment": "Nueva Observatorio",
+      "newDepartmentDesc": "Crea un nuevo observatorio para organizar tus datos",
+      "uploadDataset": "Subir Dataset",
+      "uploadDatasetDesc": "Importa un archivo Excel o CSV para analizar",
+      "viewAll": "Ver Todos",
+      "viewAllDesc": "Explora todos los datasets disponibles"
+    },
+    "recentDepartments": {
+      "title": "Observatorios Recientes",
+      "viewAll": "Ver todas",
+      "empty": "No hay observatorios aún"
+    },
+    "recentDatasets": {
+      "title": "Datasets Recientes",
+      "viewAll": "Ver todos",
+      "empty": "No hay datasets aún"
+    },
+    "distribution": {
+      "title": "Distribución de Datasets",
+      "subtitle": "Datasets por observatorio",
+      "empty": "Sin datos de distribución"
+    },
+    "health": {
+      "title": "Estado de los Datos",
+      "subtitle": "Resumen de procesamiento",
+      "healthy": "Completado",
+      "empty": "Sin datasets para analizar"
+    }
+  },
+  "datasets": {
+    "title": "Datasets",
+    "list": {
+      "title": "Datasets",
+      "newDataset": "Nuevo Dataset",
+      "empty": "No hay datasets",
+      "emptyDescription": "Importa tu primer archivo Excel",
+      "importDataset": "Importar Dataset",
+      "columns": {
+        "name": "Nombre",
+        "department": "Observatorio",
+        "category": "Categoría",
+        "status": "Estado",
+        "records": "Registros",
+        "date": "Fecha"
+      },
+      "actions": {
+        "viewDashboard": "Ver Dashboard",
+        "continueImport": "Continuar Importación",
+        "delete": "Eliminar"
+      },
+      "confirmDelete": "¿Eliminar el dataset \"{{name}}\"?"
+    },
+    "upload": {
+      "title": "Importar Dataset",
+      "steps": {
+        "upload": "Subir Archivo",
+        "configure": "Configurar Columnas",
+        "complete": "Completado"
+      },
+      "form": {
+        "department": "Observatorio",
+        "selectDepartment": "Selecciona un observatorio",
+        "category": "Categoría",
+        "selectCategory": "Selecciona una categoría",
+        "name": "Nombre del Dataset",
+        "namePlaceholder": "Ej: Encuesta 2025",
+        "description": "Descripción",
+        "sourceUrl": "URL de la fuente (opcional)",
+        "sourceUrlPlaceholder": "https://ejemplo.com/datos-fuente"
+      },
+      "dropzone": {
+        "title": "Arrastra tu archivo aquí",
+        "subtitle": "o haz clic para seleccionar",
+        "formats": "Formatos: .xlsx, .xls, .csv (máx 10MB)",
+        "removeFile": "Quitar archivo"
+      },
+      "analyzing": "Subiendo y analizando archivo...",
+      "uploadAndAnalyze": "Subir y Analizar",
+      "configure": {
+        "title": "Configurar Columnas del Dataset",
+        "rowsDetected": "filas detectadas",
+        "columnsToImport": "columnas a importar de",
+        "totalColumns": "totales",
+        "columnName": "Nombre en Base de Datos",
+        "columnNameHint": "Identificador interno (sin espacios)",
+        "dataType": "Tipo de Dato",
+        "types": {
+          "numeric": "Numérico",
+          "categorical": "Categórico",
+          "date": "Fecha",
+          "text": "Texto"
+        },
+        "sampleValues": "Muestra de valores:",
+        "visibleInDashboard": "Visible en Dashboard",
+        "includeColumn": "Incluir columna",
+        "excludeColumn": "Excluir columna"
+      },
+      "importing": "Importando datos... esto puede tardar unos segundos",
+      "confirmImport": "Confirmar e Importar",
+      "success": {
+        "title": "¡Importación Exitosa!",
+        "message": "Se importaron {{records}} registros con {{columns}} columnas",
+        "viewDatasets": "Ver Datasets",
+        "viewData": "Ver Datos y Gráficos"
+      },
+      "errors": {
+        "analyzeFailed": "Error al analizar el archivo. Verifica que el formato sea válido (.xlsx, .xls, .csv).",
+        "uploadFailed": "Error al subir el archivo. Verifica la conexión y que el archivo no exceda 10MB.",
+        "noColumns": "Debes incluir al menos una columna para continuar la importación.",
+        "importFailed": "Error al importar los datos. Verifica que las columnas estén correctamente configuradas."
+      }
+    },
+    "view": {
+      "title": "Dataset",
+      "addDescription": "Agregar descripción...",
+      "tabs": {
+        "data": "Datos",
+        "variables": "Variables",
+        "analysis": "Análisis",
+        "settings": "Configuración"
+      },
+      "data": {
+        "noData": "No hay datos disponibles",
+        "scrollHint": "Usa las flechas para navegar entre columnas",
+        "scrollLeft": "Desplazar a la izquierda",
+        "scrollRight": "Desplazar a la derecha"
+      },
+      "variables": {
+        "title": "Configuración de Variables",
+        "subtitle": "Cambia el tipo de dato o visibilidad de cada columna",
+        "column": "Columna",
+        "type": "Tipo",
+        "visible": "Visible"
+      },
+      "analysis": {
+        "title": "Crear Gráfico",
+        "subtitle": "Selecciona el tipo de gráfico y las variables a analizar",
+        "chartType": "Tipo de Gráfico:",
+        "variableX": "Variable Principal (X)",
+        "variableY": "Variable Secundaria (Y)",
+        "limit": "Límite de resultados",
+        "limitOptions": {
+          "top10": "Top 10",
+          "top20": "Top 20",
+          "top50": "Top 50",
+          "top100": "Top 100",
+          "noLimit": "Sin límite"
+        },
+        "addChart": "Agregar Gráfico",
+        "generateAll": "Generar Todos (Univariable)",
+        "clearAll": "Limpiar Todo",
+        "chartsCount": "{{count}} gráfico(s) activo(s)",
+        "noCharts": "Sin gráficos",
+        "noChartsMessage": "Selecciona un tipo de gráfico y una variable para comenzar",
+        "noCompatibleVariables": "No hay variables compatibles",
+        "variablesAvailable": "{{count}} variables disponibles",
+        "variablesCompatible": "{{count}} variables compatibles",
+        "searchVariable": "Escribe para buscar...",
+        "filters": "Filtros",
+        "activeFilters": "{{count}} filtro(s) activo(s)",
+        "noFilters": "Sin filtros aplicados",
+        "addFilter": "Agregar filtro",
+        "clearFilters": "Limpiar filtros",
+        "filterBy": "Filtrar por",
+        "filterValues": "Valores",
+        "filterRange": "Rango",
+        "filterMin": "Mínimo",
+        "filterMax": "Máximo",
+        "filterContains": "Contiene",
+        "applyFilters": "Aplicar filtros",
+        "showPercentages": "Mostrar porcentajes",
+        "saveAsDefault": "Guardar como predeterminado",
+        "predefinedCharts": "Gráficos Predeterminados",
+        "noPredefinedCharts": "No hay gráficos predeterminados configurados",
+        "chartSaved": "Gráfico guardado como predeterminado",
+        "chartDeleted": "Gráfico predeterminado eliminado"
+      },
+      "pendingWarning": {
+        "title": "Dataset incompleto",
+        "message": "Este dataset aún no tiene datos importados. Debes completar la configuración de columnas para que los datos se carguen correctamente.",
+        "continueConfig": "Continuar Configuración",
+        "deleteDataset": "Eliminar Dataset",
+        "confirmDelete": "¿Estás seguro de eliminar el dataset \"{{name}}\"? Esta acción no se puede deshacer.",
+        "deleteSuccess": "Dataset eliminado correctamente",
+        "deleteError": "Error al eliminar el dataset"
+      },
+      "sources": {
+        "title": "Fuentes de Información",
+        "addSource": "Agregar fuente",
+        "sourceTitle": "Título",
+        "sourceUrl": "URL",
+        "sourceDescription": "Descripción (opcional)",
+        "noSources": "No se han registrado fuentes para este dataset",
+        "sourceAdded": "Fuente agregada correctamente",
+        "sourceDeleted": "Fuente eliminada",
+        "sourceError": "Error al gestionar la fuente"
+      }
+    },
+    "status": {
+      "completed": "COMPLETADO",
+      "processing": "PROCESANDO",
+      "pending": "PENDIENTE",
+      "error": "ERROR"
+    },
+    "categories": {
+      "research": "Resultados Investigación ULEAM",
+      "linkage": "Resultados Vinculación ULEAM",
+      "barometer": "Barómetro ULEAM",
+      "uncategorized": "Sin categoría"
+    }
+  },
+  "departamentos": {
+    "title": "Observatorios",
+    "list": {
+      "title": "Observatorios",
+      "newDepartment": "Nueva Observatorio",
+      "empty": "No hay observatorios",
+      "emptyDescription": "Crea tu primera observatorio"
+    },
+    "form": {
+      "titleEdit": "Editar Observatorio",
+      "titleNew": "Nueva Observatorio",
+      "name": "Nombre de la Observatorio",
+      "namePlaceholder": "Ej: Vitalidad Ecológica",
+      "code": "Código Interno",
+      "codePlaceholder": "Ej: VITALIDAD-2024",
+      "codeHint": "Identificador único del observatorio",
+      "description": "Descripción (opcional)",
+      "descriptionPlaceholder": "Describe el propósito del observatorio...",
+      "public": "Observatorio Pública",
+      "publicDescription": "Los observatorios públicos pueden ser vistos por usuarios externos sin autenticación.",
+      "icon": "Icono",
+      "noIcon": "Sin icono",
+      "iconHint": "El icono se mostrará en las tarjetas del observatorio",
+      "selectIcon": "Selecciona un icono",
+      "saveChanges": "Guardar Cambios",
+      "createDepartment": "Crear Observatorio",
+      "saving": "Guardando...",
+      "validation": {
+        "nameRequired": "El nombre es requerido",
+        "nameMinLength": "El nombre debe tener al menos 3 caracteres",
+        "nameMaxLength": "El nombre no puede exceder 255 caracteres",
+        "codeRequired": "El código interno es requerido",
+        "codeMaxLength": "El código no puede exceder 50 caracteres"
+      },
+      "errors": {
+        "formInvalid": "Por favor, corrige los errores en el formulario",
+        "validationError": "Error de validación. Verifica los datos ingresados.",
+        "permissionDenied": "No tienes permisos para realizar esta acción.",
+        "connectionError": "Error de conexión. Verifica que el servidor esté funcionando.",
+        "unexpectedError": "Ocurrió un error inesperado. Intenta de nuevo."
+      },
+      "success": {
+        "created": "Observatorio creada exitosamente",
+        "updated": "Observatorio actualizada exitosamente"
+      }
+    },
+    "detail": {
+      "title": "Observatorio",
+      "noDescription": "Sin descripción",
+      "code": "Código",
+      "publicBadge": "Pública",
+      "datasets": "Datasets del Observatorio",
+      "records": "registros",
+      "noDatasets": "Sin datasets",
+      "noDatasetsMessage": "Importa un archivo Excel para comenzar el análisis",
+      "importDataset": "Importar Dataset",
+      "viewAnalysis": "Ver Análisis",
+      "confirmDelete": "¿Estás seguro de que deseas eliminar el observatorio \"{{name}}\"? Esta acción no se puede deshacer.",
+      "deleted": "Observatorio eliminada exitosamente",
+      "deleteError": "Error al eliminar el observatorio"
+    },
+    "icons": {
+      "social": "Social / Grupos",
+      "work": "Laboral / Trabajo",
+      "electoral": "Electoral / Voto",
+      "tourism": "Turístico / Viajes",
+      "education": "Educación",
+      "health": "Salud",
+      "environment": "Medio Ambiente",
+      "sports": "Deportes",
+      "culture": "Cultura / Arte",
+      "technology": "Tecnología",
+      "finance": "Finanzas",
+      "agriculture": "Agricultura",
+      "security": "Seguridad",
+      "infrastructure": "Infraestructura",
+      "research": "Investigación",
+      "generic": "Genérico"
+    }
+  },
+  "public": {
+    "header": {
+      "login": "Iniciar Sesión",
+      "register": "Registrarse"
+    },
+    "home": {
+      "hero": {
+        "title": "Observatorio Territorial",
+        "titleHighlight": "Multidisciplinario ULEAM",
+        "subtitle": "Transforma tus archivos Excel en dashboards interactivos de manera automática. Analiza, visualiza y comparte datos de forma inteligente.",
+        "exploreData": "Explorar Datos Públicos",
+        "createAccount": "Crear Cuenta Gratis",
+        "goToDashboard": "Ir al Panel"
+      },
+      "floatingCards": {
+        "dynamicCharts": "Gráficos Dinámicos",
+        "visualAnalysis": "Análisis Visual",
+        "correlations": "Correlaciones"
+      },
+      "stats": {
+        "publicDepartments": "Departamentos Públicos",
+        "availableDatasets": "Datasets Disponibles",
+        "analyzedRecords": "Registros Analizados"
+      },
+      "features": {
+        "title": "Potentes Herramientas de Análisis",
+        "subtitle": "Todo lo que necesitas para convertir datos en conocimiento",
+        "smartImport": {
+          "title": "Importación Inteligente",
+          "description": "Sube archivos Excel o CSV y el sistema detectará automáticamente los tipos de datos"
+        },
+        "autoCharts": {
+          "title": "Gráficos Automáticos",
+          "description": "Genera visualizaciones instantáneas: barras, pastel, líneas, dispersión y más"
+        },
+        "bivariable": {
+          "title": "Análisis Bivariable",
+          "description": "Descubre correlaciones y relaciones entre variables con un clic"
+        },
+        "sharePublic": {
+          "title": "Comparte Públicamente",
+          "description": "Haz públicos tus análisis para que cualquiera pueda verlos"
+        }
+      },
+      "departments": {
+        "title": "Observatorio Territorial",
+        "subtitle": "Explora los datos compartidos por la comunidad universitaria",
+        "loading": "Cargando observatorios...",
+        "noDescription": "Sin descripción",
+        "viewAll": "Ver todas los observatorios",
+        "empty": "No hay observatorios públicos disponibles"
+      },
+      "cta": {
+        "title": "Únete a Observatorio Territorial",
+        "subtitle": "Accede a datos territoriales, análisis multidisciplinarios y herramientas de visualización para la toma de decisiones informadas.",
+        "button": "Crear Cuenta Gratis"
+      },
+      "footer": {
+        "websiteLink": "Sitio Web ULEAM",
+        "departmentsLink": "Observatorios"
+      },
+      "nav": {
+        "home": "Inicio",
+        "geoViewer": "Visor Geográfico",
+        "dimensions": "Observatorios",
+        "barometer": "Barómetro",
+        "barometerResearch": "Resultados Investigación ULEAM",
+        "barometerLinkage": "Resultados Vinculación ULEAM",
+        "barometerUleam": "Barómetro ULEAM",
+        "aboutOtm": "Acerca del OTM",
+        "sapereAude": "Programa Sapere Aude",
+        "analysis": "Análisis y Propuestas",
+        "territorialData": "Datos Territoriales",
+        "participation": "Participación y Diálogo",
+        "datasets": "Datasets"
+      }
+    },
+    "departments": {
+      "title": "Observatorios Públicos",
+      "subtitle": "Explora los datos compartidos por los observatorios",
+      "search": "Buscar observatorios...",
+      "resultsCount": "{{count}} observatorio(es) encontrado(s)",
+      "loading": "Cargando observatorios...",
+      "empty": "No hay observatorios públicos disponibles",
+      "viewDetails": "Ver detalles"
+    },
+    "allDatasets": {
+      "title": "Todos los Datasets",
+      "subtitle": "Explora todos los datasets públicos disponibles",
+      "search": "Buscar datasets por nombre...",
+      "resultsCount": "{{count}} dataset(s) encontrado(s)",
+      "loading": "Cargando datasets...",
+      "empty": "No hay datasets públicos disponibles",
+      "datasetsCount": "datasets",
+      "records": "registros",
+      "viewDataset": "Ver dataset",
+      "department": "Observatorio"
+    },
+    "departmentDetail": {
+      "backToDepartments": "Observatorios",
+      "noDescription": "Sin descripción",
+      "stats": {
+        "datasets": "datasets",
+        "records": "registros"
+      },
+      "datasets": {
+        "title": "Datasets Disponibles",
+        "empty": "Sin datasets",
+        "emptyMessage": "Este observatorio aún no tiene datasets públicos disponibles",
+        "search": "Buscar dataset..."
+      },
+      "notFound": {
+        "title": "Observatorio no encontrado",
+        "message": "El observatorio que buscas no existe o no está disponible públicamente",
+        "backButton": "Volver a observatorios"
+      }
+    },
+    "datasetView": {
+      "loading": "Cargando dataset...",
+      "backToDepartment": "Volver al observatorio",
+      "stats": {
+        "records": "registros",
+        "variables": "variables"
+      },
+      "tabs": {
+        "data": "Datos",
+        "analysis": "Análisis"
+      },
+      "noData": "No hay datos disponibles",
+      "createChart": {
+        "title": "Crear Visualización",
+        "subtitle": "Selecciona el tipo de gráfico y las variables"
+      },
+      "quickActions": {
+        "generateAll": "Generar Todo Automático",
+        "clear": "Limpiar"
+      },
+      "chartsCount": "{{count}} gráfico(s)",
+      "noCharts": {
+        "title": "Sin gráficos",
+        "message": "Selecciona un tipo de gráfico y variables para comenzar a analizar"
+      },
+      "notFound": {
+        "title": "Dataset no encontrado",
+        "message": "El dataset que buscas no existe o no está disponible públicamente",
+        "backButton": "Volver a departamentos"
+      }
+    },
+    "barometer": {
+      "title": "Barómetro",
+      "research": {
+        "title": "Resultados de Investigación ULEAM",
+        "subtitle": "Datos y análisis de investigaciones realizadas por la universidad",
+        "empty": "No hay datasets de investigación disponibles"
+      },
+      "linkage": {
+        "title": "Resultados de Vinculación ULEAM",
+        "subtitle": "Datos y análisis de proyectos de vinculación con la sociedad",
+        "empty": "No hay datasets de vinculación disponibles"
+      },
+      "barometerUleam": {
+        "title": "Barómetro ULEAM",
+        "subtitle": "Indicadores y métricas institucionales",
+        "empty": "No hay datasets de barómetro disponibles"
+      },
+      "loading": "Cargando datos del barómetro...",
+      "viewDataset": "Ver datos y gráficos",
+      "predefinedCharts": "Gráficos Predeterminados",
+      "dataTable": "Tabla de Datos"
+    }
+  },
+  "charts": {
+    "types": {
+      "bar": {
+        "name": "Barras",
+        "description": "Comparar categorías"
+      },
+      "pie": {
+        "name": "Pastel",
+        "description": "Proporciones"
+      },
+      "donut": {
+        "name": "Anillo",
+        "description": "Con total"
+      },
+      "histogram": {
+        "name": "Histograma",
+        "description": "Distribución"
+      },
+      "line": {
+        "name": "Líneas",
+        "description": "Tendencias"
+      },
+      "area": {
+        "name": "Área",
+        "description": "Tendencias con área"
+      },
+      "funnel": {
+        "name": "Embudo",
+        "description": "Procesos"
+      },
+      "treemap": {
+        "name": "Treemap",
+        "description": "Jerarquía"
+      },
+      "gauge": {
+        "name": "Indicador",
+        "description": "Medidor"
+      },
+      "radar": {
+        "name": "Radar",
+        "description": "Múltiples ejes"
+      },
+      "scatter": {
+        "name": "Dispersión",
+        "description": "Correlación 2 numéricas"
+      },
+      "groupedBar": {
+        "name": "Barras Agrupadas",
+        "description": "Promedio por categoría"
+      },
+      "heatmap": {
+        "name": "Mapa de Calor",
+        "description": "Matriz de frecuencias"
+      },
+      "boxCompare": {
+        "name": "Comparar Promedios",
+        "description": "Promedio por categoría"
+      },
+      "lineTime": {
+        "name": "Serie Temporal",
+        "description": "Evolución en el tiempo"
+      },
+      "stackedBar": {
+        "name": "Barras Apiladas",
+        "description": "Categorías por tiempo"
+      },
+      "wordcloud": {
+        "name": "Nube de Palabras",
+        "description": "Frecuencia de términos en texto"
+      },
+      "horizontal_bar": {
+        "name": "Barras Horizontales",
+        "description": "Categorías con etiquetas largas"
+      },
+      "rose": {
+        "name": "Rosa de Nightingale",
+        "description": "Proporciones polares"
+      },
+      "polar_bar": {
+        "name": "Barras Polares",
+        "description": "Barras circulares"
+      },
+      "pictorial_bar": {
+        "name": "Barras Pictóricas",
+        "description": "Barras decorativas"
+      },
+      "bubble": {
+        "name": "Burbujas",
+        "description": "Dispersión con tamaño"
+      },
+      "stacked_area": {
+        "name": "Área Apilada",
+        "description": "Tendencias apiladas"
+      },
+      "grouped_bar": {
+        "name": "Barras Agrupadas",
+        "description": "Promedio por categoría"
+      },
+      "box_compare": {
+        "name": "Comparar Promedios",
+        "description": "Promedio por categoría"
+      },
+      "line_time": {
+        "name": "Serie Temporal",
+        "description": "Evolución en el tiempo"
+      },
+      "stacked_bar": {
+        "name": "Barras Apiladas",
+        "description": "Categorías por tiempo"
+      }
+    },
+    "stats": {
+      "mean": "Promedio",
+      "median": "Mediana",
+      "total": "Total",
+      "min": "Mínimo",
+      "max": "Máximo",
+      "sum": "Suma",
+      "count": "Conteo",
+      "correlation": "Correlación"
+    },
+    "errors": {
+      "loadFailed": "No se pudieron cargar los datos del gráfico.",
+      "invalidDataType": "El tipo de dato de la variable no es compatible con este tipo de gráfico.",
+      "noDataForFilter": "No se encontraron datos con los filtros aplicados. Intenta cambiar los criterios de filtrado.",
+      "variableNotFound": "La variable seleccionada no fue encontrada en el dataset.",
+      "datasetNotFound": "El dataset solicitado no existe o no tienes acceso.",
+      "statsQueryError": "Error al procesar la consulta estadística. Verifica que los datos del dataset sean válidos.",
+      "columnCastError": "Error al convertir los datos de la columna. Algunos valores pueden no ser del tipo esperado.",
+      "accessDenied": "No tienes permisos para acceder a estos datos.",
+      "serverError": "Error interno del servidor. Intenta de nuevo más tarde.",
+      "connectionError": "Error de conexión con el servidor. Verifica tu conexión a internet."
+    },
+    "predefined": {
+      "title": "Título del gráfico",
+      "description": "Descripción breve",
+      "descriptionPlaceholder": "Escribe una descripción breve de lo que muestra este gráfico...",
+      "analysis": "Análisis detallado",
+      "analysisPlaceholder": "Escribe un análisis más detallado, interpretaciones, conclusiones o propuestas sobre los datos mostrados...",
+      "source": "Fuente",
+      "sourcePlaceholder": "Ej: Encuesta Nacional 2025, INE",
+      "save": "Guardar gráfico predeterminado",
+      "edit": "Editar gráfico predeterminado",
+      "delete": "Eliminar gráfico predeterminado",
+      "confirmDelete": "¿Eliminar este gráfico predeterminado?",
+      "visible": "Visible para usuarios",
+      "order": "Orden de visualización"
+    },
+    "export": {
+      "png": "Exportar como imagen PNG",
+      "csv": "Exportar datos como CSV"
+    }
+  },
+  "dataTypes": {
+    "numeric": "Numérico",
+    "categorical": "Categórico",
+    "date": "Fecha",
+    "text": "Texto",
+    "short": {
+      "numeric": "NUM",
+      "categorical": "CAT",
+      "date": "FECHA",
+      "text": "TXT"
+    }
+  },
+  "language": {
+    "select": "Seleccionar idioma",
+    "spanish": "Español",
+    "english": "English"
+  },
+  "users": {
+    "title": "Gestión de Usuarios",
+    "subtitle": "Administra todos los usuarios de la plataforma",
+    "columns": {
+      "name": "Usuario",
+      "email": "Email",
+      "role": "Rol",
+      "status": "Estado",
+      "createdAt": "Fecha de registro"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "actions": {
+      "create": "Nuevo Usuario",
+      "activate": "Activar",
+      "deactivate": "Desactivar",
+      "changeRole": "Cambiar Rol"
+    },
+    "roles": {
+      "adminDesc": "Acceso completo al sistema",
+      "userDesc": "Acceso limitado"
+    },
+    "form": {
+      "createTitle": "Crear Usuario",
+      "createSubtitle": "Ingresa los datos del nuevo usuario",
+      "editTitle": "Editar Usuario",
+      "editSubtitle": "Modifica la información del usuario",
+      "basicInfo": "Información Básica",
+      "basicInfoDesc": "Datos principales del usuario",
+      "roleStatus": "Rol y Estado",
+      "roleStatusDesc": "Configura el acceso del usuario",
+      "profileInfo": "Información del Perfil",
+      "profileInfoDesc": "Datos adicionales opcionales",
+      "name": "Nombre completo",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "passwordHint": "Dejar vacío para mantener la contraseña actual",
+      "role": "Rol del usuario",
+      "isActive": "Usuario activo",
+      "isActiveHint": "Los usuarios inactivos no pueden iniciar sesión",
+      "phone": "Teléfono",
+      "position": "Cargo",
+      "bio": "Biografía"
+    },
+    "validation": {
+      "nameRequired": "El nombre es requerido",
+      "nameMaxLength": "El nombre no puede exceder 255 caracteres",
+      "emailRequired": "El email es requerido",
+      "emailInvalid": "Ingresa un email válido",
+      "passwordRequired": "La contraseña es requerida",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres"
+    },
+    "confirmToggle": {
+      "title": "Cambiar estado del usuario",
+      "message": "¿Estás seguro de que deseas {{action}} a {{name}}?"
+    },
+    "confirmRole": {
+      "title": "Cambiar rol del usuario",
+      "message": "¿Estás seguro de que deseas cambiar el rol de {{name}} a {{role}}?"
+    },
+    "confirmDelete": {
+      "title": "Eliminar usuario",
+      "message": "¿Estás seguro de que deseas eliminar a {{name}}? Esta acción no se puede deshacer."
+    },
+    "messages": {
+      "loadError": "Error al cargar los usuarios",
+      "created": "Usuario creado exitosamente",
+      "createError": "Error al crear el usuario",
+      "updated": "Usuario actualizado exitosamente",
+      "updateError": "Error al actualizar el usuario",
+      "deleted": "Usuario eliminado exitosamente",
+      "deleteError": "Error al eliminar el usuario",
+      "statusUpdated": "Estado del usuario actualizado",
+      "statusError": "Error al cambiar el estado",
+      "roleUpdated": "Rol del usuario actualizado",
+      "roleError": "Error al cambiar el rol",
+      "noUsers": "No hay usuarios registrados"
+    }
+  },
+  "errors": {
+    "codes": {
+      "DATASET_NOT_FOUND": "El dataset solicitado no fue encontrado.",
+      "VARIABLE_NOT_FOUND": "La variable seleccionada no existe en este dataset.",
+      "ACCESS_DENIED": "No tienes acceso a este recurso. Verifica tus permisos.",
+      "INVALID_CHART_TYPE": "El tipo de gráfico seleccionado no es válido.",
+      "STATS_QUERY_ERROR": "Error al procesar la consulta estadística. Verifica que los datos sean válidos para este análisis.",
+      "INVALID_DATA_TYPE": "El tipo de dato de la variable no es compatible con la operación solicitada.",
+      "COLUMN_CAST_ERROR": "Error al procesar los datos de la columna. Algunos valores no son del tipo esperado.",
+      "VALIDATION_ERROR": "Los datos proporcionados no son válidos. Verifica los campos marcados.",
+      "RATE_LIMIT": "Has realizado demasiadas solicitudes. Espera un momento e intenta de nuevo.",
+      "SERVER_ERROR": "Error interno del servidor. Si el problema persiste, contacta al administrador.",
+      "FILTER_ERROR": "Error al aplicar los filtros seleccionados."
+    }
+  },
+  "filters": {
+    "operators": {
+      "eq": "Igual a",
+      "neq": "Diferente de",
+      "gt": "Mayor que",
+      "gte": "Mayor o igual",
+      "lt": "Menor que",
+      "lte": "Menor o igual",
+      "between": "Entre",
+      "in": "Incluye",
+      "notIn": "No incluye",
+      "contains": "Contiene",
+      "notContains": "No contiene"
+    },
+    "column": "Columna",
+    "operator": "Operador",
+    "value": "Valor",
+    "valueFrom": "Desde",
+    "valueTo": "Hasta",
+    "add": "Agregar filtro",
+    "clear": "Limpiar todo",
+    "apply": "Aplicar filtros"
+  },
+  "variableList": {
+    "search": "Buscar variable",
+    "searchPlaceholder": "Nombre de variable...",
+    "of": "de",
+    "variables": "variables",
+    "options": "opciones",
+    "noResults": "No se encontraron variables con ese filtro.",
+    "selectMultiple": "Seleccionar",
+    "cancelSelection": "Cancelar",
+    "selected": "seleccionadas",
+    "selectAll": "Seleccionar todo",
+    "bulk": {
+      "showAll": "Mostrar",
+      "hideAll": "Ocultar",
+      "changeType": "Cambiar tipo",
+      "updated": "variables actualizadas"
+    }
+  },
+  "variableAnalysis": {
+    "loading": "Cargando análisis...",
+    "records": "registros",
+    "uniqueValues": "valores únicos",
+    "filterByValue": "Filtrar por valor",
+    "allValues": "Todos",
+    "crossWith": "Cruzar con",
+    "selectVariable": "Seleccionar variable",
+    "predefinedCharts": "Gráficos predeterminados",
+    "frequencyTable": "Tabla de frecuencias",
+    "statistics": "Estadísticas",
+    "stats": {
+      "count": "Conteo",
+      "mean": "Media",
+      "median": "Mediana",
+      "min": "Mínimo",
+      "max": "Máximo",
+      "sum": "Suma"
+    },
+    "addChart": "Agregar gráfico",
+    "selectChartType": "Seleccionar tipo de gráfico",
+    "crossAnalysis": "Análisis cruzado",
+    "chartSaved": "Gráfico guardado como predeterminado",
+    "notFound": {
+      "title": "Variable no encontrada",
+      "message": "La variable solicitada no existe o no pertenece a este dataset."
+    }
+  },
+  "textInsights": {
+    "analyzing": "Analizando texto...",
+    "sentiment": "Análisis de sentimiento",
+    "topPhrases": "Frases más frecuentes",
+    "words": "palabras",
+    "topKeywords": "Palabras clave principales",
+    "textStats": "Estadísticas de texto",
+    "noPhrases": "No se encontraron frases frecuentes",
+    "totalTexts": "Textos analizados",
+    "uniqueWords": "Palabras únicas",
+    "avgLength": "Longitud promedio",
+    "phrasesFound": "Frases encontradas",
+    "loadError": "No se pudo cargar el análisis de texto"
+  },
+  "stopwords": {
+    "title": "Palabras vacías personalizadas",
+    "description": "Agrega palabras que deben ignorarse en el análisis de texto (nubes de palabras, frases, etc.)",
+    "addPlaceholder": "Escribir palabra...",
+    "add": "Agregar",
+    "empty": "No hay palabras vacías personalizadas"
+  },
+  "frequencyTable": {
+    "title": "Tabla de frecuencias",
+    "value": "Valor",
+    "total": "Total",
+    "frequency": "Frecuencia",
+    "percentage": "Porcentaje"
+  }
+}

@@ -59,6 +59,15 @@
       "problemMatcher": []
     },
     {
+      "label": "Backend: Detener servidor",
+      "type": "shell",
+      "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 stop" },
+      "linux": { "command": "./scripts/backend.sh stop" },
+      "osx": { "command": "./scripts/backend.sh stop" },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
       "label": "Backend: Instalar dependencias",
       "type": "shell",
       "windows": { "command": "powershell -ExecutionPolicy Bypass -File ./scripts/backend.ps1 install" },
@@ -191,7 +200,7 @@
     },
     {
       "label": "⏹️ Detener TODO",
-      "dependsOn": ["Docker: Detener PostgreSQL"],
+      "dependsOn": ["Backend: Detener servidor", "Docker: Detener PostgreSQL"],
       "group": "build",
       "problemMatcher": []
     },

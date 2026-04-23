@@ -1,0 +1,300 @@
+<div class="analysis-page">
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>{{ 'variableAnalysis.loading' | translate }}</p>
+    </div>
+  } @else if (variable()) {
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      @if (departamentoRoute() && departamentoName()) {
+        <a [routerLink]="departamentoRoute()">
+          <mat-icon>home</mat-icon>
+          {{ departamentoName() }}
+        </a>
+        <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+      }
+      <a [routerLink]="backRoute()" class="breadcrumb-link">
+        {{ datasetName() }}
+      </a>
+      <mat-icon class="breadcrumb-separator">chevron_right</mat-icon>
+      <span class="breadcrumb-current">{{ variable()!.nombre_original }}</span>
+    </nav>
+
+    <!-- Variable Header -->
+    <div class="variable-header">
+      <div class="header-icon" [class]="'type-' + variable()!.tipo_dato.toLowerCase()">
+        <mat-icon>{{ getTypeIcon(variable()!.tipo_dato) }}</mat-icon>
+      </div>
+      <div class="header-info">
+        <h1>{{ variable()!.nombre_original || variable()!.nombre_columna }}</h1>
+        <div class="header-meta">
+          <span class="type-badge" [class]="'badge-' + variable()!.tipo_dato.toLowerCase()">
+            {{ variable()!.tipo_dato }}
+          </span>
+          <span class="meta-divider">•</span>
+          <span class="meta-text"
+            >{{ totalRecords() | number }} {{ 'variableAnalysis.records' | translate }}</span
+          >
+          @if (variable()!.opciones?.length) {
+            <span class="meta-divider">•</span>
+            <span class="meta-text"
+              >{{ variable()!.opciones!.length }}
+              {{ 'variableAnalysis.uniqueValues' | translate }}</span
+            >
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <!-- Value filter chips (for CATEGORICO/TEXTO) -->
+      @if (valueOptions().length > 0) {
+        <div class="filter-group">
+          <label class="filter-label">
+            <mat-icon>filter_list</mat-icon>
+            {{ 'variableAnalysis.filterByValue' | translate }}
+          </label>
+          <div class="filter-chips">
+            <button
+              class="value-chip"
+              [class.active]="selectedValue() === null"
+              (click)="selectValueFilter(null)"
+            >
+              {{ 'variableAnalysis.allValues' | translate }}
+            </button>
+            @for (opt of valueOptions(); track opt) {
+              <button
+                class="value-chip"
+                [class.active]="selectedValue() === opt"
+                (click)="selectValueFilter(opt)"
+              >
+                {{ opt }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Cross-variable selector -->
+      <div class="filter-group cross-variable-group">
+        <label class="filter-label">
+          <mat-icon>compare_arrows</mat-icon>
+          {{ 'variableAnalysis.crossWith' | translate }}
+        </label>
+        @if (crossVariable()) {
+          <div class="cross-active">
+            <span class="cross-chip">
+              {{ crossVariable()!.nombre_original }}
+              <button class="cross-remove" (click)="clearCrossVariable()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </span>
+          </div>
+        } @else {
+          <mat-form-field appearance="outline" class="cross-field">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              [matAutocomplete]="crossAuto"
+              [placeholder]="'variableAnalysis.selectVariable' | translate"
+              [ngModel]="crossSearchTerm()"
+              (ngModelChange)="crossSearchTerm.set($event)"
+            />
+            <mat-autocomplete
+              #crossAuto="matAutocomplete"
+              (optionSelected)="selectCrossVariable($event.option.value)"
+            >
+              @for (v of filteredCrossVariables(); track v.id) {
+                <mat-option [value]="v">
+                  {{ v.nombre_original || v.nombre_columna }}
+                  <span class="option-type-hint">{{ v.tipo_dato }}</span>
+                </mat-option>
+              }
+            </mat-autocomplete>
+          </mat-form-field>
+        }
+      </div>
+    </div>
+
+    <!-- Predefined Charts -->
+    @if (predefinedCharts().length > 0) {
+      <div class="predefined-section">
+        <h3 class="section-subtitle">
+          <mat-icon>dashboard_customize</mat-icon>
+          {{ 'variableAnalysis.predefinedCharts' | translate }}
+        </h3>
+        <div class="predefined-grid">
+          @for (pre of predefinedCharts(); track pre.id) {
+            <button
+              mat-stroked-button
+              class="predefined-chip"
+              (click)="loadPredefinedChart(pre)"
+              [matTooltip]="pre.descripcion || ''"
+            >
+              <mat-icon>auto_graph</mat-icon>
+              {{ pre.titulo }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Main Content: Side by side -->
+    <div class="content-row">
+      <!-- Left: Tables -->
+      <div class="table-panel">
+        <!-- Frequency Table -->
+        @if (frequencyLabels().length > 0) {
+          <app-frequency-table
+            [labels]="frequencyLabels()"
+            [values]="frequencyValues()"
+            [title]="'variableAnalysis.frequencyTable' | translate"
+            [highlightedValue]="selectedValue()"
+          />
+        }
+
+        <!-- Numeric Stats -->
+        @if (numericStats()) {
+          <div class="stats-card">
+            <div class="stats-header">
+              <mat-icon>equalizer</mat-icon>
+              <h4>{{ 'variableAnalysis.statistics' | translate }}</h4>
+            </div>
+            <div class="stats-grid">
+              @if (numericStats()!['count'] != null) {
+                <div class="stat-item">
+                  <span class="stat-label">{{ 'variableAnalysis.stats.count' | translate }}</span>
+                  <span class="stat-value">{{ numericStats()!['count'] | number }}</span>
+                </div>
+              }
+              @if (numericStats()!['mean'] != null) {
+                <div class="stat-item">
+                  <span class="stat-label">{{ 'variableAnalysis.stats.mean' | translate }}</span>
+                  <span class="stat-value">{{ numericStats()!['mean'] | number: '1.2-2' }}</span>
+                </div>
+              }
+              @if (numericStats()!['median'] != null) {
+                <div class="stat-item">
+                  <span class="stat-label">{{ 'variableAnalysis.stats.median' | translate }}</span>
+                  <span class="stat-value">{{ numericStats()!['median'] | number: '1.2-2' }}</span>
+                </div>
+              }
+              @if (numericStats()!['min'] != null) {
+                <div class="stat-item">
+                  <span class="stat-label">{{ 'variableAnalysis.stats.min' | translate }}</span>
+                  <span class="stat-value">{{ numericStats()!['min'] | number: '1.2-2' }}</span>
+                </div>
+              }
+              @if (numericStats()!['max'] != null) {
+                <div class="stat-item">
+                  <span class="stat-label">{{ 'variableAnalysis.stats.max' | translate }}</span>
+                  <span class="stat-value">{{ numericStats()!['max'] | number: '1.2-2' }}</span>
+                </div>
+              }
+              @if (numericStats()!['sum'] != null) {
+                <div class="stat-item">
+                  <span class="stat-label">{{ 'variableAnalysis.stats.sum' | translate }}</span>
+                  <span class="stat-value">{{ numericStats()!['sum'] | number: '1.2-2' }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Text Insights Panel (NLP analysis for TEXT variables) -->
+        @if (isTextVariable()) {
+          <app-text-insights-panel
+            [datasetId]="datasetId()"
+            [variableId]="variableId()"
+            [isAdmin]="isAdmin()"
+            [filters]="activeFilters()"
+          />
+        }
+      </div>
+
+      <!-- Right: Charts -->
+      <div class="charts-panel">
+        <!-- Univariable Charts -->
+        <div class="charts-compact-grid">
+          @for (chart of activeCharts(); track chart.id) {
+            <app-chart-card
+              [chart]="chart"
+              [showSave]="isAdmin()"
+              [variables]="allVariables()"
+              [compact]="true"
+              (remove)="removeChart($event)"
+              (save)="saveChartAsPredefined($event)"
+              (filtersChange)="onChartFiltersChange($event)"
+            />
+          }
+        </div>
+
+        <!-- Add more charts button -->
+        <div class="add-chart-section">
+          @if (!showChartSelector()) {
+            <button mat-stroked-button class="add-chart-btn" (click)="showChartSelector.set(true)">
+              <mat-icon>add_chart</mat-icon>
+              {{ 'variableAnalysis.addChart' | translate }}
+            </button>
+          } @else {
+            <div class="mini-chart-selector">
+              <div class="mini-selector-header">
+                <span>{{ 'variableAnalysis.selectChartType' | translate }}</span>
+                <button mat-icon-button (click)="showChartSelector.set(false)">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+              <div class="mini-types-grid">
+                @for (type of compatibleChartTypes(); track type.id) {
+                  <button
+                    class="mini-type-card"
+                    (click)="addAdditionalChart(type)"
+                    [matTooltip]="type.description"
+                  >
+                    <mat-icon>{{ type.icon }}</mat-icon>
+                    <span>{{ type.name }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Cross-variable Charts -->
+        @if (crossCharts().length > 0) {
+          <mat-divider class="section-divider"></mat-divider>
+          <h3 class="section-subtitle cross-title">
+            <mat-icon>compare_arrows</mat-icon>
+            {{ 'variableAnalysis.crossAnalysis' | translate }}: {{ variable()!.nombre_original }} vs
+            {{ crossVariable()!.nombre_original }}
+          </h3>
+          <div class="charts-compact-grid">
+            @for (chart of crossCharts(); track chart.id) {
+              <app-chart-card
+                [chart]="chart"
+                [showSave]="isAdmin()"
+                [variables]="allVariables()"
+                [compact]="true"
+                (remove)="removeCrossChart($event)"
+                (save)="saveChartAsPredefined($event)"
+              />
+            }
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <!-- Variable not found -->
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <h2>{{ 'variableAnalysis.notFound.title' | translate }}</h2>
+      <p>{{ 'variableAnalysis.notFound.message' | translate }}</p>
+      <a mat-stroked-button [routerLink]="backRoute()">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'variableAnalysis.notFound.backButton' | translate }}
+      </a>
+    </div>
+  }
+</div>

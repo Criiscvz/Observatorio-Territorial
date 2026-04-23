@@ -1,0 +1,79 @@
+import { CommonModule } from '@angular/common';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTableModule } from '@angular/material/table';
+import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Dataset } from '@core/models';
+import { DatasetService } from '@core/services/dataset.service';
+
+@Component({
+  selector: 'app-dataset-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTableModule,
+    MatChipsModule,
+    MatMenuModule,
+    MatProgressSpinnerModule,
+    TranslateModule,
+  ],
+  templateUrl: './dataset-list.component.html',
+  styleUrl: './dataset-list.component.scss',
+})
+export class DatasetListComponent implements OnInit {
+  private datasetService = inject(DatasetService);
+  private translate = inject(TranslateService);
+
+  datasets = signal<Dataset[]>([]);
+  loading = signal(true);
+
+  displayedColumns = ['nombre', 'departamento', 'estado', 'registros', 'fecha', 'acciones'];
+
+  ngOnInit(): void {
+    this.loadDatasets();
+  }
+
+  loadDatasets(): void {
+    this.loading.set(true);
+    this.datasetService.getAll().subscribe({
+      next: (res) => {
+        this.datasets.set(res?.data || []);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.datasets.set([]);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  getEstadoColor(estado: string): 'primary' | 'accent' | 'warn' {
+    switch (estado) {
+      case 'COMPLETADO':
+        return 'primary';
+      case 'PROCESANDO':
+        return 'accent';
+      default:
+        return 'warn';
+    }
+  }
+
+  deleteDataset(dataset: Dataset): void {
+    const message = this.translate.instant('datasets.list.confirmDelete', { name: dataset.nombre });
+    if (confirm(message)) {
+      this.datasetService.delete(dataset.id).subscribe({
+        next: () => this.loadDatasets(),
+      });
+    }
+  }
+}

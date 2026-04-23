@@ -1,0 +1,104 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <mat-card-header class="justify-center mb-6">
+      <div class="text-center w-full">
+        <img src="ULEAM.png" alt="ULEAM" class="auth-logo" />
+        <mat-card-title class="auth-title">{{ 'auth.register.title' | translate }}</mat-card-title>
+        <mat-card-subtitle>{{ 'auth.register.subtitle' | translate }}</mat-card-subtitle>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (error()) {
+        <div class="alert alert-error">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <mat-form-field class="w-full" appearance="outline">
+          <mat-label>{{ 'auth.register.fullName' | translate }}</mat-label>
+          <input matInput type="text" formControlName="name" [placeholder]="'auth.register.fullNamePlaceholder' | translate" />
+          <mat-icon matSuffix>person</mat-icon>
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+            <mat-error>{{ 'common.validation.required' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="w-full" appearance="outline">
+          <mat-label>{{ 'auth.register.email' | translate }}</mat-label>
+          <input matInput type="email" formControlName="email" [placeholder]="'auth.register.emailPlaceholder' | translate" />
+          <mat-icon matSuffix>email</mat-icon>
+          @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
+            <mat-error>{{ 'common.validation.required' | translate }}</mat-error>
+          }
+          @if (form.get('email')?.hasError('email')) {
+            <mat-error>{{ 'common.validation.email' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="w-full" appearance="outline">
+          <mat-label>{{ 'auth.register.password' | translate }}</mat-label>
+          <input
+            matInput
+            [type]="hidePassword() ? 'password' : 'text'"
+            formControlName="password"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="hidePassword.set(!hidePassword())"
+          >
+            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
+            <mat-error>{{ 'common.validation.required' | translate }}</mat-error>
+          }
+          @if (form.get('password')?.hasError('minlength')) {
+            <mat-error>{{ 'common.validation.minLength' | translate: { min: 8 } }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="w-full" appearance="outline">
+          <mat-label>{{ 'auth.register.confirmPassword' | translate }}</mat-label>
+          <input
+            matInput
+            [type]="hidePassword() ? 'password' : 'text'"
+            formControlName="password_confirmation"
+          />
+          <mat-icon matSuffix>lock</mat-icon>
+          @if (
+            form.get('password_confirmation')?.hasError('required') &&
+            form.get('password_confirmation')?.touched
+          ) {
+            <mat-error>{{ 'common.validation.required' | translate }}</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-raised-button
+          color="primary"
+          type="submit"
+          class="w-full mt-4"
+          [disabled]="form.invalid || loading()"
+        >
+          @if (loading()) {
+            <mat-spinner diameter="20" class="inline-block mr-2"></mat-spinner>
+            {{ 'auth.register.submitting' | translate }}
+          } @else {
+            {{ 'auth.register.submit' | translate }}
+          }
+        </button>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions class="justify-center">
+      <p class="auth-footer-text">
+        {{ 'auth.register.hasAccount' | translate }}
+        <a routerLink="/auth/login" class="auth-link">{{ 'auth.register.loginLink' | translate }}</a>
+      </p>
+    </mat-card-actions>
+  </mat-card>
+</div>

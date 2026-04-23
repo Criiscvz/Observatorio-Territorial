@@ -1,0 +1,386 @@
+<!-- Header público -->
+<header class="public-header">
+  <div class="header-container">
+    <a routerLink="/" class="logo-link">
+      <img src="ULEAM.png" alt="ULEAM" class="logo" />
+      <div class="logo-text-container">
+        <span class="logo-text">{{ appConfig.app.name }}</span>
+        <span class="logo-subtitle">{{ appConfig.university.shortName }}</span>
+      </div>
+    </a>
+
+    <nav class="nav-links">
+      <!-- Visor Geográfico -->
+      <a
+        href="https://departamentos.uleam.edu.ec/observatorio-territorial/"
+        target="_blank"
+        class="nav-link featured"
+      >
+        <mat-icon>public</mat-icon>
+        {{ 'public.home.nav.geoViewer' | translate }}
+      </a>
+
+      <!-- Menú de Observatorios -->
+      <button class="nav-link" [matMenuTriggerFor]="dimensionsMenu">
+        <mat-icon>category</mat-icon>
+        {{ 'public.home.nav.dimensions' | translate }}
+        <mat-icon class="dropdown-arrow">expand_more</mat-icon>
+      </button>
+      <mat-menu #dimensionsMenu="matMenu" class="observatories-menu">
+        @for (depto of departamentos(); track depto.id) {
+          <a mat-menu-item [routerLink]="['/publico/departamentos', depto.id]">
+            <mat-icon>{{ depto.icono || 'folder' }}</mat-icon>
+            <span>{{ depto.nombre }}</span>
+          </a>
+        }
+        @if (departamentos().length === 0) {
+          <button mat-menu-item disabled>
+            <mat-icon>info</mat-icon>
+            <span>{{ 'public.home.departments.empty' | translate }}</span>
+          </button>
+        }
+      </mat-menu>
+
+      <!-- Datasets -->
+      <a routerLink="/publico/datasets" class="nav-link">
+        <mat-icon>table_chart</mat-icon>
+        {{ 'public.home.nav.datasets' | translate }}
+      </a>
+
+      <!-- Menú Barómetro -->
+      <button class="nav-link" [matMenuTriggerFor]="barometerMenu">
+        <mat-icon>speed</mat-icon>
+        {{ 'public.home.nav.barometer' | translate }}
+        <mat-icon class="dropdown-arrow">expand_more</mat-icon>
+      </button>
+      <mat-menu #barometerMenu="matMenu">
+        <a mat-menu-item routerLink="/publico/barometro/investigacion">
+          <mat-icon>science</mat-icon>
+          <span>{{ 'public.home.nav.barometerResearch' | translate }}</span>
+        </a>
+        <a mat-menu-item routerLink="/publico/barometro/vinculacion">
+          <mat-icon>handshake</mat-icon>
+          <span>{{ 'public.home.nav.barometerLinkage' | translate }}</span>
+        </a>
+        <a mat-menu-item routerLink="/publico/datasets">
+          <mat-icon>speed</mat-icon>
+          <span>{{ 'public.home.nav.barometerUleam' | translate }}</span>
+        </a>
+      </mat-menu>
+    </nav>
+
+    <div class="header-actions">
+      <!-- Language selector -->
+      <button
+        class="lang-toggle"
+        [matMenuTriggerFor]="langMenu"
+        [matTooltip]="'language.select' | translate"
+      >
+        <mat-icon>language</mat-icon>
+        <span class="lang-code">{{ languageService.currentLang().toUpperCase() }}</span>
+      </button>
+      <mat-menu #langMenu="matMenu">
+        @for (lang of languageService.availableLanguages; track lang.code) {
+          <button
+            mat-menu-item
+            (click)="languageService.setLanguage(lang.code)"
+            [class.active]="languageService.currentLang() === lang.code"
+          >
+            <span class="lang-flag">{{ lang.flag }}</span>
+            <span>{{ lang.name }}</span>
+            @if (languageService.currentLang() === lang.code) {
+              <mat-icon class="check-icon">check</mat-icon>
+            }
+          </button>
+        }
+      </mat-menu>
+
+      <button class="theme-toggle" (click)="themeService.toggleTheme()">
+        <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      <!-- Botones de autenticación o menú de usuario -->
+      @if (authService.isAuthenticated()) {
+        <!-- Usuario autenticado: mostrar menú -->
+        <button class="user-btn" [matMenuTriggerFor]="userMenu">
+          <div class="user-avatar">
+            @if (authService.user()?.perfil?.avatar) {
+              <img
+                [src]="authService.user()?.perfil?.avatar"
+                alt="Avatar"
+                class="avatar-img"
+                crossorigin="anonymous"
+              />
+            } @else {
+              <span>{{ authService.user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
+            }
+          </div>
+          <span class="user-name-text">{{ authService.user()?.name }}</span>
+          <mat-icon class="dropdown-icon">expand_more</mat-icon>
+        </button>
+
+        <mat-menu #userMenu="matMenu" class="user-menu">
+          <div class="menu-header">
+            <div class="menu-avatar">
+              @if (authService.user()?.perfil?.avatar) {
+                <img
+                  [src]="authService.user()?.perfil?.avatar"
+                  alt="Avatar"
+                  class="avatar-img"
+                  crossorigin="anonymous"
+                />
+              } @else {
+                <span>{{ authService.user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
+              }
+            </div>
+            <div class="menu-user-info">
+              <span class="menu-user-name">{{ authService.user()?.name }}</span>
+              <span class="menu-user-email">{{ authService.user()?.email }}</span>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <a mat-menu-item routerLink="/perfil" class="menu-item">
+            <mat-icon>person</mat-icon>
+            <span>{{ 'profile.title' | translate }}</span>
+          </a>
+
+          @if (authService.isAdmin()) {
+            <a mat-menu-item routerLink="/admin/dashboard" class="menu-item">
+              <mat-icon>dashboard</mat-icon>
+              <span>{{ 'layout.sidebar.dashboard' | translate }}</span>
+            </a>
+          }
+
+          <mat-divider></mat-divider>
+
+          <button mat-menu-item (click)="authService.logout().subscribe()" class="menu-item logout">
+            <mat-icon>logout</mat-icon>
+            <span>{{ 'auth.logout' | translate }}</span>
+          </button>
+        </mat-menu>
+      } @else {
+        <!-- Usuario no autenticado: mostrar login/register -->
+        <a mat-stroked-button routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
+        <a mat-raised-button color="primary" routerLink="/auth/register">{{
+          'public.header.register' | translate
+        }}</a>
+      }
+    </div>
+  </div>
+</header>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <h1 class="hero-title">
+      <span class="hero-highlight">{{ 'public.home.hero.title' | translate }}</span> <br />{{
+        'public.home.hero.titleHighlight' | translate
+      }}
+    </h1>
+    <p class="hero-subtitle">
+      {{ 'public.home.hero.subtitle' | translate }}
+    </p>
+    <div class="hero-actions">
+      <a
+        mat-raised-button
+        color="primary"
+        routerLink="/publico/departamentos"
+        class="hero-btn primary"
+      >
+        <mat-icon>explore</mat-icon>
+        {{ 'public.home.hero.exploreData' | translate }}
+      </a>
+      @if (authService.isAuthenticated()) {
+        @if (authService.isAdmin()) {
+          <a mat-stroked-button routerLink="/admin/dashboard" class="hero-btn">
+            <mat-icon>dashboard</mat-icon>
+            {{ 'public.home.hero.goToDashboard' | translate }}
+          </a>
+        } @else {
+          <a mat-stroked-button routerLink="/perfil" class="hero-btn">
+            <mat-icon>person</mat-icon>
+            {{ 'profile.title' | translate }}
+          </a>
+        }
+      } @else {
+        <a mat-stroked-button routerLink="/auth/register" class="hero-btn">
+          <mat-icon>person_add</mat-icon>
+          {{ 'public.home.hero.createAccount' | translate }}
+        </a>
+      }
+    </div>
+  </div>
+  <div class="hero-illustration">
+    <div class="floating-card card-1">
+      <mat-icon>bar_chart</mat-icon>
+      <span>{{ 'public.home.floatingCards.dynamicCharts' | translate }}</span>
+    </div>
+    <div class="floating-card card-2">
+      <mat-icon>pie_chart</mat-icon>
+      <span>{{ 'public.home.floatingCards.visualAnalysis' | translate }}</span>
+    </div>
+    <div class="floating-card card-3">
+      <mat-icon>analytics</mat-icon>
+      <span>{{ 'public.home.floatingCards.correlations' | translate }}</span>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+  <div class="stats-container">
+    <div class="stat-item">
+      <span class="stat-number">{{ departamentos().length }}</span>
+      <span class="stat-label">{{ 'public.home.stats.publicDepartments' | translate }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ totalDatasets }}</span>
+      <span class="stat-label">{{ 'public.home.stats.availableDatasets' | translate }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ formatNumber(totalRegistros) }}</span>
+      <span class="stat-label">{{ 'public.home.stats.analyzedRecords' | translate }}</span>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+  <div class="section-header">
+    <h2 class="section-title">{{ 'public.home.features.title' | translate }}</h2>
+    <p class="section-subtitle">{{ 'public.home.features.subtitle' | translate }}</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <mat-icon>cloud_upload</mat-icon>
+      </div>
+      <h3>{{ 'public.home.features.smartImport.title' | translate }}</h3>
+      <p>{{ 'public.home.features.smartImport.description' | translate }}</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <mat-icon>auto_graph</mat-icon>
+      </div>
+      <h3>{{ 'public.home.features.autoCharts.title' | translate }}</h3>
+      <p>{{ 'public.home.features.autoCharts.description' | translate }}</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <mat-icon>compare_arrows</mat-icon>
+      </div>
+      <h3>{{ 'public.home.features.bivariable.title' | translate }}</h3>
+      <p>{{ 'public.home.features.bivariable.description' | translate }}</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">
+        <mat-icon>share</mat-icon>
+      </div>
+      <h3>{{ 'public.home.features.sharePublic.title' | translate }}</h3>
+      <p>{{ 'public.home.features.sharePublic.description' | translate }}</p>
+    </div>
+  </div>
+</section>
+
+<!-- Public Departments Preview -->
+<section class="departments-section">
+  <div class="section-header">
+    <h2 class="section-title">{{ 'public.home.departments.title' | translate }}</h2>
+    <p class="section-subtitle">{{ 'public.home.departments.subtitle' | translate }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>{{ 'public.home.departments.loading' | translate }}</p>
+    </div>
+  } @else if (departamentos().length > 0) {
+    <div class="departments-grid">
+      @for (depto of departamentos().slice(0, 6); track depto.id) {
+        <a [routerLink]="['/publico/departamentos', depto.id]" class="department-card">
+          <div class="department-avatar" [style.background]="getDeptoColor($index)">
+            @if (depto.icono) {
+              <mat-icon>{{ depto.icono }}</mat-icon>
+            } @else {
+              {{ depto.nombre.charAt(0).toUpperCase() }}
+            }
+          </div>
+          <div class="department-info">
+            <h4>{{ depto.nombre }}</h4>
+            <p>{{ depto.descripcion || ('public.home.departments.noDescription' | translate) }}</p>
+            <span class="dataset-count">
+              <mat-icon>table_chart</mat-icon>
+              {{ depto.datasets?.length || 0 }} {{ 'common.units.datasets' | translate }}
+            </span>
+          </div>
+        </a>
+      }
+    </div>
+    @if (departamentos().length > 6) {
+      <div class="view-all-container">
+        <a mat-stroked-button routerLink="/publico/departamentos">
+          {{ 'public.home.departments.viewAll' | translate }}
+          <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </div>
+    }
+  } @else {
+    <div class="empty-departments">
+      <mat-icon>folder_off</mat-icon>
+      <p>{{ 'public.home.departments.empty' | translate }}</p>
+    </div>
+  }
+</section>
+
+<!-- CTA Section -->
+@if (!authService.isAuthenticated()) {
+  <section class="cta-section">
+    <div class="cta-decoration cta-decoration-1"></div>
+    <div class="cta-decoration cta-decoration-2"></div>
+    <div class="cta-content">
+      <div class="cta-icon">
+        <mat-icon>explore</mat-icon>
+      </div>
+      <h2>{{ 'public.home.cta.title' | translate }}</h2>
+      <p>{{ 'public.home.cta.subtitle' | translate }}</p>
+      <div class="cta-actions">
+        <a mat-raised-button routerLink="/auth/register" class="cta-btn-primary">
+          <mat-icon>person_add</mat-icon>
+          {{ 'public.home.cta.button' | translate }}
+        </a>
+        <a mat-stroked-button routerLink="/auth/login" class="cta-btn-secondary">
+          <mat-icon>login</mat-icon>
+          {{ 'public.header.login' | translate }}
+        </a>
+      </div>
+    </div>
+  </section>
+}
+
+<!-- Footer -->
+<footer class="public-footer">
+  <div class="footer-content">
+    <div class="footer-brand">
+      <img src="ULEAM.png" alt="ULEAM" class="footer-logo" />
+      <div class="footer-brand-info">
+        <p class="footer-app-name">{{ appConfig.app.name }}</p>
+        <p class="footer-university">{{ appConfig.university.name }}</p>
+      </div>
+    </div>
+    <div class="footer-links">
+      <a [href]="appConfig.university.url" target="_blank">{{
+        'public.home.footer.websiteLink' | translate
+      }}</a>
+      <a routerLink="/publico/departamentos">{{
+        'public.home.footer.departmentsLink' | translate
+      }}</a>
+      <a routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
+    </div>
+    <div class="footer-copy">
+      <p>{{ 'layout.footer.copyright' | translate: { year: currentYear } }}</p>
+    </div>
+  </div>
+</footer>
