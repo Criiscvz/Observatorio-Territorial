@@ -32,57 +32,61 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
   ],
   template: `
     <mat-card class="chart-card">
-      <div class="chart-actions">
-        <button
-          mat-icon-button
-          class="export-chart"
-          (click)="exportPng()"
-          [matTooltip]="'charts.export.png' | translate"
-        >
-          <mat-icon>image</mat-icon>
-        </button>
-        <button
-          mat-icon-button
-          class="export-chart"
-          (click)="exportCsv()"
-          [matTooltip]="'charts.export.csv' | translate"
-        >
-          <mat-icon>download</mat-icon>
-        </button>
-        @if (variables().length > 0) {
+      <div class="chart-card-header">
+        <div class="chart-card-avatar" aria-hidden="true">
+          <mat-icon>{{ chart().chartType.icon }}</mat-icon>
+        </div>
+        <div class="chart-card-titles">
+          <div class="chart-card-title" [title]="chart().title">{{ chart().title }}</div>
+          <div class="chart-card-subtitle">
+            {{ 'charts.types.' + chart().chartType.id + '.name' | translate }}
+          </div>
+        </div>
+        <div class="chart-actions">
           <button
             mat-icon-button
-            class="filter-chart"
-            (click)="toggleFilters()"
-            [matTooltip]="'datasets.view.analysis.filters' | translate"
+            class="export-chart"
+            (click)="exportPng()"
+            [matTooltip]="'charts.export.png' | translate"
           >
-            <mat-icon [class.has-filters]="hasLocalFilters()">filter_list</mat-icon>
-            @if (hasLocalFilters()) {
-              <span class="filter-badge">{{ chart().filters?.length }}</span>
-            }
+            <mat-icon>image</mat-icon>
           </button>
-        }
-        @if (showSave()) {
           <button
             mat-icon-button
-            class="save-chart"
-            (click)="save.emit(chart())"
-            [matTooltip]="'charts.predefined.save' | translate"
+            class="export-chart"
+            (click)="exportCsv()"
+            [matTooltip]="'charts.export.csv' | translate"
           >
-            <mat-icon>bookmark_border</mat-icon>
+            <mat-icon>download</mat-icon>
           </button>
-        }
-        <button mat-icon-button class="remove-chart" (click)="remove.emit(chart().id)">
-          <mat-icon>close</mat-icon>
-        </button>
+          @if (variables().length > 0) {
+            <button
+              mat-icon-button
+              class="filter-chart"
+              (click)="toggleFilters()"
+              [matTooltip]="'datasets.view.analysis.filters' | translate"
+            >
+              <mat-icon [class.has-filters]="hasLocalFilters()">filter_list</mat-icon>
+              @if (hasLocalFilters()) {
+                <span class="filter-badge">{{ chart().filters?.length }}</span>
+              }
+            </button>
+          }
+          @if (showSave()) {
+            <button
+              mat-icon-button
+              class="save-chart"
+              (click)="save.emit(chart())"
+              [matTooltip]="'charts.predefined.save' | translate"
+            >
+              <mat-icon>bookmark_border</mat-icon>
+            </button>
+          }
+          <button mat-icon-button class="remove-chart" (click)="remove.emit(chart().id)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
       </div>
-      <mat-card-header>
-        <mat-icon mat-card-avatar>{{ chart().chartType.icon }}</mat-icon>
-        <mat-card-title>{{ chart().title }}</mat-card-title>
-        <mat-card-subtitle>{{
-          'charts.types.' + chart().chartType.id + '.name' | translate
-        }}</mat-card-subtitle>
-      </mat-card-header>
       @if (chart().description) {
         <p class="chart-description">{{ chart().description }}</p>
       }
@@ -125,13 +129,64 @@ import { ChartFiltersComponent } from '../chart-filters/chart-filters.component'
         position: relative;
       }
 
+      /* Header is a plain flex row: avatar | titles (flex-shrinks) | actions.
+         No mat-card-header wrapper, no absolute positioning — avoids fighting
+         Material's defaults and guarantees actions never overlay the title. */
+      .chart-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 12px 8px 16px;
+        min-height: 52px;
+      }
+
+      .chart-card-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--primary-600, #6366f1) 12%, transparent);
+        color: var(--primary-600, #6366f1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .chart-card-avatar mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+      }
+
+      .chart-card-titles {
+        flex: 1 1 auto;
+        min-width: 0; /* allow flex child to shrink below its content */
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .chart-card-title {
+        font-size: 0.95rem;
+        font-weight: 600;
+        line-height: 1.25;
+        color: var(--text-primary, rgba(0, 0, 0, 0.87));
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .chart-card-subtitle {
+        font-size: 0.75rem;
+        color: var(--text-secondary, rgba(0, 0, 0, 0.6));
+        line-height: 1.2;
+      }
+
       .chart-actions {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        z-index: 10;
         display: flex;
         gap: 2px;
+        flex-shrink: 0;
       }
 
       .save-chart mat-icon {

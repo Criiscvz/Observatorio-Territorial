@@ -1015,7 +1015,8 @@
     "chartSaved": "Chart saved as predefined",
     "notFound": {
       "title": "Variable not found",
-      "message": "The requested variable does not exist or does not belong to this dataset."
+      "message": "The requested variable does not exist or does not belong to this dataset.",
+      "backButton": "Back to dataset"
     }
   },
   "textInsights": {

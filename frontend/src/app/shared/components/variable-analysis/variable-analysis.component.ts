@@ -39,6 +39,7 @@ import {
   ActiveChart,
   CHART_TYPES,
   ChartType,
+  getBivariableChartTypes,
   getDefaultBivariableChartType,
   getDefaultUnivariableChartType,
   getUnivariableChartTypes,
@@ -122,6 +123,9 @@ export class VariableAnalysisComponent implements OnInit {
   showChartSelector = signal(false);
   selectedAdditionalType = signal<ChartType | null>(null);
 
+  // Chart selector for the cross/bivariable panel
+  showCrossChartSelector = signal(false);
+
   readonly chartTypes = CHART_TYPES;
 
   // Options for the selected variable (for filter chips)
@@ -141,6 +145,14 @@ export class VariableAnalysisComponent implements OnInit {
     const v = this.variable();
     if (!v) return [];
     return getUnivariableChartTypes(v.tipo_dato);
+  });
+
+  // Compatible chart types for cross/bivariable analysis (depends on both variables)
+  compatibleBivariableChartTypes = computed(() => {
+    const v = this.variable();
+    const cross = this.crossVariable();
+    if (!v || !cross) return [];
+    return getBivariableChartTypes(v.tipo_dato, cross.tipo_dato);
   });
 
   // Whether this is a TEXT variable (shows NLP insights panel)
@@ -440,6 +452,27 @@ export class VariableAnalysisComponent implements OnInit {
     this.crossVariable.set(null);
     this.crossCharts.set([]);
     this.crossSearchTerm.set('');
+    this.showCrossChartSelector.set(false);
+  }
+
+  /** Add an additional bivariable chart with a user-selected type */
+  addAdditionalCrossChart(chartType: ChartType): void {
+    const v = this.variable();
+    const cross = this.crossVariable();
+    if (!v || !cross) return;
+
+    const chart: ActiveChart = {
+      id: `cross-extra-${chartType.id}-${Date.now()}`,
+      title: `${v.nombre_original || v.nombre_columna} vs ${cross.nombre_original || cross.nombre_columna}`,
+      chartType,
+      variableX: v,
+      variableY: cross,
+      data: null,
+      loading: true,
+    };
+    this.crossCharts.update((charts) => [...charts, chart]);
+    this.loadBivariableData(chart);
+    this.showCrossChartSelector.set(false);
   }
 
   /** Add an additional chart with a specific type */
