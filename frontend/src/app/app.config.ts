@@ -9,14 +9,14 @@ import { provideTranslateBrowserLoader } from './core/loaders/translate-browser.
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { routes } from './app.routes';
 import { repositoryProviders } from './core/di/providers';
-import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { authInterceptor, retryInterceptor } from './core/interceptors';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
-    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor, retryInterceptor])),
     provideAnimationsAsync(),
     provideEchartsCore({
       echarts: () => import('./core/config/echarts.config').then((m) => m.echarts),

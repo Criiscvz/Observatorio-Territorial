@@ -14,6 +14,14 @@ use Illuminate\Support\Facades\Storage;
 |--------------------------------------------------------------------------
 */
 
+// ============ HEALTH CHECK ============
+// Lightweight endpoint for the frontend warmup gate. No DB, no auth.
+// Used to mask Render free-tier cold-start 500s from the UI.
+Route::get('/health', fn() => response()->json([
+    'ok' => true,
+    'ts' => now()->toIso8601String(),
+]));
+
 // ============ DOCUMENTACIÓN API (Swagger) ============
 Route::get('/documentation', function () {
     $path = storage_path('api-docs/api-docs.json');
