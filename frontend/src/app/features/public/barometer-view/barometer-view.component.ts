@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -39,6 +39,11 @@ export class BarometerViewComponent implements OnInit {
   error = signal(false);
   codigo = '';
 
+  // ─── PWA Install Prompt ───
+  private readonly deferredPrompt = signal<any>(null);
+  readonly canInstall = computed(() => !!this.deferredPrompt());
+  installOutcome = signal<'accepted' | 'dismissed' | null>(null);
+
   /** Maps category codes to i18n key segments */
   private readonly categoryI18nMap: Record<string, string> = {
     investigacion: 'research',
@@ -69,6 +74,18 @@ export class BarometerViewComponent implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
+      // Capture PWA install prompt
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        this.deferredPrompt.set(e);
+      });
+
+      // Listen for successful installation
+      window.addEventListener('appinstalled', () => {
+        this.deferredPrompt.set(null);
+        this.installOutcome.set('accepted');
+      });
+
       this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
         this.codigo = params['codigo'] || 'investigacion';
         this.loadData();
@@ -117,5 +134,14 @@ export class BarometerViewComponent implements OnInit {
       default:
         return 'type-text';
     }
+  }
+
+  async installApp(): Promise<void> {
+    const prompt = this.deferredPrompt();
+    if (!prompt) return;
+    prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    this.installOutcome.set(outcome);
+    this.deferredPrompt.set(null);
   }
 }

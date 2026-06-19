@@ -28,6 +28,16 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets"
+              },
+              {
+                "glob": "manifest.webmanifest",
+                "input": "src",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/icons",
+                "output": "/icons"
               }
             ],
             "styles": [
@@ -36,6 +46,7 @@
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
+            "serviceWorker": "ngsw-config.json",
             "ssr": {
               "entry": "src/server.ts"
             }

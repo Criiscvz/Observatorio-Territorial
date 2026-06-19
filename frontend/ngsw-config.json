@@ -1,0 +1,88 @@
+{
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
+  "index": "/index.html",
+  "assetGroups": [
+    {
+      "name": "app-shell",
+      "installMode": "prefetch",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js",
+          "/ULEAM.png"
+        ]
+      }
+    },
+    {
+      "name": "static-assets",
+      "installMode": "lazy",
+      "updateMode": "prefetch",
+      "resources": {
+        "files": [
+          "/assets/**",
+          "/icons/**",
+          "/*.svg",
+          "/*.png",
+          "/*.jpg",
+          "/*.jpeg",
+          "/*.webp",
+          "/*.woff",
+          "/*.woff2",
+          "/*.ttf",
+          "/*.otf"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "barometro-categorias",
+      "urls": [
+        "/api/categorias",
+        "/api/categorias/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 50,
+        "maxAge": "1h",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    },
+    {
+      "name": "barometro-datasets",
+      "urls": [
+        "/api/datasets/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 100,
+        "maxAge": "30m",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    },
+    {
+      "name": "public-data",
+      "urls": [
+        "/api/departamentos/**",
+        "/api/variables/**"
+      ],
+      "cacheConfig": {
+        "maxSize": 50,
+        "maxAge": "30m",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    }
+  ],
+  "navigationUrls": [
+    "/**",
+    "!/**/*.*",
+    "!/**/*__*",
+    "!/**/*__*/**",
+    "!/api/**"
+  ]
+}

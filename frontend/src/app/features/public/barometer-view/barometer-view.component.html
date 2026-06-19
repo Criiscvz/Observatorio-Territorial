@@ -24,6 +24,32 @@
       </a>
     </nav>
 
+    <!-- PWA Install Banner -->
+    @if (canInstall()) {
+      <div class="pwa-install-banner">
+        <div class="pwa-banner-content">
+          <div class="pwa-banner-icon">
+            <mat-icon>install_mobile</mat-icon>
+          </div>
+          <div class="pwa-banner-text">
+            <strong>Instala el Barómetro</strong>
+            <span>Accede rápido desde tu móvil sin abrir el navegador</span>
+          </div>
+        </div>
+        <button mat-flat-button class="pwa-install-btn" (click)="installApp()">
+          <mat-icon>download</mat-icon>
+          Instalar
+        </button>
+      </div>
+    }
+
+    @if (installOutcome() === 'accepted') {
+      <div class="pwa-success-banner">
+        <mat-icon>check_circle</mat-icon>
+        <span>¡App instalada correctamente! Búscala en tu pantalla de inicio.</span>
+      </div>
+    }
+
     <!-- Category Header -->
     <div class="category-header" [style.--accent-color]="categoria()?.color || '#6366F1'">
       <div
