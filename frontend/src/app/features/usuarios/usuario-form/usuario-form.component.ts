@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -15,6 +15,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from '@core/models';
 import { UserService } from '@core/services/user.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-usuario-form',
@@ -39,6 +40,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   styleUrl: './usuario-form.component.scss',
 })
 export class UsuarioFormComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -84,7 +86,7 @@ export class UsuarioFormComponent implements OnInit {
     if (!id) return;
 
     this.loadingUser.set(true);
-    this.userService.getUserById(id).subscribe({
+    this.userService.getUserById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.user.set(response.data);
         this.patchForm(response.data);
@@ -139,7 +141,7 @@ export class UsuarioFormComponent implements OnInit {
   }
 
   private createUser(data: any): void {
-    this.userService.createUser(data).subscribe({
+    this.userService.createUser(data).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.snackBar.open(
           this.translate.instant('users.messages.created'),
@@ -160,7 +162,7 @@ export class UsuarioFormComponent implements OnInit {
     const id = this.userId();
     if (!id) return;
 
-    this.userService.updateUser(id, data).subscribe({
+    this.userService.updateUser(id, data).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.snackBar.open(
           this.translate.instant('users.messages.updated'),

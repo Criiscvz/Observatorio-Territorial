@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal, DestroyRef } from '@angular/core';
 import {
   ChartEntity,
   ChartType,
@@ -11,9 +11,11 @@ import { GetBivariableStatsUseCase, GetUnivariableStatsUseCase } from '@core/dom
 import { GetDatasetDataUseCase } from '@core/domain/usecases/dataset';
 import { ActiveChart } from './active-chart.interface';
 import { ChartTypeOption } from './chart-type-option.interface';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Injectable({ providedIn: 'root' })
 export class DatasetAnalysisViewModel {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly getUnivariableStats = inject(GetUnivariableStatsUseCase);
   private readonly getBivariableStats = inject(GetBivariableStatsUseCase);
   private readonly getDatasetData = inject(GetDatasetDataUseCase);
@@ -122,7 +124,7 @@ export class DatasetAnalysisViewModel {
 
   loadDataset(id: string): void {
     this.isLoading.set(true);
-    this.datasetRepository.getById(id).subscribe({
+    this.datasetRepository.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (dataset) => {
         this.dataset.set(dataset);
         this.isLoading.set(false);
@@ -138,7 +140,7 @@ export class DatasetAnalysisViewModel {
     const dataset = this.dataset();
     if (!dataset) return;
 
-    this.getDatasetData.execute(dataset.id, page, perPage).subscribe({
+    this.getDatasetData.execute(dataset.id, page, perPage).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => this.dataRecords.set(data),
       error: (err) => this.error.set(err.error?.message || 'Error al cargar datos'),
     });
@@ -201,7 +203,7 @@ export class DatasetAnalysisViewModel {
         variable_id: variableId,
         chart_type: chartType,
       })
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.activeCharts.update((charts) =>
             charts.map((c) => (c.id === chartId ? { ...c, data, isLoading: false } : c)),
@@ -227,7 +229,7 @@ export class DatasetAnalysisViewModel {
         variable_y_id: varYId,
         chart_type: chartType,
       })
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.activeCharts.update((charts) =>
             charts.map((c) => (c.id === chartId ? { ...c, data, isLoading: false } : c)),

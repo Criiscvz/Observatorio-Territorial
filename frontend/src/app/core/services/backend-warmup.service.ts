@@ -1,9 +1,10 @@
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject, DestroyRef } from '@angular/core';
 import { Observable, ReplaySubject } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 /**
  * Gates HTTP calls behind a warmup ping so Render free-tier cold starts
@@ -16,6 +17,7 @@ import { environment } from '../../../environments/environment';
  */
 @Injectable({ providedIn: 'root' })
 export class BackendWarmupService {
+    private readonly destroyRef = inject(DestroyRef);
   private http = inject(HttpClient);
   private platformId = inject(PLATFORM_ID);
 
@@ -42,7 +44,7 @@ export class BackendWarmupService {
   }
 
   private attempt(n: number): void {
-    this.http.get(this.healthUrl).subscribe({
+    this.http.get(this.healthUrl).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.subject.next(true);
         this.subject.complete();

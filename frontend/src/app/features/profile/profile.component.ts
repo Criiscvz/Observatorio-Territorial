@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, computed, ElementRef, inject, OnInit, PLATFORM_ID, signal, ViewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, OnInit, PLATFORM_ID, signal, ViewChild, DestroyRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -16,6 +16,7 @@ import { ProfileService, UpdateProfileData } from '@core/services/profile.servic
 import { ThemeService } from '@core/services/theme.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-profile',
@@ -38,6 +39,7 @@ import { environment } from '../../../environments/environment';
   styleUrl: './profile.component.scss',
 })
 export class ProfileComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   private readonly platformId = inject(PLATFORM_ID);
@@ -89,7 +91,7 @@ export class ProfileComponent implements OnInit {
 
   private loadProfile(): void {
     this.loading.set(true);
-    this.profileService.getProfile().subscribe({
+    this.profileService.getProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => {
         this.user.set(user);
         this.patchForm(user);
@@ -124,7 +126,7 @@ export class ProfileComponent implements OnInit {
     this.saving.set(true);
     const data: UpdateProfileData = this.profileForm.value;
 
-    this.profileService.updateProfile(data).subscribe({
+    this.profileService.updateProfile(data).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => {
         this.user.set(user);
         this.authService.updateUser(user);
@@ -185,7 +187,7 @@ export class ProfileComponent implements OnInit {
   private uploadAvatar(file: File): void {
     this.uploadingAvatar.set(true);
 
-    this.profileService.uploadAvatar(file).subscribe({
+    this.profileService.uploadAvatar(file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => {
         this.user.set(user);
         this.authService.updateUser(user);
@@ -216,7 +218,7 @@ export class ProfileComponent implements OnInit {
 
     this.uploadingAvatar.set(true);
 
-    this.profileService.deleteAvatar().subscribe({
+    this.profileService.deleteAvatar().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => {
         this.user.set(user);
         this.authService.updateUser(user);

@@ -1,9 +1,11 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal, DestroyRef } from '@angular/core';
 import { DatasetEntity, DepartamentoEntity } from '@core/domain/entities';
 import { GetDepartamentosUseCase } from '@core/domain/usecases/departamento';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Injectable({ providedIn: 'root' })
 export class DashboardViewModel {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly getDepartamentosUseCase = inject(GetDepartamentosUseCase);
 
   // State
@@ -52,7 +54,7 @@ export class DashboardViewModel {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.getDepartamentosUseCase.execute().subscribe({
+    this.getDepartamentosUseCase.execute().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.departamentos.set(data);
         this.isLoading.set(false);

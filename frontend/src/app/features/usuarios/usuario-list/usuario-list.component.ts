@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -19,6 +19,7 @@ import { User } from '@core/models';
 import { UserService } from '@core/services/user.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-usuario-list',
@@ -46,6 +47,7 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
   styleUrl: './usuario-list.component.scss',
 })
 export class UsuarioListComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly userService = inject(UserService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
@@ -68,7 +70,7 @@ export class UsuarioListComponent implements OnInit {
 
   loadUsers(page = 1): void {
     this.loading.set(true);
-    this.userService.getUsers(this.pageSize(), page).subscribe({
+    this.userService.getUsers(this.pageSize(), page).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.users.set(response.data);
         this.currentPage.set(response.meta.current_page);
@@ -105,9 +107,9 @@ export class UsuarioListComponent implements OnInit {
       },
     });
 
-    dialogRef.afterClosed().subscribe((confirmed) => {
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
       if (confirmed) {
-        this.userService.toggleUserStatus(user.id, newStatus).subscribe({
+        this.userService.toggleUserStatus(user.id, newStatus).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: () => {
             this.snackBar.open(
               this.translate.instant('users.messages.statusUpdated'),
@@ -140,9 +142,9 @@ export class UsuarioListComponent implements OnInit {
       },
     });
 
-    dialogRef.afterClosed().subscribe((confirmed) => {
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
       if (confirmed) {
-        this.userService.updateUserRole(user.id, { rol: newRole }).subscribe({
+        this.userService.updateUserRole(user.id, { rol: newRole }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: () => {
             this.snackBar.open(
               this.translate.instant('users.messages.roleUpdated'),
@@ -174,9 +176,9 @@ export class UsuarioListComponent implements OnInit {
       },
     });
 
-    dialogRef.afterClosed().subscribe((confirmed) => {
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
       if (confirmed) {
-        this.userService.deleteUser(user.id).subscribe({
+        this.userService.deleteUser(user.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: () => {
             this.snackBar.open(
               this.translate.instant('users.messages.deleted'),

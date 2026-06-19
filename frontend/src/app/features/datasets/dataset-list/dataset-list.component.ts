@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -11,6 +11,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Dataset } from '@core/models';
 import { DatasetService } from '@core/services/dataset.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-dataset-list',
@@ -31,6 +32,7 @@ import { DatasetService } from '@core/services/dataset.service';
   styleUrl: './dataset-list.component.scss',
 })
 export class DatasetListComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   private datasetService = inject(DatasetService);
   private translate = inject(TranslateService);
 
@@ -45,7 +47,7 @@ export class DatasetListComponent implements OnInit {
 
   loadDatasets(): void {
     this.loading.set(true);
-    this.datasetService.getAll().subscribe({
+    this.datasetService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.datasets.set(res?.data || []);
         this.loading.set(false);
@@ -71,7 +73,7 @@ export class DatasetListComponent implements OnInit {
   deleteDataset(dataset: Dataset): void {
     const message = this.translate.instant('datasets.list.confirmDelete', { name: dataset.nombre });
     if (confirm(message)) {
-      this.datasetService.delete(dataset.id).subscribe({
+      this.datasetService.delete(dataset.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => this.loadDatasets(),
       });
     }

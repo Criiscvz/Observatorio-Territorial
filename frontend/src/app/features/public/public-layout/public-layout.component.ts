@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, DestroyRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +11,7 @@ import { AuthService } from '@core/services/auth.service';
 import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-public-layout',
@@ -31,6 +32,7 @@ import { TranslateModule } from '@ngx-translate/core';
   styleUrl: './public-layout.component.scss',
 })
 export class PublicLayoutComponent {
+    private readonly destroyRef = inject(DestroyRef);
   readonly authService = inject(AuthService);
   readonly themeService = inject(ThemeService);
   readonly languageService = inject(LanguageService);
@@ -38,6 +40,6 @@ export class PublicLayoutComponent {
   currentYear = new Date().getFullYear();
 
   logout(): void {
-    this.authService.logout().subscribe();
+    this.authService.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 }

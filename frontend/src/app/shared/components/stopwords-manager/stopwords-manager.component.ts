@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -11,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { DashboardService } from '@core/services/dashboard.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-stopwords-manager',
@@ -222,6 +223,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   ],
 })
 export class StopwordsManagerComponent {
+    private readonly destroyRef = inject(DestroyRef);
   private dashboardService = inject(DashboardService);
   private snackBar = inject(MatSnackBar);
   private translate = inject(TranslateService);
@@ -244,7 +246,7 @@ export class StopwordsManagerComponent {
 
   private loadStopwords(datasetId: string): void {
     this.loading.set(true);
-    this.dashboardService.getDatasetStopwords(datasetId).subscribe({
+    this.dashboardService.getDatasetStopwords(datasetId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.stopwords.set(res.stopwords || []);
         this.loading.set(false);
@@ -268,7 +270,7 @@ export class StopwordsManagerComponent {
 
     this.saving.set(true);
     const updated = [...current, word];
-    this.dashboardService.updateDatasetStopwords(this.datasetId(), updated).subscribe({
+    this.dashboardService.updateDatasetStopwords(this.datasetId(), updated).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.stopwords.set(res.stopwords);
         this.newWord = '';
@@ -288,7 +290,7 @@ export class StopwordsManagerComponent {
   removeWord(word: string): void {
     const updated = this.stopwords().filter((w) => w !== word);
     this.saving.set(true);
-    this.dashboardService.updateDatasetStopwords(this.datasetId(), updated).subscribe({
+    this.dashboardService.updateDatasetStopwords(this.datasetId(), updated).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.stopwords.set(res.stopwords);
         this.saving.set(false);

@@ -1,11 +1,13 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal, DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { LoginCredentials, RegisterData, UserEntity } from '@core/domain/entities';
 import { AuthRepository } from '@core/domain/repositories';
 import { LoginUseCase, LogoutUseCase, RegisterUseCase } from '@core/domain/usecases/auth';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Injectable({ providedIn: 'root' })
 export class AuthViewModel {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly loginUseCase = inject(LoginUseCase);
   private readonly registerUseCase = inject(RegisterUseCase);
   private readonly logoutUseCase = inject(LogoutUseCase);
@@ -24,7 +26,7 @@ export class AuthViewModel {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.loginUseCase.execute(credentials).subscribe({
+    this.loginUseCase.execute(credentials).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.currentUser.set(response.user);
         this.isLoading.set(false);
@@ -41,7 +43,7 @@ export class AuthViewModel {
     this.isLoading.set(true);
     this.error.set(null);
 
-    this.registerUseCase.execute(data).subscribe({
+    this.registerUseCase.execute(data).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.currentUser.set(response.user);
         this.isLoading.set(false);
@@ -57,7 +59,7 @@ export class AuthViewModel {
   logout(): void {
     this.isLoading.set(true);
 
-    this.logoutUseCase.execute().subscribe({
+    this.logoutUseCase.execute().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.currentUser.set(null);
         this.isLoading.set(false);
@@ -76,7 +78,7 @@ export class AuthViewModel {
   loadCurrentUser(): void {
     if (!this.isAuthenticated()) return;
 
-    this.authRepository.getCurrentUser().subscribe({
+    this.authRepository.getCurrentUser().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => this.currentUser.set(user),
       error: () => this.authRepository.clearToken(),
     });

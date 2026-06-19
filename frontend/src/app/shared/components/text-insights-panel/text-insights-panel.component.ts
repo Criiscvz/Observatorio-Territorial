@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, DestroyRef } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -8,6 +8,7 @@ import { DashboardService } from '@core/services/dashboard.service';
 import { NgramItem, TextAnalysisResponse } from '@core/services/interfaces';
 import { ChartFilter } from '@core/services/interfaces/stats/univariable-request.interface';
 import { TranslateModule } from '@ngx-translate/core';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-text-insights-panel',
@@ -522,6 +523,7 @@ import { TranslateModule } from '@ngx-translate/core';
   ],
 })
 export class TextInsightsPanelComponent {
+    private readonly destroyRef = inject(DestroyRef);
   // Inputs
   datasetId = input.required<string>();
   variableId = input.required<string>();
@@ -621,7 +623,7 @@ export class TextInsightsPanelComponent {
       ? this.dashboardService.getTextAnalysis(request)
       : this.dashboardService.getPublicTextAnalysis(request);
 
-    obs.subscribe({
+    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.analysisData.set(data);
         this.loading.set(false);

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -12,6 +12,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-departamento-form',
@@ -34,6 +35,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   styleUrl: './departamento-form.component.scss',
 })
 export class DepartamentoFormComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -88,7 +90,7 @@ export class DepartamentoFormComponent implements OnInit {
   }
 
   loadDepartamento(id: string): void {
-    this.deptoService.getById(id).subscribe({
+    this.deptoService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (departamento) => {
         this.form.patchValue({
           nombre: departamento.nombre,
@@ -128,7 +130,7 @@ export class DepartamentoFormComponent implements OnInit {
         publico: this.form.value.publico || false,
       };
 
-      this.deptoService.update(this.departamentoId()!, updateData).subscribe({
+      this.deptoService.update(this.departamentoId()!, updateData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.success.set(this.translate.instant('departamentos.form.success.updated'));
           setTimeout(() => {
@@ -149,7 +151,7 @@ export class DepartamentoFormComponent implements OnInit {
         publico: this.form.value.publico || false,
       };
 
-      this.deptoService.create(createData).subscribe({
+      this.deptoService.create(createData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (departamento) => {
           this.success.set(this.translate.instant('departamentos.form.success.created'));
           setTimeout(() => {

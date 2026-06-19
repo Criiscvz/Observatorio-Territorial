@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal, DestroyRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,6 +6,7 @@ import { EMPTY, switchMap } from 'rxjs';
 import { ColumnaAnalizada, Departamento } from '@core/models';
 import { DatasetService } from '@core/services/dataset.service';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 export interface ColumnaExtendida extends ColumnaAnalizada {
   excluida?: boolean;
@@ -28,6 +29,7 @@ export interface ColumnaExtendida extends ColumnaAnalizada {
  */
 @Injectable()
 export class DatasetUploadFacade {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly datasetService = inject(DatasetService);
@@ -62,7 +64,7 @@ export class DatasetUploadFacade {
 
   /** Carga la lista de departamentos disponibles */
   loadDepartamentos(): void {
-    this.deptoService.getAll().subscribe({
+    this.deptoService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (departamentos) => this.departamentos.set(departamentos || []),
     });
   }
@@ -90,7 +92,7 @@ export class DatasetUploadFacade {
           return this.datasetService.analizar(dataset.id);
         }),
       )
-      .subscribe({
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (analisis) => {
           const columnasExtendidas = analisis.columnas.map((c) => ({
             ...c,
@@ -125,7 +127,7 @@ export class DatasetUploadFacade {
     this.processing.set(true);
     this.error.set(null);
 
-    this.datasetService.confirmar(this.datasetId()!, columnasAImportar).subscribe({
+    this.datasetService.confirmar(this.datasetId()!, columnasAImportar).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.importedCount.set(res.total_registros);
         this.processing.set(false);

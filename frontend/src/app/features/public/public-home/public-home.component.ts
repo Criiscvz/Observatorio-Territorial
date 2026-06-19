@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { Component, inject, OnInit, PLATFORM_ID, signal, DestroyRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
@@ -15,6 +15,7 @@ import { DepartamentoService } from '@core/services/departamento.service';
 import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-public-home',
@@ -35,6 +36,7 @@ import { TranslateModule } from '@ngx-translate/core';
   styleUrl: './public-home.component.scss',
 })
 export class PublicHomeComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly deptoService = inject(DepartamentoService);
   readonly authService = inject(AuthService);
@@ -82,7 +84,7 @@ export class PublicHomeComponent implements OnInit {
   }
 
   loadDepartamentos(): void {
-    this.deptoService.getPublicos().subscribe({
+    this.deptoService.getPublicos().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (deptos) => {
         this.departamentos.set(deptos || []);
         this.loading.set(false);

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, output, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, output, signal, DestroyRef } from '@angular/core';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -9,6 +9,7 @@ import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { IsAdminDirective } from '../../directives/is-admin.directive';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 interface NavItem {
   label: string;
@@ -398,6 +399,7 @@ interface NavItem {
   ],
 })
 export class SidebarComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly deptoService = inject(DepartamentoService);
   private readonly authService = inject(AuthService);
 
@@ -425,13 +427,13 @@ export class SidebarComponent implements OnInit {
     this.loadDepartamentos();
 
     // Suscribirse a cambios en departamentos para actualizar automáticamente
-    this.deptoService.onDepartamentosChanged$.subscribe(() => {
+    this.deptoService.onDepartamentosChanged$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.loadDepartamentos();
     });
   }
 
   loadDepartamentos(): void {
-    this.deptoService.getAll().subscribe({
+    this.deptoService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (departamentos) => this.departamentos.set(departamentos || []),
       error: () => this.departamentos.set([]),
     });

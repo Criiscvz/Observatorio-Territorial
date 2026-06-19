@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, output } from '@angular/core';
+import { Component, inject, output, DestroyRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,6 +11,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '@core/services/auth.service';
 import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-header',
@@ -425,12 +426,13 @@ import { ThemeService } from '@core/services/theme.service';
   ],
 })
 export class HeaderComponent {
+    private readonly destroyRef = inject(DestroyRef);
   authService = inject(AuthService);
   themeService = inject(ThemeService);
   languageService = inject(LanguageService);
   toggleSidenav = output<void>();
 
   logout(): void {
-    this.authService.logout().subscribe();
+    this.authService.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 }

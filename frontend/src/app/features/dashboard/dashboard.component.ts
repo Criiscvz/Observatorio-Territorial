@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatRippleModule } from '@angular/material/core';
@@ -13,6 +13,7 @@ import { DepartamentoService } from '@core/services/departamento.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import type { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-dashboard',
@@ -33,6 +34,7 @@ import { NgxEchartsDirective } from 'ngx-echarts';
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly deptoService = inject(DepartamentoService);
   private readonly translate = inject(TranslateService);
   authService = inject(AuthService);
@@ -223,7 +225,7 @@ export class DashboardComponent implements OnInit {
   }
 
   loadDepartamentos(): void {
-    this.deptoService.getAll().subscribe({
+    this.deptoService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (departamentos) => {
         this.departamentos.set(departamentos || []);
         this.loading.set(false);

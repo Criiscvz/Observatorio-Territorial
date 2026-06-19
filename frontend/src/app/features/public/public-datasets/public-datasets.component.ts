@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, computed, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, PLATFORM_ID, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -11,6 +11,7 @@ import { RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 interface DatasetConDepto extends Dataset {
   departamento_nombre: string;
@@ -36,6 +37,7 @@ interface DatasetConDepto extends Dataset {
   styleUrl: './public-datasets.component.scss',
 })
 export class PublicDatasetsComponent implements OnInit {
+    private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly deptoService = inject(DepartamentoService);
 
@@ -98,7 +100,7 @@ export class PublicDatasetsComponent implements OnInit {
   }
 
   private loadData(): void {
-    this.deptoService.getPublicos().subscribe({
+    this.deptoService.getPublicos().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (deptos) => {
         this.departamentos.set(deptos || []);
         this.loading.set(false);
