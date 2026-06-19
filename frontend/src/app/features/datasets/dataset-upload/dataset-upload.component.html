@@ -5,14 +5,14 @@
 
   <mat-stepper [linear]="true" #stepper>
     <!-- Step 1: Subir archivo -->
-    <mat-step [stepControl]="uploadForm" [label]="'datasets.upload.steps.upload' | translate">
+    <mat-step [stepControl]="facade.uploadForm" [label]="'datasets.upload.steps.upload' | translate">
       <mat-card class="mt-4">
         <mat-card-content>
-          <form [formGroup]="uploadForm" class="space-y-4">
+          <form [formGroup]="facade.uploadForm" class="space-y-4">
             <mat-form-field class="w-full" appearance="outline">
               <mat-label>{{ 'datasets.upload.form.department' | translate }}</mat-label>
               <mat-select formControlName="departamento_id">
-                @for (depto of departamentos(); track depto.id) {
+                @for (depto of facade.departamentos(); track depto.id) {
                   <mat-option [value]="depto.id">{{ depto.nombre }}</mat-option>
                 }
               </mat-select>
@@ -35,7 +35,7 @@
             <!-- Drop zone -->
             <div
               class="drop-zone"
-              [class.has-file]="selectedFile()"
+              [class.has-file]="facade.selectedFile()"
               (click)="fileInput.click()"
               (dragover)="onDragOver($event)"
               (drop)="onDrop($event)"
@@ -48,10 +48,10 @@
                 (change)="onFileSelect($event)"
               />
 
-              @if (selectedFile()) {
+              @if (facade.selectedFile()) {
                 <mat-icon class="icon success">check_circle</mat-icon>
-                <p class="file-name">{{ selectedFile()?.name }}</p>
-                <p class="file-size">{{ formatFileSize(selectedFile()?.size || 0) }}</p>
+                <p class="file-name">{{ facade.selectedFile()?.name }}</p>
+                <p class="file-size">{{ facade.formatFileSize(facade.selectedFile()?.size || 0) }}</p>
                 <button mat-button color="warn" (click)="clearFile($event)" class="mt-2">
                   <mat-icon>close</mat-icon> {{ 'datasets.upload.dropzone.removeFile' | translate }}
                 </button>
@@ -63,16 +63,16 @@
               }
             </div>
 
-            @if (uploading()) {
+            @if (facade.uploading()) {
               <div class="upload-progress">
                 <p>{{ 'datasets.upload.analyzing' | translate }}</p>
                 <mat-progress-bar mode="indeterminate"></mat-progress-bar>
               </div>
             }
 
-            @if (error()) {
+            @if (facade.error()) {
               <div class="alert error">
-                {{ error() }}
+                {{ facade.error() }}
               </div>
             }
           </form>
@@ -82,8 +82,8 @@
           <button
             mat-raised-button
             color="primary"
-            [disabled]="uploadForm.invalid || !selectedFile() || uploading()"
-            (click)="uploadAndAnalyze(stepper)"
+            [disabled]="facade.uploadForm.invalid || !facade.selectedFile() || facade.uploading()"
+            (click)="facade.uploadAndAnalyze(stepper)"
           >
             <mat-icon>upload</mat-icon>
             {{ 'datasets.upload.uploadAndAnalyze' | translate }}
@@ -98,22 +98,22 @@
         <mat-card-header>
           <mat-card-title>{{ 'datasets.upload.configure.title' | translate }}</mat-card-title>
           <mat-card-subtitle>
-            {{ totalFilas() | number }} {{ 'datasets.upload.configure.rowsDetected' | translate }} |
-            {{ columnasActivas().length }}
-            {{ 'datasets.upload.configure.columnsToImport' | translate }} {{ columnas().length }}
+            {{ facade.totalFilas() | number }} {{ 'datasets.upload.configure.rowsDetected' | translate }} |
+            {{ facade.columnasActivas().length }}
+            {{ 'datasets.upload.configure.columnsToImport' | translate }} {{ facade.columnas().length }}
             {{ 'datasets.upload.configure.totalColumns' | translate }}
           </mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content class="!pt-4">
-          @if (error()) {
+          @if (facade.error()) {
             <div class="alert error mb-4">
-              {{ error() }}
+              {{ facade.error() }}
             </div>
           }
 
           <div class="space-y-3">
-            @for (col of columnas(); track col.nombre_columna; let i = $index) {
+            @for (col of facade.columnas(); track col.nombre_columna; let i = $index) {
               <mat-expansion-panel [expanded]="false" [class.excluded]="col.excluida">
                 <mat-expansion-panel-header>
                   <mat-panel-title class="column-title">
@@ -131,7 +131,7 @@
                     </span>
                   </mat-panel-title>
                   <mat-panel-description class="column-description">
-                    <span [class]="getTipoClass(col.tipo_dato)">{{ col.tipo_dato }}</span>
+                    <span [class]="facade.getTipoClass(col.tipo_dato)">{{ col.tipo_dato }}</span>
                     @if (col.excluida) {
                       <span class="excluded-label"
                         >({{ 'datasets.upload.configure.excludeColumn' | translate }})</span
@@ -205,7 +205,7 @@
                   <button
                     mat-button
                     [color]="col.excluida ? 'primary' : 'warn'"
-                    (click)="toggleExcluir(col)"
+                    (click)="facade.toggleExcluir(col)"
                   >
                     <mat-icon>{{ col.excluida ? 'add_circle' : 'remove_circle' }}</mat-icon>
                     {{
@@ -219,7 +219,7 @@
             }
           </div>
 
-          @if (processing()) {
+          @if (facade.processing()) {
             <div class="processing-state">
               <p>{{ 'datasets.upload.importing' | translate }}</p>
               <mat-progress-bar mode="indeterminate"></mat-progress-bar>
@@ -228,21 +228,21 @@
         </mat-card-content>
 
         <mat-card-actions align="end" class="!px-4 !pb-4">
-          <button mat-button matStepperPrevious [disabled]="processing()">
+          <button mat-button matStepperPrevious [disabled]="facade.processing()">
             <mat-icon>arrow_back</mat-icon> {{ 'common.buttons.previous' | translate }}
           </button>
           <button
             mat-raised-button
             color="primary"
-            [disabled]="processing() || columnasActivas().length === 0"
-            (click)="confirmImport(stepper)"
+            [disabled]="facade.processing() || facade.columnasActivas().length === 0"
+            (click)="facade.confirmImport(stepper)"
           >
-            @if (processing()) {
+            @if (facade.processing()) {
               <mat-icon class="animate-spin">refresh</mat-icon>
             } @else {
               <mat-icon>check</mat-icon>
             }
-            {{ 'datasets.upload.confirmImport' | translate }} ({{ columnasActivas().length }}
+            {{ 'datasets.upload.confirmImport' | translate }} ({{ facade.columnasActivas().length }}
             {{ 'common.units.columns' | translate }})
           </button>
         </mat-card-actions>
@@ -258,7 +258,7 @@
           <p class="success-message">
             {{
               'datasets.upload.success.message'
-                | translate: { records: importedCount(), columns: columnasActivas().length }
+                | translate: { records: facade.importedCount(), columns: facade.columnasActivas().length }
             }}
           </p>
 
@@ -269,7 +269,7 @@
             <button
               mat-raised-button
               color="primary"
-              [routerLink]="['/admin/datasets', datasetId()]"
+              [routerLink]="['/admin/datasets', facade.datasetId()]"
             >
               <mat-icon>analytics</mat-icon> {{ 'datasets.upload.success.viewData' | translate }}
             </button>
@@ -278,4 +278,5 @@
       </mat-card>
     </mat-step>
   </mat-stepper>
+
 </div>

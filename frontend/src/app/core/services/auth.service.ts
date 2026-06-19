@@ -4,7 +4,12 @@ import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
 import { AuthResponse, LoginRequest, RegisterRequest, User, UserRole } from '../models';
 import { ApiService } from './api.service';
 
-const TOKEN_KEY = 'auth_token';
+/**
+ * Clave para almacenar el perfil del usuario en sessionStorage.
+ * NOTA DE SEGURIDAD: El token JWT ya NO se persiste en localStorage ni en
+ * sessionStorage. Vive únicamente en memoria (señal Angular) para minimizar
+ * la superficie de ataque frente a inyecciones XSS.
+ */
 const USER_KEY = 'auth_user';
 
 @Injectable({
@@ -16,7 +21,11 @@ export class AuthService {
 
   // State con signals
   private readonly userSignal = signal<User | null>(this.getStoredUser());
-  private readonly tokenSignal = signal<string | null>(this.getStoredToken());
+  /**
+   * El token vive únicamente en memoria. No se inicializa desde ningún
+   * almacenamiento persistente para evitar robo de sesión por XSS.
+   */
+  private readonly tokenSignal = signal<string | null>(null);
   private readonly loadingSignal = signal<boolean>(false);
 
   // Computed values
@@ -106,7 +115,8 @@ export class AuthService {
   }
 
   /**
-   * Obtener token actual (para uso en interceptors)
+   * Obtener token actual (para uso en interceptors).
+   * El token solo existe en memoria durante la sesión activa.
    */
   getToken(): string | null {
     return this.tokenSignal();
@@ -127,15 +137,15 @@ export class AuthService {
     this.tokenSignal.set(null);
     this.userSignal.set(null);
     if (typeof window !== 'undefined') {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(USER_KEY);
     }
   }
 
   private handleAuthSuccess(response: AuthResponse): void {
+    // El token se mantiene SOLO en la señal en memoria para evitar exposición por XSS.
     this.tokenSignal.set(response.token);
     this.userSignal.set(response.user);
-    this.storeToken(response.token);
+    // El perfil del usuario se guarda en sessionStorage (mismo tab, se elimina al cerrar).
     this.storeUser(response.user);
   }
 
@@ -144,26 +154,26 @@ export class AuthService {
     this.router.navigate(['/auth/login']);
   }
 
-  private getStoredToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
+  /**
+   * El usuario se recupera de sessionStorage para mostrar datos básicos
+   * tras una recarga de página, sin exponer el token de sesión.
+   * Al recargar, checkAuth() verificará con el backend si la sesión es válida.
+   */
   private getStoredUser(): User | null {
     if (typeof window === 'undefined') return null;
-    const user = localStorage.getItem(USER_KEY);
+    const user = sessionStorage.getItem(USER_KEY);
     return user ? JSON.parse(user) : null;
   }
 
-  private storeToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TOKEN_KEY, token);
-    }
-  }
-
+  /**
+   * El perfil del usuario se almacena en sessionStorage:
+   * - No es accesible desde otras pestañas del navegador.
+   * - Se elimina automáticamente al cerrar la pestaña/navegador.
+   * - No contiene el token JWT.
+   */
   private storeUser(user: User): void {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     }
   }
 }
