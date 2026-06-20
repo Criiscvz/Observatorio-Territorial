@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, DestroyRef } from '@angular/core';
+import { Component, inject, DestroyRef, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
@@ -38,8 +38,12 @@ export class PublicLayoutComponent {
   readonly languageService = inject(LanguageService);
   readonly appConfig = APP_CONFIG;
   currentYear = new Date().getFullYear();
+  mobileMenuOpen = signal(false);
+  showObservatories = signal(false);
+  showBarometer = signal(false);
 
   logout(): void {
     this.authService.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
   }
 }
+

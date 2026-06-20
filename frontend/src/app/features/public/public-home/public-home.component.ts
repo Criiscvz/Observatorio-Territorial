@@ -47,6 +47,9 @@ export class PublicHomeComponent implements OnInit {
 
   departamentos = signal<Departamento[]>([]);
   loading = signal(true);
+  mobileMenuOpen = signal(false);
+  showObservatories = signal(false);
+  showBarometer = signal(false);
   currentYear = new Date().getFullYear();
 
   private readonly deptoColors = [
@@ -106,3 +109,4 @@ export class PublicHomeComponent implements OnInit {
     return num.toString();
   }
 }
+

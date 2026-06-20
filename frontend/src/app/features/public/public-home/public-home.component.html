@@ -2,13 +2,14 @@
 <header class="public-header">
   <div class="header-container">
     <a routerLink="/" class="logo-link">
-      <img src="ULEAM.png" alt="ULEAM" class="logo" />
+      <img src="ULEAM.png" alt="ULEAM" class="logo" routerLink="/" (click)="mobileMenuOpen.set(false)" style="cursor: pointer;" />
       <div class="logo-text-container">
         <span class="logo-text">{{ appConfig.app.name }}</span>
         <span class="logo-subtitle">{{ appConfig.university.shortName }}</span>
       </div>
     </a>
 
+    <button mat-icon-button class="mobile-menu-btn" (click)="mobileMenuOpen.set(true)"><mat-icon>menu</mat-icon></button>
     <nav class="nav-links">
       <!-- Visor GeogrÃ¡fico -->
       <a
@@ -384,3 +385,77 @@
     </div>
   </div>
 </footer>
+
+
+<!-- Mobile Sidebar -->
+@if (mobileMenuOpen()) {
+  <div class="mobile-sidebar-overlay" (click)="mobileMenuOpen.set(false)"></div>
+  <div class="mobile-sidebar">
+    <div class="mobile-sidebar-header">
+      <img src="ULEAM.png" alt="ULEAM" class="logo" routerLink="/" (click)="mobileMenuOpen.set(false)" style="cursor: pointer;" />
+      <button mat-icon-button (click)="mobileMenuOpen.set(false)">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <nav class="mobile-nav-links">
+      <!-- Visor Geográfico -->
+      <a href="https://departamentos.uleam.edu.ec/observatorio-territorial/" target="_blank" class="nav-link featured" (click)="mobileMenuOpen.set(false)">
+        <mat-icon>public</mat-icon>
+        {{ 'public.home.nav.geoViewer' | translate }}
+      </a>
+      
+      <!-- Menú de Observatorios -->
+      <button class="nav-link" (click)="showObservatories.set(!showObservatories())">
+        <mat-icon>category</mat-icon>
+        {{ 'public.home.nav.dimensions' | translate }}
+        <mat-icon class="dropdown-arrow">{{ showObservatories() ? 'expand_less' : 'expand_more' }}</mat-icon>
+      </button>
+      @if (showObservatories()) {
+        <div class="mobile-sub-menu">
+          @for (depto of departamentos(); track depto.id) {
+            <a class="nav-link sub-link" [routerLink]="['/publico/departamentos', depto.id]" (click)="mobileMenuOpen.set(false)">
+              <mat-icon>{{ depto.icono || 'folder' }}</mat-icon>
+              <span>{{ depto.nombre }}</span>
+            </a>
+          }
+          @if (departamentos().length === 0) {
+            <div class="nav-link sub-link disabled">
+              <mat-icon>info</mat-icon>
+              <span>{{ 'public.home.departments.empty' | translate }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Datasets -->
+      <a routerLink="/publico/datasets" class="nav-link" (click)="mobileMenuOpen.set(false)">
+        <mat-icon>table_chart</mat-icon>
+        {{ 'public.home.nav.datasets' | translate }}
+      </a>
+
+      <!-- Menú Barómetro -->
+      <button class="nav-link" (click)="showBarometer.set(!showBarometer())">
+        <mat-icon>speed</mat-icon>
+        {{ 'public.home.nav.barometer' | translate }}
+        <mat-icon class="dropdown-arrow">{{ showBarometer() ? 'expand_less' : 'expand_more' }}</mat-icon>
+      </button>
+      @if (showBarometer()) {
+        <div class="mobile-sub-menu">
+          <a class="nav-link sub-link" routerLink="/publico/barometro/investigacion" (click)="mobileMenuOpen.set(false)">
+            <mat-icon>science</mat-icon>
+            <span>{{ 'public.home.nav.barometerResearch' | translate }}</span>
+          </a>
+          <a class="nav-link sub-link" routerLink="/publico/barometro/vinculacion" (click)="mobileMenuOpen.set(false)">
+            <mat-icon>handshake</mat-icon>
+            <span>{{ 'public.home.nav.barometerLinkage' | translate }}</span>
+          </a>
+          <a class="nav-link sub-link" routerLink="/publico/datasets" (click)="mobileMenuOpen.set(false)">
+            <mat-icon>speed</mat-icon>
+            <span>{{ 'public.home.nav.barometerUleam' | translate }}</span>
+          </a>
+        </div>
+      }
+    </nav>
+  </div>
+}
+

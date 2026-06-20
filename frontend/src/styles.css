@@ -1791,3 +1791,28 @@ a:not([class*='mat-']):not([class*='btn']):not([class*='nav']) {
   gap: 0.25rem;
   flex-shrink: 0;
 }
+
+/* Bloquear scroll cuando el sidebar movil esta abierto */
+body:has(.mobile-sidebar-overlay) {
+  overflow: hidden !important;
+  touch-action: none !important;
+}
+.mobile-sidebar-overlay {
+  backdrop-filter: blur(4px);
+}
+
+
+/* Mejoras robustas para el scroll del sidebar en móviles (iOS Safari, etc) */
+html:has(.mobile-sidebar-overlay),
+body:has(.mobile-sidebar-overlay) {
+  overflow: hidden !important;
+  height: 100vh !important;
+  overscroll-behavior: none !important;
+}
+.mobile-sidebar {
+  overscroll-behavior: contain !important;
+}
+.mobile-sidebar-overlay {
+  overscroll-behavior: contain !important;
+}
+
