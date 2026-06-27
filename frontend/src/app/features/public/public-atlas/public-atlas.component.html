@@ -1,0 +1,124 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-icon">
+      <mat-icon>auto_stories</mat-icon>
+    </div>
+    <div class="header-info">
+      <h1>Atlas de Publicaciones Territoriales</h1>
+      <p>Explora y descarga informes, documentos de investigación y atlas elaborados por el Observatorio Territorial Multidisciplinario de la ULEAM.</p>
+      
+      <div class="header-stats">
+        <span class="stat">
+          <mat-icon>library_books</mat-icon>
+          {{ publicaciones().length }} Publicaciones Disponibles
+        </span>
+        <span class="stat">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Formatos PDF Optimizados
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Filters -->
+  <div class="filters-section">
+    <!-- Search Bar -->
+    <div class="search-container">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Buscar publicaciones...</mat-label>
+        <input matInput [value]="searchTerm()" (input)="onSearch($any($event.target).value)" placeholder="Título, descripción o autor..." />
+        @if (searchTerm()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      @if (searchTerm()) {
+        <span class="results-count">
+          {{ filteredPublicaciones().length }} resultado(s) encontrado(s)
+        </span>
+      }
+    </div>
+
+    <!-- Category Chips -->
+    <div class="categories-container">
+      <span class="filter-label">Filtrar por:</span>
+      <mat-chip-listbox class="category-chips">
+        @for (cat of categorias(); track cat) {
+          <mat-chip-option
+            [selected]="selectedCategory() === cat"
+            (selectableChange)="selectCategory(cat)"
+          >
+            <mat-icon matChipAvatar *ngIf="cat !== 'TODAS'">
+              {{ getCategoryIcon(cat) }}
+            </mat-icon>
+            {{ cat }}
+          </mat-chip-option>
+        }
+      </mat-chip-listbox>
+    </div>
+  </div>
+
+  <!-- Publications Grid -->
+  @if (filteredPublicaciones().length > 0) {
+    <div class="publications-grid">
+      @for (pub of filteredPublicaciones(); track pub.id) {
+        <div class="publication-card">
+          <!-- Card Header & Cover simulation -->
+          <div class="card-cover" [style.background]="'linear-gradient(135deg, ' + getCategoryColor(pub.categoria) + ' 0%, #1e1b4b 100%)'">
+            <div class="cover-pattern"></div>
+            <span class="category-badge">
+              <mat-icon>{{ getCategoryIcon(pub.categoria) }}</mat-icon>
+              {{ pub.categoria }}
+            </span>
+            <div class="cover-doc-info">
+              <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
+              <span class="file-size">{{ pub.tamano }}</span>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            <h3 class="publication-title" [title]="pub.titulo">{{ pub.titulo }}</h3>
+            <p class="publication-desc">{{ pub.descripcion }}</p>
+            
+            <div class="publication-metadata">
+              <div class="meta-row">
+                <mat-icon class="meta-icon">person</mat-icon>
+                <span class="meta-text">{{ pub.autor }}</span>
+              </div>
+              <div class="meta-row">
+                <mat-icon class="meta-icon">calendar_today</mat-icon>
+                <span class="meta-text">{{ pub.fecha | date: 'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="meta-row">
+                <mat-icon class="meta-icon">auto_stories</mat-icon>
+                <span class="meta-text">{{ pub.paginas }} páginas</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-actions">
+            <a mat-stroked-button [href]="pub.pdfUrl" target="_blank" class="action-btn view-btn">
+              <mat-icon>visibility</mat-icon>
+              Visualizar
+            </a>
+            <a mat-flat-button color="primary" [href]="pub.pdfUrl" [download]="pub.titulo + '.pdf'" class="action-btn download-btn">
+              <mat-icon>download</mat-icon>
+              Descargar
+            </a>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <mat-icon>menu_book</mat-icon>
+      <h3>No se encontraron publicaciones</h3>
+      <p>Prueba buscando con otros términos o seleccionando otra categoría.</p>
+    </div>
+  }
+</div>

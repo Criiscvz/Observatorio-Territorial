@@ -1,4 +1,4 @@
-<!-- Header pÃºblico -->
+ï»¿<!-- Header pÃºblico -->
 <header class="public-header">
   <div class="header-container">
     <a routerLink="/" class="logo-link">
@@ -201,19 +201,19 @@
       </button>
     </div>
     <nav class="mobile-nav-links">
-      <!-- Visor Geográfico -->
+      <!-- Visor Geogrï¿½fico -->
       <a href="https://departamentos.uleam.edu.ec/observatorio-territorial/" target="_blank" class="nav-link featured" (click)="mobileMenuOpen.set(false)">
         <mat-icon>public</mat-icon>
         {{ 'public.home.nav.geoViewer' | translate }}
       </a>
       
-      <!-- Menú de Observatorios -->
+      <!-- Menï¿½ de Observatorios -->
       <a routerLink="/publico/departamentos" class="nav-link" (click)="mobileMenuOpen.set(false)">
         <mat-icon>category</mat-icon>
         {{ 'public.home.nav.dimensions' | translate }}
       </a>
 
-      <!-- Menú Barómetro -->
+      <!-- Menï¿½ Barï¿½metro -->
       <button class="nav-link" (click)="showBarometer.set(!showBarometer())">
         <mat-icon>speed</mat-icon>
         {{ 'public.home.nav.barometer' | translate }}

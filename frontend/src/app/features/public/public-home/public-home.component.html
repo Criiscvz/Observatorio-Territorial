@@ -1,4 +1,4 @@
-<!-- Header pÃºblico -->
+ï»¿<!-- Header pÃºblico -->
 <header class="public-header">
   <div class="header-container">
     <a routerLink="/" class="logo-link">
@@ -46,6 +46,12 @@
       <a routerLink="/publico/datasets" class="nav-link">
         <mat-icon>table_chart</mat-icon>
         {{ 'public.home.nav.datasets' | translate }}
+      </a>
+
+      <!-- Atlas -->
+      <a routerLink="/publico/atlas" class="nav-link">
+        <mat-icon>auto_stories</mat-icon>
+        {{ 'public.home.nav.atlas' | translate }}
       </a>
 
       <!-- MenÃº BarÃ³metro -->
@@ -398,13 +404,13 @@
       </button>
     </div>
     <nav class="mobile-nav-links">
-      <!-- Visor Geográfico -->
+      <!-- Visor Geogrï¿½fico -->
       <a href="https://departamentos.uleam.edu.ec/observatorio-territorial/" target="_blank" class="nav-link featured" (click)="mobileMenuOpen.set(false)">
         <mat-icon>public</mat-icon>
         {{ 'public.home.nav.geoViewer' | translate }}
       </a>
       
-      <!-- Menú de Observatorios -->
+      <!-- Menï¿½ de Observatorios -->
       <button class="nav-link" (click)="showObservatories.set(!showObservatories())">
         <mat-icon>category</mat-icon>
         {{ 'public.home.nav.dimensions' | translate }}
@@ -433,7 +439,13 @@
         {{ 'public.home.nav.datasets' | translate }}
       </a>
 
-      <!-- Menú Barómetro -->
+      <!-- Atlas -->
+      <a routerLink="/publico/atlas" class="nav-link" (click)="mobileMenuOpen.set(false)">
+        <mat-icon>auto_stories</mat-icon>
+        {{ 'public.home.nav.atlas' | translate }}
+      </a>
+
+      <!-- Menï¿½ Barï¿½metro -->
       <button class="nav-link" (click)="showBarometer.set(!showBarometer())">
         <mat-icon>speed</mat-icon>
         {{ 'public.home.nav.barometer' | translate }}

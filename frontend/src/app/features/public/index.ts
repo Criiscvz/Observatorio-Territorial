@@ -7,3 +7,4 @@ export * from './public-departamento-detail/public-departamento-detail.component
 export * from './public-departamentos/public-departamentos.component';
 export * from './public-home/public-home.component';
 export * from './public-layout/public-layout.component';
+export * from './public-atlas/public-atlas.component';
