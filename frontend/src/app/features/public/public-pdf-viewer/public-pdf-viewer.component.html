@@ -1,0 +1,37 @@
+<div class="pdf-viewer-container">
+  <div class="viewer-header glass">
+    <div class="header-left">
+      <a routerLink="/publico/departamentos" mat-icon-button class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+      <div class="title-container">
+        <h1 class="doc-title">{{ pdfName }}</h1>
+        <span class="doc-badge"><mat-icon>picture_as_pdf</mat-icon> Documento PDF</span>
+      </div>
+    </div>
+    
+    <div class="header-right">
+      <button mat-flat-button class="action-btn primary" (click)="downloadPdf()">
+        <mat-icon>download</mat-icon>
+        <span class="hide-mobile">Descargar</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="viewer-content">
+    @if (pdfUrl) {
+      <iframe 
+        [src]="pdfUrl" 
+        class="pdf-iframe" 
+        title="Visualizador PDF"
+        frameborder="0">
+      </iframe>
+    } @else {
+      <div class="error-state">
+        <mat-icon>error_outline</mat-icon>
+        <p>No se pudo cargar el documento.</p>
+        <a routerLink="/publico/departamentos" mat-button>Volver</a>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,27 @@
+<div class="documents-section">
+  <div class="section-header">
+    <mat-icon class="header-icon">picture_as_pdf</mat-icon>
+    <h2 class="section-title">Archivos del Observatorio</h2>
+  </div>
+  <p class="section-subtitle">Consulta nuestros documentos e informes en formato PDF</p>
+
+  <div class="documents-grid">
+    @for (doc of documentos; track doc.id) {
+      <a [routerLink]="['/publico/documentos', doc.id]" class="document-card card-interactive glass">
+        <div class="doc-icon">
+          <mat-icon>description</mat-icon>
+        </div>
+        <div class="doc-info">
+          <h3>{{ doc.nombre }}</h3>
+          <div class="doc-meta">
+            <span class="meta-item"><mat-icon>event</mat-icon> {{ doc.fecha }}</span>
+            <span class="meta-item"><mat-icon>storage</mat-icon> {{ doc.size }}</span>
+          </div>
+        </div>
+        <div class="doc-action">
+          <mat-icon>chevron_right</mat-icon>
+        </div>
+      </a>
+    }
+  </div>
+</div>

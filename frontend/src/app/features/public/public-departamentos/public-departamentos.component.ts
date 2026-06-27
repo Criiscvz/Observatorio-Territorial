@@ -9,10 +9,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+
 import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { PublicDocumentListComponent } from '../public-document-list/public-document-list.component';
 
 @Component({
   selector: 'app-public-departamentos',
@@ -29,6 +31,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
     MatProgressSpinnerModule,
     MatChipsModule,
     TranslateModule,
+    PublicDocumentListComponent,
   ],
   templateUrl: './public-departamentos.component.html',
   styleUrl: './public-departamentos.component.scss',

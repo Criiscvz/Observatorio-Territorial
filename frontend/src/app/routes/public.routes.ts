@@ -58,6 +58,14 @@ export const PUBLIC_ROUTES: Routes = [
     title: 'Atlas - Observatorio ULEAM',
   },
   {
+    path: 'documentos/:id',
+    loadComponent: () =>
+      import('../features/public/public-pdf-viewer/public-pdf-viewer.component').then(
+        (m) => m.PublicPdfViewerComponent,
+      ),
+    title: 'Visualizador de Documento - Observatorio ULEAM',
+  },
+  {
     path: '',
     redirectTo: 'departamentos',
     pathMatch: 'full',
