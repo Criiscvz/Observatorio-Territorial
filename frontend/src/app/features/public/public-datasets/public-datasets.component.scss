@@ -28,6 +28,26 @@
   border: 1px solid var(--card-border);
   border-radius: var(--radius-xl);
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  min-width: 0;           /* ← AGREGADO: permite que el flex container encoja */
+  width: 100%;            /* ← AGREGADO: limita al ancho del padre */
+  box-sizing: border-box; /* ← AGREGADO: incluye padding en width */
+}
+
+.header-info {
+  min-width: 0;           /* ← CLAVE: permite que este flex item encoja */
+  max-width: 100%;
+  width: 100%;
+}
+
+.header-info > p {
+  color: var(--text-secondary);
+  margin: 0 0 1rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;  /* ← FUERZA ruptura de palabra larga */
+  word-break: break-word;   /* ← fallback */
+  hyphens: auto;            /* ← silabeo */
+  max-width: 100%;
 }
 
 .header-icon {
@@ -117,10 +137,26 @@
     flex-direction: column;
     text-align: center;
     align-items: center;
+    min-width: 0;        /* ← REPITE AQUÍ TAMBIÉN */
+    width: 100%;
+  }
+
+  .header-info {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .header-info > p {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
   }
 
   .header-stats {
     justify-content: center;
+    width: 100%;
   }
 }
 

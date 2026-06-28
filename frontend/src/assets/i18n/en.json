@@ -576,7 +576,7 @@
       "nav": {
         "home": "Home",
         "geoViewer": "Geographic Viewer",
-        "observatories": "Observatories",
+        "dimensions": "Observatories",
         "atlas": "Atlas",
         "barometer": "Barometer",
         "barometerResearch": "ULEAM Research Results",

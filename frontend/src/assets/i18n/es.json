@@ -193,7 +193,7 @@
       "users": "Usuarios",
       "departments": "Observatorios",
       "newDepartment": "Nueva observatorio",
-      "allDatasets": "Todos los Datasets",
+      "allDatasets": "Todos los Conjuntos de Datos",
       "publicView": "Vista Pública",
       "noDepartments": "Sin observatorios",
       "createOne": "Crear una",
@@ -210,10 +210,10 @@
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Bienvenido a Observatorios",
-    "welcomeMessage": "Gestiona tus observatorios y datasets de manera eficiente",
+    "welcomeMessage": "Gestiona tus observatorios y conjuntos de datos demanera eficiente",
     "stats": {
       "totalDepartments": "Observatorios",
-      "totalDatasets": "Datasets",
+      "totalDatasets": "Conjuntos de Datos",
       "totalRecords": "Registros Totales",
       "publicDepartments": "Observatorios Públicos",
       "completed": "completados",
@@ -226,7 +226,7 @@
       "uploadDataset": "Subir Dataset",
       "uploadDatasetDesc": "Importa un archivo Excel o CSV para analizar",
       "viewAll": "Ver Todos",
-      "viewAllDesc": "Explora todos los datasets disponibles"
+      "viewAllDesc": "Explora todos los conjuntos de datos disponibles"
     },
     "recentDepartments": {
       "title": "Observatorios Recientes",
@@ -234,30 +234,30 @@
       "empty": "No hay observatorios aún"
     },
     "recentDatasets": {
-      "title": "Datasets Recientes",
+      "title": "Conjuntos de Datos Recientes",
       "viewAll": "Ver todos",
-      "empty": "No hay datasets aún"
+      "empty": "No hay conjuntos de datos aún"
     },
     "distribution": {
-      "title": "Distribución de Datasets",
-      "subtitle": "Datasets por observatorio",
+      "title": "Distribución de Conjuntos de Datos",
+      "subtitle": "Conjuntos de Datos por observatorio",
       "empty": "Sin datos de distribución"
     },
     "health": {
       "title": "Estado de los Datos",
       "subtitle": "Resumen de procesamiento",
       "healthy": "Completado",
-      "empty": "Sin datasets para analizar"
+      "empty": "Sin conjuntos de datos para analizar"
     }
   },
   "datasets": {
-    "title": "Datasets",
+    "title": "Conjuntos de Datos",
     "list": {
-      "title": "Datasets",
-      "newDataset": "Nuevo Dataset",
-      "empty": "No hay datasets",
+      "title": "Conjuntos de Datos",
+      "newDataset": "Nuevo Conjunto de Datos",
+      "empty": "No hay conjuntos de datos",
       "emptyDescription": "Importa tu primer archivo Excel",
-      "importDataset": "Importar Dataset",
+      "importDataset": "Importar Conjunto de Datos",
       "columns": {
         "name": "Nombre",
         "department": "Observatorio",
@@ -323,7 +323,7 @@
       "success": {
         "title": "¡Importación Exitosa!",
         "message": "Se importaron {{records}} registros con {{columns}} columnas",
-        "viewDatasets": "Ver Datasets",
+        "viewDatasets": "Ver Conjuntos de Datos",
         "viewData": "Ver Datos y Gráficos"
       },
       "errors": {
@@ -483,11 +483,11 @@
       "noDescription": "Sin descripción",
       "code": "Código",
       "publicBadge": "Pública",
-      "datasets": "Datasets del Observatorio",
+      "datasets": "Conjuntos de Datos del Observatorio",
       "records": "registros",
-      "noDatasets": "Sin datasets",
+      "noDatasets": "Sin conjuntos de datos",
       "noDatasetsMessage": "Importa un archivo Excel para comenzar el análisis",
-      "importDataset": "Importar Dataset",
+      "importDataset": "Importar Conjunto de Datos",
       "viewAnalysis": "Ver Análisis",
       "confirmDelete": "¿Estás seguro de que deseas eliminar el observatorio \"{{name}}\"? Esta acción no se puede deshacer.",
       "deleted": "Observatorio eliminada exitosamente",
@@ -533,7 +533,7 @@
       },
       "stats": {
         "publicDepartments": "Departamentos Públicos",
-        "availableDatasets": "Datasets Disponibles",
+        "availableDatasets": "Conjuntos de Datos Disponibles",
         "analyzedRecords": "Registros Analizados"
       },
       "features": {
@@ -600,13 +600,13 @@
       "viewDetails": "Ver detalles"
     },
     "allDatasets": {
-      "title": "Todos los Datasets",
-      "subtitle": "Explora todos los datasets públicos disponibles",
-      "search": "Buscar datasets por nombre...",
-      "resultsCount": "{{count}} dataset(s) encontrado(s)",
-      "loading": "Cargando datasets...",
-      "empty": "No hay datasets públicos disponibles",
-      "datasetsCount": "datasets",
+      "title": "Todos los Conjuntos de Datos Públicos",
+      "subtitle": "Explora todos los conjuntos de datos disponibles",
+      "search": "Buscar conjuntos de datos por nombre...",
+      "resultsCount": "{{count}} conjunto(s) de datos encontrado(s)",
+      "loading": "Cargando conjuntos de datos...",
+      "empty": "No hay conjuntos de datos públicos disponibles",
+      "datasetsCount": "conjuntos de datos",
       "records": "registros",
       "viewDataset": "Ver dataset",
       "department": "Observatorio"
@@ -615,14 +615,14 @@
       "backToDepartments": "Observatorios",
       "noDescription": "Sin descripción",
       "stats": {
-        "datasets": "datasets",
+        "datasets": "conjuntos de datos",
         "records": "registros"
       },
       "datasets": {
-        "title": "Datasets Disponibles",
-        "empty": "Sin datasets",
-        "emptyMessage": "Este observatorio aún no tiene datasets públicos disponibles",
-        "search": "Buscar dataset..."
+        "title": "Conjuntos de Datos Disponibles",
+        "empty": "Sin conjuntos de datos",
+        "emptyMessage": "Este observatorio aún no tiene conjuntos de datos públicos disponibles",
+        "search": "Buscar conjunto de datos..."
       },
       "notFound": {
         "title": "Observatorio no encontrado",
@@ -631,7 +631,7 @@
       }
     },
     "datasetView": {
-      "loading": "Cargando dataset...",
+      "loading": "Cargando conjunto de datos...",
       "backToDepartment": "Volver al observatorio",
       "stats": {
         "records": "registros",
@@ -656,8 +656,8 @@
         "message": "Selecciona un tipo de gráfico y variables para comenzar a analizar"
       },
       "notFound": {
-        "title": "Dataset no encontrado",
-        "message": "El dataset que buscas no existe o no está disponible públicamente",
+        "title": "Conjunto de Datos no encontrado",
+        "message": "El conjunto de datos que buscas no existe o no está disponible públicamente",
         "backButton": "Volver a departamentos"
       }
     },
@@ -666,17 +666,17 @@
       "research": {
         "title": "Resultados de Investigación ULEAM",
         "subtitle": "Datos y análisis de investigaciones realizadas por la universidad",
-        "empty": "No hay datasets de investigación disponibles"
+        "empty": "No hay conjuntos de datos de investigación disponibles"
       },
       "linkage": {
         "title": "Resultados de Vinculación ULEAM",
         "subtitle": "Datos y análisis de proyectos de vinculación con la sociedad",
-        "empty": "No hay datasets de vinculación disponibles"
+        "empty": "No hay conjuntos de datos de vinculación disponibles"
       },
       "barometerUleam": {
         "title": "Barómetro ULEAM",
         "subtitle": "Indicadores y métricas institucionales",
-        "empty": "No hay datasets de barómetro disponibles"
+        "empty": "No hay conjuntos de datos de barómetro disponibles"
       },
       "loading": "Cargando datos del barómetro...",
       "viewDataset": "Ver datos y gráficos",

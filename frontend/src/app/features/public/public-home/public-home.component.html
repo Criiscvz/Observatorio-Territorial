@@ -42,12 +42,6 @@
         }
       </mat-menu>
 
-      <!-- Datasets -->
-      <a routerLink="/publico/datasets" class="nav-link">
-        <mat-icon>table_chart</mat-icon>
-        {{ 'public.home.nav.datasets' | translate }}
-      </a>
-
       <!-- Atlas -->
       <a routerLink="/publico/atlas" class="nav-link">
         <mat-icon>auto_stories</mat-icon>
@@ -404,20 +398,20 @@
       </button>
     </div>
     <nav class="mobile-nav-links">
-      <!-- Visor Geogr�fico -->
+      <!-- Visor Geografico -->
       <a href="https://departamentos.uleam.edu.ec/observatorio-territorial/" target="_blank" class="nav-link featured" (click)="mobileMenuOpen.set(false)">
         <mat-icon>public</mat-icon>
         {{ 'public.home.nav.geoViewer' | translate }}
       </a>
-      
-      <!-- Men� de Observatorios -->
+
+      <!-- Menu de Observatorios -->
       <button class="nav-link" (click)="showObservatories.set(!showObservatories())">
         <mat-icon>category</mat-icon>
         {{ 'public.home.nav.dimensions' | translate }}
         <mat-icon class="dropdown-arrow">{{ showObservatories() ? 'expand_less' : 'expand_more' }}</mat-icon>
       </button>
       @if (showObservatories()) {
-        <div class="mobile-sub-menu">
+        <div class="mobile-sub-menu" [class.open]="showObservatories()">
           @for (depto of departamentos(); track depto.id) {
             <a class="nav-link sub-link" [routerLink]="['/publico/departamentos', depto.id]" (click)="mobileMenuOpen.set(false)">
               <mat-icon>{{ depto.icono || 'folder' }}</mat-icon>
@@ -433,26 +427,20 @@
         </div>
       }
 
-      <!-- Datasets -->
-      <a routerLink="/publico/datasets" class="nav-link" (click)="mobileMenuOpen.set(false)">
-        <mat-icon>table_chart</mat-icon>
-        {{ 'public.home.nav.datasets' | translate }}
-      </a>
-
       <!-- Atlas -->
       <a routerLink="/publico/atlas" class="nav-link" (click)="mobileMenuOpen.set(false)">
         <mat-icon>auto_stories</mat-icon>
         {{ 'public.home.nav.atlas' | translate }}
       </a>
 
-      <!-- Men� Bar�metro -->
+      <!-- Menu Barometro -->
       <button class="nav-link" (click)="showBarometer.set(!showBarometer())">
         <mat-icon>speed</mat-icon>
         {{ 'public.home.nav.barometer' | translate }}
         <mat-icon class="dropdown-arrow">{{ showBarometer() ? 'expand_less' : 'expand_more' }}</mat-icon>
       </button>
       @if (showBarometer()) {
-        <div class="mobile-sub-menu">
+        <div class="mobile-sub-menu"[class.open]="showBarometer()">
           <a class="nav-link sub-link" routerLink="/publico/barometro/investigacion" (click)="mobileMenuOpen.set(false)">
             <mat-icon>science</mat-icon>
             <span>{{ 'public.home.nav.barometerResearch' | translate }}</span>

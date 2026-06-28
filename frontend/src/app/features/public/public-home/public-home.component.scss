@@ -1,6 +1,6 @@
 :host {
   display: block;
-  overflow-x: hidden; /* Corta cualquier elemento que intente salirse hacia los lados */
+  overflow-x: hidden;  
   width: 100%;
 }
 
@@ -530,14 +530,26 @@
   padding-left: 1.5rem;
   background: var(--bg-tertiary);
   border-radius: var(--radius-md);
-  margin-top: -0.5rem;
+  margin-top: 0.25rem;
   margin-bottom: 0.5rem;
-  overflow: hidden;
+  overflow: visible;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.2s ease, margin 0.3s ease;
 }
+
+.mobile-sub-menu.open {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
 .mobile-sub-menu .sub-link {
   font-size: 0.9rem;
   padding: 0.5rem 0.875rem;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* Animations */
@@ -578,13 +590,10 @@
     font-size: 2rem;
   }
 
-  /* Estilos específicos para el menú móvil consolidados aquí */
+
   .mobile-menu-btn {
     display: inline-flex;
     color: var(--text-primary);
-  }
-  .public-header .logo-link {
-    display: none !important;
   }
 }
 
@@ -610,5 +619,25 @@
   .cta-btn-secondary {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* Landscape móvil */
+@media (max-width: 1024px) {
+  .public-header .header-container {
+    padding: 0 1rem;
+  }
+  .public-header .nav-links {
+    display: none !important;
+  }
+  .public-header .logo-link {
+    display: none !important;
+  }
+  .public-header .mobile-menu-btn {
+    display: inline-flex !important;
+    color: var(--text-primary);
+  }
+  .public-header .header-actions {
+    gap: 0.5rem;
   }
 }

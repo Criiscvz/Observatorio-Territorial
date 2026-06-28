@@ -1,4 +1,4 @@
-﻿<!-- Header público -->
+<!-- Header público -->
 <header class="public-header">
   <div class="header-container">
     <a routerLink="/" class="logo-link">
@@ -27,14 +27,11 @@
         {{ 'public.home.nav.dimensions' | translate }}
       </a>
 
-      <!-- Datasets -->
-
-      <!--
-      <a routerLink="/publico/datasets" routerLinkActive="active" class="nav-link">
-        <mat-icon>table_chart</mat-icon>
-        {{ 'public.home.nav.datasets' | translate }}
+      <!-- Atlas -->
+      <a routerLink="/publico/atlas" routerLinkActive="active" class="nav-link">
+        <mat-icon>auto_stories</mat-icon>
+        {{ 'public.home.nav.atlas' | translate }}
       </a>
-        -->
 
       <!-- Menú Barómetro -->
       <button class="nav-link" [matMenuTriggerFor]="barometerMenu">
@@ -201,26 +198,32 @@
       </button>
     </div>
     <nav class="mobile-nav-links">
-      <!-- Visor Geogr�fico -->
+      <!-- Visor Geografico -->
       <a href="https://departamentos.uleam.edu.ec/observatorio-territorial/" target="_blank" class="nav-link featured" (click)="mobileMenuOpen.set(false)">
         <mat-icon>public</mat-icon>
         {{ 'public.home.nav.geoViewer' | translate }}
       </a>
-      
-      <!-- Men� de Observatorios -->
+
+      <!-- Menu de Observatorios -->
       <a routerLink="/publico/departamentos" class="nav-link" (click)="mobileMenuOpen.set(false)">
         <mat-icon>category</mat-icon>
         {{ 'public.home.nav.dimensions' | translate }}
       </a>
 
-      <!-- Men� Bar�metro -->
+      <!-- Atlas -->
+      <a routerLink="/publico/atlas" class="nav-link" (click)="mobileMenuOpen.set(false)">
+        <mat-icon>auto_stories</mat-icon>
+        {{ 'public.home.nav.atlas' | translate }}
+      </a>
+
+      <!-- Menu Barometro -->
       <button class="nav-link" (click)="showBarometer.set(!showBarometer())">
         <mat-icon>speed</mat-icon>
         {{ 'public.home.nav.barometer' | translate }}
         <mat-icon class="dropdown-arrow">{{ showBarometer() ? 'expand_less' : 'expand_more' }}</mat-icon>
       </button>
       @if (showBarometer()) {
-        <div class="mobile-sub-menu">
+        <div class="mobile-sub-menu" [class.open]="showBarometer()">
           <a class="nav-link sub-link" routerLink="/publico/barometro/investigacion" (click)="mobileMenuOpen.set(false)">
             <mat-icon>science</mat-icon>
             <span>{{ 'public.home.nav.barometerResearch' | translate }}</span>

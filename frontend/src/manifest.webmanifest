@@ -7,7 +7,7 @@
   "display": "standalone",
   "start_url": "/publico/barometro/barometro",
   "scope": "/",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "lang": "es",
   "categories": ["education", "government"],
   "icons": [
