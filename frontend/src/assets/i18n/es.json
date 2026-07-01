@@ -205,16 +205,16 @@
       "linkage": "Vinculación ULEAM",
       "barometerUleam": "Barómetro ULEAM"
     },
-    "permissions": {
-      "title": "Permisos de Roles",
-      "subtitle": "Configura dinámicamente qué acciones y alcances puede ejecutar cada rol sobre los informes del Atlas",
-      "messages": {
-        "saved": "Configuración de permisos guardada correctamente."
-      }
-    },
     "footer": {
       "copyright": "© {{year}} Observatorio ULEAM. Todos los derechos reservados.",
       "university": "Universidad Laica Eloy Alfaro de Manabí"
+    }
+  },
+  "permissions": {
+    "title": "Permisos de Roles",
+    "subtitle": "Configura dinámicamente qué acciones y alcances puede ejecutar cada rol sobre los informes del Atlas",
+    "messages": {
+      "saved": "Configuración de permisos guardada correctamente."
     }
   },
   "dashboard": {

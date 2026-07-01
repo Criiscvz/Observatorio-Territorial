@@ -120,4 +120,147 @@
       </button>
     </mat-card-actions>
   </mat-card>
+
+  <!-- Permisos individuales por usuario -->
+  <mat-card class="permissions-card users-permissions-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>manage_accounts</mat-icon>
+        Permisos por Usuario
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content class="card-content">
+      <p class="description">
+        Ajusta los permisos de un usuario específico, sin importar su rol. Los cambios personalizados
+        sobreescriben la configuración base del rol únicamente para ese usuario.
+      </p>
+
+      <!-- Filtros -->
+      <div class="users-toolbar">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-icon matPrefix>search</mat-icon>
+          <input
+            matInput
+            type="text"
+            placeholder="Buscar por nombre o correo"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="role-filter">
+          <mat-label>Tipo de usuario</mat-label>
+          <mat-select [ngModel]="roleFilter()" (ngModelChange)="roleFilter.set($event)">
+            <mat-option value="ALL">Todos los roles</mat-option>
+            <mat-option value="ADMIN">ADMIN</mat-option>
+            <mat-option value="EDITOR">EDITOR</mat-option>
+            <mat-option value="SUBSCRIBER">SUBSCRIBER</mat-option>
+            <mat-option value="USER">USER</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (loadingUsers()) {
+        <div class="users-loading">
+          <mat-spinner diameter="36"></mat-spinner>
+          <p>Cargando usuarios...</p>
+        </div>
+      } @else if (filteredUsers().length === 0) {
+        <div class="users-empty">
+          <mat-icon>group_off</mat-icon>
+          <p>No se encontraron usuarios con los filtros aplicados.</p>
+        </div>
+      } @else {
+        <div class="users-grid">
+          @for (user of filteredUsers(); track user.id) {
+            <div class="user-card">
+              <div class="user-card-head">
+                <div class="user-avatar">{{ getInitial(user) }}</div>
+                <div class="user-meta">
+                  <span class="user-name" [title]="user.name">{{ user.name }}</span>
+                  <span class="user-email" [title]="user.email">{{ user.email }}</span>
+                </div>
+                <span class="role-badge" [ngClass]="getRoleBadgeClass(user.rol)">{{ user.rol }}</span>
+              </div>
+
+              <div class="user-card-body">
+                @if (user.rol === 'ADMIN') {
+                  <div class="admin-note">
+                    <mat-icon>verified_user</mat-icon>
+                    <span>Control total del sistema</span>
+                  </div>
+                } @else {
+                  <div class="perm-chips">
+                    <span
+                      class="perm-chip"
+                      [class.on]="getUserConfig(user).create"
+                      matTooltip="Crear publicaciones"
+                    >
+                      <mat-icon>{{ getUserConfig(user).create ? 'check_circle' : 'cancel' }}</mat-icon>
+                      Crear
+                    </span>
+                    <span
+                      class="perm-chip"
+                      [class.on]="getUserConfig(user).edit"
+                      matTooltip="Editar publicaciones"
+                    >
+                      <mat-icon>{{ getUserConfig(user).edit ? 'check_circle' : 'cancel' }}</mat-icon>
+                      Editar
+                      @if (getUserConfig(user).edit) {
+                        <small>({{ getUserConfig(user).editScope === 'all' ? 'Todos' : 'Propios' }})</small>
+                      }
+                    </span>
+                    <span
+                      class="perm-chip"
+                      [class.on]="getUserConfig(user).delete"
+                      matTooltip="Eliminar publicaciones"
+                    >
+                      <mat-icon>{{ getUserConfig(user).delete ? 'check_circle' : 'cancel' }}</mat-icon>
+                      Eliminar
+                      @if (getUserConfig(user).delete) {
+                        <small>({{ getUserConfig(user).deleteScope === 'all' ? 'Todos' : 'Propios' }})</small>
+                      }
+                    </span>
+                  </div>
+
+                  @if (hasCustomPermissions(user)) {
+                    <span class="custom-flag">
+                      <mat-icon>tune</mat-icon>
+                      Personalizado
+                    </span>
+                  }
+                }
+              </div>
+
+              <div class="user-card-actions">
+                @if (user.rol !== 'ADMIN') {
+                  @if (hasCustomPermissions(user)) {
+                    <button
+                      mat-stroked-button
+                      class="reset-btn"
+                      matTooltip="Volver a los permisos del rol"
+                      (click)="resetUserPermissions(user)"
+                    >
+                      <mat-icon>restart_alt</mat-icon>
+                      Restablecer
+                    </button>
+                  }
+                  <button mat-flat-button color="primary" (click)="openPermissionsDialog(user)">
+                    <mat-icon>security</mat-icon>
+                    Gestionar
+                  </button>
+                } @else {
+                  <button mat-stroked-button disabled>
+                    <mat-icon>lock</mat-icon>
+                    Sin restricciones
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
 </div>

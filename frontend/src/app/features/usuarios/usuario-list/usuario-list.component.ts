@@ -44,7 +44,6 @@ import { PermisosService } from '@core/services/permisos.service';
     MatTooltipModule,
     MatDivider,
     TranslateModule,
-    UserPermissionsDialogComponent,
   ],
   templateUrl: './usuario-list.component.html',
   styleUrl: './usuario-list.component.scss',

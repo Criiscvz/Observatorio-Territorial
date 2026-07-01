@@ -95,9 +95,33 @@ export class PermisosService {
     this.ensureInitialized();
     const userPermissionsData = localStorage.getItem(USER_STORAGE_KEY);
     const userPermissions: UserSpecificPermissions = userPermissionsData ? JSON.parse(userPermissionsData) : {};
-    
+
     userPermissions[userId] = config;
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userPermissions));
+  }
+
+  /**
+   * Indica si un usuario tiene permisos personalizados que sobreescriben los de su rol.
+   */
+  hasCustomPermissions(userId: number): boolean {
+    this.ensureInitialized();
+    const userPermissionsData = localStorage.getItem(USER_STORAGE_KEY);
+    const userPermissions: UserSpecificPermissions = userPermissionsData ? JSON.parse(userPermissionsData) : {};
+    return Object.prototype.hasOwnProperty.call(userPermissions, userId);
+  }
+
+  /**
+   * Elimina la personalización de un usuario, restaurando los permisos base de su rol.
+   */
+  clearUserPermissions(userId: number): void {
+    this.ensureInitialized();
+    const userPermissionsData = localStorage.getItem(USER_STORAGE_KEY);
+    const userPermissions: UserSpecificPermissions = userPermissionsData ? JSON.parse(userPermissionsData) : {};
+
+    if (Object.prototype.hasOwnProperty.call(userPermissions, userId)) {
+      delete userPermissions[userId];
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userPermissions));
+    }
   }
 
   hasUserPermission(userId: number, role: string, action: 'create' | 'edit' | 'delete', isOwner = false): boolean {

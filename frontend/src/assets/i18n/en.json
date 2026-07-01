@@ -205,16 +205,16 @@
       "linkage": "ULEAM Linkage",
       "barometerUleam": "ULEAM Barometer"
     },
-    "permissions": {
-      "title": "Role Permissions",
-      "subtitle": "Dynamically configure which actions and scopes each role can execute on Atlas reports",
-      "messages": {
-        "saved": "Permissions configuration saved successfully."
-      }
-    },
     "footer": {
       "copyright": "© {{year}} ULEAM Observatory. All rights reserved.",
       "university": "Laica Eloy Alfaro University of Manabí"
+    }
+  },
+  "permissions": {
+    "title": "Role Permissions",
+    "subtitle": "Dynamically configure which actions and scopes each role can execute on Atlas reports",
+    "messages": {
+      "saved": "Permissions configuration saved successfully."
     }
   },
   "dashboard": {

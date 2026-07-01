@@ -206,7 +206,7 @@ import { User } from '@core/models';
     .scope-select {
       width: 140px;
       font-size: 12px;
-      margin-bottom: -1.25em; // Offset Angular Material outline container padding
+      margin-bottom: -1.25em; /* Offset Angular Material outline container padding */
 
       ::ng-deep {
         .mat-mdc-form-field-infix {
@@ -229,6 +229,28 @@ import { User } from '@core/models';
         align-items: center;
         gap: 6px;
         font-weight: 500;
+      }
+    }
+    @media (max-width: 480px) {
+      .permission-check {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+      .scope-select {
+        width: 100%;
+      }
+      .help-text {
+        padding-left: 0;
+      }
+      .dialog-actions {
+        flex-direction: column-reverse;
+        align-items: stretch;
+
+        button {
+          justify-content: center;
+          width: 100%;
+        }
       }
     }
   `],
