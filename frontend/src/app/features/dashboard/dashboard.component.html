@@ -320,6 +320,16 @@
           <p class="action-desc">{{ 'dashboard.quickActions.viewAllDesc' | translate }}</p>
         </a>
 
+        @if (authService.isAdmin()) {
+          <a class="quick-action admin-action" routerLink="/admin/usuarios" matRipple>
+            <div class="action-icon red">
+              <mat-icon>manage_accounts</mat-icon>
+            </div>
+            <span class="action-label">{{ 'dashboard.quickActions.manageUsers' | translate }}</span>
+            <p class="action-desc">{{ 'dashboard.quickActions.manageUsersDesc' | translate }}</p>
+          </a>
+        }
+
         @if (datasetsRecientes().length > 0) {
           <a
             class="quick-action"

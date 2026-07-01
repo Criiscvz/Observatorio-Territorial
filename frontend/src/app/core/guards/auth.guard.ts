@@ -51,7 +51,7 @@ export const guestGuard: CanActivateFn = () => {
   }
 
   // Redirigir según el rol del usuario
-  if (authService.isAdmin()) {
+  if (authService.isAdmin() || authService.isEditor()) {
     router.navigate(['/admin/dashboard']);
   } else {
     router.navigate(['/publico/departamentos']);

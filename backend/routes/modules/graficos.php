@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Route;
 // Lectura pública (gráficos de datasets públicos)
 Route::get('/datasets/{datasetId}/graficos-predeterminados', [GraficoPredeterminadoController::class, 'index']);
 
-// Escritura - solo admin autenticado
-Route::middleware(['auth:sanctum', 'role:ADMIN'])->group(function () {
+// Escritura - admin y editor autenticados
+Route::middleware(['auth:sanctum', 'role:ADMIN,EDITOR'])->group(function () {
     Route::post('/datasets/{datasetId}/graficos-predeterminados', [GraficoPredeterminadoController::class, 'store']);
     Route::put('/graficos-predeterminados/{id}', [GraficoPredeterminadoController::class, 'update']);
     Route::delete('/graficos-predeterminados/{id}', [GraficoPredeterminadoController::class, 'destroy']);

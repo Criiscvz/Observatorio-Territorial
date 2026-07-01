@@ -572,16 +572,8 @@
 
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .quick-action {
@@ -615,6 +607,16 @@
       transform: none;
       border-color: var(--border-color);
       background: var(--card-bg);
+    }
+  }
+
+  &.admin-action {
+    border-style: solid;
+    border-color: rgba(200, 16, 46, 0.24);
+
+    &:hover {
+      border-color: rgba(200, 16, 46, 0.48);
+      background: rgba(200, 16, 46, 0.06);
     }
   }
 }
@@ -654,6 +656,10 @@
   &.orange {
     background: rgba(245, 158, 11, 0.1);
     color: #f59e0b;
+  }
+  &.red {
+    background: rgba(200, 16, 46, 0.1);
+    color: #c8102e;
   }
   &.gray {
     background: var(--bg-tertiary);

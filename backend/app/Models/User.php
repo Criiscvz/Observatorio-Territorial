@@ -18,16 +18,16 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
 
     /**
-     * Boot method para proteger la asignación del rol ADMIN
+     * Boot method para proteger la asignación de los roles ADMIN y EDITOR
      */
     protected static function boot(): void
     {
         parent::boot();
 
-        // Proteger la asignación del rol ADMIN al crear usuarios
+        // Proteger la asignación de los roles ADMIN/EDITOR al crear usuarios
         static::creating(function (User $user) {
-            // Si se intenta crear un usuario con rol ADMIN
-            if ($user->rol === 'ADMIN') {
+            // Si se intenta crear un usuario con rol ADMIN o EDITOR
+            if (in_array($user->rol, ['ADMIN', 'EDITOR'])) {
                 // Verificar si hay un usuario autenticado que sea ADMIN
                 $currentUser = auth()->user();
 
@@ -40,10 +40,10 @@ class User extends Authenticatable
             }
         });
 
-        // Proteger la actualización del rol a ADMIN
+        // Proteger la actualización del rol a ADMIN o EDITOR
         static::updating(function (User $user) {
-            // Si se intenta cambiar el rol a ADMIN
-            if ($user->isDirty('rol') && $user->rol === 'ADMIN') {
+            // Si se intenta cambiar el rol a ADMIN o EDITOR
+            if ($user->isDirty('rol') && in_array($user->rol, ['ADMIN', 'EDITOR'])) {
                 $currentUser = auth()->user();
 
                 // Solo permitir si el usuario actual es admin
@@ -152,6 +152,22 @@ class User extends Authenticatable
     public function isUser(): bool
     {
         return $this->rol === 'USER';
+    }
+
+    /**
+     * Verificar si el usuario tiene rol global EDITOR
+     */
+    public function isEditor(): bool
+    {
+        return $this->rol === 'EDITOR';
+    }
+
+    /**
+     * Verificar si el usuario tiene rol global SUBSCRIBER
+     */
+    public function isSubscriber(): bool
+    {
+        return $this->rol === 'SUBSCRIBER';
     }
 
     /**

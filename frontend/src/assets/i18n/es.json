@@ -162,7 +162,9 @@
     },
     "roles": {
       "admin": "Administrador",
-      "user": "Usuario"
+      "user": "Usuario normal",
+      "subscriber": "Subscriptor",
+      "editor": "Editor"
     },
     "messages": {
       "updateSuccess": "Perfil actualizado correctamente",
@@ -190,7 +192,8 @@
       "main": "Principal",
       "dashboard": "Dashboard",
       "uploadDataset": "Subir Dataset",
-      "users": "Usuarios",
+      "users": "Usuarios y roles",
+      "permissions": "Permisos de Roles",
       "departments": "Observatorios",
       "newDepartment": "Nueva observatorio",
       "allDatasets": "Todos los Conjuntos de Datos",
@@ -201,6 +204,13 @@
       "research": "Investigación ULEAM",
       "linkage": "Vinculación ULEAM",
       "barometerUleam": "Barómetro ULEAM"
+    },
+    "permissions": {
+      "title": "Permisos de Roles",
+      "subtitle": "Configura dinámicamente qué acciones y alcances puede ejecutar cada rol sobre los informes del Atlas",
+      "messages": {
+        "saved": "Configuración de permisos guardada correctamente."
+      }
     },
     "footer": {
       "copyright": "© {{year}} Observatorio ULEAM. Todos los derechos reservados.",
@@ -226,7 +236,9 @@
       "uploadDataset": "Subir Dataset",
       "uploadDatasetDesc": "Importa un archivo Excel o CSV para analizar",
       "viewAll": "Ver Todos",
-      "viewAllDesc": "Explora todos los conjuntos de datos disponibles"
+      "viewAllDesc": "Explora todos los conjuntos de datos disponibles",
+      "manageUsers": "Roles y permisos",
+      "manageUsersDesc": "Gestiona usuarios, roles globales y acceso al sistema"
     },
     "recentDepartments": {
       "title": "Observatorios Recientes",
@@ -876,7 +888,9 @@
     },
     "roles": {
       "adminDesc": "Acceso completo al sistema",
-      "userDesc": "Acceso limitado"
+      "userDesc": "Acceso limitado a departamentos",
+      "subscriberDesc": "Acceso de lectura a reportes y suscripciones",
+      "editorDesc": "Acceso de edición y subida en sus departamentos"
     },
     "form": {
       "createTitle": "Crear Usuario",

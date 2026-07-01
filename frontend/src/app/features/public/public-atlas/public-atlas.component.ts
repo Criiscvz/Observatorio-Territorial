@@ -1,24 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { TranslateModule } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-interface PublicacionAtlas {
-  id: string;
-  titulo: string;
-  descripcion: string;
-  fecha: string;
-  categoria: string;
-  autor: string;
-  paginas: number;
-  tamano: string;
-  pdfUrl: string;
-}
+import { AtlasService, PublicacionAtlas } from '@core/services/atlas.service';
+import { AuthService } from '@core/services/auth.service';
+import { PermisosService } from '@core/services/permisos.service';
+import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { AtlasFormComponent } from './atlas-form.component';
 
 @Component({
   selector: 'app-public-atlas',
@@ -31,62 +28,117 @@ interface PublicacionAtlas {
     MatFormFieldModule,
     MatInputModule,
     MatChipsModule,
+    MatDialogModule,
+    MatSnackBarModule,
     TranslateModule,
   ],
   templateUrl: './public-atlas.component.html',
   styleUrl: './public-atlas.component.scss',
 })
-export class PublicAtlasComponent {
+export class PublicAtlasComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly atlasService = inject(AtlasService);
+  private readonly authService = inject(AuthService);
+  private readonly permisosService = inject(PermisosService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
+
   searchTerm = signal('');
   selectedCategory = signal<string>('TODAS');
+  publicaciones = signal<PublicacionAtlas[]>([]);
 
-  // Datos mockeados del Atlas
-  publicaciones = signal<PublicacionAtlas[]>([
-    {
-      id: 'pub-001',
-      titulo: 'Recuperación Económica - Informe de Indicadores',
-      descripcion: 'Indicadores sobre el crecimiento del Producto Interno Bruto (PIB) a nivel mundial, regional y nacional. Incluye proyecciones y análisis detallado de los sectores productivos con mayor crecimiento en el Ecuador.',
-      fecha: '2025-11-20',
-      categoria: 'Economía',
-      autor: 'Observatorio Territorial Multidisciplinario - ULEAM',
-      paginas: 9,
-      tamano: '1.3 MB',
-      pdfUrl: '/1-recuperacion-economica.pdf',
-    },
-    {
-      id: 'pub-002',
-      titulo: 'Atlas de la Biodiversidad Costera del Ecuador',
-      descripcion: 'Estudio territorial exhaustivo sobre la preservación de ecosistemas marinos, inventariado de especies marinas locales y propuestas de zonificación para la conservación en el perfil costanero manabita.',
-      fecha: '2026-03-15',
-      categoria: 'Vitalidad Ecológica',
-      autor: 'Facultad de Ciencias del Mar - ULEAM',
-      paginas: 45,
-      tamano: '4.2 MB',
-      pdfUrl: '/1-recuperacion-economica.pdf', // Se usa el PDF real de prueba
-    },
-    {
-      id: 'pub-003',
-      titulo: 'Manual de Gobernanza y Presupuestos Participativos',
-      descripcion: 'Un marco metodológico para guiar la toma de decisiones comunitarias y la asignación transparente de presupuestos participativos en los gobiernos autónomos descentralizados (GAD).',
-      fecha: '2026-05-10',
-      categoria: 'Gobernanza',
-      autor: 'Observatorio de Gobernanza Territorial',
-      paginas: 28,
-      tamano: '2.1 MB',
-      pdfUrl: '/1-recuperacion-economica.pdf', // Se usa el PDF real de prueba
-    },
-    {
-      id: 'pub-004',
-      titulo: 'Atlas Cultural de Manabí: Saberes y Expresiones Vivas',
-      descripcion: 'Compendio e investigación de campo sobre la herencia cultural inmaterial de la provincia de Manabí: tradiciones orales, artesanías, música autóctona y gastronomía patrimonial.',
-      fecha: '2026-01-20',
-      categoria: 'Cultura',
-      autor: 'Centro de Investigaciones Históricas - ULEAM',
-      paginas: 60,
-      tamano: '8.5 MB',
-      pdfUrl: '/1-recuperacion-economica.pdf', // Se usa el PDF real de prueba
-    },
-  ]);
+  // Computed properties for permissions
+  canCreate = computed(() => {
+    const user = this.authService.user();
+    if (!user) return false;
+    return this.permisosService.hasUserPermission(user.id, user.rol, 'create');
+  });
+
+  ngOnInit(): void {
+    this.loadPublications();
+  }
+
+  loadPublications(): void {
+    this.atlasService.getPublications()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((data) => {
+        this.publicaciones.set(data);
+      });
+  }
+
+  canEdit(pub: PublicacionAtlas): boolean {
+    const user = this.authService.user();
+    if (!user) return false;
+    const isOwner = pub.creado_por_id === user.id;
+    return this.permisosService.hasUserPermission(user.id, user.rol, 'edit', isOwner);
+  }
+
+  canDelete(pub: PublicacionAtlas): boolean {
+    const user = this.authService.user();
+    if (!user) return false;
+    const isOwner = pub.creado_por_id === user.id;
+    return this.permisosService.hasUserPermission(user.id, user.rol, 'delete', isOwner);
+  }
+
+  openCreateDialog(): void {
+    const dialogRef = this.dialog.open(AtlasFormComponent, {
+      width: '550px',
+      data: null,
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result) {
+          const userId = this.authService.user()?.id || 1;
+          this.atlasService.createPublication(result, userId).subscribe(() => {
+            this.loadPublications();
+            this.snackBar.open('Publicación agregada con éxito', 'Cerrar', { duration: 3000 });
+          });
+        }
+      });
+  }
+
+  openEditDialog(pub: PublicacionAtlas): void {
+    const dialogRef = this.dialog.open(AtlasFormComponent, {
+      width: '550px',
+      data: pub,
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result) {
+          this.atlasService.updatePublication(pub.id, result).subscribe(() => {
+            this.loadPublications();
+            this.snackBar.open('Publicación actualizada con éxito', 'Cerrar', { duration: 3000 });
+          });
+        }
+      });
+  }
+
+  deletePublication(pub: PublicacionAtlas): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Confirmar Eliminación',
+        message: `¿Estás seguro de que deseas eliminar la publicación "${pub.titulo}"?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar',
+        confirmColor: 'warn',
+      },
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.atlasService.deletePublication(pub.id).subscribe(() => {
+            this.loadPublications();
+            this.snackBar.open('Publicación eliminada con éxito', 'Cerrar', { duration: 3000 });
+          });
+        }
+      });
+  }
 
   // Categorías únicas
   categorias = computed<string[]>(() => {

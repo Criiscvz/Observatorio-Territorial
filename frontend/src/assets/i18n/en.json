@@ -162,7 +162,9 @@
     },
     "roles": {
       "admin": "Administrator",
-      "user": "User"
+      "user": "Regular user",
+      "subscriber": "Subscriber",
+      "editor": "Editor"
     },
     "messages": {
       "updateSuccess": "Profile updated successfully",
@@ -190,7 +192,8 @@
       "main": "Main",
       "dashboard": "Dashboard",
       "uploadDataset": "Upload Dataset",
-      "users": "Users",
+      "users": "Users and Roles",
+      "permissions": "Role Permissions",
       "departments": "Observatories",
       "newDepartment": "New observatory",
       "allDatasets": "All Datasets",
@@ -201,6 +204,13 @@
       "research": "ULEAM Research",
       "linkage": "ULEAM Linkage",
       "barometerUleam": "ULEAM Barometer"
+    },
+    "permissions": {
+      "title": "Role Permissions",
+      "subtitle": "Dynamically configure which actions and scopes each role can execute on Atlas reports",
+      "messages": {
+        "saved": "Permissions configuration saved successfully."
+      }
     },
     "footer": {
       "copyright": "© {{year}} ULEAM Observatory. All rights reserved.",
@@ -226,7 +236,9 @@
       "uploadDataset": "Upload Dataset",
       "uploadDatasetDesc": "Import an Excel or CSV file for analysis",
       "viewAll": "View All",
-      "viewAllDesc": "Explore all available datasets"
+      "viewAllDesc": "Explore all available datasets",
+      "manageUsers": "Roles and permissions",
+      "manageUsersDesc": "Manage users, global roles, and system access"
     },
     "recentDepartments": {
       "title": "Recent Observatories",
@@ -876,7 +888,9 @@
     },
     "roles": {
       "adminDesc": "Full system access",
-      "userDesc": "Limited access"
+      "userDesc": "Limited access to departments",
+      "subscriberDesc": "Read-only access to reports and subscriptions",
+      "editorDesc": "Edit and upload access in their departments"
     },
     "form": {
       "createTitle": "Create User",

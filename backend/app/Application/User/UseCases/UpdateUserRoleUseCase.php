@@ -34,8 +34,8 @@ class UpdateUserRoleUseCase
             }
 
             // Validar que el rol sea válido
-            if (!in_array($dto->rol, ['ADMIN', 'USER'])) {
-                throw new \InvalidArgumentException('Rol inválido. Los roles permitidos son: ADMIN, USER');
+            if (!in_array($dto->rol, ['ADMIN', 'USER', 'SUBSCRIBER', 'EDITOR'])) {
+                throw new \InvalidArgumentException('Rol inválido. Los roles permitidos son: ADMIN, USER, SUBSCRIBER, EDITOR');
             }
 
             // Actualizar el rol (el modelo User permitirá esto porque el admin está autenticado)

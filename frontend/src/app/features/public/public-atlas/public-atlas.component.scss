@@ -408,4 +408,53 @@
   .publications-grid {
     grid-template-columns: 1fr;
   }
+
+  .header-actions {
+    width: 100%;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.header-info {
+  flex: 1;
+}
+
+.header-actions {
+  align-self: center;
+  flex-shrink: 0;
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    padding: 0.5rem 1.25rem;
+    border-radius: var(--radius-lg);
+  }
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+
+  button {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
 }

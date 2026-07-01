@@ -15,7 +15,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from '@core/models';
 import { UserService } from '@core/services/user.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-usuario-form',
@@ -40,7 +40,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
   styleUrl: './usuario-form.component.scss',
 })
 export class UsuarioFormComponent implements OnInit {
-    private readonly destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

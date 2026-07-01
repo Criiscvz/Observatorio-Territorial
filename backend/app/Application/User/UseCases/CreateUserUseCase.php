@@ -33,8 +33,8 @@ class CreateUserUseCase
             }
 
             // Validar rol
-            if (!in_array($dto->rol, ['ADMIN', 'USER'])) {
-                throw new \InvalidArgumentException('Rol inválido. Los roles permitidos son: ADMIN, USER');
+            if (!in_array($dto->rol, ['ADMIN', 'USER', 'SUBSCRIBER', 'EDITOR'])) {
+                throw new \InvalidArgumentException('Rol inválido. Los roles permitidos son: ADMIN, USER, SUBSCRIBER, EDITOR');
             }
 
             // Crear usuario

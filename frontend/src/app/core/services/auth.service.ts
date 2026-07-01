@@ -37,6 +37,8 @@ export class AuthService {
   // Computed values para roles
   readonly isAdmin = computed(() => this.userSignal()?.rol === 'ADMIN');
   readonly isUser = computed(() => this.userSignal()?.rol === 'USER');
+  readonly isEditor = computed(() => this.userSignal()?.rol === 'EDITOR');
+  readonly isSubscriber = computed(() => this.userSignal()?.rol === 'SUBSCRIBER');
   readonly userRole = computed(() => this.userSignal()?.rol ?? null);
 
   register(data: RegisterRequest): Observable<AuthResponse> {

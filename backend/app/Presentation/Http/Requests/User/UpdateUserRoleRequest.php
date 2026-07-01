@@ -17,7 +17,7 @@ class UpdateUserRoleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rol' => ['required', 'string', 'in:ADMIN,USER'],
+            'rol' => ['required', 'string', 'in:ADMIN,USER,SUBSCRIBER,EDITOR'],
         ];
     }
 
@@ -25,7 +25,7 @@ class UpdateUserRoleRequest extends FormRequest
     {
         return [
             'rol.required' => 'El rol es obligatorio',
-            'rol.in' => 'El rol debe ser ADMIN o USER',
+            'rol.in' => 'El rol debe ser ADMIN, USER, SUBSCRIBER o EDITOR',
         ];
     }
 }

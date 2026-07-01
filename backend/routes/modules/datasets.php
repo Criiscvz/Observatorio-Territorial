@@ -15,8 +15,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/{dataset}', [DatasetController::class, 'show']);
     Route::get('/{dataset}/data', [DatasetController::class, 'data']);
 
-    // Escritura - solo admin
-    Route::middleware('role:ADMIN')->group(function () {
+    // Escritura - admin y editor
+    Route::middleware('role:ADMIN,EDITOR')->group(function () {
         Route::post('/', [DatasetController::class, 'store']);
         Route::put('/{dataset}', [DatasetController::class, 'update']);
         Route::post('/{dataset}/analyze', [DatasetController::class, 'analyze']);

@@ -19,6 +19,14 @@
         </span>
       </div>
     </div>
+    @if (canCreate()) {
+      <div class="header-actions">
+        <button mat-flat-button color="primary" (click)="openCreateDialog()">
+          <mat-icon>add</mat-icon>
+          Agregar Publicación
+        </button>
+      </div>
+    }
   </div>
 
   <!-- Search & Filters -->
@@ -110,6 +118,14 @@
               <mat-icon>download</mat-icon>
               Descargar
             </a>
+            <div class="admin-actions" *ngIf="canEdit(pub) || canDelete(pub)">
+              <button mat-icon-button color="accent" *ngIf="canEdit(pub)" (click)="openEditDialog(pub)" matTooltip="Editar publicación">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" *ngIf="canDelete(pub)" (click)="deletePublication(pub)" matTooltip="Eliminar publicación">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
           </div>
         </div>
       }

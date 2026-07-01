@@ -15,11 +15,13 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { User } from '@core/models';
+import { User, UserRole } from '@core/models';
 import { UserService } from '@core/services/user.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { UserPermissionsDialogComponent } from '../user-permissions-dialog.component';
+import { PermisosService } from '@core/services/permisos.service';
 
 @Component({
   selector: 'app-usuario-list',
@@ -42,13 +44,15 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
     MatTooltipModule,
     MatDivider,
     TranslateModule,
+    UserPermissionsDialogComponent,
   ],
   templateUrl: './usuario-list.component.html',
   styleUrl: './usuario-list.component.scss',
 })
 export class UsuarioListComponent implements OnInit {
-    private readonly destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly userService = inject(UserService);
+  private readonly permisosService = inject(PermisosService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
   private readonly translate = inject(TranslateService);
@@ -130,7 +134,7 @@ export class UsuarioListComponent implements OnInit {
     });
   }
 
-  changeRole(user: User, newRole: 'ADMIN' | 'USER'): void {
+  changeRole(user: User, newRole: UserRole): void {
     if (user.rol === newRole) return;
 
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
@@ -200,7 +204,12 @@ export class UsuarioListComponent implements OnInit {
   }
 
   getRoleBadgeClass(rol: string): string {
-    return rol === 'ADMIN' ? 'badge-admin' : 'badge-user';
+    switch (rol) {
+      case 'ADMIN': return 'badge-admin';
+      case 'EDITOR': return 'badge-editor';
+      case 'SUBSCRIBER': return 'badge-subscriber';
+      default: return 'badge-user';
+    }
   }
 
   getStatusBadgeClass(isActive: boolean): string {
@@ -210,5 +219,25 @@ export class UsuarioListComponent implements OnInit {
   formatDate(date: string | undefined): string {
     if (!date) return '-';
     return new Date(date).toLocaleDateString();
+  }
+
+  openPermissionsDialog(user: User): void {
+    const dialogRef = this.dialog.open(UserPermissionsDialogComponent, {
+      width: '450px',
+      data: user,
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result) {
+          this.permisosService.saveUserPermissions(user.id, result);
+          this.snackBar.open(
+            'Permisos personalizados guardados correctamente para el usuario.',
+            'Cerrar',
+            { duration: 3000 }
+          );
+        }
+      });
   }
 }

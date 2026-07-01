@@ -51,7 +51,8 @@ describe('DashboardComponent', () => {
       getAll: vi.fn().mockReturnValue(of(mockDepartamentos))
     };
     authServiceSpy = {
-      user: vi.fn().mockReturnValue({ name: 'Test', rol: 'ADMIN' })
+      user: vi.fn().mockReturnValue({ name: 'Test', rol: 'ADMIN' }),
+      isAdmin: vi.fn().mockReturnValue(true)
     };
     translateSpy = {
       instant: vi.fn().mockImplementation((k) => k)

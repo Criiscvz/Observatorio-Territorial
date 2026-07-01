@@ -112,6 +112,10 @@
                   <mat-icon>admin_panel_settings</mat-icon>
                   <span>{{ 'users.actions.changeRole' | translate }}</span>
                 </button>
+                <button mat-menu-item (click)="openPermissionsDialog(user)">
+                  <mat-icon>security</mat-icon>
+                  <span>Gestionar Permisos</span>
+                </button>
                 <mat-divider></mat-divider>
                 <button mat-menu-item class="delete-action" (click)="deleteUser(user)">
                   <mat-icon color="warn">delete</mat-icon>
@@ -134,6 +138,22 @@
                 >
                   <mat-icon>person</mat-icon>
                   <span>USER</span>
+                </button>
+                <button
+                  mat-menu-item
+                  (click)="changeRole(user, 'EDITOR')"
+                  [disabled]="user.rol === 'EDITOR'"
+                >
+                  <mat-icon>edit</mat-icon>
+                  <span>EDITOR</span>
+                </button>
+                <button
+                  mat-menu-item
+                  (click)="changeRole(user, 'SUBSCRIBER')"
+                  [disabled]="user.rol === 'SUBSCRIBER'"
+                >
+                  <mat-icon>card_membership</mat-icon>
+                  <span>SUBSCRIBER</span>
                 </button>
               </mat-menu>
             </td>

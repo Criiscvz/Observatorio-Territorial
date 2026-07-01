@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Route;
 // Lectura pública
 Route::get('/datasets/{datasetId}/fuentes', [DatasetFuenteController::class, 'index']);
 
-// Escritura - solo admin autenticado
-Route::middleware(['auth:sanctum', 'role:ADMIN'])->group(function () {
+// Escritura - admin y editor autenticados
+Route::middleware(['auth:sanctum', 'role:ADMIN,EDITOR'])->group(function () {
     Route::post('/datasets/{datasetId}/fuentes', [DatasetFuenteController::class, 'store']);
     Route::put('/fuentes/{id}', [DatasetFuenteController::class, 'update']);
     Route::delete('/fuentes/{id}', [DatasetFuenteController::class, 'destroy']);

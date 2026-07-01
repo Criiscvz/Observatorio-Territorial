@@ -1,0 +1,123 @@
+<div class="page-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-icon">
+      <mat-icon>security</mat-icon>
+    </div>
+    <div class="header-info">
+      <h1>{{ 'permissions.title' | translate }}</h1>
+      <p>{{ 'permissions.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <mat-card class="permissions-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>table_chart</mat-icon>
+        Matriz de Configuración de Accesos
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content class="card-content">
+      <p class="description">
+        Como administrador, puedes configurar dinámicamente qué acciones puede realizar cada rol sobre las publicaciones del Atlas.
+        El alcance <strong>"Propios"</strong> restringe al usuario a modificar únicamente las publicaciones que él mismo ha creado, mientras que <strong>"Todos"</strong> le otorga permisos sobre todo el catálogo.
+      </p>
+
+      <div class="table-responsive">
+        <table class="permissions-table">
+          <thead>
+            <tr>
+              <th>Rol del Sistema</th>
+              <th>Crear Publicaciones</th>
+              <th>Editar Publicaciones</th>
+              <th>Eliminar Publicaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Fila para ADMIN (Solo lectura, ya que tiene todo habilitado) -->
+            <tr class="admin-row">
+              <td>
+                <span class="role-badge badge-admin">ADMIN</span>
+              </td>
+              <td>
+                <mat-checkbox [checked]="true" [disabled]="true">Habilitado</mat-checkbox>
+              </td>
+              <td>
+                <div class="scope-cell">
+                  <mat-checkbox [checked]="true" [disabled]="true">Habilitado</mat-checkbox>
+                  <span class="scope-label font-medium text-xs">Todos</span>
+                </div>
+              </td>
+              <td>
+                <div class="scope-cell">
+                  <mat-checkbox [checked]="true" [disabled]="true">Habilitado</mat-checkbox>
+                  <span class="scope-label font-medium text-xs">Todos</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Filas Dinámicas de Roles Configurables -->
+            <tr *ngFor="let role of rolesList">
+              <td>
+                <span class="role-badge" [ngClass]="'badge-' + role.toLowerCase()">{{ role }}</span>
+              </td>
+              
+              <!-- Crear -->
+              <td>
+                <mat-checkbox [(ngModel)]="permissions[role].create">
+                  Habilitar
+                </mat-checkbox>
+              </td>
+
+              <!-- Editar -->
+              <td>
+                <div class="scope-cell">
+                  <mat-checkbox [(ngModel)]="permissions[role].edit">
+                    Habilitar
+                  </mat-checkbox>
+                  
+                  <mat-form-field *ngIf="permissions[role].edit" appearance="outline" class="scope-select">
+                    <mat-select [(value)]="permissions[role].editScope">
+                      <mat-option value="own">Solo propio</mat-option>
+                      <mat-option value="all">Todos</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </td>
+
+              <!-- Eliminar -->
+              <td>
+                <div class="scope-cell">
+                  <mat-checkbox [(ngModel)]="permissions[role].delete">
+                    Habilitar
+                  </mat-checkbox>
+                  
+                  <mat-form-field *ngIf="permissions[role].delete" appearance="outline" class="scope-select">
+                    <mat-select [(value)]="permissions[role].deleteScope">
+                      <mat-option value="own">Solo propio</mat-option>
+                      <mat-option value="all">Todos</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-actions class="card-actions">
+      <button mat-stroked-button (click)="resetDefaults()">
+        <mat-icon>settings_backup_restore</mat-icon>
+        Restablecer
+      </button>
+      <button mat-flat-button color="primary" (click)="savePermissions()">
+        <mat-icon>save</mat-icon>
+        Guardar Configuración
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

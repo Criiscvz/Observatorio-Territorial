@@ -51,19 +51,20 @@ interface NavItem {
           <span class="nav-text">{{ 'layout.sidebar.dashboard' | translate }}</span>
         </a>
 
-        <!-- Subir Dataset - solo admin -->
-        <a
-          *isAdmin
-          class="nav-item"
-          routerLink="/admin/datasets/nuevo"
-          routerLinkActive="active"
-          (click)="navigate.emit()"
-        >
-          <div class="nav-icon-wrapper">
-            <mat-icon class="nav-icon">cloud_upload</mat-icon>
-          </div>
-          <span class="nav-text">{{ 'layout.sidebar.uploadDataset' | translate }}</span>
-        </a>
+        <!-- Subir Dataset - admin y editor -->
+        @if (isAdmin() || isEditor()) {
+          <a
+            class="nav-item"
+            routerLink="/admin/datasets/nuevo"
+            routerLinkActive="active"
+            (click)="navigate.emit()"
+          >
+            <div class="nav-icon-wrapper">
+              <mat-icon class="nav-icon">cloud_upload</mat-icon>
+            </div>
+            <span class="nav-text">{{ 'layout.sidebar.uploadDataset' | translate }}</span>
+          </a>
+        }
 
         <!-- Gestión de Usuarios - solo admin -->
         <a
@@ -74,9 +75,23 @@ interface NavItem {
           (click)="navigate.emit()"
         >
           <div class="nav-icon-wrapper">
-            <mat-icon class="nav-icon">people</mat-icon>
+            <mat-icon class="nav-icon">manage_accounts</mat-icon>
           </div>
           <span class="nav-text">{{ 'layout.sidebar.users' | translate }}</span>
+        </a>
+
+        <!-- Gestión de Permisos - solo admin -->
+        <a
+          *isAdmin
+          class="nav-item"
+          routerLink="/admin/permisos"
+          routerLinkActive="active"
+          (click)="navigate.emit()"
+        >
+          <div class="nav-icon-wrapper">
+            <mat-icon class="nav-icon">security</mat-icon>
+          </div>
+          <span class="nav-text">{{ 'layout.sidebar.permissions' | translate }}</span>
         </a>
       </div>
 
@@ -408,6 +423,7 @@ export class SidebarComponent implements OnInit {
 
   // Computed para verificar si el usuario es admin
   isAdmin = computed(() => this.authService.isAdmin());
+  isEditor = computed(() => this.authService.isEditor());
 
   // Colores para los departamentos
   private deptoColors = [
