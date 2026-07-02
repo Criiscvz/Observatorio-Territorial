@@ -13,6 +13,7 @@ $BackendPath = Join-Path $PSScriptRoot "..\backend"
 $ImageName = "backend-backend"
 $ContainerName = "observatorio-backend-dev"
 $EnvFile = Join-Path $BackendPath ".env"
+$DockerNetwork = "observatirio_default"
 
 function Ensure-BackendImage {
     $exists = docker image inspect $ImageName 2>$null
@@ -30,9 +31,10 @@ function Run-Artisan {
 
     Ensure-BackendImage
     docker run --rm `
+      --network $DockerNetwork `
       --add-host=host.docker.internal:host-gateway `
       --env-file "$EnvFile" `
-      -e DB_HOST=host.docker.internal `
+      -e DB_HOST=observatorio_db `
       --entrypoint php `
       $ImageName artisan @Args
 }
@@ -48,10 +50,11 @@ try {
             docker run -d `
               --name $ContainerName `
               --rm `
+              --network $DockerNetwork `
               -p 8000:8000 `
               --add-host=host.docker.internal:host-gateway `
               --env-file "$EnvFile" `
-              -e DB_HOST=host.docker.internal `
+              -e DB_HOST=observatorio_db `
               --entrypoint php `
               $ImageName artisan serve --host=0.0.0.0 --port=8000 | Out-Null
             Write-Host "Backend iniciado. Usa '.\scripts\backend.ps1 logs' para ver salida." -ForegroundColor Green
