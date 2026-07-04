@@ -1,4 +1,4 @@
-# ============================================
+﻿# ============================================
 # Backend Scripts (Laravel/PHP 8.4 via Docker)
 # Uso: .\scripts\backend.ps1 [comando]
 # ============================================
@@ -13,6 +13,19 @@ $BackendPath = Join-Path $PSScriptRoot "..\backend"
 $ImageName = "backend-backend"
 $ContainerName = "observatorio-backend-dev"
 $EnvFile = Join-Path $BackendPath ".env"
+
+# El backend corre DENTRO de un contenedor: 127.0.0.1/localhost apuntan al propio
+# contenedor, no al host. Igual que hacemos con DB_HOST, reescribimos el host de la
+# MONGODB_URI a host.docker.internal para alcanzar el contenedor de Mongo (publicado
+# en el puerto 27017 del host). Las credenciales se leen del .env, no se hardcodean.
+function Get-DockerMongoUri {
+    $line = Select-String -Path $EnvFile -Pattern '^\s*MONGODB_URI\s*=\s*(.+)$' | Select-Object -First 1
+    if (-not $line) {
+        return "mongodb://root:secret123@host.docker.internal:27017/?authSource=admin"
+    }
+    $uri = $line.Matches[0].Groups[1].Value.Trim().Trim('"')
+    return ($uri -replace '@(127\.0\.0\.1|localhost):', '@host.docker.internal:')
+}
 
 function Ensure-BackendImage {
     $exists = docker image inspect $ImageName 2>$null
@@ -29,10 +42,12 @@ function Run-Artisan {
     )
 
     Ensure-BackendImage
+    $MongoUri = Get-DockerMongoUri
     docker run --rm `
       --add-host=host.docker.internal:host-gateway `
       --env-file "$EnvFile" `
       -e DB_HOST=host.docker.internal `
+      -e "MONGODB_URI=$MongoUri" `
       --entrypoint php `
       $ImageName artisan @Args
 }
@@ -43,6 +58,7 @@ try {
     switch ($Command) {
         "start" {
             Ensure-BackendImage
+            $MongoUri = Get-DockerMongoUri
             Write-Host "Iniciando backend en http://127.0.0.1:8000 con PHP 8.4 (Docker)..." -ForegroundColor Green
             docker rm -f $ContainerName 2>$null | Out-Null
             docker run -d `
@@ -52,6 +68,7 @@ try {
               --add-host=host.docker.internal:host-gateway `
               --env-file "$EnvFile" `
               -e DB_HOST=host.docker.internal `
+              -e "MONGODB_URI=$MongoUri" `
               --entrypoint php `
               $ImageName artisan serve --host=0.0.0.0 --port=8000 | Out-Null
             Write-Host "Backend iniciado. Usa '.\scripts\backend.ps1 logs' para ver salida." -ForegroundColor Green

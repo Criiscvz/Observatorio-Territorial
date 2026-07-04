@@ -1,6 +1,8 @@
 <?php
 
 use App\Presentation\Http\Controllers\Api\PublicController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -15,12 +17,40 @@ use Illuminate\Support\Facades\Storage;
 */
 
 // ============ HEALTH CHECK ============
-// Lightweight endpoint for the frontend warmup gate. No DB, no auth.
-// Used to mask Render free-tier cold-start 500s from the UI.
-Route::get('/health', fn() => response()->json([
-    'ok' => true,
-    'ts' => now()->toIso8601String(),
-]));
+// Endpoint liviano para el warmup gate del frontend. Sin DB, sin auth por defecto
+// (oculta los 500 de cold-start del free-tier de Render en la UI).
+// Con ?deep=1 verifica además conectividad a PostgreSQL y MongoDB: responde
+// siempre HTTP 200 (el warmup no debe romper), pero ok=false si algún motor falla.
+Route::get('/health', function (Request $request) {
+    if (!$request->boolean('deep')) {
+        return response()->json([
+            'ok' => true,
+            'ts' => now()->toIso8601String(),
+        ]);
+    }
+
+    $services = [];
+
+    try {
+        DB::connection('pgsql')->select('select 1');
+        $services['postgres'] = 'ok';
+    } catch (\Throwable $e) {
+        $services['postgres'] = 'error';
+    }
+
+    try {
+        DB::connection('mongodb')->getDatabase()->command(['ping' => 1]);
+        $services['mongodb'] = 'ok';
+    } catch (\Throwable $e) {
+        $services['mongodb'] = 'error';
+    }
+
+    return response()->json([
+        'ok' => $services['postgres'] === 'ok' && $services['mongodb'] === 'ok',
+        'ts' => now()->toIso8601String(),
+        'services' => $services,
+    ]);
+});
 
 // ============ DOCUMENTACIÓN API (Swagger) ============
 Route::get('/documentation', function () {
@@ -82,3 +112,7 @@ Route::prefix('users')->group(__DIR__ . '/modules/users.php');
 Route::prefix('categorias')->group(__DIR__ . '/modules/categorias.php');
 require __DIR__ . '/modules/graficos.php';
 require __DIR__ . '/modules/fuentes.php';
+
+// ============ CONTENIDO DEL OBSERVATORIO (Artículos y Reportes) ============
+Route::prefix('articulos')->group(__DIR__ . '/modules/articulos.php');
+Route::prefix('reportes')->group(__DIR__ . '/modules/reportes.php');
