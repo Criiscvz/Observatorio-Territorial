@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure\Services;
 
 use App\Domain\Statistics\Services\StatisticsServiceInterface;
+use App\Infrastructure\Persistence\Mongo\Models\RegistroDatoMongoModel;
 use Illuminate\Support\Facades\DB;
 
 class StatisticsService implements StatisticsServiceInterface
@@ -14,17 +15,34 @@ class StatisticsService implements StatisticsServiceInterface
     ) {}
 
     /**
-     * Whitelist pattern for column names to prevent SQL injection
+     * Whitelist pattern for column names to prevent injection.
+     *
+     * Se permite cualquier carácter Unicode imprimible (las columnas del CSV pueden tener
+     * signos de interrogación, paréntesis, acentos, etc.). Es seguro porque los nombres
+     * nunca se interpolan en una cadena de consulta: se usan únicamente como field paths
+     * estructurados dentro de los pipelines de Mongo ('data.'.$col).
      */
     private function sanitizeColumn(string $column): string
     {
-        // Permitir cualquier carácter Unicode imprimible (las columnas del CSV pueden tener
-        // signos de interrogación, paréntesis, acentos, etc.). Es seguro porque los nombres
-        // se pasan siempre como bind parameters (data->>?) y no se interpolan en SQL.
         if (!preg_match('/^[^\x00-\x1F\x7F]+$/u', $column) || mb_strlen($column) > 500) {
             throw new \InvalidArgumentException("Nombre de columna inválido: {$column}");
         }
         return $column;
+    }
+
+    /**
+     * Ejecuta un aggregation pipeline y devuelve cada documento como array PHP plano.
+     *
+     * @param array<int, array<string, mixed>> $pipeline
+     * @return array<int, array<string, mixed>>
+     */
+    private function aggregate(array $pipeline): array
+    {
+        return RegistroDatoMongoModel::raw(
+            fn($collection) => $collection->aggregate($pipeline, [
+                'typeMap' => ['root' => 'array', 'document' => 'array', 'array' => 'array'],
+            ])
+        )->toArray();
     }
 
     /**
@@ -37,7 +55,7 @@ class StatisticsService implements StatisticsServiceInterface
     }
 
     /**
-     * Determine the SQL cast based on filter type hint or value detection
+     * Determine the logical type of a filter (date / numeric / text) based on type hint or value.
      */
     private function getFilterCast(array $filter): string
     {
@@ -56,140 +74,200 @@ class StatisticsService implements StatisticsServiceInterface
     }
 
     /**
-     * Apply JSONB filters to a query builder
+     * Construye el fragmento de $match de Mongo equivalente a applyFilters() de Postgres.
+     *
+     * Replica las semánticas de la versión jsonb:
+     *  - eq/neq/in/not_in: comparan como STRING (en Postgres se hacía con data->>? y casteos a string).
+     *  - gt/gte/lt/lte/between: comparación numérica o por fecha (string Y-m-d, comparable lexicográficamente).
+     *  - contains/not_contains: ILIKE (case-insensitive substring) -> $regex con opción 'i'.
+     *
+     * @param array<int, array<string, mixed>>|null $filters
+     * @return array<string, mixed>  Fragmento listo para mezclar dentro de un $match.
      */
-    private function applyFilters($query, ?array $filters): mixed
+    private function buildFilterMatch(?array $filters): array
     {
         if (empty($filters)) {
-            return $query;
+            return [];
         }
+
+        $conditions = [];
 
         foreach ($filters as $filter) {
             $col = $this->sanitizeColumn($filter['column']);
             $operator = $filter['operator'];
             $value = $filter['value'];
             $cast = $this->getFilterCast($filter);
+            $field = 'data.' . $col;
 
             switch ($operator) {
                 case 'eq':
-                    $query->whereRaw("data->>? = ?", [$col, (string)$value]);
+                    // Comparación como string para replicar data->>? = ?
+                    $conditions[] = ['$expr' => ['$eq' => [['$toString' => '$' . $field], (string) $value]]];
                     break;
+
                 case 'neq':
-                    $query->whereRaw("data->>? != ?", [$col, (string)$value]);
+                    $conditions[] = ['$expr' => ['$ne' => [['$toString' => '$' . $field], (string) $value]]];
                     break;
+
                 case 'in':
                     if (is_array($value)) {
-                        $placeholders = implode(',', array_fill(0, count($value), '?'));
-                        $params = array_merge([$col], array_map('strval', $value));
-                        $query->whereRaw("data->>? IN ($placeholders)", $params);
+                        $conditions[] = ['$expr' => ['$in' => [
+                            ['$toString' => '$' . $field],
+                            array_map('strval', $value),
+                        ]]];
                     }
                     break;
+
                 case 'not_in':
                     if (is_array($value)) {
-                        $placeholders = implode(',', array_fill(0, count($value), '?'));
-                        $params = array_merge([$col], array_map('strval', $value));
-                        $query->whereRaw("data->>? NOT IN ($placeholders)", $params);
+                        $conditions[] = ['$expr' => ['$not' => [['$in' => [
+                            ['$toString' => '$' . $field],
+                            array_map('strval', $value),
+                        ]]]]];
                     }
                     break;
+
                 case 'gt':
-                    if ($cast === 'date') {
-                        $query->whereRaw("(data->>?)::date > ?::date", [$col, (string)$value]);
-                    } else {
-                        $query->whereRaw("(data->>?)::numeric > ?", [$col, (float)$value]);
-                    }
+                    $conditions[] = $cast === 'date'
+                        ? [$field => ['$gt' => (string) $value]]
+                        : [$field => ['$gt' => (float) $value]];
                     break;
+
                 case 'gte':
-                    if ($cast === 'date') {
-                        $query->whereRaw("(data->>?)::date >= ?::date", [$col, (string)$value]);
-                    } else {
-                        $query->whereRaw("(data->>?)::numeric >= ?", [$col, (float)$value]);
-                    }
+                    $conditions[] = $cast === 'date'
+                        ? [$field => ['$gte' => (string) $value]]
+                        : [$field => ['$gte' => (float) $value]];
                     break;
+
                 case 'lt':
-                    if ($cast === 'date') {
-                        $query->whereRaw("(data->>?)::date < ?::date", [$col, (string)$value]);
-                    } else {
-                        $query->whereRaw("(data->>?)::numeric < ?", [$col, (float)$value]);
-                    }
+                    $conditions[] = $cast === 'date'
+                        ? [$field => ['$lt' => (string) $value]]
+                        : [$field => ['$lt' => (float) $value]];
                     break;
+
                 case 'lte':
-                    if ($cast === 'date') {
-                        $query->whereRaw("(data->>?)::date <= ?::date", [$col, (string)$value]);
-                    } else {
-                        $query->whereRaw("(data->>?)::numeric <= ?", [$col, (float)$value]);
-                    }
+                    $conditions[] = $cast === 'date'
+                        ? [$field => ['$lte' => (string) $value]]
+                        : [$field => ['$lte' => (float) $value]];
                     break;
+
                 case 'between':
                     if (is_array($value) && count($value) === 2) {
                         if ($cast === 'date') {
-                            $query->whereRaw("(data->>?)::date BETWEEN ?::date AND ?::date", [$col, (string)$value[0], (string)$value[1]]);
+                            $conditions[] = [$field => ['$gte' => (string) $value[0], '$lte' => (string) $value[1]]];
                         } else {
-                            $query->whereRaw("(data->>?)::numeric BETWEEN ? AND ?", [$col, (float)$value[0], (float)$value[1]]);
+                            $conditions[] = [$field => ['$gte' => (float) $value[0], '$lte' => (float) $value[1]]];
                         }
                     }
                     break;
+
                 case 'contains':
-                    $query->whereRaw("data->>? ILIKE ?", [$col, '%' . $value . '%']);
+                    $conditions[] = [$field => ['$regex' => preg_quote((string) $value, '/'), '$options' => 'i']];
                     break;
+
                 case 'not_contains':
-                    $query->whereRaw("data->>? NOT ILIKE ?", [$col, '%' . $value . '%']);
+                    $conditions[] = [$field => ['$not' => ['$regex' => preg_quote((string) $value, '/'), '$options' => 'i']]];
                     break;
             }
         }
 
-        return $query;
+        if (empty($conditions)) {
+            return [];
+        }
+
+        // Mezclar todas las condiciones en un solo fragmento. Como varios filtros pueden
+        // usar la misma clave ($expr / mismo field), se combinan bajo $and para no perder ninguno.
+        return ['$and' => $conditions];
+    }
+
+    /**
+     * Construye el $match inicial de un pipeline: dataset_id + filtros + condiciones extra.
+     *
+     * @param array<int, array<string, mixed>>|null $filters
+     * @param array<string, mixed> $extra  Condiciones adicionales (p.ej. validez numérica/fecha de columnas).
+     * @return array<string, mixed>
+     */
+    private function buildMatch(string $datasetId, ?array $filters, array $extra = []): array
+    {
+        $match = ['dataset_id' => $datasetId];
+
+        $filterMatch = $this->buildFilterMatch($filters);
+
+        // Combinar fragmentos que puedan compartir claves ($and, $expr, etc.) sin pisarse.
+        $andClauses = [];
+
+        if (!empty($filterMatch)) {
+            // buildFilterMatch siempre devuelve ['$and' => [...]] cuando hay condiciones.
+            $andClauses = array_merge($andClauses, $filterMatch['$and'] ?? [$filterMatch]);
+        }
+
+        if (!empty($extra)) {
+            $andClauses[] = $extra;
+        }
+
+        if (!empty($andClauses)) {
+            $match['$and'] = $andClauses;
+        }
+
+        return $match;
     }
 
     public function getNumericStats(string $datasetId, string $column, int $limit, ?array $filters = null): array
     {
         $col = $this->sanitizeColumn($column);
+        $field = 'data.' . $col;
 
-        // Only include rows whose value is actually castable to numeric.
-        // This prevents "invalid input syntax for type numeric" 500s when a NUMERICO
-        // column contains stray strings like "N/A", "-", or unit suffixes.
-        $onlyNumeric = "TRIM(data->>?) ~ '^-?[0-9]+(\.[0-9]+)?$'";
+        // Solo filas cuyo valor es realmente numérico (los valores ya son float nativos en Mongo).
+        $onlyNumeric = ['$expr' => ['$isNumber' => '$' . $field]];
 
-        $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->whereRaw($onlyNumeric, [$col]);
-        $query = $this->applyFilters($query, $filters);
+        $statsMatch = $this->buildMatch($datasetId, $filters, $onlyNumeric);
 
-        $stats = $query->selectRaw("
-                COUNT(*) as count,
-                AVG((TRIM(data->>?))::numeric) as mean,
-                MIN((TRIM(data->>?))::numeric) as min,
-                MAX((TRIM(data->>?))::numeric) as max,
-                SUM((TRIM(data->>?))::numeric) as sum
-            ", [$col, $col, $col, $col])
-            ->first();
+        $statsRows = $this->aggregate([
+            ['$match' => $statsMatch],
+            ['$group' => [
+                '_id' => null,
+                'count' => ['$sum' => 1],
+                'mean' => ['$avg' => '$' . $field],
+                'min' => ['$min' => '$' . $field],
+                'max' => ['$max' => '$' . $field],
+                'sum' => ['$sum' => '$' . $field],
+            ]],
+        ]);
 
-        $min = (float) ($stats->min ?? 0);
-        $max = (float) ($stats->max ?? 1);
+        $stats = $statsRows[0] ?? [];
+
+        $min = (float) ($stats['min'] ?? 0);
+        $max = (float) ($stats['max'] ?? 1);
+        $count = (int) ($stats['count'] ?? 0);
         $range = $max - $min;
-        $bins = min(20, max(5, (int) sqrt((int) ($stats->count ?? 10))));
+        $bins = min(20, max(5, (int) sqrt($count > 0 ? $count : 10)));
         $binSize = $range > 0 ? $range / $bins : 1;
 
-        $histQuery = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->whereRaw($onlyNumeric, [$col]);
-        $histQuery = $this->applyFilters($histQuery, $filters);
-
-        $histogram = $histQuery->selectRaw("
-                FLOOR(((TRIM(data->>?))::numeric - ?) / ?) as bin,
-                COUNT(*) as count
-            ", [$col, $min, $binSize])
-            ->groupBy('bin')
-            ->orderBy('bin')
-            ->get();
+        $histogram = $this->aggregate([
+            ['$match' => $statsMatch],
+            ['$project' => [
+                'bin' => ['$floor' => [
+                    '$divide' => [
+                        ['$subtract' => ['$' . $field, $min]],
+                        $binSize,
+                    ],
+                ]],
+            ]],
+            ['$group' => [
+                '_id' => '$bin',
+                'count' => ['$sum' => 1],
+            ]],
+            ['$sort' => ['_id' => 1]],
+        ]);
 
         $labels = [];
         $values = [];
 
         foreach ($histogram as $h) {
-            $binStart = $min + ((float) $h->bin * $binSize);
+            $binStart = $min + ((float) ($h['_id'] ?? 0) * $binSize);
             $binEnd = $binStart + $binSize;
             $labels[] = number_format($binStart, 1) . ' - ' . number_format($binEnd, 1);
-            $values[] = (int) $h->count;
+            $values[] = (int) ($h['count'] ?? 0);
         }
 
         return [
@@ -198,11 +276,11 @@ class StatisticsService implements StatisticsServiceInterface
                 'values' => $values,
             ],
             'stats' => [
-                'count' => (int) ($stats->count ?? 0),
-                'mean' => round((float) ($stats->mean ?? 0), 2),
-                'min' => round((float) ($stats->min ?? 0), 2),
-                'max' => round((float) ($stats->max ?? 0), 2),
-                'sum' => round((float) ($stats->sum ?? 0), 2),
+                'count' => (int) ($stats['count'] ?? 0),
+                'mean' => round((float) ($stats['mean'] ?? 0), 2),
+                'min' => round((float) ($stats['min'] ?? 0), 2),
+                'max' => round((float) ($stats['max'] ?? 0), 2),
+                'sum' => round((float) ($stats['sum'] ?? 0), 2),
             ],
         ];
     }
@@ -210,28 +288,54 @@ class StatisticsService implements StatisticsServiceInterface
     public function getCategoricalStats(string $datasetId, string $column, int $limit, ?array $filters = null): array
     {
         $col = $this->sanitizeColumn($column);
+        $field = 'data.' . $col;
 
-        $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId);
-        $query = $this->applyFilters($query, $filters);
+        // Normaliza el valor: trim de strings, NULL/'' -> 'Sin valor'.
+        // $trim solo opera sobre strings; para valores no string usamos $toString primero.
+        $categoryExpr = ['$let' => [
+            'vars' => [
+                'trimmed' => ['$trim' => ['input' => ['$toString' => ['$ifNull' => ['$' . $field, '']]]]],
+            ],
+            'in' => ['$cond' => [
+                ['$eq' => ['$$trimmed', '']],
+                'Sin valor',
+                '$$trimmed',
+            ]],
+        ]];
 
-        $data = $query->selectRaw("
-                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as categoria,
-                COUNT(*) as count
-            ", [$col])
-            ->groupBy('categoria')
-            ->orderByDesc('count')
-            ->limit($limit)
-            ->get();
+        $rows = $this->aggregate([
+            ['$match' => $this->buildMatch($datasetId, $filters)],
+            ['$group' => [
+                '_id' => $categoryExpr,
+                'count' => ['$sum' => 1],
+            ]],
+            ['$sort' => ['count' => -1]],
+            ['$limit' => $limit],
+            ['$project' => [
+                '_id' => 0,
+                'categoria' => '$_id',
+                'count' => 1,
+            ]],
+        ]);
+
+        $labels = [];
+        $values = [];
+        $totalCount = 0;
+        foreach ($rows as $row) {
+            $labels[] = $row['categoria'] ?? 'Sin valor';
+            $c = (int) ($row['count'] ?? 0);
+            $values[] = $c;
+            $totalCount += $c;
+        }
 
         return [
             'data' => [
-                'labels' => $data->pluck('categoria')->toArray(),
-                'values' => $data->pluck('count')->map(fn($v) => (int) $v)->toArray(),
+                'labels' => $labels,
+                'values' => $values,
             ],
             'stats' => [
-                'count' => $data->sum('count'),
-                'unique' => $data->count(),
+                'count' => $totalCount,
+                'unique' => count($rows),
             ],
         ];
     }
@@ -239,29 +343,29 @@ class StatisticsService implements StatisticsServiceInterface
     public function getDateStats(string $datasetId, string $column, int $limit, ?array $filters = null): array
     {
         $col = $this->sanitizeColumn($column);
+        $field = 'data.' . $col;
 
-        // Only include rows whose value starts with a YYYY-MM-DD or YYYY/MM/DD pattern.
-        // Prevents "invalid input for type date" 500s when a FECHA column contains
-        // free-form text. DATE() will still parse the matched prefix correctly.
-        $onlyDate = "data->>? ~ '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}'";
+        // Solo filas cuyo valor (string) empieza por YYYY-MM-DD o YYYY/MM/DD.
+        $onlyDate = [$field => ['$type' => 'string', '$regex' => '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}']];
 
-        $baseQuery = fn() => $this->applyFilters(
-            DB::table('registros_datos')->where('dataset_id', $datasetId),
-            $filters
-        )->whereRaw($onlyDate, [$col]);
+        $baseMatch = $this->buildMatch($datasetId, $filters, $onlyDate);
 
-        // Get date range to determine optimal granularity
-        $range = $baseQuery()
-            ->selectRaw("
-                MIN(DATE(data->>?)) as min_date,
-                MAX(DATE(data->>?)) as max_date,
-                COUNT(*) as count
-            ", [$col, $col])
-            ->first();
+        // Rango de fechas y total. Los valores son strings 'Y-m-d' => min/max lexicográfico = cronológico.
+        $rangeRows = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => [
+                '_id' => null,
+                // Normalizamos a YYYY-MM-DD tomando los primeros 10 caracteres del string.
+                'min_date' => ['$min' => ['$substrBytes' => ['$' . $field, 0, 10]]],
+                'max_date' => ['$max' => ['$substrBytes' => ['$' . $field, 0, 10]]],
+                'count' => ['$sum' => 1],
+            ]],
+        ]);
 
-        $minDate = $range->min_date ?? null;
-        $maxDate = $range->max_date ?? null;
-        $totalCount = (int) ($range->count ?? 0);
+        $range = $rangeRows[0] ?? [];
+        $minDate = $range['min_date'] ?? null;
+        $maxDate = $range['max_date'] ?? null;
+        $totalCount = (int) ($range['count'] ?? 0);
 
         if (!$minDate || !$maxDate || $totalCount === 0) {
             return [
@@ -270,43 +374,55 @@ class StatisticsService implements StatisticsServiceInterface
             ];
         }
 
-        // Determine granularity based on date range
+        // Granularidad según rango de días.
         $daysDiff = (int) ((strtotime($maxDate) - strtotime($minDate)) / 86400);
 
         if ($daysDiff <= 60) {
-            // Up to 2 months: group by day
-            $groupExpr = "DATE(data->>?)";
-            $formatExpr = "TO_CHAR(DATE(data->>?), 'YYYY-MM-DD')";
+            // Hasta 2 meses: agrupar por día (YYYY-MM-DD).
+            $periodExpr = ['$substrBytes' => ['$' . $field, 0, 10]];
             $granularity = 'day';
         } elseif ($daysDiff <= 730) {
-            // Up to 2 years: group by month
-            $groupExpr = "DATE_TRUNC('month', DATE(data->>?))";
-            $formatExpr = "TO_CHAR(DATE(data->>?), 'YYYY-MM')";
+            // Hasta 2 años: agrupar por mes (YYYY-MM).
+            $periodExpr = ['$substrBytes' => ['$' . $field, 0, 7]];
             $granularity = 'month';
         } else {
-            // More than 2 years: group by year
-            $groupExpr = "DATE_TRUNC('year', DATE(data->>?))";
-            $formatExpr = "TO_CHAR(DATE(data->>?), 'YYYY')";
+            // Más de 2 años: agrupar por año (YYYY).
+            $periodExpr = ['$substrBytes' => ['$' . $field, 0, 4]];
             $granularity = 'year';
         }
 
-        $data = $baseQuery()
-            ->selectRaw("{$formatExpr} as periodo, COUNT(*) as count", [$col])
-            ->groupByRaw("{$groupExpr}", [$col])
-            ->orderByRaw("{$groupExpr} ASC", [$col])
-            ->limit($limit)
-            ->get();
+        $data = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => [
+                '_id' => $periodExpr,
+                'count' => ['$sum' => 1],
+            ]],
+            ['$sort' => ['_id' => 1]],
+            ['$limit' => $limit],
+            ['$project' => [
+                '_id' => 0,
+                'periodo' => '$_id',
+                'count' => 1,
+            ]],
+        ]);
+
+        $labels = [];
+        $values = [];
+        foreach ($data as $row) {
+            $labels[] = $row['periodo'] ?? null;
+            $values[] = (int) ($row['count'] ?? 0);
+        }
 
         return [
             'data' => [
-                'labels' => $data->pluck('periodo')->toArray(),
-                'values' => $data->pluck('count')->map(fn($v) => (int) $v)->toArray(),
+                'labels' => $labels,
+                'values' => $values,
             ],
             'stats' => [
                 'count' => $totalCount,
                 'min_date' => $minDate,
                 'max_date' => $maxDate,
-                'periods' => $data->count(),
+                'periods' => count($data),
                 'granularity' => $granularity,
             ],
         ];
@@ -316,20 +432,28 @@ class StatisticsService implements StatisticsServiceInterface
     {
         $colX = $this->sanitizeColumn($columnX);
         $colY = $this->sanitizeColumn($columnY);
+        $fieldX = 'data.' . $colX;
+        $fieldY = 'data.' . $colY;
 
-        $numericPattern = "^-?[0-9]+(\.[0-9]+)?$";
+        $bothNumeric = ['$expr' => ['$and' => [
+            ['$isNumber' => '$' . $fieldX],
+            ['$isNumber' => '$' . $fieldY],
+        ]]];
 
-        $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->whereRaw("TRIM(data->>?) ~ ?", [$colX, $numericPattern])
-            ->whereRaw("TRIM(data->>?) ~ ?", [$colY, $numericPattern]);
-        $query = $this->applyFilters($query, $filters);
+        $rows = $this->aggregate([
+            ['$match' => $this->buildMatch($datasetId, $filters, $bothNumeric)],
+            ['$limit' => 1000],
+            ['$project' => [
+                '_id' => 0,
+                'x' => '$' . $fieldX,
+                'y' => '$' . $fieldY,
+            ]],
+        ]);
 
-        $points = $query->selectRaw("(TRIM(data->>?))::numeric as x, (TRIM(data->>?))::numeric as y", [$colX, $colY])
-            ->limit(1000)
-            ->get()
-            ->map(fn($p) => [(float) $p->x, (float) $p->y])
-            ->toArray();
+        $points = array_map(fn($row) => [
+            (float) ($row['x'] ?? 0),
+            (float) ($row['y'] ?? 0),
+        ], $rows);
 
         $correlation = $this->calculateCorrelation($points);
 
@@ -349,30 +473,59 @@ class StatisticsService implements StatisticsServiceInterface
     {
         $cat = $this->sanitizeColumn($catColumn);
         $num = $this->sanitizeColumn($numColumn);
+        $fieldCat = 'data.' . $cat;
+        $fieldNum = 'data.' . $num;
 
-        $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->whereRaw("TRIM(data->>?) ~ '^-?[0-9]+(\.[0-9]+)?$'", [$num]);
-        $query = $this->applyFilters($query, $filters);
+        $onlyNumeric = ['$expr' => ['$isNumber' => '$' . $fieldNum]];
 
-        $data = $query->selectRaw("
-                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as categoria,
-                AVG((TRIM(data->>?))::numeric) as avg_value,
-                COUNT(*) as count
-            ", [$cat, $num])
-            ->groupBy('categoria')
-            ->orderByDesc('count')
-            ->limit($limit)
-            ->get();
+        $categoryExpr = ['$let' => [
+            'vars' => [
+                'trimmed' => ['$trim' => ['input' => ['$toString' => ['$ifNull' => ['$' . $fieldCat, '']]]]],
+            ],
+            'in' => ['$cond' => [
+                ['$eq' => ['$$trimmed', '']],
+                'Sin valor',
+                '$$trimmed',
+            ]],
+        ]];
+
+        $rows = $this->aggregate([
+            ['$match' => $this->buildMatch($datasetId, $filters, $onlyNumeric)],
+            ['$group' => [
+                '_id' => $categoryExpr,
+                'avg_value' => ['$avg' => '$' . $fieldNum],
+                'count' => ['$sum' => 1],
+            ]],
+            ['$sort' => ['count' => -1]],
+            ['$limit' => $limit],
+            ['$project' => [
+                '_id' => 0,
+                'categoria' => '$_id',
+                'avg_value' => 1,
+                'count' => 1,
+            ]],
+        ]);
+
+        $labels = [];
+        $values = [];
+        $counts = [];
+        $totalCount = 0;
+        foreach ($rows as $row) {
+            $labels[] = $row['categoria'] ?? 'Sin valor';
+            $values[] = round((float) ($row['avg_value'] ?? 0), 2);
+            $c = (int) ($row['count'] ?? 0);
+            $counts[] = $c;
+            $totalCount += $c;
+        }
 
         return [
             'data' => [
-                'labels' => $data->pluck('categoria')->toArray(),
-                'values' => $data->pluck('avg_value')->map(fn($v) => round((float) $v, 2))->toArray(),
-                'counts' => $data->pluck('count')->map(fn($v) => (int) $v)->toArray(),
+                'labels' => $labels,
+                'values' => $values,
+                'counts' => $counts,
             ],
             'stats' => [
-                'count' => $data->sum('count'),
+                'count' => $totalCount,
             ],
         ];
     }
@@ -381,41 +534,57 @@ class StatisticsService implements StatisticsServiceInterface
     {
         $colX = $this->sanitizeColumn($columnX);
         $colY = $this->sanitizeColumn($columnY);
+        $fieldX = 'data.' . $colX;
+        $fieldY = 'data.' . $colY;
 
-        $baseQuery = fn() => $this->applyFilters(
-            DB::table('registros_datos')->where('dataset_id', $datasetId),
-            $filters
-        );
+        $baseMatch = $this->buildMatch($datasetId, $filters);
 
-        $labelsX = $baseQuery()
-            ->selectRaw("DISTINCT COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat", [$colX])
-            ->orderBy('cat')
-            ->limit($limit)
-            ->pluck('cat')
-            ->toArray();
+        $normExpr = fn(string $field) => ['$let' => [
+            'vars' => [
+                'trimmed' => ['$trim' => ['input' => ['$toString' => ['$ifNull' => ['$' . $field, '']]]]],
+            ],
+            'in' => ['$cond' => [
+                ['$eq' => ['$$trimmed', '']],
+                'Sin valor',
+                '$$trimmed',
+            ]],
+        ]];
 
-        $labelsY = $baseQuery()
-            ->selectRaw("DISTINCT COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat", [$colY])
-            ->orderBy('cat')
-            ->limit($limit)
-            ->pluck('cat')
-            ->toArray();
+        // Labels X (categorías únicas, ordenadas ascendentemente).
+        $rowsX = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => ['_id' => $normExpr($fieldX)]],
+            ['$sort' => ['_id' => 1]],
+            ['$limit' => $limit],
+        ]);
+        $labelsX = array_map(fn($r) => $r['_id'] ?? 'Sin valor', $rowsX);
 
-        $counts = $baseQuery()
-            ->selectRaw("
-                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat_x,
-                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat_y,
-                COUNT(*) as count
-            ", [$colX, $colY])
-            ->groupBy('cat_x', 'cat_y')
-            ->get();
+        // Labels Y.
+        $rowsY = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => ['_id' => $normExpr($fieldY)]],
+            ['$sort' => ['_id' => 1]],
+            ['$limit' => $limit],
+        ]);
+        $labelsY = array_map(fn($r) => $r['_id'] ?? 'Sin valor', $rowsY);
+
+        // Conteos por par (x, y).
+        $counts = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => [
+                '_id' => ['x' => $normExpr($fieldX), 'y' => $normExpr($fieldY)],
+                'count' => ['$sum' => 1],
+            ]],
+        ]);
 
         $heatmap = [];
         foreach ($counts as $c) {
-            $xi = array_search($c->cat_x, $labelsX);
-            $yi = array_search($c->cat_y, $labelsY);
+            $catX = $c['_id']['x'] ?? null;
+            $catY = $c['_id']['y'] ?? null;
+            $xi = array_search($catX, $labelsX, true);
+            $yi = array_search($catY, $labelsY, true);
             if ($xi !== false && $yi !== false) {
-                $heatmap[] = [$xi, $yi, (int) $c->count];
+                $heatmap[] = [$xi, $yi, (int) ($c['count'] ?? 0)];
             }
         }
 
@@ -435,32 +604,53 @@ class StatisticsService implements StatisticsServiceInterface
     {
         $date = $this->sanitizeColumn($dateColumn);
         $num = $this->sanitizeColumn($numColumn);
+        $fieldDate = 'data.' . $date;
+        $fieldNum = 'data.' . $num;
 
-        $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId)
-            ->whereRaw("data->>? ~ '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}'", [$date])
-            ->whereRaw("TRIM(data->>?) ~ '^-?[0-9]+(\.[0-9]+)?$'", [$num]);
-        $query = $this->applyFilters($query, $filters);
+        $valid = ['$and' => [
+            [$fieldDate => ['$type' => 'string', '$regex' => '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}']],
+            ['$expr' => ['$isNumber' => '$' . $fieldNum]],
+        ]];
 
-        $data = $query->selectRaw("
-                DATE(data->>?) as fecha,
-                AVG((TRIM(data->>?))::numeric) as avg_value,
-                COUNT(*) as count
-            ", [$date, $num])
-            ->groupBy('fecha')
-            ->orderBy('fecha')
-            ->limit($limit)
-            ->get();
+        $rows = $this->aggregate([
+            ['$match' => $this->buildMatch($datasetId, $filters, $valid)],
+            ['$group' => [
+                // DATE(data->>?) en Postgres -> normalizamos al prefijo YYYY-MM-DD.
+                '_id' => ['$substrBytes' => ['$' . $fieldDate, 0, 10]],
+                'avg_value' => ['$avg' => '$' . $fieldNum],
+                'count' => ['$sum' => 1],
+            ]],
+            ['$sort' => ['_id' => 1]],
+            ['$limit' => $limit],
+            ['$project' => [
+                '_id' => 0,
+                'fecha' => '$_id',
+                'avg_value' => 1,
+                'count' => 1,
+            ]],
+        ]);
+
+        $labels = [];
+        $values = [];
+        $counts = [];
+        $totalCount = 0;
+        foreach ($rows as $row) {
+            $labels[] = $row['fecha'] ?? null;
+            $values[] = round((float) ($row['avg_value'] ?? 0), 2);
+            $c = (int) ($row['count'] ?? 0);
+            $counts[] = $c;
+            $totalCount += $c;
+        }
 
         return [
             'data' => [
-                'labels' => $data->pluck('fecha')->toArray(),
-                'values' => $data->pluck('avg_value')->map(fn($v) => round((float) $v, 2))->toArray(),
-                'counts' => $data->pluck('count')->map(fn($v) => (int) $v)->toArray(),
+                'labels' => $labels,
+                'values' => $values,
+                'counts' => $counts,
             ],
             'stats' => [
-                'count' => $data->sum('count'),
-                'periods' => $data->count(),
+                'count' => $totalCount,
+                'periods' => count($rows),
             ],
         ];
     }
@@ -469,41 +659,68 @@ class StatisticsService implements StatisticsServiceInterface
     {
         $date = $this->sanitizeColumn($dateColumn);
         $cat = $this->sanitizeColumn($catColumn);
+        $fieldDate = 'data.' . $date;
+        $fieldCat = 'data.' . $cat;
 
-        $baseQuery = fn() => $this->applyFilters(
-            DB::table('registros_datos')->where('dataset_id', $datasetId),
-            $filters
-        )->whereRaw("data->>? ~ '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}'", [$date]);
+        $onlyDate = [$fieldDate => ['$type' => 'string', '$regex' => '^[0-9]{4}[-/][0-9]{1,2}[-/][0-9]{1,2}']];
+        $baseMatch = $this->buildMatch($datasetId, $filters, $onlyDate);
 
-        $categories = $baseQuery()
-            ->selectRaw("DISTINCT COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as cat", [$cat])
-            ->orderBy('cat')
-            ->limit(10)
-            ->pluck('cat')
-            ->toArray();
+        $categoryExpr = ['$let' => [
+            'vars' => [
+                'trimmed' => ['$trim' => ['input' => ['$toString' => ['$ifNull' => ['$' . $fieldCat, '']]]]],
+            ],
+            'in' => ['$cond' => [
+                ['$eq' => ['$$trimmed', '']],
+                'Sin valor',
+                '$$trimmed',
+            ]],
+        ]];
 
-        $dates = $baseQuery()
-            ->selectRaw("DISTINCT DATE(data->>?) as fecha", [$date])
-            ->orderBy('fecha')
-            ->limit($limit)
-            ->pluck('fecha')
-            ->toArray();
+        $dateExpr = ['$substrBytes' => ['$' . $fieldDate, 0, 10]];
 
-        $counts = $baseQuery()
-            ->selectRaw("
-                DATE(data->>?) as fecha,
-                COALESCE(NULLIF(TRIM(data->>?), ''), 'Sin valor') as categoria,
-                COUNT(*) as count
-            ", [$date, $cat])
-            ->groupBy('fecha', 'categoria')
-            ->get();
+        // Categorías únicas (máximo 10), ordenadas ascendentemente.
+        $catRows = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => ['_id' => $categoryExpr]],
+            ['$sort' => ['_id' => 1]],
+            ['$limit' => 10],
+        ]);
+        $categories = array_map(fn($r) => $r['_id'] ?? 'Sin valor', $catRows);
+
+        // Fechas únicas (orden cronológico = lexicográfico para 'Y-m-d').
+        $dateRows = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => ['_id' => $dateExpr]],
+            ['$sort' => ['_id' => 1]],
+            ['$limit' => $limit],
+        ]);
+        $dates = array_map(fn($r) => $r['_id'] ?? null, $dateRows);
+
+        // Conteos por (fecha, categoría).
+        $countRows = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => [
+                '_id' => ['fecha' => $dateExpr, 'categoria' => $categoryExpr],
+                'count' => ['$sum' => 1],
+            ]],
+        ]);
+
+        // Indexar conteos: [fecha][categoria] => count.
+        $countMap = [];
+        $totalCount = 0;
+        foreach ($countRows as $row) {
+            $fecha = $row['_id']['fecha'] ?? null;
+            $catVal = $row['_id']['categoria'] ?? null;
+            $c = (int) ($row['count'] ?? 0);
+            $countMap[$fecha][$catVal] = $c;
+            $totalCount += $c;
+        }
 
         $series = [];
         foreach ($categories as $catVal) {
             $seriesData = [];
             foreach ($dates as $dateVal) {
-                $count = $counts->where('fecha', $dateVal)->where('categoria', $catVal)->first();
-                $seriesData[] = $count ? (int) $count->count : 0;
+                $seriesData[] = $countMap[$dateVal][$catVal] ?? 0;
             }
             $series[] = [
                 'name' => $catVal ?? 'Sin valor',
@@ -519,7 +736,7 @@ class StatisticsService implements StatisticsServiceInterface
                 'series' => $series,
             ],
             'stats' => [
-                'count' => $counts->sum('count'),
+                'count' => $totalCount,
                 'periods' => count($dates),
                 'categories' => count($categories),
             ],
@@ -529,19 +746,17 @@ class StatisticsService implements StatisticsServiceInterface
     public function getWordCloudData(string $datasetId, string $column, int $limit, ?array $filters = null): array
     {
         $col = $this->sanitizeColumn($column);
-
-        $query = DB::table('registros_datos')
-            ->where('dataset_id', $datasetId);
-        $query = $this->applyFilters($query, $filters);
+        $field = 'data.' . $col;
 
         $maxRecords = config('nlp.max_records', 5000);
 
-        // Get all text values from the column
-        $texts = $query->selectRaw("data->>? as texto", [$col])
-            ->whereRaw("data->>? IS NOT NULL", [$col])
-            ->limit($maxRecords)
-            ->pluck('texto')
-            ->toArray();
+        // Recuperar todos los valores de texto de la columna (no nulos).
+        $rows = $this->aggregate([
+            ['$match' => $this->buildMatch($datasetId, $filters, [$field => ['$ne' => null]])],
+            ['$limit' => (int) $maxRecords],
+            ['$project' => ['_id' => 0, 'texto' => '$' . $field]],
+        ]);
+        $texts = array_map(fn($r) => $r['texto'] ?? null, $rows);
 
         // Get dataset-specific stopwords if any
         $extraStopwords = $this->getDatasetStopwords($datasetId);
@@ -625,33 +840,38 @@ class StatisticsService implements StatisticsServiceInterface
     public function getTextSummaryStats(string $datasetId, string $column, int $limit, ?array $filters = null): array
     {
         $col = $this->sanitizeColumn($column);
+        $field = 'data.' . $col;
 
-        $baseQuery = fn() => $this->applyFilters(
-            DB::table('registros_datos')->where('dataset_id', $datasetId),
-            $filters
-        );
+        // Match base: valores no nulos y no vacíos.
+        $notEmpty = ['$and' => [
+            [$field => ['$ne' => null]],
+            ['$expr' => ['$ne' => [['$toString' => '$' . $field], '']]],
+        ]];
+        $baseMatch = $this->buildMatch($datasetId, $filters, $notEmpty);
 
-        // Count unique values to determine strategy
+        // Contar valores únicos para decidir estrategia.
         $maxCategories = config('nlp.classification.max_categories', 50);
-        $uniqueCount = $baseQuery()
-            ->selectRaw("COUNT(DISTINCT data->>?) as unique_count", [$col])
-            ->whereRaw("data->>? IS NOT NULL AND data->>? != ''", [$col, $col])
-            ->value('unique_count');
+        $uniqueRows = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$group' => ['_id' => '$' . $field]],
+            ['$count' => 'unique_count'],
+        ]);
+        $uniqueCount = (int) ($uniqueRows[0]['unique_count'] ?? 0);
 
-        // If few unique values, use regular categorical stats (short texts like categories)
+        // Si hay pocos valores únicos, usar estadísticas categóricas normales (textos cortos tipo categorías).
         if ($uniqueCount <= $maxCategories) {
             return $this->getCategoricalStats($datasetId, $column, $limit, $filters);
         }
 
         $maxRecords = config('nlp.max_records', 5000);
 
-        // For diverse/long texts: classify by dominant keywords using TF-IDF
-        $texts = $baseQuery()
-            ->selectRaw("data->>? as texto", [$col])
-            ->whereRaw("data->>? IS NOT NULL AND data->>? != ''", [$col, $col])
-            ->limit($maxRecords)
-            ->pluck('texto')
-            ->toArray();
+        // Para textos diversos/largos: clasificar por keywords dominantes con TF-IDF.
+        $rows = $this->aggregate([
+            ['$match' => $baseMatch],
+            ['$limit' => (int) $maxRecords],
+            ['$project' => ['_id' => 0, 'texto' => '$' . $field]],
+        ]);
+        $texts = array_map(fn($r) => $r['texto'] ?? null, $rows);
 
         if (empty($texts)) {
             return [
@@ -702,20 +922,21 @@ class StatisticsService implements StatisticsServiceInterface
     public function getTextAnalysis(string $datasetId, string $column, int $limit, ?array $filters = null): array
     {
         $col = $this->sanitizeColumn($column);
-
-        $baseQuery = fn() => $this->applyFilters(
-            DB::table('registros_datos')->where('dataset_id', $datasetId),
-            $filters
-        );
+        $field = 'data.' . $col;
 
         $maxRecords = config('nlp.max_records', 5000);
 
-        $texts = $baseQuery()
-            ->selectRaw("data->>? as texto", [$col])
-            ->whereRaw("data->>? IS NOT NULL AND data->>? != ''", [$col, $col])
-            ->limit($maxRecords)
-            ->pluck('texto')
-            ->toArray();
+        $notEmpty = ['$and' => [
+            [$field => ['$ne' => null]],
+            ['$expr' => ['$ne' => [['$toString' => '$' . $field], '']]],
+        ]];
+
+        $rows = $this->aggregate([
+            ['$match' => $this->buildMatch($datasetId, $filters, $notEmpty)],
+            ['$limit' => (int) $maxRecords],
+            ['$project' => ['_id' => 0, 'texto' => '$' . $field]],
+        ]);
+        $texts = array_map(fn($r) => $r['texto'] ?? null, $rows);
 
         if (empty($texts)) {
             return [
@@ -801,6 +1022,9 @@ class StatisticsService implements StatisticsServiceInterface
 
     /**
      * Retrieve dataset-specific custom stopwords (from variable metadata options).
+     *
+     * NOTA: la tabla `datasets` sigue en PostgreSQL (solo `registros_datos` migró a Mongo),
+     * por lo que esta lectura se mantiene sobre el query builder de Postgres.
      */
     private function getDatasetStopwords(string $datasetId): array
     {

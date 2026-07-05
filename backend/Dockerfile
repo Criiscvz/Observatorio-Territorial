@@ -68,6 +68,15 @@ RUN docker-php-ext-configure gd \
         opcache \
         pcntl
 
+# Instalar extensión MongoDB (PECL).
+# Alpine no la trae; hay que compilarla con el toolchain de PHP.
+# $PHPIZE_DEPS (autoconf, gcc, g++, make, ...) y openssl-dev se instalan
+# de forma temporal (--virtual) y se borran al terminar para no inflar la imagen.
+RUN apk add --no-cache --virtual .mongodb-build-deps $PHPIZE_DEPS openssl-dev \
+    && pecl install mongodb \
+    && docker-php-ext-enable mongodb \
+    && apk del .mongodb-build-deps
+
 # Configurar OPcache para producción
 RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini \
     && echo "opcache.memory_consumption=128" >> /usr/local/etc/php/conf.d/opcache.ini \

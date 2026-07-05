@@ -11,11 +11,228 @@
     },
     "servers": [
         {
+            "url": "https://observatirio.onrender.com/api",
+            "description": "Servidor de producción"
+        },
+        {
             "url": "http://localhost:8000/api",
             "description": "Servidor de desarrollo"
         }
     ],
     "paths": {
+        "/articulos": {
+            "get": {
+                "tags": [
+                    "Artículos"
+                ],
+                "summary": "Listar artículos",
+                "operationId": "a6435babf6b778e06db63f7f2e19da42",
+                "parameters": [
+                    {
+                        "name": "categoria_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de artículos"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Artículos"
+                ],
+                "summary": "Crear artículo",
+                "operationId": "578d6e724568cc3a00cff5cd45bde066",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "titulo"
+                                ],
+                                "properties": {
+                                    "titulo": {
+                                        "type": "string"
+                                    },
+                                    "descripcion": {
+                                        "type": "string"
+                                    },
+                                    "autor": {
+                                        "type": "string"
+                                    },
+                                    "fuente": {
+                                        "type": "string"
+                                    },
+                                    "fecha_publicacion": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "fecha_recepcion": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "categoria_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Artículo creado"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/articulos/{id}": {
+            "get": {
+                "tags": [
+                    "Artículos"
+                ],
+                "summary": "Obtener un artículo",
+                "operationId": "47abf83e74c6592614a5ab50d48f195d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del artículo"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Artículos"
+                ],
+                "summary": "Actualizar artículo",
+                "operationId": "6f560decbf680faafaf5a350ccdc2c12",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "titulo": {
+                                        "type": "string"
+                                    },
+                                    "descripcion": {
+                                        "type": "string"
+                                    },
+                                    "autor": {
+                                        "type": "string"
+                                    },
+                                    "fuente": {
+                                        "type": "string"
+                                    },
+                                    "fecha_publicacion": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "fecha_recepcion": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "categoria_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Artículo actualizado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Artículos"
+                ],
+                "summary": "Eliminar artículo",
+                "operationId": "9dbf45f1cee5e62a3631fde05e72b94b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Artículo eliminado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/login": {
             "post": {
                 "tags": [
@@ -151,6 +368,71 @@
                 ]
             }
         },
+        "/categorias": {
+            "get": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Listar categorías de datasets",
+                "operationId": "f493d1eaad177a82dc40141d844d66e8",
+                "responses": {
+                    "200": {
+                        "description": "Lista de categorías activas"
+                    }
+                }
+            }
+        },
+        "/categorias/{codigo}": {
+            "get": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Obtener categoría por código",
+                "operationId": "febf222bcb407830ed0917092132873f",
+                "parameters": [
+                    {
+                        "name": "codigo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datos de la categoría"
+                    },
+                    "404": {
+                        "description": "No encontrada"
+                    }
+                }
+            }
+        },
+        "/categorias/{codigo}/datasets": {
+            "get": {
+                "tags": [
+                    "Categorías"
+                ],
+                "summary": "Obtener datasets de una categoría",
+                "operationId": "5a3bcc04c31309c83144aeb99148362e",
+                "parameters": [
+                    {
+                        "name": "codigo",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Datasets de la categoría"
+                    }
+                }
+            }
+        },
         "/stats/univariable": {
             "post": {
                 "tags": [
@@ -269,6 +551,142 @@
                 ]
             }
         },
+        "/stats/text-analysis": {
+            "post": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Análisis completo de texto (NLP)",
+                "description": "Obtiene análisis avanzado de texto: nube de palabras con stemming y n-grams, sentimiento, clasificación TF-IDF y frases frecuentes.",
+                "operationId": "27e247e9ac3c02d265e2d9f9fdd6f518",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dataset_id",
+                                    "variable_id"
+                                ],
+                                "properties": {
+                                    "dataset_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "limit": {
+                                        "type": "integer",
+                                        "default": 50
+                                    },
+                                    "filters": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Análisis de texto completo"
+                    },
+                    "400": {
+                        "description": "Variable no es de tipo TEXTO"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/stats/datasets/{datasetId}/stopwords": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Obtener stopwords personalizados del dataset",
+                "operationId": "55447403e33f7bea79d20eb4f5e74c1d",
+                "parameters": [
+                    {
+                        "name": "datasetId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de stopwords"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Actualizar stopwords personalizados del dataset",
+                "operationId": "2b0b2e0719f33bf8838c43b4bfcb84a2",
+                "parameters": [
+                    {
+                        "name": "datasetId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "stopwords"
+                                ],
+                                "properties": {
+                                    "stopwords": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Stopwords actualizados"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/datasets": {
             "get": {
                 "tags": [
@@ -367,6 +785,94 @@
                 "responses": {
                     "200": {
                         "description": "Datos del dataset"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Datasets"
+                ],
+                "summary": "Actualizar dataset",
+                "operationId": "a0ab62063002b7bb893f2dfaa029d3f5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string"
+                                    },
+                                    "descripcion": {
+                                        "type": "string"
+                                    },
+                                    "enlace_fuente": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Dataset actualizado"
+                    },
+                    "403": {
+                        "description": "Sin permisos"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Datasets"
+                ],
+                "summary": "Eliminar dataset",
+                "operationId": "dc82a93785a2c22fe4e3c96ccf7da395",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dataset eliminado"
+                    },
+                    "403": {
+                        "description": "Sin permisos"
+                    },
+                    "404": {
+                        "description": "No encontrado"
                     }
                 },
                 "security": [
@@ -536,6 +1042,211 @@
                 "responses": {
                     "200": {
                         "description": "Variable actualizada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/variables/bulk-update": {
+            "post": {
+                "tags": [
+                    "Datasets"
+                ],
+                "summary": "Actualizar múltiples variables",
+                "operationId": "82465308f719d73519cd60ce418d7fa5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "variable_ids"
+                                ],
+                                "properties": {
+                                    "variable_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "uuid"
+                                        }
+                                    },
+                                    "es_visible": {
+                                        "type": "boolean"
+                                    },
+                                    "tipo_dato": {
+                                        "type": "string",
+                                        "enum": [
+                                            "NUMERICO",
+                                            "CATEGORICO",
+                                            "TEXTO",
+                                            "FECHA"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Variables actualizadas"
+                    },
+                    "403": {
+                        "description": "Sin permisos"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/datasets/{datasetId}/fuentes": {
+            "get": {
+                "tags": [
+                    "Fuentes"
+                ],
+                "summary": "Listar fuentes de un dataset",
+                "operationId": "d968f57ed8b0eeed16c7775378e44671",
+                "parameters": [
+                    {
+                        "name": "datasetId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de fuentes"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Fuentes"
+                ],
+                "summary": "Agregar fuente al dataset",
+                "operationId": "dc1920585108a2a698b0355f96680e20",
+                "parameters": [
+                    {
+                        "name": "datasetId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "titulo",
+                                    "url"
+                                ],
+                                "properties": {
+                                    "titulo": {
+                                        "type": "string"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "descripcion": {
+                                        "type": "string"
+                                    },
+                                    "orden": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Fuente creada"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/fuentes/{id}": {
+            "put": {
+                "tags": [
+                    "Fuentes"
+                ],
+                "summary": "Actualizar fuente",
+                "operationId": "e0652b2ec2680fd54271380b6ac7d435",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fuente actualizada"
+                    },
+                    "404": {
+                        "description": "No encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Fuentes"
+                ],
+                "summary": "Eliminar fuente",
+                "operationId": "f32dd891dc5b5eee0922b82f2d839cf5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fuente eliminada"
+                    },
+                    "404": {
+                        "description": "No encontrada"
                     }
                 },
                 "security": [
@@ -734,6 +1445,180 @@
                 "responses": {
                     "200": {
                         "description": "Departamento eliminado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/datasets/{datasetId}/graficos-predeterminados": {
+            "get": {
+                "tags": [
+                    "Gráficos Predeterminados"
+                ],
+                "summary": "Listar gráficos predeterminados de un dataset",
+                "operationId": "a05d8eec318b433606c110c4cdc1deb6",
+                "parameters": [
+                    {
+                        "name": "datasetId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de gráficos predeterminados"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Gráficos Predeterminados"
+                ],
+                "summary": "Crear gráfico predeterminado",
+                "operationId": "7e2c4fa51da002d1f42dcfffdcb93bd2",
+                "parameters": [
+                    {
+                        "name": "datasetId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "titulo",
+                                    "tipo_grafico",
+                                    "tipo_analisis",
+                                    "variable_x_id"
+                                ],
+                                "properties": {
+                                    "titulo": {
+                                        "type": "string"
+                                    },
+                                    "descripcion": {
+                                        "type": "string"
+                                    },
+                                    "analisis": {
+                                        "type": "string"
+                                    },
+                                    "tipo_grafico": {
+                                        "type": "string"
+                                    },
+                                    "tipo_analisis": {
+                                        "type": "string",
+                                        "enum": [
+                                            "univariable",
+                                            "bivariable"
+                                        ]
+                                    },
+                                    "variable_x_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_y_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "filtros": {
+                                        "type": "object"
+                                    },
+                                    "configuracion": {
+                                        "type": "object"
+                                    },
+                                    "orden": {
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Gráfico creado"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/graficos-predeterminados/{id}": {
+            "put": {
+                "tags": [
+                    "Gráficos Predeterminados"
+                ],
+                "summary": "Actualizar gráfico predeterminado",
+                "operationId": "fd1cbca0e87ebffd317b0044b62cd577",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Gráfico actualizado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Gráficos Predeterminados"
+                ],
+                "summary": "Eliminar gráfico predeterminado",
+                "operationId": "ce060b443a47d61b224d61bfd765d751",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Gráfico eliminado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
                     }
                 },
                 "security": [
@@ -1062,6 +1947,303 @@
                 }
             }
         },
+        "/publico/stats/text-analysis": {
+            "post": {
+                "tags": [
+                    "Público"
+                ],
+                "summary": "Análisis completo de texto (NLP) - Público",
+                "description": "Obtiene análisis avanzado de texto para datasets públicos: nube de palabras con stemming y n-grams, sentimiento, clasificación TF-IDF y frases frecuentes.",
+                "operationId": "f56f0cbbb3599ce2ccb0753bddc33b04",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "dataset_id",
+                                    "variable_id"
+                                ],
+                                "properties": {
+                                    "dataset_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "variable_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "limit": {
+                                        "type": "integer",
+                                        "default": 50
+                                    },
+                                    "filters": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Análisis de texto completo"
+                    },
+                    "400": {
+                        "description": "Variable no es de tipo TEXTO"
+                    },
+                    "404": {
+                        "description": "Dataset o variable no encontrados"
+                    }
+                }
+            }
+        },
+        "/reportes": {
+            "get": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Listar reportes",
+                "operationId": "9f70f16717b5dbbc2a68ee36ae17e010",
+                "parameters": [
+                    {
+                        "name": "categoria_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de reportes"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Crear reporte",
+                "operationId": "eba712b754d3ee9abd991d31cec6082c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "nombre_indicador"
+                                ],
+                                "properties": {
+                                    "nombre_indicador": {
+                                        "type": "string"
+                                    },
+                                    "descripcion_indicador": {
+                                        "type": "string"
+                                    },
+                                    "fecha_publicacion": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "link_url": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "fuente": {
+                                        "type": "string"
+                                    },
+                                    "categoria_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "ficha": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Reporte creado"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/reportes/{id}": {
+            "get": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Obtener un reporte",
+                "operationId": "3a900cda8648ace96f81f78d47b40497",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reporte encontrado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Actualizar reporte",
+                "operationId": "4d35d842e0e12f8e640130e2e8c333c9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "nombre_indicador": {
+                                        "type": "string"
+                                    },
+                                    "descripcion_indicador": {
+                                        "type": "string"
+                                    },
+                                    "fecha_publicacion": {
+                                        "type": "string",
+                                        "format": "date"
+                                    },
+                                    "link_url": {
+                                        "type": "string",
+                                        "format": "url"
+                                    },
+                                    "fuente": {
+                                        "type": "string"
+                                    },
+                                    "categoria_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "ficha": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reporte actualizado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    },
+                    "422": {
+                        "description": "Validación fallida"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Eliminar reporte",
+                "operationId": "d42b361ccf085a88b03784bd160d6a61",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reporte eliminado"
+                    },
+                    "404": {
+                        "description": "No encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/reportes/fichas/{filename}": {
+            "get": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Descargar ficha de indicador",
+                "operationId": "3e1980382bd6cac03d773935d69f21e6",
+                "parameters": [
+                    {
+                        "name": "filename",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo de la ficha"
+                    },
+                    "404": {
+                        "description": "No encontrada"
+                    }
+                }
+            }
+        },
         "/seed/admin": {
             "post": {
                 "tags": [
@@ -1177,6 +2359,86 @@
                         "sanctum": []
                     }
                 ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Crear un nuevo usuario (solo admin)",
+                "operationId": "436503589d594e0e9eca896e3aed7f6f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Juan Pérez"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "juan@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "password123"
+                                    },
+                                    "rol": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ADMIN",
+                                            "USER"
+                                        ],
+                                        "example": "USER"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "telefono": {
+                                        "type": "string",
+                                        "example": "+593999999999"
+                                    },
+                                    "cargo": {
+                                        "type": "string",
+                                        "example": "Analista"
+                                    },
+                                    "bio": {
+                                        "type": "string",
+                                        "example": "Breve descripción"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Usuario creado"
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "409": {
+                        "description": "Email ya registrado"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/users/{id}/role": {
@@ -1236,6 +2498,220 @@
                     }
                 ]
             }
+        },
+        "/users/{id}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Obtener detalle de un usuario (solo admin)",
+                "operationId": "260c87aae99d2fca61843d1d65e41236",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Detalle del usuario"
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Actualizar un usuario (solo admin)",
+                "operationId": "89d63379392533da4373e74ec67e2bff",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Juan Pérez"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "juan@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "newpassword123"
+                                    },
+                                    "rol": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ADMIN",
+                                            "USER"
+                                        ],
+                                        "example": "USER"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "telefono": {
+                                        "type": "string",
+                                        "example": "+593999999999"
+                                    },
+                                    "cargo": {
+                                        "type": "string",
+                                        "example": "Analista"
+                                    },
+                                    "bio": {
+                                        "type": "string",
+                                        "example": "Breve descripción"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Usuario actualizado"
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    },
+                    "409": {
+                        "description": "Email ya en uso"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Eliminar un usuario (solo admin)",
+                "operationId": "f1bd270cc125e96839af6c5d7ea64266",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuario eliminado"
+                    },
+                    "400": {
+                        "description": "No puedes eliminarte a ti mismo"
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/users/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Activar/Desactivar un usuario (solo admin)",
+                "operationId": "0785d4d5237b6542cae5b48f8efd5b98",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_active": {
+                                        "description": "Si no se envía, se invierte el estado actual",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Estado actualizado"
+                    },
+                    "400": {
+                        "description": "No puedes desactivarte a ti mismo"
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1250,8 +2726,16 @@
     },
     "tags": [
         {
+            "name": "Artículos",
+            "description": "Artículos de contenido del observatorio"
+        },
+        {
             "name": "Auth",
             "description": "Endpoints de autenticación"
+        },
+        {
+            "name": "Categorías",
+            "description": "Categorías de datasets"
         },
         {
             "name": "Dashboard",
@@ -1262,8 +2746,16 @@
             "description": "Gestión de datasets"
         },
         {
+            "name": "Fuentes",
+            "description": "Fuentes de datos de datasets"
+        },
+        {
             "name": "Departamentos",
             "description": "Gestión de departamentos"
+        },
+        {
+            "name": "Gráficos Predeterminados",
+            "description": "Gestión de gráficos predeterminados"
         },
         {
             "name": "Profile",
@@ -1272,6 +2764,10 @@
         {
             "name": "Público",
             "description": "Endpoints públicos (sin autenticación)"
+        },
+        {
+            "name": "Reportes",
+            "description": "Reportes e indicadores del observatorio"
         },
         {
             "name": "Seed",

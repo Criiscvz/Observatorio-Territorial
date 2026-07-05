@@ -71,8 +71,9 @@ chmod -R 777 /var/www/html/bootstrap/cache
 echo "Ejecutando migraciones..."
 php artisan migrate --force
 
-# Ejecutar seeders solo si no hay usuarios (primera ejecución)
+# Asegurar usuarios iniciales en cada arranque y ejecutar el resto solo en primera ejecución
 echo "Verificando si se necesitan seeders..."
+php artisan db:seed --class=AdminUserSeeder --force
 USER_COUNT=$(php artisan tinker --execute="echo \App\Models\User::count();" 2>/dev/null | tail -1)
 if [ "$USER_COUNT" = "0" ] || [ -z "$USER_COUNT" ]; then
     echo "Base de datos vacía, ejecutando seeders..."

@@ -1,125 +1,404 @@
-@if (loading()) {
-  <div class="flex justify-center py-12">
-    <mat-spinner></mat-spinner>
-  </div>
+﻿@if (loading()) {
+  <div class="flex justify-center py-12"><mat-spinner></mat-spinner></div>
 } @else if (departamento()) {
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex justify-between items-start">
+  <div class="detail-page space-y-6">
+    <header class="detail-header">
       <div>
-        <h1 class="text-3xl font-bold text-[var(--text-primary)]">{{ departamento()?.nombre }}</h1>
-        <p class="text-[var(--text-secondary)]">
+        <h1>{{ departamento()?.nombre }}</h1>
+        <p>
           {{ departamento()?.descripcion || ('departamentos.detail.noDescription' | translate) }}
         </p>
-        <p class="text-sm text-[var(--text-tertiary)] mt-1">
+        <p class="code-line">
           {{ 'departamentos.detail.code' | translate }}: {{ departamento()?.codigo_interno }}
-          @if (departamento()?.publico) {
-            <span
-              class="ml-2 bg-[var(--success-bg-solid)] text-[var(--success-color)] px-2 py-1 rounded text-xs"
-              >{{ 'departamentos.detail.publicBadge' | translate }}</span
-            >
-          }
         </p>
       </div>
-      <div class="flex gap-2">
-        <a mat-button [routerLink]="['/admin/departamentos', departamento()?.id, 'editar']">
-          <mat-icon>edit</mat-icon>
-          {{ 'common.buttons.edit' | translate }}
-        </a>
-        <button mat-button color="warn" (click)="deleteDepartamento()">
-          <mat-icon>delete</mat-icon>
-          {{ 'common.buttons.delete' | translate }}
-        </button>
-        <a
-          mat-raised-button
-          color="primary"
-          [routerLink]="['/admin/datasets/nuevo']"
-          [queryParams]="{ departamento: departamento()?.id }"
-        >
-          <mat-icon>upload</mat-icon>
-          {{ 'departamentos.detail.importDataset' | translate }}
-        </a>
-      </div>
-    </div>
-
-    <!-- Lista de Datasets -->
-    @if (datasets().length > 0) {
-      <div class="space-y-4">
-        <h2 class="text-xl font-semibold text-[var(--text-primary)]">
-          {{ 'departamentos.detail.datasets' | translate }}
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          @for (dataset of datasets(); track dataset.id) {
-            <mat-card class="cursor-pointer hover:shadow-lg transition-shadow">
-              <mat-card-header>
-                <mat-icon mat-card-avatar class="!text-red-500">description</mat-icon>
-                <mat-card-title>{{ dataset.nombre }}</mat-card-title>
-                <mat-card-subtitle>
-                  {{ dataset.total_registros | number }}
-                  {{ 'departamentos.detail.records' | translate }}
-                </mat-card-subtitle>
-              </mat-card-header>
-              <mat-card-content>
-                <p class="text-sm text-[var(--text-secondary)] mb-2">
-                  {{ dataset.descripcion || ('departamentos.detail.noDescription' | translate) }}
-                </p>
-                <div class="flex items-center gap-2">
-                  <span class="text-xs px-2 py-1 rounded" [class]="getEstadoClass(dataset.estado)">
-                    {{ dataset.estado }}
-                  </span>
-                  <span class="text-xs text-[var(--text-tertiary)]">
-                    {{ dataset.fecha_carga | date: 'shortDate' }}
-                  </span>
-                </div>
-              </mat-card-content>
-              <mat-card-actions align="end">
-                <a mat-button color="primary" [routerLink]="['/admin/datasets', dataset.id]">
-                  <mat-icon>analytics</mat-icon>
-                  {{ 'departamentos.detail.viewAnalysis' | translate }}
-                </a>
-                <button
-                  mat-icon-button
-                  [matMenuTriggerFor]="datasetMenu"
-                  (click)="$event.stopPropagation()"
-                >
-                  <mat-icon>more_vert</mat-icon>
-                </button>
-                <mat-menu #datasetMenu="matMenu">
-                  <a mat-menu-item [routerLink]="['/admin/datasets', dataset.id]">
-                    <mat-icon>visibility</mat-icon>
-                    <span>{{ 'common.buttons.view' | translate }}</span>
-                  </a>
-                  <button mat-menu-item (click)="deleteDataset(dataset)">
-                    <mat-icon color="warn">delete</mat-icon>
-                    <span class="text-red-500">{{ 'common.buttons.delete' | translate }}</span>
-                  </button>
-                </mat-menu>
-              </mat-card-actions>
-            </mat-card>
-          }
-        </div>
-      </div>
-    } @else {
-      <mat-card>
-        <mat-card-content class="text-center py-12">
-          <mat-icon class="text-6xl text-[var(--text-tertiary)]">insert_chart</mat-icon>
-          <h3 class="text-xl text-[var(--text-secondary)] mt-4">
-            {{ 'departamentos.detail.noDatasets' | translate }}
-          </h3>
-          <p class="text-[var(--text-secondary)] mb-4">
-            {{ 'departamentos.detail.noDatasetsMessage' | translate }}
-          </p>
+      @if (isAdmin()) {
+        <div class="header-actions">
+          <a mat-button [routerLink]="['/admin/departamentos', departamento()?.id, 'editar']"
+            ><mat-icon>edit</mat-icon>{{ 'common.buttons.edit' | translate }}</a
+          >
+          <button mat-button color="warn" (click)="deleteDepartamento()">
+            <mat-icon>delete</mat-icon>{{ 'common.buttons.delete' | translate }}
+          </button>
           <a
             mat-raised-button
             color="primary"
-            [routerLink]="['/admin/datasets/nuevo']"
+            routerLink="/admin/datasets/nuevo"
             [queryParams]="{ departamento: departamento()?.id }"
+            ><mat-icon>upload</mat-icon>{{ 'departamentos.detail.importDataset' | translate }}</a
           >
-            <mat-icon>upload</mat-icon>
-            {{ 'departamentos.detail.importDataset' | translate }}
-          </a>
-        </mat-card-content>
-      </mat-card>
+        </div>
+      }
+    </header>
+
+    @if (isAdmin()) {
+      <section class="publication-action">
+        <button mat-raised-button color="primary" type="button" (click)="togglePublicationForm()">
+          <mat-icon>{{ showPublicationForm() ? 'close' : 'library_add' }}</mat-icon>
+          {{ showPublicationForm() ? 'Cerrar formulario' : 'Agregar Artículo / Reporte / Atlas' }}
+        </button>
+      </section>
+
+      @if (showPublicationForm()) {
+        <section class="publication-form" aria-labelledby="publication-form-title">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">{{
+                editingPublication() ? 'Edición' : 'Nueva publicación'
+              }}</span>
+              <h2 id="publication-form-title">
+                @if (editingPublication()) {
+                  Editar {{ tipo === 'ARTICULO' ? 'artículo' : 'reporte' }}
+                } @else {
+                  Contenido del Observatorio
+                }
+              </h2>
+            </div>
+          </div>
+          <form [formGroup]="publicationForm" (ngSubmit)="savePublication()">
+            <div class="type-row">
+              <mat-button-toggle-group
+                formControlName="tipo"
+                aria-label="Tipo de publicación"
+                class="type-selector"
+                [disabled]="!!editingPublication()"
+              >
+                <mat-button-toggle value="ARTICULO"
+                  ><mat-icon>article</mat-icon>Artículo</mat-button-toggle
+                >
+                <mat-button-toggle value="REPORTE"
+                  ><mat-icon>summarize</mat-icon>Reporte</mat-button-toggle
+                >
+                <mat-button-toggle value="ATLAS"><mat-icon>map</mat-icon>Atlas</mat-button-toggle>
+              </mat-button-toggle-group>
+              <p class="code-hint">
+                @if (tipo === 'ATLAS') {
+                  Funcionalidad próximamente disponible
+                } @else if (editingPublication()) {
+                  Código: <strong>{{ editingPublication()?.codigo }}</strong>
+                } @else {
+                  Se generará automáticamente:
+                  <strong>{{ tipo === 'ARTICULO' ? 'ART-####' : 'REP-####' }}</strong>
+                }
+              </p>
+            </div>
+
+            @if (tipo === 'ATLAS') {
+              <div class="coming-soon">
+                <mat-icon>schedule</mat-icon>
+                <div>
+                  <strong>Atlas</strong>
+                  <p>Funcionalidad de Atlas próximamente disponible.</p>
+                </div>
+              </div>
+            } @else {
+              <div class="form-grid">
+                <mat-form-field appearance="outline"
+                  ><mat-label>{{ tipo === 'ARTICULO' ? 'Título' : 'Nombre' }}</mat-label
+                  ><input matInput formControlName="titulo" maxlength="255" />
+                  @if (
+                    publicationForm.controls.titulo.touched &&
+                    publicationForm.controls.titulo.invalid
+                  ) {
+                    <mat-error>Este campo es obligatorio.</mat-error>
+                  }
+                </mat-form-field>
+                <mat-form-field appearance="outline"
+                  ><mat-label>Fecha de publicación</mat-label
+                  ><input matInput type="date" formControlName="fecha_publicacion" />
+                  @if (
+                    publicationForm.controls.fecha_publicacion.touched &&
+                    publicationForm.controls.fecha_publicacion.invalid
+                  ) {
+                    <mat-error>Ingrese una fecha válida.</mat-error>
+                  }
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="url-field"
+                  ><mat-label>Link URL</mat-label
+                  ><input matInput type="url" formControlName="link_url" autocomplete="url" />
+                  <mat-hint>Ejemplo: https://www.ejemplo.com/recurso</mat-hint>
+                  @if (
+                    publicationForm.controls.link_url.touched &&
+                    publicationForm.controls.link_url.invalid
+                  ) {
+                    <mat-error>Ingrese una URL válida con http o https.</mat-error>
+                  }
+                </mat-form-field>
+                <mat-form-field appearance="outline"
+                  ><mat-label>Fuente</mat-label><input matInput formControlName="fuente" />
+                  @if (
+                    publicationForm.controls.fuente.touched &&
+                    publicationForm.controls.fuente.invalid
+                  ) {
+                    <mat-error>La fuente es obligatoria.</mat-error>
+                  }
+                </mat-form-field>
+                @if (tipo === 'ARTICULO') {
+                  <mat-form-field appearance="outline" class="full-width"
+                    ><mat-label>Autor o autores</mat-label
+                    ><input matInput formControlName="autores" />
+                    @if (
+                      publicationForm.controls.autores.touched &&
+                      publicationForm.controls.autores.invalid
+                    ) {
+                      <mat-error>El autor o autores son obligatorios.</mat-error>
+                    }
+                  </mat-form-field>
+                }
+                <mat-form-field appearance="outline" class="full-width"
+                  ><mat-label>{{
+                    tipo === 'ARTICULO' ? 'Breve descripción' : 'Descripción'
+                  }}</mat-label
+                  ><textarea matInput formControlName="descripcion" rows="3"></textarea>
+                  @if (
+                    publicationForm.controls.descripcion.touched &&
+                    publicationForm.controls.descripcion.invalid
+                  ) {
+                    <mat-error>La descripción es obligatoria.</mat-error>
+                  }
+                </mat-form-field>
+                <div class="file-field full-width">
+                  <input
+                    #pdfInput
+                    id="publication-pdf"
+                    class="file-input"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    (change)="onFileSelected($event)"
+                  />
+                  <div
+                    class="upload-zone"
+                    [class.is-dragging]="isDraggingFile()"
+                    [class.has-file]="!!selectedFile()"
+                    [class.has-error]="!!fileError()"
+                    role="button"
+                    tabindex="0"
+                    (click)="pdfInput.click()"
+                    (keydown.enter)="pdfInput.click()"
+                    (keydown.space)="$event.preventDefault(); pdfInput.click()"
+                    (dragover)="onFileDragOver($event)"
+                    (dragleave)="onFileDragLeave($event)"
+                    (drop)="onFileDropped($event)"
+                  >
+                    @if (selectedFile()) {
+                      <div class="file-success-icon"><mat-icon>check_circle</mat-icon></div>
+                      <div class="upload-copy">
+                        <strong>Archivo cargado correctamente</strong>
+                        <span class="selected-file-name">{{ selectedFile()?.name }}</span>
+                        <span>{{ formatFileSize(selectedFile()!.size) }} · PDF</span>
+                      </div>
+                      <div class="file-actions">
+                        <button
+                          mat-button
+                          type="button"
+                          (click)="pdfInput.click(); $event.stopPropagation()"
+                        >
+                          <mat-icon>swap_horiz</mat-icon>Cambiar
+                        </button>
+                        <button
+                          mat-button
+                          type="button"
+                          color="warn"
+                          (click)="removeSelectedFile(pdfInput, $event)"
+                        >
+                          <mat-icon>close</mat-icon>Quitar
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="upload-icon"><mat-icon>cloud_upload</mat-icon></div>
+                      <div class="upload-copy">
+                        <strong>Arrastra o haz click para subir un documento</strong>
+                        <span>Solo se permiten archivos PDF</span>
+                        <small>Máximo 20 MB</small>
+                      </div>
+                    }
+                  </div>
+                  @if (fileError()) {
+                    <div class="file-message file-message-error">
+                      <mat-icon>error</mat-icon>
+                      <span>{{ fileError() }}</span>
+                    </div>
+                  }
+                  @if (editingPublication() && !selectedFile()) {
+                    <div class="current-document">
+                      <div class="current-document-icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                      <div>
+                        <strong
+                          >Documento actual:
+                          {{ editingPublication()?.nombre_archivo_original }}</strong
+                        >
+                        <p>Puedes subir un nuevo PDF para reemplazar el documento actual.</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+              @if (serverError()) {
+                <div class="server-error"><mat-icon>error</mat-icon>{{ serverError() }}</div>
+              }
+              <div class="form-actions">
+                <button mat-button type="button" (click)="togglePublicationForm()">Cancelar</button
+                ><button
+                  mat-raised-button
+                  color="primary"
+                  type="submit"
+                  [disabled]="savingPublication()"
+                >
+                  @if (savingPublication()) {
+                    <mat-spinner diameter="20"></mat-spinner>
+                  } @else {
+                    <mat-icon>save</mat-icon>
+                  }
+                  {{ editingPublication() ? 'Actualizar' : 'Guardar' }}
+                  {{ tipo === 'ARTICULO' ? 'artículo' : 'reporte' }}
+                </button>
+              </div>
+            }
+          </form>
+        </section>
+      }
     }
+
+    <section class="datasets-section">
+      <div class="section-heading">
+        <h2>{{ 'departamentos.detail.datasets' | translate }}</h2>
+      </div>
+      @if (datasets().length > 0) {
+        <div class="resource-grid">
+          @for (dataset of datasets(); track dataset.id) {
+            <mat-card
+              ><mat-card-header
+                ><mat-icon mat-card-avatar>table_chart</mat-icon
+                ><mat-card-title>{{ dataset.nombre }}</mat-card-title
+                ><mat-card-subtitle
+                  >{{ dataset.total_registros | number }}
+                  {{ 'departamentos.detail.records' | translate }}</mat-card-subtitle
+                ></mat-card-header
+              ><mat-card-content
+                ><p>
+                  {{ dataset.descripcion || ('departamentos.detail.noDescription' | translate) }}
+                </p>
+                <span class="status" [class]="getEstadoClass(dataset.estado)">{{
+                  dataset.estado
+                }}</span></mat-card-content
+              ><mat-card-actions align="end"
+                ><a mat-button color="primary" [routerLink]="['/admin/datasets', dataset.id]"
+                  ><mat-icon>analytics</mat-icon
+                  >{{ 'departamentos.detail.viewAnalysis' | translate }}</a
+                >
+                @if (isAdmin()) {
+                  <button mat-icon-button [matMenuTriggerFor]="datasetMenu">
+                    <mat-icon>more_vert</mat-icon></button
+                  ><mat-menu #datasetMenu="matMenu"
+                    ><button mat-menu-item (click)="deleteDataset(dataset)">
+                      <mat-icon color="warn">delete</mat-icon>Eliminar
+                    </button></mat-menu
+                  >
+                }
+              </mat-card-actions></mat-card
+            >
+          }
+        </div>
+      } @else {
+        <div class="empty-state">
+          <mat-icon>insert_chart</mat-icon>
+          <h3>{{ 'departamentos.detail.noDatasets' | translate }}</h3>
+          <p>{{ 'departamentos.detail.noDatasetsMessage' | translate }}</p>
+        </div>
+      }
+    </section>
+
+    <section class="publications-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Biblioteca</span>
+          <h2>Artículos subidos</h2>
+        </div>
+        <span class="count">{{ articulos.length }}</span>
+      </div>
+      @if (loadingPublicaciones()) {
+        <mat-spinner diameter="32"></mat-spinner>
+      } @else if (articulos.length) {
+        <div class="resource-list">
+          @for (item of articulos; track item.id) {
+            <article class="publication-item">
+              <div class="publication-icon"><mat-icon>article</mat-icon></div>
+              <div class="publication-copy">
+                <div class="publication-meta">
+                  <strong>{{ item.codigo }}</strong
+                  ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
+                </div>
+                <h3>{{ item.titulo }}</h3>
+                <p>{{ item.descripcion }}</p>
+                <div class="details">
+                  <span><b>Autores:</b> {{ item.autores }}</span
+                  ><span><b>Fuente:</b> {{ item.fuente }}</span>
+                </div>
+              </div>
+              <div class="publication-links">
+                <a mat-button color="primary" [href]="item.link_url" target="_blank" rel="noopener"
+                  ><mat-icon>open_in_new</mat-icon>Ver fuente</a
+                ><button mat-stroked-button type="button" (click)="download(item)">
+                  <mat-icon>download</mat-icon>PDF
+                </button>
+                @if (isAdmin()) {
+                  <button mat-button type="button" (click)="editPublication(item)">
+                    <mat-icon>edit</mat-icon>Editar
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="empty-copy">Todavía no hay artículos asociados a este Observatorio.</p>
+      }
+    </section>
+
+    <section class="publications-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Biblioteca</span>
+          <h2>Reportes subidos</h2>
+        </div>
+        <span class="count">{{ reportes.length }}</span>
+      </div>
+      @if (loadingPublicaciones()) {
+        <mat-spinner diameter="32"></mat-spinner>
+      } @else if (reportes.length) {
+        <div class="resource-list">
+          @for (item of reportes; track item.id) {
+            <article class="publication-item">
+              <div class="publication-icon report"><mat-icon>summarize</mat-icon></div>
+              <div class="publication-copy">
+                <div class="publication-meta">
+                  <strong>{{ item.codigo }}</strong
+                  ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
+                </div>
+                <h3>{{ item.titulo }}</h3>
+                <p>{{ item.descripcion }}</p>
+                <div class="details">
+                  <span><b>Fuente:</b> {{ item.fuente }}</span>
+                </div>
+              </div>
+              <div class="publication-links">
+                <a mat-button color="primary" [href]="item.link_url" target="_blank" rel="noopener"
+                  ><mat-icon>open_in_new</mat-icon>Ver fuente</a
+                ><button mat-stroked-button type="button" (click)="download(item)">
+                  <mat-icon>download</mat-icon>PDF
+                </button>
+                @if (isAdmin()) {
+                  <button mat-button type="button" (click)="editPublication(item)">
+                    <mat-icon>edit</mat-icon>Editar
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="empty-copy">Todavía no hay reportes asociados a este Observatorio.</p>
+      }
+    </section>
   </div>
 }
