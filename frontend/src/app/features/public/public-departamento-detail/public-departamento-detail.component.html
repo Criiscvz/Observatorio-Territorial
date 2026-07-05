@@ -37,81 +37,210 @@
             <mat-icon>storage</mat-icon>
             {{ totalRegistros | number }} {{ 'public.departmentDetail.stats.records' | translate }}
           </span>
+          <span class="stat">
+            <mat-icon>article</mat-icon>
+            {{ articulos().length }} Artículos
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- Datasets Section -->
-    <section class="datasets-section">
-      <div class="section-header">
-        <h2 class="section-title">
-          <mat-icon>folder_open</mat-icon>
-          {{ 'public.departmentDetail.datasets.title' | translate }}
-        </h2>
-        @if ((departamento()?.datasets?.length || 0) > 3) {
-          <mat-form-field appearance="outline" class="dataset-search-field">
-            <mat-icon matPrefix>search</mat-icon>
-            <input
-              matInput
-              [(ngModel)]="datasetSearchTerm"
-              [placeholder]="'public.departmentDetail.datasets.search' | translate"
-            />
-            @if (datasetSearchTerm) {
-              <button matSuffix mat-icon-button (click)="datasetSearchTerm = ''">
-                <mat-icon>close</mat-icon>
-              </button>
-            }
-          </mat-form-field>
-        }
-      </div>
+    <!-- Tabs -->
+    <mat-tab-group class="content-tabs" animationDuration="200ms">
 
-      @if (datasets.length > 0) {
-        <div class="datasets-grid">
-          @for (ds of datasets; track ds.id; let i = $index) {
-            <a [routerLink]="['/publico/datasets', ds.id]" class="dataset-card">
-              <div class="card-icon" [style.background]="getDatasetColor(i)">
-                <mat-icon>description</mat-icon>
-              </div>
-              <div class="card-content">
-                <h3>{{ ds.nombre }}</h3>
-                <div class="dataset-meta">
-                  <span class="meta-item">
-                    <mat-icon>grid_on</mat-icon>
-                    {{ ds.total_registros | number }}
-                    {{ 'public.departmentDetail.stats.records' | translate }}
-                  </span>
-                  @if (ds.created_at) {
-                    <span class="meta-item">
-                      <mat-icon>calendar_today</mat-icon>
-                      {{ ds.created_at | date: 'dd/MM/yyyy' }}
-                    </span>
-                  }
-                </div>
-                <div class="variables-preview">
-                  @if (ds.variables && ds.variables.length > 0) {
-                    @for (v of ds.variables.slice(0, 4); track v.id) {
-                      <span class="variable-chip" [class]="getTypeClass(v.tipo_dato)">
-                        {{ v.nombre_original }}
+      <!-- ── Tab: Datasets ──────────────────────────────────────── -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>folder_open</mat-icon>
+          <span>{{ 'public.departmentDetail.datasets.title' | translate }}</span>
+        </ng-template>
+
+        <section class="tab-section datasets-section">
+          <div class="section-header">
+            <h2 class="section-title">
+              <mat-icon>folder_open</mat-icon>
+              {{ 'public.departmentDetail.datasets.title' | translate }}
+            </h2>
+            @if ((departamento()?.datasets?.length || 0) > 3) {
+              <mat-form-field appearance="outline" class="dataset-search-field">
+                <mat-icon matPrefix>search</mat-icon>
+                <input
+                  matInput
+                  [(ngModel)]="datasetSearchTerm"
+                  [placeholder]="'public.departmentDetail.datasets.search' | translate"
+                />
+                @if (datasetSearchTerm) {
+                  <button matSuffix mat-icon-button (click)="datasetSearchTerm = ''">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+              </mat-form-field>
+            }
+          </div>
+
+          @if (datasets.length > 0) {
+            <div class="datasets-grid">
+              @for (ds of datasets; track ds.id; let i = $index) {
+                <a [routerLink]="['/publico/datasets', ds.id]" class="dataset-card">
+                  <div class="card-icon" [style.background]="getDatasetColor(i)">
+                    <mat-icon>description</mat-icon>
+                  </div>
+                  <div class="card-content">
+                    <h3>{{ ds.nombre }}</h3>
+                    <div class="dataset-meta">
+                      <span class="meta-item">
+                        <mat-icon>grid_on</mat-icon>
+                        {{ ds.total_registros | number }}
+                        {{ 'public.departmentDetail.stats.records' | translate }}
                       </span>
-                    }
-                    @if (ds.variables.length > 4) {
-                      <span class="more-chip">+{{ ds.variables.length - 4 }}</span>
-                    }
+                      @if (ds.created_at) {
+                        <span class="meta-item">
+                          <mat-icon>calendar_today</mat-icon>
+                          {{ ds.created_at | date: 'dd/MM/yyyy' }}
+                        </span>
+                      }
+                    </div>
+                    <div class="variables-preview">
+                      @if (ds.variables && ds.variables.length > 0) {
+                        @for (v of ds.variables.slice(0, 4); track v.id) {
+                          <span class="variable-chip" [class]="getTypeClass(v.tipo_dato)">
+                            {{ v.nombre_original }}
+                          </span>
+                        }
+                        @if (ds.variables.length > 4) {
+                          <span class="more-chip">+{{ ds.variables.length - 4 }}</span>
+                        }
+                      }
+                    </div>
+                  </div>
+                  <mat-icon class="card-arrow">chevron_right</mat-icon>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>folder_off</mat-icon>
+              <h3>{{ 'public.departmentDetail.datasets.empty' | translate }}</h3>
+              <p>{{ 'public.departmentDetail.datasets.emptyMessage' | translate }}</p>
+            </div>
+          }
+        </section>
+      </mat-tab>
+
+      <!-- ── Tab: Artículos ─────────────────────────────────────── -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>article</mat-icon>
+          <span>Artículos</span>
+        </ng-template>
+
+        <section class="tab-section articulos-section">
+          @if (articulosAgrupados().length > 0) {
+            @for (grupo of articulosAgrupados(); track grupo.categoria) {
+              <div class="categoria-grupo">
+                <h2 class="categoria-titulo">
+                  <span class="categoria-line"></span>
+                  {{ grupo.categoria }}
+                  <span class="categoria-count">{{ grupo.items.length }}</span>
+                </h2>
+                <div class="articulos-grid">
+                  @for (art of grupo.items; track art.id) {
+                    <div class="articulo-card">
+                      <!-- Cover -->
+                      <div class="articulo-cover" [style.background]="'linear-gradient(135deg, ' + art.color + ' 0%, #1e1b4b 100%)'">
+                        <div class="cover-pattern"></div>
+                        <span class="articulo-categoria-badge">
+                          <mat-icon>label</mat-icon>
+                          {{ art.categoria }}
+                        </span>
+                        <div class="cover-icon">
+                          <mat-icon>article</mat-icon>
+                        </div>
+                      </div>
+                      <!-- Body -->
+                      <div class="articulo-body">
+                        <h3 class="articulo-titulo" [title]="art.titulo">{{ art.titulo }}</h3>
+                        <p class="articulo-desc">{{ art.descripcion }}</p>
+                        <div class="articulo-meta">
+                          <div class="meta-row">
+                            <mat-icon>person</mat-icon>
+                            <span>{{ art.autor }}</span>
+                          </div>
+                          <div class="meta-row">
+                            <mat-icon>calendar_today</mat-icon>
+                            <span>{{ art.fecha | date: 'dd/MM/yyyy' }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Actions -->
+                      @if (art.enlace) {
+                        <div class="articulo-actions">
+                          <a mat-flat-button [href]="art.enlace" target="_blank" class="btn-leer">
+                            <mat-icon>open_in_new</mat-icon>
+                            Leer artículo
+                          </a>
+                        </div>
+                      }
+                    </div>
                   }
                 </div>
               </div>
-              <mat-icon class="card-arrow">chevron_right</mat-icon>
-            </a>
+            }
+          } @else {
+            <div class="empty-state">
+              <mat-icon>article</mat-icon>
+              <h3>No hay artículos disponibles</h3>
+              <p>Aún no se han publicado artículos para este observatorio.</p>
+            </div>
           }
-        </div>
-      } @else {
-        <div class="empty-state">
-          <mat-icon>folder_off</mat-icon>
-          <h3>{{ 'public.departmentDetail.datasets.empty' | translate }}</h3>
-          <p>{{ 'public.departmentDetail.datasets.emptyMessage' | translate }}</p>
-        </div>
-      }
-    </section>
+        </section>
+      </mat-tab>
+
+      <!-- ── Tab: PowerBI ───────────────────────────────────────── -->
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>bar_chart</mat-icon>
+          <span>PowerBI</span>
+        </ng-template>
+
+        <section class="tab-section powerbi-section">
+          <div class="powerbi-card">
+            <div class="powerbi-icon">
+              <mat-icon>analytics</mat-icon>
+            </div>
+            <div class="powerbi-info">
+              <h2>Dashboard Interactivo</h2>
+              <p>Accede al dashboard de Power BI para explorar los datos de este observatorio con gráficos dinámicos y filtros avanzados.</p>
+              @if (powerbiConfig()?.powerbi_url) {
+                <div class="powerbi-actions">
+                  <a
+                    mat-flat-button
+                    [href]="powerbiConfig()!.powerbi_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn-powerbi"
+                  >
+                    <mat-icon>open_in_new</mat-icon>
+                    {{ powerbiConfig()?.powerbi_label || 'Abrir en Power BI' }}
+                  </a>
+                </div>
+                <p class="powerbi-hint">
+                  <mat-icon>info</mat-icon>
+                  Se abrirá en una nueva pestaña del navegador
+                </p>
+              } @else {
+                <div class="powerbi-unavailable">
+                  <mat-icon>schedule</mat-icon>
+                  <span>Dashboard en construcción — próximamente disponible</span>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+      </mat-tab>
+
+    </mat-tab-group>
+
   } @else {
     <!-- Error state -->
     <div class="error-state">

@@ -1,4 +1,16 @@
 <div class="page-container">
+
+  <!-- Tabs de contenido -->
+  <mat-tab-group class="atlas-tabs" animationDuration="200ms">
+
+  <!-- ── Tab: Publicaciones ──────────────────────────────────────────── -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon>menu_book</mat-icon>
+      <span>Publicaciones</span>
+    </ng-template>
+
+  <div class="tab-inner">
   <!-- Header -->
   <div class="page-header">
     <div class="header-icon">
@@ -137,4 +149,53 @@
       <p>Prueba buscando con otros términos o seleccionando otra categoría.</p>
     </div>
   }
+
+  </div>
+  </mat-tab>
+
+  <!-- ── Tab: PowerBI ──────────────────────────────────────────────── -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon>bar_chart</mat-icon>
+      <span>PowerBI</span>
+    </ng-template>
+
+    <section class="tab-section powerbi-section">
+      <div class="powerbi-card">
+        <div class="powerbi-icon">
+          <mat-icon>analytics</mat-icon>
+        </div>
+        <div class="powerbi-info">
+          <h2>Dashboard Interactivo — Atlas</h2>
+          <p>Accede al dashboard de Power BI para explorar los datos del Atlas Territorial de la ULEAM con visualizaciones interactivas, mapas y filtros avanzados.</p>
+          @if (powerbiUrl) {
+            <div class="powerbi-actions">
+              <a
+                mat-flat-button
+                [href]="powerbiUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-powerbi"
+              >
+                <mat-icon>open_in_new</mat-icon>
+                Abrir Dashboard Atlas en Power BI
+              </a>
+            </div>
+            <p class="powerbi-hint">
+              <mat-icon>info</mat-icon>
+              Se abrirá en una nueva pestaña del navegador
+            </p>
+          } @else {
+            <div class="powerbi-unavailable">
+              <mat-icon>schedule</mat-icon>
+              <span>Dashboard en construcción — próximamente disponible</span>
+            </div>
+          }
+        </div>
+      </div>
+    </section>
+  </mat-tab>
+
+  </mat-tab-group>
+
 </div>

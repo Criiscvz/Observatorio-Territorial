@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -30,6 +31,7 @@ import { AtlasFormComponent } from './atlas-form.component';
     MatChipsModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatTabsModule,
     TranslateModule,
   ],
   templateUrl: './public-atlas.component.html',
@@ -46,6 +48,10 @@ export class PublicAtlasComponent implements OnInit {
   searchTerm = signal('');
   selectedCategory = signal<string>('TODAS');
   publicaciones = signal<PublicacionAtlas[]>([]);
+
+  /** URL de PowerBI para el Atlas (configurable) */
+  readonly powerbiUrl: string | null = null; // Reemplazar con URL real cuando esté disponible
+
 
   // Computed properties for permissions
   canCreate = computed(() => {

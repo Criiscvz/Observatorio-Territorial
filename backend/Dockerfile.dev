@@ -1,0 +1,89 @@
+# ========================================
+# Dockerfile para desarrollo local
+# PHP 8.4 + MongoDB + php artisan serve
+# ========================================
+FROM php:8.4-cli-alpine
+
+# Build deps temporales (se purgan al final)
+RUN apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
+        openssl-dev \
+    && apk add --no-cache \
+        postgresql-dev \
+        freetype-dev \
+        libjpeg-turbo-dev \
+        libpng-dev \
+        libwebp-dev \
+        libzip-dev \
+        zip \
+        unzip \
+        curl \
+        git \
+    # Extensiones PHP
+    && docker-php-ext-configure gd \
+        --with-freetype \
+        --with-jpeg \
+        --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+        pdo \
+        pdo_pgsql \
+        pgsql \
+        gd \
+        zip \
+        bcmath \
+        opcache \
+        pcntl \
+    # MongoDB via PECL (requiere build-deps)
+    && pecl install mongodb \
+    && docker-php-ext-enable mongodb \
+    # Limpiar build deps
+    && apk del .build-deps
+
+# Configurar PHP
+RUN echo "upload_max_filesize=50M"  >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "post_max_size=50M"     >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "memory_limit=256M"     >> /usr/local/etc/php/conf.d/uploads.ini \
+    && echo "max_execution_time=300" >> /usr/local/etc/php/conf.d/uploads.ini
+
+# Instalar Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# Copiar composer files primero (para cachear la capa de deps)
+COPY composer.json composer.lock ./
+
+# Instalar dependencias PHP
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --ignore-platform-reqs
+
+# Copiar el resto del código
+COPY . .
+
+# Generar autoload optimizado
+RUN composer dump-autoload --optimize --no-dev
+
+# Permisos de storage y cache
+RUN mkdir -p storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    storage/app/public/avatars \
+    storage/api-docs \
+    bootstrap/cache \
+    && chmod -R 777 storage bootstrap/cache
+
+EXPOSE 8000
+
+# Arrancar: cachear config, migrar y servir
+CMD ["sh", "-c", "\
+    php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache && \
+    php artisan migrate --force && \
+    php artisan storage:link 2>/dev/null || true && \
+    php artisan serve --host=0.0.0.0 --port=8000"]

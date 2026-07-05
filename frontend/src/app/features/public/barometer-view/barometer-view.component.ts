@@ -6,9 +6,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CategoriaDataset, Dataset } from '@core/models';
 import { CategoriaService } from '@core/services/categoria.service';
+import { ArticulosService, Articulo, ObservatorioConfig } from '@core/services/articulos.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -22,6 +24,7 @@ import { TranslateModule } from '@ngx-translate/core';
     MatIconModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatTabsModule,
     TranslateModule,
   ],
   templateUrl: './barometer-view.component.html',
@@ -31,10 +34,13 @@ export class BarometerViewComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly route = inject(ActivatedRoute);
   private readonly categoriaService = inject(CategoriaService);
+  private readonly articulosService = inject(ArticulosService);
   private readonly destroyRef = inject(DestroyRef);
 
   categoria = signal<CategoriaDataset | null>(null);
   datasets = signal<Dataset[]>([]);
+  articulos = signal<Articulo[]>([]);
+  powerbiConfig = signal<ObservatorioConfig | null>(null);
   loading = signal(true);
   error = signal(false);
   codigo = '';
@@ -63,6 +69,11 @@ export class BarometerViewComponent implements OnInit {
     '#F97316',
     '#3B82F6',
   ];
+
+  /** Artículos agrupados por categoría */
+  articulosAgrupados = computed(() =>
+    this.articulosService.agruparPorCategoria(this.articulos())
+  );
 
   get i18nSection(): string {
     return this.categoryI18nMap[this.codigo] || 'research';
@@ -117,6 +128,16 @@ export class BarometerViewComponent implements OnInit {
         this.loading.set(false);
       },
     });
+
+    // Load articles for this observatorio
+    this.articulosService.getByObservatorio(this.codigo).subscribe({
+      next: (arts) => this.articulos.set(arts),
+      error: () => this.articulos.set([]),
+    });
+
+    // Load PowerBI config
+    const config = this.articulosService.getPowerBIConfig(this.codigo);
+    this.powerbiConfig.set(config);
   }
 
   getDatasetColor(index: number): string {

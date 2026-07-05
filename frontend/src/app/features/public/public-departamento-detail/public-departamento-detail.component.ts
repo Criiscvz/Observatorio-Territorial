@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,9 +9,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { ArticulosService, Articulo, ObservatorioConfig } from '@core/services/articulos.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -28,6 +30,7 @@ import { TranslateModule } from '@ngx-translate/core';
     MatInputModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatTabsModule,
     TranslateModule,
   ],
   templateUrl: './public-departamento-detail.component.html',
@@ -37,9 +40,12 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly route = inject(ActivatedRoute);
   private readonly deptoService = inject(DepartamentoService);
+  private readonly articulosService = inject(ArticulosService);
   private readonly destroyRef = inject(DestroyRef);
 
   departamento = signal<Departamento | null>(null);
+  articulos = signal<Articulo[]>([]);
+  powerbiConfig = signal<ObservatorioConfig | null>(null);
   loading = signal(true);
   datasetSearchTerm = '';
 
@@ -57,6 +63,11 @@ export class PublicDepartamentoDetailComponent implements OnInit {
     '#F97316',
     '#3B82F6',
   ];
+
+  /** Artículos agrupados por categoría */
+  articulosAgrupados = computed(() =>
+    this.articulosService.agruparPorCategoria(this.articulos())
+  );
 
   get datasets(): Dataset[] {
     const all = this.departamento()?.datasets || [];
@@ -87,6 +98,15 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       next: (depto) => {
         this.departamento.set(depto);
         this.loading.set(false);
+        // Cargar artículos usando el codigo_interno del departamento
+        const codigo = depto.codigo_interno || depto.nombre;
+        this.articulosService.getByObservatorio(codigo).subscribe({
+          next: (arts) => this.articulos.set(arts),
+          error: () => this.articulos.set([]),
+        });
+        // Cargar configuración de PowerBI
+        const config = this.articulosService.getPowerBIConfig(codigo);
+        this.powerbiConfig.set(config);
       },
       error: () => {
         this.departamento.set(null);
