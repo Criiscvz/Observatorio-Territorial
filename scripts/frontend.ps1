@@ -1,4 +1,4 @@
-# ============================================
+﻿# ============================================
 # Frontend Scripts (Angular)
 # Uso: .\scripts\frontend.ps1 [comando]
 # Detecta automaticamente bun o npm

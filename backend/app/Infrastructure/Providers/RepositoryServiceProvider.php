@@ -20,6 +20,7 @@ use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentDatasetReposito
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentRegistroDatoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentVariableMetadatoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentUserRepository;
+use App\Infrastructure\Persistence\Mongo\Repositories\MongoRegistroDatoRepository;
 use App\Infrastructure\Services\StatisticsService;
 use App\Infrastructure\Services\TextProcessingService;
 
@@ -34,7 +35,7 @@ class RepositoryServiceProvider extends ServiceProvider
         // Repositories
         DepartamentoRepositoryInterface::class => EloquentDepartamentoRepository::class,
         DatasetRepositoryInterface::class => EloquentDatasetRepository::class,
-        RegistroDatoRepositoryInterface::class => EloquentRegistroDatoRepository::class,
+        RegistroDatoRepositoryInterface::class => MongoRegistroDatoRepository::class,
         VariableMetadatoRepositoryInterface::class => EloquentVariableMetadatoRepository::class,
         UserRepositoryInterface::class => EloquentUserRepository::class,
         // Services
