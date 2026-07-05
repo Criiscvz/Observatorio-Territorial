@@ -45,6 +45,14 @@ class Departamento extends Model
     }
 
     /**
+     * Publicaciones del departamento
+     */
+    public function publicaciones(): HasMany
+    {
+        return $this->hasMany(ObservatorioPublicacion::class, 'departamento_id');
+    }
+
+    /**
      * Scope para departamentos públicos
      */
     public function scopePublicos($query)

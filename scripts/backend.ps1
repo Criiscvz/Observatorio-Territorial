@@ -1,4 +1,4 @@
-﻿# ============================================
+# ============================================
 # Backend Scripts (Laravel/PHP 8.4 via Docker)
 # Uso: .\scripts\backend.ps1 [comando]
 # ============================================
@@ -13,6 +13,7 @@ $BackendPath = Join-Path $PSScriptRoot "..\backend"
 $ImageName = "backend-backend"
 $ContainerName = "observatorio-backend-dev"
 $EnvFile = Join-Path $BackendPath ".env"
+$DockerNetwork = "observatirio_default"
 
 # El backend corre DENTRO de un contenedor: 127.0.0.1/localhost apuntan al propio
 # contenedor, no al host. Igual que hacemos con DB_HOST, reescribimos el host de la
@@ -44,6 +45,7 @@ function Run-Artisan {
     Ensure-BackendImage
     $MongoUri = Get-DockerMongoUri
     docker run --rm `
+      --network $DockerNetwork `
       --add-host=host.docker.internal:host-gateway `
       --env-file "$EnvFile" `
       -e DB_HOST=host.docker.internal `
@@ -64,6 +66,7 @@ try {
             docker run -d `
               --name $ContainerName `
               --rm `
+              --network $DockerNetwork `
               -p 8000:8000 `
               --add-host=host.docker.internal:host-gateway `
               --env-file "$EnvFile" `

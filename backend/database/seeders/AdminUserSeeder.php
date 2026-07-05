@@ -9,39 +9,68 @@ use Illuminate\Support\Facades\Hash;
 class AdminUserSeeder extends Seeder
 {
     /**
-     * Seed the application's database with admin user.
+     * Seed the application's database with required initial users.
      */
     public function run(): void
     {
-        $adminEmail = env('ADMIN_EMAIL');
-        $adminPassword = env('ADMIN_PASSWORD');
-        $adminName = env('ADMIN_NAME', 'Administrador');
+        $users = [
+            [
+                'name' => env('ADMIN_NAME'),
+                'email' => env('ADMIN_EMAIL'),
+                'password' => env('ADMIN_PASSWORD'),
+                'rol' => 'ADMIN',
+            ],
+            [
+                'name' => env('INITIAL_USER_NAME'),
+                'email' => env('INITIAL_USER_EMAIL'),
+                'password' => env('INITIAL_USER_PASSWORD'),
+                'rol' => 'USER',
+            ],
+        ];
 
-        // Validar que las credenciales estén configuradas
-        if (empty($adminEmail) || empty($adminPassword)) {
-            $this->command->error('❌ Error: Las variables ADMIN_EMAIL y ADMIN_PASSWORD deben estar configuradas en el archivo .env');
-            $this->command->info('Agrega las siguientes variables a tu archivo .env:');
-            $this->command->info('  ADMIN_EMAIL=tu_email@ejemplo.com');
-            $this->command->info('  ADMIN_PASSWORD=tu_contraseña_segura');
-            return;
+        foreach ($users as $userData) {
+            if (!$this->hasValidConfiguration($userData)) {
+                $this->command?->warn("Usuario inicial {$userData['rol']} omitido: configura nombre, email y contraseña en .env.");
+                continue;
+            }
+
+            $user = User::withTrashed()->where('email', $userData['email'])->first();
+
+            User::withoutEvents(function () use ($user, $userData): void {
+                if ($user) {
+                    if ($user->trashed()) {
+                        $user->restore();
+                    }
+
+                    $user->forceFill([
+                        'name' => $userData['name'],
+                        'password' => Hash::make($userData['password']),
+                        'rol' => $userData['rol'],
+                        'is_active' => true,
+                        'email_verified_at' => $user->email_verified_at ?? now(),
+                    ])->save();
+
+                    return;
+                }
+
+                User::create([
+                    'name' => $userData['name'],
+                    'email' => $userData['email'],
+                    'password' => Hash::make($userData['password']),
+                    'rol' => $userData['rol'],
+                    'is_active' => true,
+                    'email_verified_at' => now(),
+                ]);
+            });
+
+            $this->command?->info("Usuario inicial asegurado: {$userData['email']} ({$userData['rol']})");
         }
+    }
 
-        // Verificar si ya existe el usuario admin
-        $existingAdmin = User::where('email', $adminEmail)->first();
-
-        if ($existingAdmin) {
-            $this->command->info("ℹ️ El usuario administrador ya existe: {$adminEmail}");
-            return;
-        }
-
-        User::create([
-            'name' => $adminName,
-            'email' => $adminEmail,
-            'password' => Hash::make($adminPassword),
-            'rol' => 'ADMIN',
-            'email_verified_at' => now(),
-        ]);
-
-        $this->command->info("✅ Usuario administrador creado exitosamente: {$adminEmail}");
+    private function hasValidConfiguration(array $userData): bool
+    {
+        return filled($userData['name'])
+            && filter_var($userData['email'], FILTER_VALIDATE_EMAIL) !== false
+            && filled($userData['password']);
     }
 }
