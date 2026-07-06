@@ -18,6 +18,7 @@ class ReporteModel extends Model
 
     protected $fillable = [
         'categoria_id',
+        'departamento_id',
         'nombre_indicador',
         'descripcion_indicador',
         'fecha_publicacion',
@@ -33,5 +34,10 @@ class ReporteModel extends Model
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(CategoriaDatasetModel::class, 'categoria_id');
+    }
+
+    public function departamento(): BelongsTo
+    {
+        return $this->belongsTo(DepartamentoModel::class, 'departamento_id');
     }
 }
