@@ -27,7 +27,7 @@ class ArticuloController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $query = ArticuloModel::with('categoria');
+        $query = ArticuloModel::with(['categoria', 'departamento']);
 
         if ($request->filled('categoria_id')) {
             $query->where('categoria_id', $request->query('categoria_id'));
@@ -55,7 +55,7 @@ class ArticuloController extends Controller
     )]
     public function show(string $id): JsonResponse
     {
-        $articulo = ArticuloModel::with('categoria')->find($id);
+        $articulo = ArticuloModel::with(['categoria', 'departamento'])->find($id);
 
         if (!$articulo) {
             return response()->json(['message' => 'Artículo no encontrado'], 404);
@@ -82,7 +82,8 @@ class ArticuloController extends Controller
                     new OA\Property(property: 'enlace', type: 'string'),
                     new OA\Property(property: 'fecha_publicacion', type: 'string', format: 'date'),
                     new OA\Property(property: 'fecha_recepcion', type: 'string', format: 'date'),
-                    new OA\Property(property: 'categoria_id', type: 'string', format: 'uuid')
+                    new OA\Property(property: 'categoria_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'departamento_id', type: 'string', format: 'uuid')
                 ]
             )
         ),
@@ -105,6 +106,7 @@ class ArticuloController extends Controller
             'fecha_publicacion' => 'nullable|date',
             'fecha_recepcion' => 'nullable|date',
             'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
+            'departamento_id' => 'nullable|uuid|exists:departamentos,id',
         ]);
 
         if ($validator->fails()) {
@@ -115,7 +117,7 @@ class ArticuloController extends Controller
         }
 
         $articulo = ArticuloModel::create($validator->validated());
-        $articulo->load('categoria');
+        $articulo->load(['categoria', 'departamento']);
 
         return response()->json($articulo, 201);
     }
@@ -140,7 +142,8 @@ class ArticuloController extends Controller
                     new OA\Property(property: 'enlace', type: 'string'),
                     new OA\Property(property: 'fecha_publicacion', type: 'string', format: 'date'),
                     new OA\Property(property: 'fecha_recepcion', type: 'string', format: 'date'),
-                    new OA\Property(property: 'categoria_id', type: 'string', format: 'uuid')
+                    new OA\Property(property: 'categoria_id', type: 'string', format: 'uuid'),
+                    new OA\Property(property: 'departamento_id', type: 'string', format: 'uuid')
                 ]
             )
         ),
@@ -170,6 +173,7 @@ class ArticuloController extends Controller
             'fecha_publicacion' => 'nullable|date',
             'fecha_recepcion' => 'nullable|date',
             'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
+            'departamento_id' => 'nullable|uuid|exists:departamentos,id',
         ]);
 
         if ($validator->fails()) {
@@ -181,7 +185,7 @@ class ArticuloController extends Controller
 
         $articulo->update($validator->validated());
 
-        return response()->json($articulo->fresh(['categoria']));
+        return response()->json($articulo->fresh(['categoria', 'departamento']));
     }
 
     #[OA\Delete(

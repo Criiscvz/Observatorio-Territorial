@@ -9,6 +9,7 @@ class Articulo
     public function __construct(
         public readonly ?string $id,
         public readonly ?string $categoriaId,
+        public readonly ?string $departamentoId,
         public readonly string $titulo,
         public readonly ?string $descripcion,
         public readonly ?string $autor,
@@ -22,6 +23,7 @@ class Articulo
     public static function create(
         string $titulo,
         ?string $categoriaId = null,
+        ?string $departamentoId = null,
         ?string $descripcion = null,
         ?string $autor = null,
         ?string $fuente = null,
@@ -33,6 +35,7 @@ class Articulo
         return new self(
             id: null,
             categoriaId: $categoriaId,
+            departamentoId: $departamentoId,
             titulo: $titulo,
             descripcion: $descripcion,
             autor: $autor,
@@ -49,6 +52,7 @@ class Articulo
         return [
             'id' => $this->id,
             'categoria_id' => $this->categoriaId,
+            'departamento_id' => $this->departamentoId,
             'titulo' => $this->titulo,
             'descripcion' => $this->descripcion,
             'autor' => $this->autor,

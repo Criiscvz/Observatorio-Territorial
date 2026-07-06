@@ -18,6 +18,7 @@ class ArticuloModel extends Model
 
     protected $fillable = [
         'categoria_id',
+        'departamento_id',
         'titulo',
         'descripcion',
         'autor',
@@ -36,5 +37,10 @@ class ArticuloModel extends Model
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(CategoriaDatasetModel::class, 'categoria_id');
+    }
+
+    public function departamento(): BelongsTo
+    {
+        return $this->belongsTo(DepartamentoModel::class, 'departamento_id');
     }
 }
