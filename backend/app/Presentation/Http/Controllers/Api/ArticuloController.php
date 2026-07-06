@@ -33,6 +33,10 @@ class ArticuloController extends Controller
             $query->where('categoria_id', $request->query('categoria_id'));
         }
 
+        if ($request->filled('departamento_id')) {
+            $query->where('departamento_id', $request->query('departamento_id'));
+        }
+
         $articulos = $query
             ->orderByRaw('fecha_publicacion DESC NULLS LAST')
             ->orderByDesc('created_at')

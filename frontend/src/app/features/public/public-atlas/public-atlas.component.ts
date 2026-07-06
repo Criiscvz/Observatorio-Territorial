@@ -6,17 +6,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { AtlasService, PublicacionAtlas } from '@core/services/atlas.service';
-import { AuthService } from '@core/services/auth.service';
-import { PermisosService } from '@core/services/permisos.service';
-import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
-import { AtlasFormComponent } from './atlas-form.component';
+import { ArticulosService, Articulo } from '@core/services/articulos.service';
+import { ReportesService, Reporte } from '@core/services/reportes.service';
 
 @Component({
   selector: 'app-public-atlas',
@@ -29,8 +24,6 @@ import { AtlasFormComponent } from './atlas-form.component';
     MatFormFieldModule,
     MatInputModule,
     MatChipsModule,
-    MatDialogModule,
-    MatSnackBarModule,
     MatTabsModule,
     TranslateModule,
   ],
@@ -39,141 +32,69 @@ import { AtlasFormComponent } from './atlas-form.component';
 })
 export class PublicAtlasComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
-  private readonly atlasService = inject(AtlasService);
-  private readonly authService = inject(AuthService);
-  private readonly permisosService = inject(PermisosService);
-  private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly articulosService = inject(ArticulosService);
+  private readonly reportesService = inject(ReportesService);
 
   searchTerm = signal('');
   selectedCategory = signal<string>('TODAS');
-  publicaciones = signal<PublicacionAtlas[]>([]);
-
-  /** URL de PowerBI para el Atlas (configurable) */
-  readonly powerbiUrl: string | null = null; // Reemplazar con URL real cuando esté disponible
-
-
-  // Computed properties for permissions
-  canCreate = computed(() => {
-    const user = this.authService.user();
-    if (!user) return false;
-    return this.permisosService.hasUserPermission(user.id, user.rol, 'create');
-  });
+  
+  articulos = signal<Articulo[]>([]);
+  reportes = signal<Reporte[]>([]);
 
   ngOnInit(): void {
-    this.loadPublications();
+    this.loadData();
   }
 
-  loadPublications(): void {
-    this.atlasService.getPublications()
+  loadData(): void {
+    // Cargar todos los artículos (sin filtrar por departamento)
+    this.articulosService.getAll()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => {
-        this.publicaciones.set(data);
-      });
-  }
+      .subscribe((data) => this.articulos.set(data));
 
-  canEdit(pub: PublicacionAtlas): boolean {
-    const user = this.authService.user();
-    if (!user) return false;
-    const isOwner = pub.creado_por_id === user.id;
-    return this.permisosService.hasUserPermission(user.id, user.rol, 'edit', isOwner);
-  }
-
-  canDelete(pub: PublicacionAtlas): boolean {
-    const user = this.authService.user();
-    if (!user) return false;
-    const isOwner = pub.creado_por_id === user.id;
-    return this.permisosService.hasUserPermission(user.id, user.rol, 'delete', isOwner);
-  }
-
-  openCreateDialog(): void {
-    const dialogRef = this.dialog.open(AtlasFormComponent, {
-      width: '550px',
-      data: null,
-    });
-
-    dialogRef.afterClosed()
+    // Cargar todos los reportes (sin filtrar por departamento)
+    this.reportesService.getAll()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
-        if (result) {
-          const userId = this.authService.user()?.id || 1;
-          this.atlasService.createPublication(result, userId).subscribe(() => {
-            this.loadPublications();
-            this.snackBar.open('Publicación agregada con éxito', 'Cerrar', { duration: 3000 });
-          });
-        }
-      });
+      .subscribe((data) => this.reportes.set(data));
   }
 
-  openEditDialog(pub: PublicacionAtlas): void {
-    const dialogRef = this.dialog.open(AtlasFormComponent, {
-      width: '550px',
-      data: pub,
-    });
+  // ── Artículos (Publicaciones) ──
 
-    dialogRef.afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
-        if (result) {
-          this.atlasService.updatePublication(pub.id, result).subscribe(() => {
-            this.loadPublications();
-            this.snackBar.open('Publicación actualizada con éxito', 'Cerrar', { duration: 3000 });
-          });
-        }
-      });
-  }
-
-  deletePublication(pub: PublicacionAtlas): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: 'Confirmar Eliminación',
-        message: `¿Estás seguro de que deseas eliminar la publicación "${pub.titulo}"?`,
-        confirmText: 'Eliminar',
-        cancelText: 'Cancelar',
-        confirmColor: 'warn',
-      },
-    });
-
-    dialogRef.afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          this.atlasService.deletePublication(pub.id).subscribe(() => {
-            this.loadPublications();
-            this.snackBar.open('Publicación eliminada con éxito', 'Cerrar', { duration: 3000 });
-          });
-        }
-      });
-  }
-
-  // Categorías únicas
-  categorias = computed<string[]>(() => {
-    const list = this.publicaciones().map((p) => p.categoria);
+  categoriasArticulos = computed<string[]>(() => {
+    const list = this.articulos()
+      .map((a) => a.categoria?.nombre)
+      .filter((n): n is string => !!n);
     return ['TODAS', ...Array.from(new Set(list))];
   });
 
-  // Filtrado de publicaciones
-  filteredPublicaciones = computed<PublicacionAtlas[]>(() => {
+  filteredArticulos = computed<Articulo[]>(() => {
     const term = this.searchTerm().toLowerCase().trim();
     const cat = this.selectedCategory();
-    let list = this.publicaciones();
+    let list = this.articulos();
 
     if (cat !== 'TODAS') {
-      list = list.filter((p) => p.categoria === cat);
+      list = list.filter((a) => a.categoria?.nombre === cat);
     }
 
     if (term) {
       list = list.filter(
-        (p) =>
-          p.titulo.toLowerCase().includes(term) ||
-          p.descripcion.toLowerCase().includes(term) ||
-          p.autor.toLowerCase().includes(term) ||
-          p.categoria.toLowerCase().includes(term),
+        (a) =>
+          a.titulo.toLowerCase().includes(term) ||
+          (a.descripcion?.toLowerCase() || '').includes(term) ||
+          (a.autor?.toLowerCase() || '').includes(term) ||
+          (a.categoria?.nombre?.toLowerCase() || '').includes(term),
       );
     }
 
     return list;
   });
+
+  // ── Reportes (PowerBI) ──
+
+  reportesAgrupados = computed(() => {
+    return this.reportesService.agruparPorCategoria(this.reportes());
+  });
+
+  // ── Interfaz ──
 
   onSearch(term: string): void {
     this.searchTerm.set(term);
@@ -189,31 +110,21 @@ export class PublicAtlasComponent implements OnInit {
 
   getCategoryIcon(cat: string): string {
     switch (cat) {
-      case 'Economía':
-        return 'trending_up';
-      case 'Vitalidad Ecológica':
-        return 'eco';
-      case 'Gobernanza':
-        return 'groups';
-      case 'Cultura':
-        return 'theater_comedy';
-      default:
-        return 'menu_book';
+      case 'Economía': return 'trending_up';
+      case 'Vitalidad Ecológica': return 'eco';
+      case 'Gobernanza': return 'groups';
+      case 'Cultura': return 'theater_comedy';
+      default: return 'menu_book';
     }
   }
 
   getCategoryColor(cat: string): string {
     switch (cat) {
-      case 'Economía':
-        return '#C8102E'; // ULEAM Red
-      case 'Vitalidad Ecológica':
-        return '#10B981'; // Green
-      case 'Gobernanza':
-        return '#6366F1'; // Indigo
-      case 'Cultura':
-        return '#F59E0B'; // Amber
-      default:
-        return '#8B5CF6'; // Purple
+      case 'Economía': return '#C8102E'; // ULEAM Red
+      case 'Vitalidad Ecológica': return '#10B981'; // Green
+      case 'Gobernanza': return '#6366F1'; // Indigo
+      case 'Cultura': return '#F59E0B'; // Amber
+      default: return '#8B5CF6'; // Purple
     }
   }
 }

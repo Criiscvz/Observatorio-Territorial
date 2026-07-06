@@ -183,11 +183,11 @@
                   @for (art of grupo.items; track art.id) {
                     <div class="articulo-card">
                       <!-- Card Cover -->
-                      <div class="articulo-cover" [style.background]="'linear-gradient(135deg, ' + art.color + ' 0%, #1e1b4b 100%)'">
+                      <div class="articulo-cover" [style.background]="'linear-gradient(135deg, ' + grupo.color + ' 0%, #1e1b4b 100%)'">
                         <div class="cover-pattern"></div>
                         <span class="articulo-categoria-badge">
                           <mat-icon>label</mat-icon>
-                          {{ art.categoria }}
+                          {{ art.categoria?.nombre || 'Sin categoría' }}
                         </span>
                         <div class="cover-icon">
                           <mat-icon>article</mat-icon>
@@ -198,14 +198,18 @@
                         <h3 class="articulo-titulo" [title]="art.titulo">{{ art.titulo }}</h3>
                         <p class="articulo-desc">{{ art.descripcion }}</p>
                         <div class="articulo-meta">
-                          <div class="meta-row">
-                            <mat-icon>person</mat-icon>
-                            <span>{{ art.autor }}</span>
-                          </div>
-                          <div class="meta-row">
-                            <mat-icon>calendar_today</mat-icon>
-                            <span>{{ art.fecha | date: 'dd/MM/yyyy' }}</span>
-                          </div>
+                          @if (art.autor) {
+                            <div class="meta-row">
+                              <mat-icon>person</mat-icon>
+                              <span>{{ art.autor }}</span>
+                            </div>
+                          }
+                          @if (art.fecha_publicacion) {
+                            <div class="meta-row">
+                              <mat-icon>calendar_today</mat-icon>
+                              <span>{{ art.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
+                            </div>
+                          }
                         </div>
                       </div>
                       <!-- Card Actions -->
@@ -239,39 +243,75 @@
           <span>PowerBI</span>
         </ng-template>
 
-        <section class="tab-section powerbi-section">
-          <div class="powerbi-card">
-            <div class="powerbi-icon">
+        <section class="tab-section reportes-section">
+          @if (reportesAgrupados().length > 0) {
+            @for (grupo of reportesAgrupados(); track grupo.categoria) {
+              <div class="categoria-grupo">
+                <h2 class="categoria-titulo">
+                  <span class="categoria-line"></span>
+                  {{ grupo.categoria }}
+                  <span class="categoria-count">{{ grupo.items.length }}</span>
+                </h2>
+                <div class="articulos-grid">
+                  @for (rep of grupo.items; track rep.id) {
+                    <div class="articulo-card">
+                      <!-- Cover -->
+                      <div class="articulo-cover" [style.background]="'linear-gradient(135deg, ' + grupo.color + ' 0%, #1e1b4b 100%)'">
+                        <div class="cover-pattern"></div>
+                        <span class="articulo-categoria-badge">
+                          <mat-icon>analytics</mat-icon>
+                          {{ rep.categoria?.nombre || 'Sin categoría' }}
+                        </span>
+                        <div class="cover-icon">
+                          <mat-icon>bar_chart</mat-icon>
+                        </div>
+                      </div>
+                      <!-- Body -->
+                      <div class="articulo-body">
+                        <h3 class="articulo-titulo" [title]="rep.nombre_indicador">{{ rep.nombre_indicador }}</h3>
+                        <p class="articulo-desc">{{ rep.descripcion_indicador }}</p>
+                        <div class="articulo-meta">
+                          @if (rep.fuente) {
+                            <div class="meta-row">
+                              <mat-icon>source</mat-icon>
+                              <span>{{ rep.fuente }}</span>
+                            </div>
+                          }
+                          @if (rep.fecha_publicacion) {
+                            <div class="meta-row">
+                              <mat-icon>calendar_today</mat-icon>
+                              <span>{{ rep.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                      <!-- Actions -->
+                      <div class="articulo-actions">
+                        @if (rep.link_url) {
+                          <a mat-flat-button [href]="rep.link_url" target="_blank" class="btn-powerbi">
+                            <mat-icon>open_in_new</mat-icon>
+                            Ver en PowerBI
+                          </a>
+                        }
+                        @if (rep.ficha_indicador) {
+                          <a mat-stroked-button [href]="rep.ficha_indicador" target="_blank" class="btn-leer">
+                            <mat-icon>download</mat-icon>
+                            Ficha
+                          </a>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          } @else {
+            <div class="empty-state">
               <mat-icon>analytics</mat-icon>
+              <h3>No hay reportes disponibles</h3>
+              <p>Aún no se han publicado reportes o dashboards para este barómetro.</p>
             </div>
-            <div class="powerbi-info">
-              <h2>Dashboard Interactivo</h2>
-              <p>Accede al dashboard de Power BI para explorar los datos de este barómetro de forma interactiva con gráficos dinámicos y filtros avanzados.</p>
-              @if (powerbiConfig()?.powerbi_url) {
-                <div class="powerbi-actions">
-                  <a
-                    mat-flat-button
-                    [href]="powerbiConfig()!.powerbi_url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="btn-powerbi"
-                  >
-                    <mat-icon>open_in_new</mat-icon>
-                    {{ powerbiConfig()?.powerbi_label || 'Abrir en Power BI' }}
-                  </a>
-                </div>
-                <p class="powerbi-hint">
-                  <mat-icon>info</mat-icon>
-                  Se abrirá en una nueva pestaña del navegador
-                </p>
-              } @else {
-                <div class="powerbi-unavailable">
-                  <mat-icon>schedule</mat-icon>
-                  <span>Dashboard en construcción — próximamente disponible</span>
-                </div>
-              }
-            </div>
-          </div>
+          }
         </section>
       </mat-tab>
 

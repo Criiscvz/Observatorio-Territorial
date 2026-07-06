@@ -10,7 +10,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CategoriaDataset, Dataset } from '@core/models';
 import { CategoriaService } from '@core/services/categoria.service';
-import { ArticulosService, Articulo, ObservatorioConfig } from '@core/services/articulos.service';
+import { ArticulosService, Articulo } from '@core/services/articulos.service';
+import { ReportesService, Reporte } from '@core/services/reportes.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -35,12 +36,13 @@ export class BarometerViewComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly categoriaService = inject(CategoriaService);
   private readonly articulosService = inject(ArticulosService);
+  private readonly reportesService = inject(ReportesService);
   private readonly destroyRef = inject(DestroyRef);
 
   categoria = signal<CategoriaDataset | null>(null);
   datasets = signal<Dataset[]>([]);
   articulos = signal<Articulo[]>([]);
-  powerbiConfig = signal<ObservatorioConfig | null>(null);
+  reportes = signal<Reporte[]>([]);
   loading = signal(true);
   error = signal(false);
   codigo = '';
@@ -73,6 +75,11 @@ export class BarometerViewComponent implements OnInit {
   /** Artículos agrupados por categoría */
   articulosAgrupados = computed(() =>
     this.articulosService.agruparPorCategoria(this.articulos())
+  );
+
+  /** Reportes agrupados por categoría */
+  reportesAgrupados = computed(() =>
+    this.reportesService.agruparPorCategoria(this.reportes())
   );
 
   get i18nSection(): string {
@@ -129,15 +136,17 @@ export class BarometerViewComponent implements OnInit {
       },
     });
 
-    // Load articles for this observatorio
-    this.articulosService.getByObservatorio(this.codigo).subscribe({
+    // Load articles (can be filtered if backend supports filtering by category code, but for now we load all or filter client side)
+    this.articulosService.getAll().subscribe({
       next: (arts) => this.articulos.set(arts),
       error: () => this.articulos.set([]),
     });
 
-    // Load PowerBI config
-    const config = this.articulosService.getPowerBIConfig(this.codigo);
-    this.powerbiConfig.set(config);
+    // Load reports
+    this.reportesService.getAll().subscribe({
+      next: (reps) => this.reportes.set(reps),
+      error: () => this.reportes.set([]),
+    });
   }
 
   getDatasetColor(index: number): string {

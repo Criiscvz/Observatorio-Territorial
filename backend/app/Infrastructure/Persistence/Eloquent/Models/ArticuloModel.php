@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
 class ArticuloModel extends Model
 {
@@ -42,5 +43,11 @@ class ArticuloModel extends Model
     public function departamento(): BelongsTo
     {
         return $this->belongsTo(DepartamentoModel::class, 'departamento_id');
+    }
+
+    /** Scope: filtrar por departamento */
+    public function scopeDelDepartamento(Builder $query, string $departamentoId): Builder
+    {
+        return $query->where('departamento_id', $departamentoId);
     }
 }

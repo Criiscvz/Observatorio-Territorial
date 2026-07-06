@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://observatirio.onrender.com/api',
+  apiUrl: 'http://localhost:8000/api',
 };

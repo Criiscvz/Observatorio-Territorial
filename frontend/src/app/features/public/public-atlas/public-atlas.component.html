@@ -23,7 +23,7 @@
       <div class="header-stats">
         <span class="stat">
           <mat-icon>library_books</mat-icon>
-          {{ publicaciones().length }} Publicaciones Disponibles
+          {{ articulos().length }} Publicaciones Disponibles
         </span>
         <span class="stat">
           <mat-icon>picture_as_pdf</mat-icon>
@@ -31,14 +31,6 @@
         </span>
       </div>
     </div>
-    @if (canCreate()) {
-      <div class="header-actions">
-        <button mat-flat-button color="primary" (click)="openCreateDialog()">
-          <mat-icon>add</mat-icon>
-          Agregar Publicación
-        </button>
-      </div>
-    }
   </div>
 
   <!-- Search & Filters -->
@@ -57,7 +49,7 @@
       </mat-form-field>
       @if (searchTerm()) {
         <span class="results-count">
-          {{ filteredPublicaciones().length }} resultado(s) encontrado(s)
+          {{ filteredArticulos().length }} resultado(s) encontrado(s)
         </span>
       }
     </div>
@@ -66,7 +58,7 @@
     <div class="categories-container">
       <span class="filter-label">Filtrar por:</span>
       <mat-chip-listbox class="category-chips">
-        @for (cat of categorias(); track cat) {
+        @for (cat of categoriasArticulos(); track cat) {
           <mat-chip-option
             [selected]="selectedCategory() === cat"
             (selectableChange)="selectCategory(cat)"
@@ -82,62 +74,51 @@
   </div>
 
   <!-- Publications Grid -->
-  @if (filteredPublicaciones().length > 0) {
+  @if (filteredArticulos().length > 0) {
     <div class="publications-grid">
-      @for (pub of filteredPublicaciones(); track pub.id) {
+      @for (art of filteredArticulos(); track art.id) {
         <div class="publication-card">
           <!-- Card Header & Cover simulation -->
-          <div class="card-cover" [style.background]="'linear-gradient(135deg, ' + getCategoryColor(pub.categoria) + ' 0%, #1e1b4b 100%)'">
+          <div class="card-cover" [style.background]="'linear-gradient(135deg, ' + getCategoryColor(art.categoria?.nombre || '') + ' 0%, #1e1b4b 100%)'">
             <div class="cover-pattern"></div>
             <span class="category-badge">
-              <mat-icon>{{ getCategoryIcon(pub.categoria) }}</mat-icon>
-              {{ pub.categoria }}
+              <mat-icon>{{ getCategoryIcon(art.categoria?.nombre || '') }}</mat-icon>
+              {{ art.categoria?.nombre || 'Sin categoría' }}
             </span>
             <div class="cover-doc-info">
               <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
-              <span class="file-size">{{ pub.tamano }}</span>
             </div>
           </div>
 
           <!-- Card Body -->
           <div class="card-body">
-            <h3 class="publication-title" [title]="pub.titulo">{{ pub.titulo }}</h3>
-            <p class="publication-desc">{{ pub.descripcion }}</p>
+            <h3 class="publication-title" [title]="art.titulo">{{ art.titulo }}</h3>
+            <p class="publication-desc">{{ art.descripcion }}</p>
             
             <div class="publication-metadata">
-              <div class="meta-row">
-                <mat-icon class="meta-icon">person</mat-icon>
-                <span class="meta-text">{{ pub.autor }}</span>
-              </div>
-              <div class="meta-row">
-                <mat-icon class="meta-icon">calendar_today</mat-icon>
-                <span class="meta-text">{{ pub.fecha | date: 'dd/MM/yyyy' }}</span>
-              </div>
-              <div class="meta-row">
-                <mat-icon class="meta-icon">auto_stories</mat-icon>
-                <span class="meta-text">{{ pub.paginas }} páginas</span>
-              </div>
+              @if (art.autor) {
+                <div class="meta-row">
+                  <mat-icon class="meta-icon">person</mat-icon>
+                  <span class="meta-text">{{ art.autor }}</span>
+                </div>
+              }
+              @if (art.fecha_publicacion) {
+                <div class="meta-row">
+                  <mat-icon class="meta-icon">calendar_today</mat-icon>
+                  <span class="meta-text">{{ art.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
+                </div>
+              }
             </div>
           </div>
 
           <!-- Card Actions -->
           <div class="card-actions">
-            <a mat-stroked-button [href]="pub.pdfUrl" target="_blank" class="action-btn view-btn">
-              <mat-icon>visibility</mat-icon>
-              Visualizar
-            </a>
-            <a mat-flat-button color="primary" [href]="pub.pdfUrl" [download]="pub.titulo + '.pdf'" class="action-btn download-btn">
-              <mat-icon>download</mat-icon>
-              Descargar
-            </a>
-            <div class="admin-actions" *ngIf="canEdit(pub) || canDelete(pub)">
-              <button mat-icon-button color="accent" *ngIf="canEdit(pub)" (click)="openEditDialog(pub)" matTooltip="Editar publicación">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" *ngIf="canDelete(pub)" (click)="deletePublication(pub)" matTooltip="Eliminar publicación">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
+            @if (art.enlace) {
+              <a mat-stroked-button [href]="art.enlace" target="_blank" class="action-btn view-btn">
+                <mat-icon>visibility</mat-icon>
+                Visualizar
+              </a>
+            }
           </div>
         </div>
       }
@@ -157,42 +138,78 @@
   <mat-tab>
     <ng-template mat-tab-label>
       <mat-icon>bar_chart</mat-icon>
-      <span>PowerBI</span>
+      <span>PowerBI / Reportes</span>
     </ng-template>
 
-    <section class="tab-section powerbi-section">
-      <div class="powerbi-card">
-        <div class="powerbi-icon">
-          <mat-icon>analytics</mat-icon>
-        </div>
-        <div class="powerbi-info">
-          <h2>Dashboard Interactivo — Atlas</h2>
-          <p>Accede al dashboard de Power BI para explorar los datos del Atlas Territorial de la ULEAM con visualizaciones interactivas, mapas y filtros avanzados.</p>
-          @if (powerbiUrl) {
-            <div class="powerbi-actions">
-              <a
-                mat-flat-button
-                [href]="powerbiUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn-powerbi"
-              >
-                <mat-icon>open_in_new</mat-icon>
-                Abrir Dashboard Atlas en Power BI
-              </a>
+    <section class="tab-section reportes-section" style="padding: 2rem;">
+      @if (reportesAgrupados().length > 0) {
+        @for (grupo of reportesAgrupados(); track grupo.categoria) {
+          <div class="categoria-grupo" style="margin-bottom: 3rem;">
+            <h2 class="categoria-titulo" style="display: flex; align-items: center; gap: 1rem; font-size: 1.5rem; color: #1e1b4b; margin-bottom: 1.5rem;">
+              <span class="categoria-line" style="flex: 1; height: 1px; background: #e2e8f0;"></span>
+              {{ grupo.categoria }}
+              <span class="categoria-count" style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.875rem; color: #64748b;">{{ grupo.items.length }}</span>
+            </h2>
+            <div class="articulos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
+              @for (rep of grupo.items; track rep.id) {
+                <div class="articulo-card" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); display: flex; flex-direction: column;">
+                  <!-- Cover -->
+                  <div class="articulo-cover" [style.background]="'linear-gradient(135deg, ' + grupo.color + ' 0%, #1e1b4b 100%)'" style="padding: 2rem; position: relative; color: white;">
+                    <div class="cover-pattern"></div>
+                    <span class="articulo-categoria-badge" style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
+                      <mat-icon style="font-size: 1rem; width: 1rem; height: 1rem;">analytics</mat-icon>
+                      {{ rep.categoria?.nombre || 'Sin categoría' }}
+                    </span>
+                    <div class="cover-icon" style="margin-top: 1rem;">
+                      <mat-icon style="font-size: 3rem; width: 3rem; height: 3rem;">bar_chart</mat-icon>
+                    </div>
+                  </div>
+                  <!-- Body -->
+                  <div class="articulo-body" style="padding: 1.5rem; flex: 1;">
+                    <h3 class="articulo-titulo" [title]="rep.nombre_indicador" style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 600; color: #1e293b;">{{ rep.nombre_indicador }}</h3>
+                    <p class="articulo-desc" style="color: #64748b; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5;">{{ rep.descripcion_indicador }}</p>
+                    <div class="articulo-meta" style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #94a3b8;">
+                      @if (rep.fuente) {
+                        <div class="meta-row" style="display: flex; align-items: center; gap: 0.5rem;">
+                          <mat-icon style="font-size: 1.25rem; width: 1.25rem; height: 1.25rem;">source</mat-icon>
+                          <span>{{ rep.fuente }}</span>
+                        </div>
+                      }
+                      @if (rep.fecha_publicacion) {
+                        <div class="meta-row" style="display: flex; align-items: center; gap: 0.5rem;">
+                          <mat-icon style="font-size: 1.25rem; width: 1.25rem; height: 1.25rem;">calendar_today</mat-icon>
+                          <span>{{ rep.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <!-- Actions -->
+                  <div class="articulo-actions" style="padding: 1.5rem; border-top: 1px solid #f1f5f9; display: flex; gap: 1rem;">
+                    @if (rep.link_url) {
+                      <a mat-flat-button color="primary" [href]="rep.link_url" target="_blank" style="flex: 1;">
+                        <mat-icon>open_in_new</mat-icon>
+                        Ver en PowerBI
+                      </a>
+                    }
+                    @if (rep.ficha_indicador) {
+                      <a mat-stroked-button [href]="rep.ficha_indicador" target="_blank">
+                        <mat-icon>download</mat-icon>
+                        Ficha
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
             </div>
-            <p class="powerbi-hint">
-              <mat-icon>info</mat-icon>
-              Se abrirá en una nueva pestaña del navegador
-            </p>
-          } @else {
-            <div class="powerbi-unavailable">
-              <mat-icon>schedule</mat-icon>
-              <span>Dashboard en construcción — próximamente disponible</span>
-            </div>
-          }
+          </div>
+        }
+      } @else {
+        <div class="empty-state" style="text-align: center; padding: 4rem 2rem; color: #64748b;">
+          <mat-icon style="font-size: 4rem; width: 4rem; height: 4rem; margin-bottom: 1rem; color: #cbd5e1;">analytics</mat-icon>
+          <h3 style="font-size: 1.5rem; color: #1e293b; margin: 0 0 0.5rem 0;">No hay reportes disponibles</h3>
+          <p style="margin: 0;">Aún no se han publicado reportes o dashboards para el Atlas Territorial.</p>
         </div>
-      </div>
+      }
     </section>
   </mat-tab>
 

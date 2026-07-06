@@ -13,7 +13,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
-import { ArticulosService, Articulo, ObservatorioConfig } from '@core/services/articulos.service';
+import { ArticulosService, Articulo } from '@core/services/articulos.service';
+import { ReportesService, Reporte } from '@core/services/reportes.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -41,32 +42,31 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly deptoService = inject(DepartamentoService);
   private readonly articulosService = inject(ArticulosService);
+  private readonly reportesService = inject(ReportesService);
   private readonly destroyRef = inject(DestroyRef);
 
   departamento = signal<Departamento | null>(null);
   articulos = signal<Articulo[]>([]);
-  powerbiConfig = signal<ObservatorioConfig | null>(null);
+  reportes = signal<Reporte[]>([]);
   loading = signal(true);
   datasetSearchTerm = '';
 
   deptoGradient = 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)';
 
   private readonly datasetColors = [
-    '#6366F1',
-    '#EC4899',
-    '#14B8A6',
-    '#F59E0B',
-    '#EF4444',
-    '#8B5CF6',
-    '#06B6D4',
-    '#84CC16',
-    '#F97316',
-    '#3B82F6',
+    '#6366F1', '#EC4899', '#14B8A6', '#F59E0B',
+    '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16',
+    '#F97316', '#3B82F6',
   ];
 
   /** Artículos agrupados por categoría */
   articulosAgrupados = computed(() =>
     this.articulosService.agruparPorCategoria(this.articulos())
+  );
+
+  /** Reportes agrupados por categoría */
+  reportesAgrupados = computed(() =>
+    this.reportesService.agruparPorCategoria(this.reportes())
   );
 
   get datasets(): Dataset[] {
@@ -98,15 +98,15 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       next: (depto) => {
         this.departamento.set(depto);
         this.loading.set(false);
-        // Cargar artículos usando el codigo_interno del departamento
-        const codigo = depto.codigo_interno || depto.nombre;
-        this.articulosService.getByObservatorio(codigo).subscribe({
+        // Cargar artículos y reportes filtrados por este departamento
+        this.articulosService.getAll(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (arts) => this.articulos.set(arts),
           error: () => this.articulos.set([]),
         });
-        // Cargar configuración de PowerBI
-        const config = this.articulosService.getPowerBIConfig(codigo);
-        this.powerbiConfig.set(config);
+        this.reportesService.getAll(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next: (reps) => this.reportes.set(reps),
+          error: () => this.reportes.set([]),
+        });
       },
       error: () => {
         this.departamento.set(null);
@@ -121,14 +121,10 @@ export class PublicDepartamentoDetailComponent implements OnInit {
 
   getTypeClass(tipo: string): string {
     switch (tipo) {
-      case 'NUMERICO':
-        return 'type-numeric';
-      case 'CATEGORICO':
-        return 'type-categoric';
-      case 'FECHA':
-        return 'type-date';
-      default:
-        return 'type-text';
+      case 'NUMERICO': return 'type-numeric';
+      case 'CATEGORICO': return 'type-categoric';
+      case 'FECHA': return 'type-date';
+      default: return 'type-text';
     }
   }
 }
