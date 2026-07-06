@@ -28,7 +28,7 @@ class ReporteController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $query = ReporteModel::with('categoria');
+        $query = ReporteModel::with(['categoria', 'departamento']);
 
         if ($request->filled('categoria_id')) {
             $query->where('categoria_id', $request->query('categoria_id'));
@@ -56,7 +56,7 @@ class ReporteController extends Controller
     )]
     public function show(string $id): JsonResponse
     {
-        $reporte = ReporteModel::with('categoria')->find($id);
+        $reporte = ReporteModel::with(['categoria', 'departamento'])->find($id);
 
         if (!$reporte) {
             return response()->json(['message' => 'Reporte no encontrado'], 404);
@@ -83,6 +83,7 @@ class ReporteController extends Controller
                         new OA\Property(property: 'link_url', type: 'string', format: 'url'),
                         new OA\Property(property: 'fuente', type: 'string'),
                         new OA\Property(property: 'categoria_id', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'departamento_id', type: 'string', format: 'uuid'),
                         new OA\Property(property: 'ficha', type: 'string', format: 'binary')
                     ]
                 )
@@ -108,6 +109,7 @@ class ReporteController extends Controller
             'link_url' => 'nullable|url|max:500',
             'fuente' => 'nullable|string|max:255',
             'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
+            'departamento_id' => 'nullable|uuid|exists:departamentos,id',
             'ficha' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
         ]);
 
@@ -127,7 +129,7 @@ class ReporteController extends Controller
         unset($data['ficha']);
 
         $reporte = ReporteModel::create($data);
-        $reporte->load('categoria');
+        $reporte->load(['categoria', 'departamento']);
 
         return response()->json($reporte, 201);
     }
@@ -152,6 +154,7 @@ class ReporteController extends Controller
                         new OA\Property(property: 'link_url', type: 'string', format: 'url'),
                         new OA\Property(property: 'fuente', type: 'string'),
                         new OA\Property(property: 'categoria_id', type: 'string', format: 'uuid'),
+                        new OA\Property(property: 'departamento_id', type: 'string', format: 'uuid'),
                         new OA\Property(property: 'ficha', type: 'string', format: 'binary')
                     ]
                 )
@@ -184,6 +187,7 @@ class ReporteController extends Controller
             'link_url' => 'nullable|url|max:500',
             'fuente' => 'nullable|string|max:255',
             'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
+            'departamento_id' => 'nullable|uuid|exists:departamentos,id',
             'ficha' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
         ]);
 
@@ -213,7 +217,7 @@ class ReporteController extends Controller
 
         $reporte->update($data);
 
-        return response()->json($reporte->fresh(['categoria']));
+        return response()->json($reporte->fresh(['categoria', 'departamento']));
     }
 
     #[OA\Delete(
