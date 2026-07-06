@@ -22,10 +22,10 @@ $DockerNetwork = "observatirio_default"
 function Get-DockerMongoUri {
     $line = Select-String -Path $EnvFile -Pattern '^\s*MONGODB_URI\s*=\s*(.+)$' | Select-Object -First 1
     if (-not $line) {
-        return "mongodb://root:secret123@host.docker.internal:27017/?authSource=admin"
+        return "mongodb://root:secret123@observatorio_mongo:27017/?authSource=admin"
     }
     $uri = $line.Matches[0].Groups[1].Value.Trim().Trim('"')
-    return ($uri -replace '@(127\.0\.0\.1|localhost):', '@host.docker.internal:')
+    return ($uri -replace '@(127\.0\.0\.1|localhost):', '@observatorio_mongo:')
 }
 
 function Ensure-BackendImage {
@@ -48,7 +48,8 @@ function Run-Artisan {
       --network $DockerNetwork `
       --add-host=host.docker.internal:host-gateway `
       --env-file "$EnvFile" `
-      -e DB_HOST=host.docker.internal `
+      -e DB_HOST=observatorio_db `
+      -e DB_PORT=5432 `
       -e "MONGODB_URI=$MongoUri" `
       --entrypoint php `
       $ImageName artisan @Args
@@ -70,7 +71,8 @@ try {
               -p 8000:8000 `
               --add-host=host.docker.internal:host-gateway `
               --env-file "$EnvFile" `
-              -e DB_HOST=host.docker.internal `
+              -e DB_HOST=observatorio_db `
+              -e DB_PORT=5432 `
               -e "MONGODB_URI=$MongoUri" `
               --entrypoint php `
               $ImageName artisan serve --host=0.0.0.0 --port=8000 | Out-Null
@@ -146,4 +148,3 @@ try {
 } finally {
     Pop-Location
 }
-
