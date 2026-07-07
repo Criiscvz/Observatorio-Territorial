@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             DepartamentoSeeder::class,
             CategoriaDatasetSeeder::class,
             DemoDataSeeder::class,
+            ReporteArticuloSeeder::class,
         ]);
     }
 }
