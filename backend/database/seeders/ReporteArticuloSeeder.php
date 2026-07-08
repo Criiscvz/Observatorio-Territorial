@@ -49,6 +49,7 @@ class ReporteArticuloSeeder extends Seeder
                     'link_url' => $link,
                     'ficha_indicador' => 'Ficha técnica del reporte',
                     'fuente' => 'Observatorio Institucional',
+                    'visibilidad' => $i === 1 ? 'suscriptor' : 'publico',
                 ]);
             }
 
@@ -64,6 +65,7 @@ class ReporteArticuloSeeder extends Seeder
                     'fuente' => 'Revista Científica del Observatorio',
                     'estado' => 'PUBLICADO',
                     'enlace' => $pdfPath,
+                    'visibilidad' => $i === 2 ? 'suscriptor' : 'publico',
                     'fecha_publicacion' => now()->subDays(rand(1, 365)),
                     'fecha_recepcion' => now()->subDays(rand(366, 400)),
                 ]);

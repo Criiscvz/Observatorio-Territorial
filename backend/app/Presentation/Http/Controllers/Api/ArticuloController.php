@@ -57,12 +57,19 @@ class ArticuloController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         $articulo = ArticuloModel::with(['categoria', 'departamento'])->find($id);
 
         if (!$articulo) {
             return response()->json(['message' => 'Artículo no encontrado'], 404);
+        }
+
+        if ($articulo->visibilidad === 'suscriptor') {
+            $user = $request->user('sanctum');
+            if (!$user || !in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER'])) {
+                return response()->json(['message' => 'Acceso exclusivo para suscriptores.'], 403);
+            }
         }
 
         return response()->json($articulo);
@@ -107,6 +114,7 @@ class ArticuloController extends Controller
             'fuente' => 'nullable|string|max:255',
             'estado' => 'nullable|string',
             'enlace' => 'nullable|string',
+            'visibilidad' => 'sometimes|string|in:publico,suscriptor,privado',
             'fecha_publicacion' => 'nullable|date',
             'fecha_recepcion' => 'nullable|date',
             'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
@@ -174,6 +182,7 @@ class ArticuloController extends Controller
             'fuente' => 'nullable|string|max:255',
             'estado' => 'nullable|string',
             'enlace' => 'nullable|string',
+            'visibilidad' => 'sometimes|string|in:publico,suscriptor,privado',
             'fecha_publicacion' => 'nullable|date',
             'fecha_recepcion' => 'nullable|date',
             'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',

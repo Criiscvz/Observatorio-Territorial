@@ -58,12 +58,19 @@ class ReporteController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         $reporte = ReporteModel::with(['categoria', 'departamento'])->find($id);
 
         if (!$reporte) {
             return response()->json(['message' => 'Reporte no encontrado'], 404);
+        }
+
+        if ($reporte->visibilidad === 'suscriptor') {
+            $user = $request->user('sanctum');
+            if (!$user || !in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER'])) {
+                return response()->json(['message' => 'Acceso exclusivo para suscriptores.'], 403);
+            }
         }
 
         return response()->json($reporte);
@@ -112,6 +119,7 @@ class ReporteController extends Controller
             'fecha_publicacion' => 'nullable|date',
             'link_url' => 'nullable|url|max:500',
             'fuente' => 'nullable|string|max:255',
+            'visibilidad' => 'sometimes|string|in:publico,suscriptor,privado',
             'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
             'departamento_id' => 'nullable|uuid|exists:departamentos,id',
             'ficha' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
@@ -190,6 +198,7 @@ class ReporteController extends Controller
             'fecha_publicacion' => 'nullable|date',
             'link_url' => 'nullable|url|max:500',
             'fuente' => 'nullable|string|max:255',
+            'visibilidad' => 'sometimes|string|in:publico,suscriptor,privado',
             'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
             'departamento_id' => 'nullable|uuid|exists:departamentos,id',
             'ficha' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
@@ -276,6 +285,17 @@ class ReporteController extends Controller
             return response()->json(['message' => 'Ficha no encontrada'], 404)
                 ->header('Access-Control-Allow-Origin', '*')
                 ->header('Cross-Origin-Resource-Policy', 'cross-origin');
+        }
+
+        // Validación de paywall para descargas/fichas de suscriptor
+        $reporte = ReporteModel::where('ficha_indicador', 'like', '%' . $filename)->first();
+        if ($reporte && $reporte->visibilidad === 'suscriptor') {
+            $user = request()->user('sanctum');
+            if (!$user || !in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER'])) {
+                return response()->json(['message' => 'Acceso exclusivo para suscriptores.'], 403)
+                    ->header('Access-Control-Allow-Origin', '*')
+                    ->header('Cross-Origin-Resource-Policy', 'cross-origin');
+            }
         }
 
         $file = Storage::get($path);

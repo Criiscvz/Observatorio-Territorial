@@ -15,6 +15,7 @@ export interface Articulo {
   fecha_recepcion?: string | null;
   categoria_id?: string | null;
   departamento_id?: string | null;
+  visibilidad?: string;
   categoria?: {
     id: string;
     nombre: string;

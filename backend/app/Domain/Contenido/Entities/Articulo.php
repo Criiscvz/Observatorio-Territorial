@@ -16,6 +16,7 @@ class Articulo
         public readonly ?string $fuente,
         public readonly ?string $estado,
         public readonly ?string $enlace,
+        public readonly string $visibilidad,
         public readonly ?string $fechaPublicacion,
         public readonly ?string $fechaRecepcion,
     ) {}
@@ -29,6 +30,7 @@ class Articulo
         ?string $fuente = null,
         ?string $estado = null,
         ?string $enlace = null,
+        string $visibilidad = 'publico',
         ?string $fechaPublicacion = null,
         ?string $fechaRecepcion = null,
     ): self {
@@ -42,6 +44,7 @@ class Articulo
             fuente: $fuente,
             estado: $estado,
             enlace: $enlace,
+            visibilidad: $visibilidad,
             fechaPublicacion: $fechaPublicacion,
             fechaRecepcion: $fechaRecepcion,
         );
@@ -59,6 +62,7 @@ class Articulo
             'fuente' => $this->fuente,
             'estado' => $this->estado,
             'enlace' => $this->enlace,
+            'visibilidad' => $this->visibilidad,
             'fecha_publicacion' => $this->fechaPublicacion,
             'fecha_recepcion' => $this->fechaRecepcion,
         ];

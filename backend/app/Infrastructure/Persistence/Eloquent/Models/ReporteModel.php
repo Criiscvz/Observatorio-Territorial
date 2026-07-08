@@ -26,6 +26,7 @@ class ReporteModel extends Model
         'link_url',
         'ficha_indicador',
         'fuente',
+        'visibilidad',
     ];
 
     protected $casts = [

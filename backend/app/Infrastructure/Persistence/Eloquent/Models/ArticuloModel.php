@@ -26,6 +26,7 @@ class ArticuloModel extends Model
         'fuente',
         'estado',
         'enlace',
+        'visibilidad',
         'fecha_publicacion',
         'fecha_recepcion',
     ];
