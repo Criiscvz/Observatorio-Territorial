@@ -28,8 +28,12 @@ export class UserService {
   /**
    * Obtener lista de usuarios (solo admin)
    */
-  getUsers(perPage = 15, page = 1): Observable<UsersListResponse> {
-    return this.api.get<UsersListResponse>(`/users?per_page=${perPage}&page=${page}`);
+  getUsers(perPage = 15, page = 1, search?: string): Observable<UsersListResponse> {
+    let url = `/users?per_page=${perPage}&page=${page}`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    return this.api.get<UsersListResponse>(url);
   }
 
   /**

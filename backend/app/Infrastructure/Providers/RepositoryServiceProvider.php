@@ -11,12 +11,14 @@ use App\Domain\Departamento\Repositories\DepartamentoRepositoryInterface;
 use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
 use App\Domain\Dataset\Repositories\RegistroDatoRepositoryInterface;
 use App\Domain\Dataset\Repositories\VariableMetadatoRepositoryInterface;
+use App\Domain\Permiso\Repositories\PermisoRepositoryInterface;
 use App\Domain\User\Repositories\UserRepositoryInterface;
 use App\Domain\Statistics\Services\StatisticsServiceInterface;
 
 // Infrastructure Implementations
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentDepartamentoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentDatasetRepository;
+use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentPermisoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentRegistroDatoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentVariableMetadatoRepository;
 use App\Infrastructure\Persistence\Eloquent\Repositories\EloquentUserRepository;
@@ -38,6 +40,7 @@ class RepositoryServiceProvider extends ServiceProvider
         RegistroDatoRepositoryInterface::class => MongoRegistroDatoRepository::class,
         VariableMetadatoRepositoryInterface::class => EloquentVariableMetadatoRepository::class,
         UserRepositoryInterface::class => EloquentUserRepository::class,
+        PermisoRepositoryInterface::class => EloquentPermisoRepository::class,
         // Services
         StatisticsServiceInterface::class => StatisticsService::class,
     ];

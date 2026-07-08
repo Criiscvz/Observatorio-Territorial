@@ -52,7 +52,8 @@ class UserController extends Controller
     public function index(Request $request): JsonResponse
     {
         $perPage = (int) $request->input('per_page', 15);
-        $users = $this->getUsersUseCase->execute($request->user()->id, $perPage);
+        $search = $request->input('search');
+        $users = $this->getUsersUseCase->execute($request->user()->id, $perPage, $search);
 
         return response()->json([
             'data' => UserResource::collection($users->items()),

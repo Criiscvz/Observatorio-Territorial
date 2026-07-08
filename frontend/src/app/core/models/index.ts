@@ -9,3 +9,6 @@ export * from './departamento';
 
 // Dashboard models
 export * from './dashboard';
+
+// Permisos models
+export * from './permisos';

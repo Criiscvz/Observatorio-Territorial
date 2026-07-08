@@ -12,6 +12,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ArticulosService, Articulo } from '@core/services/articulos.service';
 import { ReportesService, Reporte } from '@core/services/reportes.service';
+import { AuthService } from '@core/services/auth.service';
+import { PermisosService } from '@core/services/permisos.service';
 
 @Component({
   selector: 'app-public-atlas',
@@ -34,12 +36,21 @@ export class PublicAtlasComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly articulosService = inject(ArticulosService);
   private readonly reportesService = inject(ReportesService);
+  private readonly authService = inject(AuthService);
+  private readonly permisosService = inject(PermisosService);
 
   searchTerm = signal('');
   selectedCategory = signal<string>('TODAS');
-  
+
   articulos = signal<Articulo[]>([]);
   reportes = signal<Reporte[]>([]);
+
+  // Computed properties for permissions
+  canCreate = computed(() => {
+    const user = this.authService.user();
+    if (!user) return false;
+    return this.permisosService.puedeEditar(user.id, 'atlas');
+  });
 
   ngOnInit(): void {
     this.loadData();
@@ -55,6 +66,18 @@ export class PublicAtlasComponent implements OnInit {
     this.reportesService.getAll()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data) => this.reportes.set(data));
+  }
+
+  canEdit(item: Articulo | Reporte): boolean {
+    const user = this.authService.user();
+    if (!user) return false;
+    return this.permisosService.puedeEditar(user.id, 'atlas');
+  }
+
+  canDelete(item: Articulo | Reporte): boolean {
+    const user = this.authService.user();
+    if (!user) return false;
+    return this.permisosService.esAdmin(user.id, 'atlas');
   }
 
   // ── Artículos (Publicaciones) ──
@@ -126,5 +149,19 @@ export class PublicAtlasComponent implements OnInit {
       case 'Cultura': return '#F59E0B'; // Amber
       default: return '#8B5CF6'; // Purple
     }
+  }
+
+  tieneAcceso(item: Articulo | Reporte): boolean {
+    const vis = item.visibilidad || 'publico';
+    if (vis === 'publico') return true;
+
+    const user = this.authService.user();
+    if (!user) return false;
+
+    return ['ADMIN', 'EDITOR', 'SUBSCRIBER'].includes(user.rol);
+  }
+
+  sugerirSuscripcion(): void {
+    alert('Esta publicación es exclusiva para suscriptores. Inicia sesión o suscríbete para acceder al contenido.');
   }
 }

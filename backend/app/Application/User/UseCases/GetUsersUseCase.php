@@ -14,7 +14,7 @@ class GetUsersUseCase
      * Obtiene la lista de usuarios.
      * Solo puede ser ejecutado por un administrador.
      */
-    public function execute(int $adminId, int $perPage = 15): LengthAwarePaginator
+    public function execute(int $adminId, int $perPage = 15, ?string $search = null): LengthAwarePaginator
     {
         // Verificar que el usuario que ejecuta la acción es admin
         $admin = User::findOrFail($adminId);
@@ -23,8 +23,15 @@ class GetUsersUseCase
             throw new AccessDeniedHttpException('Solo los administradores pueden ver la lista de usuarios');
         }
 
-        return User::with(['perfil', 'departamentos'])
-            ->orderBy('created_at', 'desc')
-            ->paginate($perPage);
+        $query = User::with(['perfil', 'departamentos'])->orderBy('created_at', 'desc');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', '%' . $search . '%')
+                  ->orWhere('email', 'like', '%' . $search . '%');
+            });
+        }
+
+        return $query->paginate($perPage);
     }
 }

@@ -117,3 +117,6 @@ require __DIR__ . '/modules/fuentes.php';
 // ============ CONTENIDO DEL OBSERVATORIO (Artículos y Reportes) ============
 Route::prefix('articulos')->group(__DIR__ . '/modules/articulos.php');
 Route::prefix('reportes')->group(__DIR__ . '/modules/reportes.php');
+
+// ============ PERMISOS ============
+Route::prefix('permisos')->group(__DIR__ . '/modules/permisos.php');
