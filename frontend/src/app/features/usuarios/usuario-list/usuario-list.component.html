@@ -17,6 +17,25 @@
 
   <!-- Content -->
   <mat-card class="users-card">
+    <div class="users-search-bar" style="padding: 1.25rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid var(--card-border, #e2e8f0);">
+      <mat-form-field appearance="outline" class="search-field" style="flex: 1; margin-bottom: -1.25rem;">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>Buscar usuarios...</mat-label>
+        <input
+          matInput
+          type="text"
+          placeholder="Buscar por nombre o correo electrónico"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+        />
+        @if (searchQuery()) {
+          <button matSuffix mat-icon-button (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+
     @if (loading()) {
       <div class="loading-container">
         <mat-spinner diameter="40"></mat-spinner>

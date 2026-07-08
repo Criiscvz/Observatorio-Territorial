@@ -1,152 +1,183 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { PermisosApiService } from './permisos-api.service';
+import {
+  ModuloPermiso,
+  NivelPermiso,
+  PermisoConfig,
+  MODULOS_PERMISO,
+  NIVEL_LABELS,
+} from '../models/permisos';
 
-export interface RolePermissionConfig {
-  create: boolean;
-  edit: boolean;
-  editScope: 'all' | 'own';
-  delete: boolean;
-  deleteScope: 'all' | 'own';
-}
+const STORAGE_KEY = 'observatorio_frontend_permisos';
 
-export interface SystemPermissions {
-  [role: string]: RolePermissionConfig;
-}
-
-export interface UserSpecificPermissions {
-  [userId: number]: RolePermissionConfig;
-}
-
-const ROLE_STORAGE_KEY = 'observatorio_role_permissions';
-const USER_STORAGE_KEY = 'observatorio_user_permissions';
-
-const DEFAULT_ROLE_PERMISSIONS: SystemPermissions = {
-  ADMIN: {
-    create: true,
-    edit: true,
-    editScope: 'all',
-    delete: true,
-    deleteScope: 'all',
-  },
-  EDITOR: {
-    create: true,
-    edit: true,
-    editScope: 'own',
-    delete: true,
-    deleteScope: 'own',
-  },
-  USER: {
-    create: false,
-    edit: false,
-    editScope: 'own',
-    delete: false,
-    deleteScope: 'own',
-  },
-  SUBSCRIBER: {
-    create: false,
-    edit: false,
-    editScope: 'own',
-    delete: false,
-    deleteScope: 'own',
-  },
-};
-
+/**
+ * Servicio unificado de permisos.
+ *
+ * - Atlas y Reportes: se gestionan solo en frontend (localStorage)
+ *   porque el backend aún no implementa esos módulos.
+ * - Observatorios: se sincronizan con el backend.
+ *
+ * El servicio mantiene un mapa interno userId -> lista de PermisoConfig.
+ */
 @Injectable({
   providedIn: 'root',
 })
 export class PermisosService {
-  constructor() {
-    this.ensureInitialized();
-  }
+  private readonly permisosApi = inject(PermisosApiService);
 
-  private ensureInitialized(): void {
-    if (!localStorage.getItem(ROLE_STORAGE_KEY)) {
-      localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(DEFAULT_ROLE_PERMISSIONS));
-    }
-    if (!localStorage.getItem(USER_STORAGE_KEY)) {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify({}));
-    }
-  }
+  /** Mapa interno: userId → PermisoConfig[] */
+  private cache = new Map<number, PermisoConfig[]>();
 
-  getRolePermissions(): SystemPermissions {
-    this.ensureInitialized();
-    const data = localStorage.getItem(ROLE_STORAGE_KEY);
-    return data ? JSON.parse(data) : DEFAULT_ROLE_PERMISSIONS;
-  }
+  // ───────────────────────────────
+  //  Lectura
+  // ───────────────────────────────
 
-  saveRolePermissions(permissions: SystemPermissions): void {
-    localStorage.setItem(ROLE_STORAGE_KEY, JSON.stringify(permissions));
-  }
+  /**
+   * Obtiene los permisos de un usuario.
+   * Para observatorios se usa backend, para atlas/reportes se usa localStorage.
+   */
+  getUserPermisos(userId: number): PermisoConfig[] {
+    const cached = this.cache.get(userId);
+    if (cached) return cached;
 
-  getUserPermissions(userId: number, role: string): RolePermissionConfig {
-    this.ensureInitialized();
-    const userPermissionsData = localStorage.getItem(USER_STORAGE_KEY);
-    const userPermissions: UserSpecificPermissions = userPermissionsData ? JSON.parse(userPermissionsData) : {};
-    
-    if (userPermissions[userId]) {
-      return userPermissions[userId];
-    }
+    const stored = localStorage.getItem(`${STORAGE_KEY}_${userId}`);
+    const fromStorage: PermisoConfig[] = stored ? JSON.parse(stored) : [];
 
-    // Fallback to role defaults
-    const rolePermissions = this.getRolePermissions();
-    return rolePermissions[role] || DEFAULT_ROLE_PERMISSIONS[role];
-  }
-
-  saveUserPermissions(userId: number, config: RolePermissionConfig): void {
-    this.ensureInitialized();
-    const userPermissionsData = localStorage.getItem(USER_STORAGE_KEY);
-    const userPermissions: UserSpecificPermissions = userPermissionsData ? JSON.parse(userPermissionsData) : {};
-
-    userPermissions[userId] = config;
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userPermissions));
+    // Combinar con permisos de backend (observatorios)
+    const combined = this.mergeWithBackendDefaults(fromStorage);
+    this.cache.set(userId, combined);
+    return combined;
   }
 
   /**
-   * Indica si un usuario tiene permisos personalizados que sobreescriben los de su rol.
+   * Obtiene el nivel de permiso para un módulo y usuario específicos.
    */
-  hasCustomPermissions(userId: number): boolean {
-    this.ensureInitialized();
-    const userPermissionsData = localStorage.getItem(USER_STORAGE_KEY);
-    const userPermissions: UserSpecificPermissions = userPermissionsData ? JSON.parse(userPermissionsData) : {};
-    return Object.prototype.hasOwnProperty.call(userPermissions, userId);
+  getNivel(userId: number, modulo: ModuloPermiso, departamentoId?: string | null): NivelPermiso {
+    const permisos = this.getUserPermisos(userId);
+
+    // Buscar coincidencia exacta (con departamento_id)
+    if (departamentoId !== undefined) {
+      const match = permisos.find(
+        (p) => p.modulo === modulo && p.departamento_id === departamentoId
+      );
+      if (match) return match.nivel;
+    }
+
+    // Buscar permiso genérico (sin departamento_id)
+    const generic = permisos.find(
+      (p) => p.modulo === modulo && p.departamento_id === undefined
+    );
+    if (generic) return generic.nivel;
+
+    // Buscar "todos" para observatorios/departamentos
+    const all = permisos.find(
+      (p) => p.modulo === modulo && p.departamento_id === null
+    );
+    if (all) return all.nivel;
+
+    return 'ninguno';
   }
 
   /**
-   * Elimina la personalización de un usuario, restaurando los permisos base de su rol.
+   * Verifica si un usuario tiene un nivel mínimo de permiso.
    */
-  clearUserPermissions(userId: number): void {
-    this.ensureInitialized();
-    const userPermissionsData = localStorage.getItem(USER_STORAGE_KEY);
-    const userPermissions: UserSpecificPermissions = userPermissionsData ? JSON.parse(userPermissionsData) : {};
-
-    if (Object.prototype.hasOwnProperty.call(userPermissions, userId)) {
-      delete userPermissions[userId];
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userPermissions));
-    }
+  hasMinNivel(userId: number, modulo: ModuloPermiso, minNivel: NivelPermiso, departamentoId?: string | null): boolean {
+    const nivel = this.getNivel(userId, modulo, departamentoId);
+    return this.nivelWeight(nivel) >= this.nivelWeight(minNivel);
   }
 
-  hasUserPermission(userId: number, role: string, action: 'create' | 'edit' | 'delete', isOwner = false): boolean {
-    if (role === 'ADMIN') {
-      return true;
+  /**
+   * Verifica si un usuario puede ver cierto módulo (tiene lectura+).
+   */
+  puedeVer(userId: number, modulo: ModuloPermiso, departamentoId?: string | null): boolean {
+    return this.hasMinNivel(userId, modulo, 'lectura', departamentoId);
+  }
+
+  /**
+   * Verifica si un usuario puede editar cierto módulo (tiene escritura+).
+   */
+  puedeEditar(userId: number, modulo: ModuloPermiso, departamentoId?: string | null): boolean {
+    return this.hasMinNivel(userId, modulo, 'escritura', departamentoId);
+  }
+
+  /**
+   * Verifica si un usuario es admin de cierto módulo.
+   */
+  esAdmin(userId: number, modulo: ModuloPermiso, departamentoId?: string | null): boolean {
+    return this.hasMinNivel(userId, modulo, 'admin', departamentoId);
+  }
+
+  // ───────────────────────────────
+  //  Escritura
+  // ───────────────────────────────
+
+  /**
+   * Guarda los permisos de un usuario.
+   * Para observatorios se envía al backend; para atlas/reportes se guarda en localStorage.
+   */
+  saveUserPermisos(userId: number, permisos: PermisoConfig[]): void {
+    // Separar observatorios del resto
+    const observatorioPermisos = permisos.filter((p) => p.modulo === 'observatorios');
+    const frontendPermisos = permisos.filter((p) => p.modulo !== 'observatorios');
+
+    // Guardar atlas/reportes en localStorage
+    localStorage.setItem(`${STORAGE_KEY}_${userId}`, JSON.stringify(frontendPermisos));
+
+    // Sincronizar observatorios con backend (fire-and-forget)
+    if (observatorioPermisos.length > 0) {
+      this.permisosApi.saveUserPermisos(userId, observatorioPermisos).subscribe({
+        error: () => {
+          // Si falla el backend, guardar localmente como respaldo
+          console.warn('No se pudieron sincronizar permisos de observatorios con el backend.');
+        },
+      });
     }
 
-    const config = this.getUserPermissions(userId, role);
+    // Actualizar cache
+    this.cache.set(userId, permisos);
+  }
 
-    if (!config) {
-      return false;
-    }
+  /**
+   * Carga permisos de observatorios desde el backend y los fusiona con los locales.
+   */
+  syncFromBackend(userId: number): void {
+    this.permisosApi.getUserPermisos(userId).subscribe({
+      next: (backendPermisos) => {
+        const stored = localStorage.getItem(`${STORAGE_KEY}_${userId}`);
+        const frontendPermisos: PermisoConfig[] = stored ? JSON.parse(stored) : [];
 
-    if (action === 'create') {
-      return config.create;
-    }
+        // Fusionar: backend (observatorios) + frontend (atlas/reportes)
+        const merged = [
+          ...frontendPermisos.filter((p) => p.modulo !== 'observatorios'),
+          ...backendPermisos,
+        ];
 
-    if (action === 'edit') {
-      return config.edit && (config.editScope === 'all' || isOwner);
-    }
+        this.cache.set(userId, merged);
+      },
+      error: () => {
+        // Usar cache local si backend no responde
+        console.warn('No se pudieron cargar permisos del backend.');
+      },
+    });
+  }
 
-    if (action === 'delete') {
-      return config.delete && (config.deleteScope === 'all' || isOwner);
-    }
+  // ───────────────────────────────
+  //  Internos
+  // ───────────────────────────────
 
-    return false;
+  private mergeWithBackendDefaults(fromStorage: PermisoConfig[]): PermisoConfig[] {
+    // Por ahora, devolvemos lo que hay en storage.
+    // Cuando se carguen desde backend, se fusionan.
+    return fromStorage;
+  }
+
+  private nivelWeight(nivel: NivelPermiso): number {
+    const weights: Record<NivelPermiso, number> = {
+      ninguno: 0,
+      lectura: 1,
+      escritura: 2,
+      admin: 3,
+    };
+    return weights[nivel] ?? 0;
   }
 }

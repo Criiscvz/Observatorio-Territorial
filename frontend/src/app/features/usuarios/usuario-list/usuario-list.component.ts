@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDivider } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
@@ -20,7 +21,7 @@ import { UserService } from '@core/services/user.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { UserPermissionsDialogComponent } from '../user-permissions-dialog.component';
+import { UserPermissionsDialogComponent } from '../../permisos/user-permissions-dialog.component';
 import { PermisosService } from '@core/services/permisos.service';
 
 @Component({
@@ -33,6 +34,7 @@ import { PermisosService } from '@core/services/permisos.service';
     MatButtonModule,
     MatCardModule,
     MatDialogModule,
+    MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatMenuModule,
@@ -67,34 +69,55 @@ export class UsuarioListComponent implements OnInit {
   pageSize = signal(15);
   lastPage = signal(1);
 
+  searchQuery = signal('');
+  private searchTimeout: any;
+
   ngOnInit(): void {
     this.loadUsers();
   }
 
   loadUsers(page = 1): void {
     this.loading.set(true);
-    this.userService.getUsers(this.pageSize(), page).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (response) => {
-        this.users.set(response.data);
-        this.currentPage.set(response.meta.current_page);
-        this.totalItems.set(response.meta.total);
-        this.lastPage.set(response.meta.last_page);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.snackBar.open(
-          this.translate.instant('users.messages.loadError'),
-          this.translate.instant('common.buttons.close'),
-          { duration: 3000 }
-        );
-        this.loading.set(false);
-      },
-    });
+    const search = this.searchQuery().trim();
+    this.userService.getUsers(this.pageSize(), page, search || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.users.set(response.data);
+          this.currentPage.set(response.meta.current_page);
+          this.totalItems.set(response.meta.total);
+          this.lastPage.set(response.meta.last_page);
+          this.loading.set(false);
+        },
+        error: () => {
+          this.snackBar.open(
+            this.translate.instant('users.messages.loadError'),
+            this.translate.instant('common.buttons.close'),
+            { duration: 3000 }
+          );
+          this.loading.set(false);
+        },
+      });
   }
 
   onPageChange(event: PageEvent): void {
     this.pageSize.set(event.pageSize);
     this.loadUsers(event.pageIndex + 1);
+  }
+
+  onSearchChange(term: string): void {
+    this.searchQuery.set(term);
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+    this.searchTimeout = setTimeout(() => {
+      this.loadUsers(1);
+    }, 400);
+  }
+
+  clearSearch(): void {
+    this.searchQuery.set('');
+    this.loadUsers(1);
   }
 
   toggleStatus(user: User): void {
@@ -230,9 +253,9 @@ export class UsuarioListComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result) {
-          this.permisosService.saveUserPermissions(user.id, result);
+          this.permisosService.saveUserPermisos(user.id, result);
           this.snackBar.open(
-            'Permisos personalizados guardados correctamente para el usuario.',
+            'Permisos guardados correctamente para el usuario.',
             'Cerrar',
             { duration: 3000 }
           );

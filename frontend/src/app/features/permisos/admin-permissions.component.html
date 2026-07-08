@@ -6,139 +6,26 @@
     </div>
     <div class="header-info">
       <h1>{{ 'permissions.title' | translate }}</h1>
-      <p>{{ 'permissions.subtitle' | translate }}</p>
+      <p>Gestiona los permisos de cada usuario sobre los módulos del sistema.</p>
     </div>
   </div>
 
+  <!-- Permisos por usuario -->
   <mat-card class="permissions-card">
-    <mat-card-header>
-      <mat-card-title>
-        <mat-icon>table_chart</mat-icon>
-        Matriz de Configuración de Accesos
-      </mat-card-title>
-    </mat-card-header>
-
-    <mat-card-content class="card-content">
-      <p class="description">
-        Como administrador, puedes configurar dinámicamente qué acciones puede realizar cada rol sobre las publicaciones del Atlas.
-        El alcance <strong>"Propios"</strong> restringe al usuario a modificar únicamente las publicaciones que él mismo ha creado, mientras que <strong>"Todos"</strong> le otorga permisos sobre todo el catálogo.
-      </p>
-
-      <div class="table-responsive">
-        <table class="permissions-table">
-          <thead>
-            <tr>
-              <th>Rol del Sistema</th>
-              <th>Crear Publicaciones</th>
-              <th>Editar Publicaciones</th>
-              <th>Eliminar Publicaciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Fila para ADMIN (Solo lectura, ya que tiene todo habilitado) -->
-            <tr class="admin-row">
-              <td>
-                <span class="role-badge badge-admin">ADMIN</span>
-              </td>
-              <td>
-                <mat-checkbox [checked]="true" [disabled]="true">Habilitado</mat-checkbox>
-              </td>
-              <td>
-                <div class="scope-cell">
-                  <mat-checkbox [checked]="true" [disabled]="true">Habilitado</mat-checkbox>
-                  <span class="scope-label font-medium text-xs">Todos</span>
-                </div>
-              </td>
-              <td>
-                <div class="scope-cell">
-                  <mat-checkbox [checked]="true" [disabled]="true">Habilitado</mat-checkbox>
-                  <span class="scope-label font-medium text-xs">Todos</span>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Filas Dinámicas de Roles Configurables -->
-            <tr *ngFor="let role of rolesList">
-              <td>
-                <span class="role-badge" [ngClass]="'badge-' + role.toLowerCase()">{{ role }}</span>
-              </td>
-              
-              <!-- Crear -->
-              <td>
-                <mat-checkbox [(ngModel)]="permissions[role].create">
-                  Habilitar
-                </mat-checkbox>
-              </td>
-
-              <!-- Editar -->
-              <td>
-                <div class="scope-cell">
-                  <mat-checkbox [(ngModel)]="permissions[role].edit">
-                    Habilitar
-                  </mat-checkbox>
-                  
-                  <mat-form-field *ngIf="permissions[role].edit" appearance="outline" class="scope-select">
-                    <mat-select [(value)]="permissions[role].editScope">
-                      <mat-option value="own">Solo propio</mat-option>
-                      <mat-option value="all">Todos</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </td>
-
-              <!-- Eliminar -->
-              <td>
-                <div class="scope-cell">
-                  <mat-checkbox [(ngModel)]="permissions[role].delete">
-                    Habilitar
-                  </mat-checkbox>
-                  
-                  <mat-form-field *ngIf="permissions[role].delete" appearance="outline" class="scope-select">
-                    <mat-select [(value)]="permissions[role].deleteScope">
-                      <mat-option value="own">Solo propio</mat-option>
-                      <mat-option value="all">Todos</mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </mat-card-content>
-
-    <mat-divider></mat-divider>
-
-    <mat-card-actions class="card-actions">
-      <button mat-stroked-button (click)="resetDefaults()">
-        <mat-icon>settings_backup_restore</mat-icon>
-        Restablecer
-      </button>
-      <button mat-flat-button color="primary" (click)="savePermissions()">
-        <mat-icon>save</mat-icon>
-        Guardar Configuración
-      </button>
-    </mat-card-actions>
-  </mat-card>
-
-  <!-- Permisos individuales por usuario -->
-  <mat-card class="permissions-card users-permissions-card">
     <mat-card-header>
       <mat-card-title>
         <mat-icon>manage_accounts</mat-icon>
         Permisos por Usuario
       </mat-card-title>
+      <mat-card-subtitle>
+        Configura qué módulos puede ver y editar cada usuario. Los cambios aplican inmediatamente.
+      </mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content class="card-content">
-      <p class="description">
-        Ajusta los permisos de un usuario específico, sin importar su rol. Los cambios personalizados
-        sobreescriben la configuración base del rol únicamente para ese usuario.
-      </p>
-
       <!-- Filtros -->
       <div class="users-toolbar">
-        <mat-form-field appearance="outline" class="search-field">
+        <mat-form-field appearance="outline" class="search-field" style="max-width: 100%; width: 100%;">
           <mat-icon matPrefix>search</mat-icon>
           <input
             matInput
@@ -147,17 +34,6 @@
             [ngModel]="searchTerm()"
             (ngModelChange)="searchTerm.set($event)"
           />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="role-filter">
-          <mat-label>Tipo de usuario</mat-label>
-          <mat-select [ngModel]="roleFilter()" (ngModelChange)="roleFilter.set($event)">
-            <mat-option value="ALL">Todos los roles</mat-option>
-            <mat-option value="ADMIN">ADMIN</mat-option>
-            <mat-option value="EDITOR">EDITOR</mat-option>
-            <mat-option value="SUBSCRIBER">SUBSCRIBER</mat-option>
-            <mat-option value="USER">USER</mat-option>
-          </mat-select>
         </mat-form-field>
       </div>
 
@@ -175,6 +51,7 @@
         <div class="users-grid">
           @for (user of filteredUsers(); track user.id) {
             <div class="user-card">
+              <!-- Cabecera del usuario -->
               <div class="user-card-head">
                 <div class="user-avatar">{{ getInitial(user) }}</div>
                 <div class="user-meta">
@@ -184,68 +61,47 @@
                 <span class="role-badge" [ngClass]="getRoleBadgeClass(user.rol)">{{ user.rol }}</span>
               </div>
 
+              <!-- Cuerpo: módulos -->
               <div class="user-card-body">
                 @if (user.rol === 'ADMIN') {
                   <div class="admin-note">
                     <mat-icon>verified_user</mat-icon>
-                    <span>Control total del sistema</span>
+                    <span>Los administradores tienen acceso total a todos los módulos.</span>
                   </div>
                 } @else {
-                  <div class="perm-chips">
-                    <span
-                      class="perm-chip"
-                      [class.on]="getUserConfig(user).create"
-                      matTooltip="Crear publicaciones"
-                    >
-                      <mat-icon>{{ getUserConfig(user).create ? 'check_circle' : 'cancel' }}</mat-icon>
-                      Crear
-                    </span>
-                    <span
-                      class="perm-chip"
-                      [class.on]="getUserConfig(user).edit"
-                      matTooltip="Editar publicaciones"
-                    >
-                      <mat-icon>{{ getUserConfig(user).edit ? 'check_circle' : 'cancel' }}</mat-icon>
-                      Editar
-                      @if (getUserConfig(user).edit) {
-                        <small>({{ getUserConfig(user).editScope === 'all' ? 'Todos' : 'Propios' }})</small>
-                      }
-                    </span>
-                    <span
-                      class="perm-chip"
-                      [class.on]="getUserConfig(user).delete"
-                      matTooltip="Eliminar publicaciones"
-                    >
-                      <mat-icon>{{ getUserConfig(user).delete ? 'check_circle' : 'cancel' }}</mat-icon>
-                      Eliminar
-                      @if (getUserConfig(user).delete) {
-                        <small>({{ getUserConfig(user).deleteScope === 'all' ? 'Todos' : 'Propios' }})</small>
-                      }
-                    </span>
+                  <div class="modulos-permisos">
+                    @for (modulo of modulos; track modulo) {
+                      <div class="modulo-row">
+                        <div class="modulo-icon-wrapper">
+                          <mat-icon class="modulo-icon">{{ moduloIcons[modulo] }}</mat-icon>
+                        </div>
+                        <div class="modulo-info">
+                          <span class="modulo-label">{{ moduloLabels[modulo] }}</span>
+                          <span
+                            class="nivel-chip"
+                            [ngClass]="getNivelChipClass(getModuloNivel(user, modulo))"
+                          >
+                            {{ nivelLabels[getModuloNivel(user, modulo)] }}
+                          </span>
+                        </div>
+                      </div>
+                    }
                   </div>
-
-                  @if (hasCustomPermissions(user)) {
-                    <span class="custom-flag">
-                      <mat-icon>tune</mat-icon>
-                      Personalizado
-                    </span>
-                  }
                 }
               </div>
 
+              <!-- Acciones -->
               <div class="user-card-actions">
                 @if (user.rol !== 'ADMIN') {
-                  @if (hasCustomPermissions(user)) {
-                    <button
-                      mat-stroked-button
-                      class="reset-btn"
-                      matTooltip="Volver a los permisos del rol"
-                      (click)="resetUserPermissions(user)"
-                    >
-                      <mat-icon>restart_alt</mat-icon>
-                      Restablecer
-                    </button>
-                  }
+                  <button
+                    mat-stroked-button
+                    class="reset-btn"
+                    matTooltip="Restablecer permisos de atlas y reportes"
+                    (click)="resetUserPermissions(user)"
+                  >
+                    <mat-icon>restart_alt</mat-icon>
+                    Restablecer
+                  </button>
                   <button mat-flat-button color="primary" (click)="openPermissionsDialog(user)">
                     <mat-icon>security</mat-icon>
                     Gestionar

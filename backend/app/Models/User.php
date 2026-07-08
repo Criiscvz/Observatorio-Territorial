@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Permiso;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -115,6 +116,14 @@ class User extends Authenticatable
     public function datasets(): HasMany
     {
         return $this->hasMany(Dataset::class, 'subido_por');
+    }
+
+    /**
+     * Permisos del usuario (Atlas, Reportes, Observatorios)
+     */
+    public function permisos(): HasMany
+    {
+        return $this->hasMany(Permiso::class, 'user_id');
     }
 
     /**

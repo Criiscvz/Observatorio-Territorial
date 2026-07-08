@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,10 +16,19 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { PermisosService, RolePermissionConfig, SystemPermissions } from '@core/services/permisos.service';
+import { PermisosService } from '@core/services/permisos.service';
 import { UserService } from '@core/services/user.service';
 import { User } from '@core/models';
-import { UserPermissionsDialogComponent } from '../usuarios/user-permissions-dialog.component';
+import {
+  ModuloPermiso,
+  NivelPermiso,
+  PermisoConfig,
+  MODULOS_PERMISO,
+  MODULO_LABELS,
+  MODULO_ICONS,
+  NIVEL_LABELS,
+} from '@core/models/permisos';
+import { UserPermissionsDialogComponent } from './user-permissions-dialog.component';
 
 @Component({
   selector: 'app-admin-permissions',
@@ -30,7 +38,6 @@ import { UserPermissionsDialogComponent } from '../usuarios/user-permissions-dia
     FormsModule,
     MatButtonModule,
     MatCardModule,
-    MatCheckboxModule,
     MatDialogModule,
     MatDividerModule,
     MatFormFieldModule,
@@ -53,10 +60,11 @@ export class AdminPermissionsComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
-  permissions!: SystemPermissions;
-  rolesList = ['EDITOR', 'SUBSCRIBER', 'USER'];
+  readonly modulos = MODULOS_PERMISO;
+  readonly moduloLabels = MODULO_LABELS;
+  readonly moduloIcons = MODULO_ICONS;
+  readonly nivelLabels = NIVEL_LABELS;
 
-  // Gestión de permisos por usuario
   users = signal<User[]>([]);
   loadingUsers = signal(true);
   searchTerm = signal('');
@@ -64,30 +72,22 @@ export class AdminPermissionsComponent implements OnInit {
 
   filteredUsers = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
-    const role = this.roleFilter();
     return this.users().filter((user) => {
-      const matchesRole = role === 'ALL' || user.rol === role;
+      const isEditor = user.rol === 'EDITOR';
       const matchesTerm =
         !term ||
         user.name?.toLowerCase().includes(term) ||
         user.email?.toLowerCase().includes(term);
-      return matchesRole && matchesTerm;
+      return isEditor && matchesTerm;
     });
   });
 
   ngOnInit(): void {
-    this.loadPermissions();
     this.loadUsers();
-  }
-
-  loadPermissions(): void {
-    // Deep clone the object so modifications don't apply immediately until saved
-    this.permissions = JSON.parse(JSON.stringify(this.permisosService.getRolePermissions()));
   }
 
   loadUsers(): void {
     this.loadingUsers.set(true);
-    // Cargamos la primera página y, si hay más, el resto en paralelo para listar TODOS los usuarios.
     this.userService
       .getUsers(100, 1)
       .pipe(
@@ -121,33 +121,24 @@ export class AdminPermissionsComponent implements OnInit {
       });
   }
 
-  savePermissions(): void {
-    this.permisosService.saveRolePermissions(this.permissions);
-    this.snackBar.open(
-      this.translate.instant('permissions.messages.saved') || 'Permisos guardados correctamente.',
-      this.translate.instant('common.buttons.close') || 'Cerrar',
-      { duration: 3000 }
-    );
+  // ─── helpers de UI ───
+
+  getUserPermisos(user: User): PermisoConfig[] {
+    return this.permisosService.getUserPermisos(user.id);
   }
 
-  resetDefaults(): void {
-    localStorage.removeItem('observatorio_role_permissions');
-    this.loadPermissions();
-    this.snackBar.open(
-      'Configuración restablecida a los valores por defecto.',
-      'Cerrar',
-      { duration: 3000 }
-    );
+  getModuloNivel(user: User, modulo: ModuloPermiso): NivelPermiso {
+    return this.permisosService.getNivel(user.id, modulo);
   }
 
-  // --- Permisos por usuario ---
-
-  getUserConfig(user: User): RolePermissionConfig {
-    return this.permisosService.getUserPermissions(user.id, user.rol);
-  }
-
-  hasCustomPermissions(user: User): boolean {
-    return this.permisosService.hasCustomPermissions(user.id);
+  getNivelChipClass(nivel: NivelPermiso): string {
+    const map: Record<NivelPermiso, string> = {
+      ninguno: 'nivel-none',
+      lectura: 'nivel-read',
+      escritura: 'nivel-write',
+      admin: 'nivel-admin',
+    };
+    return map[nivel] ?? 'nivel-none';
   }
 
   getRoleBadgeClass(rol: string): string {
@@ -158,9 +149,15 @@ export class AdminPermissionsComponent implements OnInit {
     return user.name?.charAt(0)?.toUpperCase() || 'U';
   }
 
+  tienePermisosPersonalizados(user: User): boolean {
+    return this.permisosService.getUserPermisos(user.id).length > 0;
+  }
+
+  // ─── acciones ───
+
   openPermissionsDialog(user: User): void {
     const dialogRef = this.dialog.open(UserPermissionsDialogComponent, {
-      width: '460px',
+      width: '520px',
       maxWidth: '95vw',
       autoFocus: false,
       data: user,
@@ -169,13 +166,13 @@ export class AdminPermissionsComponent implements OnInit {
     dialogRef
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
+      .subscribe((result: PermisoConfig[] | undefined) => {
         if (result) {
-          this.permisosService.saveUserPermissions(user.id, result);
-          // Reasignamos la señal para refrescar los indicadores calculados.
+          this.permisosService.saveUserPermisos(user.id, result);
+          // Refresh users signal to update indicators
           this.users.set([...this.users()]);
           this.snackBar.open(
-            'Permisos personalizados guardados correctamente para el usuario.',
+            'Permisos guardados correctamente.',
             'Cerrar',
             { duration: 3000 },
           );
@@ -184,10 +181,18 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   resetUserPermissions(user: User): void {
-    this.permisosService.clearUserPermissions(user.id);
+    // Eliminar solo permisos de atlas/reportes (frontend), mantener observatorios
+    const current = this.permisosService.getUserPermisos(user.id);
+    const observatorioPermisos = current.filter((p) => p.modulo === 'observatorios');
+    const emptyFrontend: PermisoConfig[] = [
+      { modulo: 'atlas', nivel: 'ninguno' },
+      { modulo: 'reportes', nivel: 'ninguno' },
+    ];
+
+    this.permisosService.saveUserPermisos(user.id, [...observatorioPermisos, ...emptyFrontend]);
     this.users.set([...this.users()]);
     this.snackBar.open(
-      `Permisos de ${user.name} restablecidos a los valores de su rol.`,
+      `Permisos de ${user.name} restablecidos.`,
       'Cerrar',
       { duration: 3000 },
     );
