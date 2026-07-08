@@ -10,6 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BACKEND_PATH="$SCRIPT_DIR/../backend"
 IMAGE_NAME="backend-backend"
 CONTAINER_NAME="observatorio-backend-dev"
+DATABASE_CONTAINER_NAME="observatorio_db"
 ENV_FILE="$BACKEND_PATH/.env"
 
 cd "$BACKEND_PATH" || exit 1
@@ -21,12 +22,25 @@ ensure_backend_image() {
     fi
 }
 
+get_database_network() {
+    local network
+    network=$(docker inspect "$DATABASE_CONTAINER_NAME" --format '{{range $k, $_ := .NetworkSettings.Networks}}{{println $k}}{{end}}' 2>/dev/null | head -n 1)
+    if [[ -z "$network" ]]; then
+        echo "No se pudo detectar la red del contenedor PostgreSQL $DATABASE_CONTAINER_NAME. Inicia la base de datos primero." >&2
+        exit 1
+    fi
+
+    printf '%s' "$network"
+}
+
 run_artisan() {
     ensure_backend_image
+    local database_network
+    database_network=$(get_database_network)
     docker run --rm \
-        --add-host=host.docker.internal:host-gateway \
+        --network "$database_network" \
         --env-file "$ENV_FILE" \
-        -e DB_HOST=host.docker.internal \
+        -e DB_HOST="$DATABASE_CONTAINER_NAME" \
         --entrypoint php \
         "$IMAGE_NAME" artisan "$@"
 }
@@ -38,13 +52,14 @@ case "$COMMAND" in
         ensure_backend_image
         echo "🚀 Iniciando backend en http://127.0.0.1:8000 con PHP 8.4 (Docker)..."
         docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+        database_network=$(get_database_network)
         docker run -d \
             --name "$CONTAINER_NAME" \
             --rm \
             -p 8000:8000 \
-            --add-host=host.docker.internal:host-gateway \
+            --network "$database_network" \
             --env-file "$ENV_FILE" \
-            -e DB_HOST=host.docker.internal \
+            -e DB_HOST="$DATABASE_CONTAINER_NAME" \
             --entrypoint php \
             "$IMAGE_NAME" artisan serve --host=0.0.0.0 --port=8000 >/dev/null
         echo "✅ Backend iniciado. Usa './scripts/backend.sh logs' para ver salida."
