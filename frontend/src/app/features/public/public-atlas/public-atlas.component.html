@@ -1,253 +1,163 @@
 <div class="page-container">
-
-  <!-- Tabs de contenido -->
   <mat-tab-group class="atlas-tabs" animationDuration="200ms">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon>picture_as_pdf</mat-icon>
+        <span>Reportes PDF</span>
+      </ng-template>
 
-  <!-- ── Tab: Publicaciones ──────────────────────────────────────────── -->
-  <mat-tab>
-    <ng-template mat-tab-label>
-      <mat-icon>menu_book</mat-icon>
-      <span>Publicaciones</span>
-    </ng-template>
+      <div class="tab-inner">
+        <div class="page-header">
+          <div class="header-icon">
+            <mat-icon>auto_stories</mat-icon>
+          </div>
+          <div class="header-info">
+            <h1>Atlas de Publicaciones Territoriales</h1>
+            <p>
+              Explora y descarga informes PDF sincronizados desde SharePoint para el Atlas
+              Territorial del Observatorio ULEAM.
+            </p>
 
-  <div class="tab-inner">
-  <!-- Header -->
-  <div class="page-header">
-    <div class="header-icon">
-      <mat-icon>auto_stories</mat-icon>
-    </div>
-    <div class="header-info">
-      <h1>Atlas de Publicaciones Territoriales</h1>
-      <p>Explora y descarga informes, documentos de investigación y atlas elaborados por el Observatorio Territorial Multidisciplinario de la ULEAM.</p>
-      
-      <div class="header-stats">
-        <span class="stat">
-          <mat-icon>library_books</mat-icon>
-          {{ articulos().length }} Publicaciones Disponibles
-        </span>
-        <span class="stat">
-          <mat-icon>picture_as_pdf</mat-icon>
-          Formatos PDF Optimizados
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Search & Filters -->
-  <div class="filters-section">
-    <!-- Search Bar -->
-    <div class="search-container">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-icon matPrefix>search</mat-icon>
-        <mat-label>Buscar publicaciones...</mat-label>
-        <input matInput [value]="searchTerm()" (input)="onSearch($any($event.target).value)" placeholder="Título, descripción o autor..." />
-        @if (searchTerm()) {
-          <button matSuffix mat-icon-button (click)="clearSearch()">
-            <mat-icon>close</mat-icon>
-          </button>
-        }
-      </mat-form-field>
-      @if (searchTerm()) {
-        <span class="results-count">
-          {{ filteredArticulos().length }} resultado(s) encontrado(s)
-        </span>
-      }
-    </div>
-
-    <!-- Category Chips -->
-    <div class="categories-container">
-      <span class="filter-label">Filtrar por:</span>
-      <mat-chip-listbox class="category-chips">
-        @for (cat of categoriasArticulos(); track cat) {
-          <mat-chip-option
-            [selected]="selectedCategory() === cat"
-            (selectableChange)="selectCategory(cat)"
-          >
-            <mat-icon matChipAvatar *ngIf="cat !== 'TODAS'">
-              {{ getCategoryIcon(cat) }}
-            </mat-icon>
-            {{ cat }}
-          </mat-chip-option>
-        }
-      </mat-chip-listbox>
-    </div>
-  </div>
-
-  <!-- Publications Grid -->
-  @if (filteredArticulos().length > 0) {
-    <div class="publications-grid">
-      @for (art of filteredArticulos(); track art.id) {
-        <div class="publication-card" [class.locked]="!tieneAcceso(art)">
-          <!-- Card Header & Cover simulation -->
-          <div class="card-cover" [style.background]="'linear-gradient(135deg, ' + getCategoryColor(art.categoria?.nombre || '') + ' 0%, #1e1b4b 100%)'">
-            <div class="cover-pattern"></div>
-            @if (art.visibilidad === 'suscriptor') {
-              <span class="subscription-badge">
-                <mat-icon>lock</mat-icon> Suscriptor
+            <div class="header-stats">
+              <span class="stat">
+                <mat-icon>library_books</mat-icon>
+                {{ articulos().length }} publicaciones disponibles
               </span>
-            }
-            <span class="category-badge">
-              <mat-icon>{{ getCategoryIcon(art.categoria?.nombre || '') }}</mat-icon>
-              {{ art.categoria?.nombre || 'Sin categoría' }}
-            </span>
-            <div class="cover-doc-info">
-              <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
+              <span class="stat">
+                <mat-icon>picture_as_pdf</mat-icon>
+                Formato PDF
+              </span>
             </div>
-            @if (!tieneAcceso(art)) {
-              <div class="lock-overlay">
-                <mat-icon>lock</mat-icon>
-              </div>
-            }
-          </div>
-
-          <!-- Card Body -->
-          <div class="card-body">
-            <h3 class="publication-title" [title]="art.titulo">{{ art.titulo }}</h3>
-            <p class="publication-desc">{{ art.descripcion }}</p>
-            
-            <div class="publication-metadata">
-              @if (art.autor) {
-                <div class="meta-row">
-                  <mat-icon class="meta-icon">person</mat-icon>
-                  <span class="meta-text">{{ art.autor }}</span>
-                </div>
-              }
-              @if (art.fecha_publicacion) {
-                <div class="meta-row">
-                  <mat-icon class="meta-icon">calendar_today</mat-icon>
-                  <span class="meta-text">{{ art.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Card Actions -->
-          <div class="card-actions">
-            @if (art.enlace) {
-              @if (tieneAcceso(art)) {
-                <a mat-stroked-button [href]="art.enlace" target="_blank" class="action-btn view-btn">
-                  <mat-icon>visibility</mat-icon>
-                  Visualizar
-                </a>
-              } @else {
-                <button mat-flat-button color="accent" class="action-btn view-btn locked-btn" (click)="sugerirSuscripcion()">
-                  <mat-icon>lock</mat-icon>
-                  Suscribirse
-                </button>
-              }
-            }
           </div>
         </div>
-      }
-    </div>
-  } @else {
-    <div class="empty-state">
-      <mat-icon>menu_book</mat-icon>
-      <h3>No se encontraron publicaciones</h3>
-      <p>Prueba buscando con otros términos o seleccionando otra categoría.</p>
-    </div>
-  }
 
-  </div>
-  </mat-tab>
+        <div class="filters-section">
+          <div class="search-container">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-icon matPrefix>search</mat-icon>
+              <mat-label>Buscar publicaciones...</mat-label>
+              <input
+                matInput
+                [value]="searchTerm()"
+                (input)="onSearch($any($event.target).value)"
+                placeholder="Titulo, descripcion o autor..."
+              />
+              @if (searchTerm()) {
+                <button matSuffix mat-icon-button type="button" (click)="clearSearch()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </mat-form-field>
+            @if (searchTerm()) {
+              <span class="results-count">
+                {{ filteredArticulos().length }} resultado(s) encontrado(s)
+              </span>
+            }
+          </div>
 
-  <!-- ── Tab: PowerBI ──────────────────────────────────────────────── -->
-  <mat-tab>
-    <ng-template mat-tab-label>
-      <mat-icon>bar_chart</mat-icon>
-      <span>PowerBI / Reportes</span>
-    </ng-template>
+          <div class="categories-container">
+            <span class="filter-label">Filtrar por:</span>
+            <mat-chip-listbox class="category-chips">
+              @for (cat of categoriasArticulos(); track cat) {
+                <mat-chip-option
+                  [selected]="selectedCategory() === cat"
+                  (selectableChange)="selectCategory(cat)"
+                >
+                  <mat-icon matChipAvatar *ngIf="cat !== 'TODAS'">
+                    {{ getCategoryIcon(cat) }}
+                  </mat-icon>
+                  {{ cat }}
+                </mat-chip-option>
+              }
+            </mat-chip-listbox>
+          </div>
+        </div>
 
-    <section class="tab-section reportes-section" style="padding: 2rem;">
-      @if (reportesAgrupados().length > 0) {
-        @for (grupo of reportesAgrupados(); track grupo.categoria) {
-          <div class="categoria-grupo" style="margin-bottom: 3rem;">
-            <h2 class="categoria-titulo" style="display: flex; align-items: center; gap: 1rem; font-size: 1.5rem; color: #1e1b4b; margin-bottom: 1.5rem;">
-              <span class="categoria-line" style="flex: 1; height: 1px; background: #e2e8f0;"></span>
-              {{ grupo.categoria }}
-              <span class="categoria-count" style="background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.875rem; color: #64748b;">{{ grupo.items.length }}</span>
-            </h2>
-            <div class="articulos-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem;">
-              @for (rep of grupo.items; track rep.id) {
-                <div class="articulo-card" [class.locked]="!tieneAcceso(rep)" style="background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); display: flex; flex-direction: column; position: relative;">
-                  <!-- Cover -->
-                  <div class="articulo-cover" [style.background]="'linear-gradient(135deg, ' + grupo.color + ' 0%, #1e1b4b 100%)'" style="padding: 2rem; position: relative; color: white;">
-                    <div class="cover-pattern"></div>
-                    @if (rep.visibilidad === 'suscriptor') {
-                      <span class="subscription-badge" style="position: absolute; top: 1rem; left: 1rem; background: rgba(200, 16, 46, 0.95); color: white; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.725rem; display: flex; align-items: center; gap: 0.25rem; font-weight: 500; z-index: 2;">
-                        <mat-icon style="font-size: 0.875rem; width: 0.875rem; height: 0.875rem;">lock</mat-icon>
-                        Suscriptor
-                      </span>
-                    }
-                    <span class="articulo-categoria-badge" style="position: absolute; top: 1rem; right: 1rem; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem; z-index: 2;">
-                      <mat-icon style="font-size: 1rem; width: 1rem; height: 1rem;">analytics</mat-icon>
-                      {{ rep.categoria?.nombre || 'Sin categoría' }}
-                    </span>
-                    <div class="cover-icon" style="margin-top: 1rem; position: relative; z-index: 2;">
-                      <mat-icon style="font-size: 3rem; width: 3rem; height: 3rem;">bar_chart</mat-icon>
+        @if (filteredArticulos().length > 0) {
+          <div class="publications-grid">
+            @for (art of filteredArticulos(); track art.id) {
+              <div class="publication-card" [class.locked]="!tieneAcceso(art)">
+                <div
+                  class="card-cover"
+                  [style.background]="
+                    'linear-gradient(135deg, ' +
+                    getCategoryColor(art.categoria?.nombre || '') +
+                    ' 0%, #1e1b4b 100%)'
+                  "
+                >
+                  <div class="cover-pattern"></div>
+                  <span class="category-badge">
+                    <mat-icon>{{ getCategoryIcon(art.categoria?.nombre || '') }}</mat-icon>
+                    {{ art.categoria?.nombre || 'Atlas' }}
+                  </span>
+                  <div class="cover-doc-info">
+                    <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
+                  </div>
+                  @if (!tieneAcceso(art)) {
+                    <div class="lock-overlay">
+                      <mat-icon>lock</mat-icon>
                     </div>
-                    @if (!tieneAcceso(rep)) {
-                      <div class="lock-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 27, 75, 0.4); display: flex; align-items: center; justify-content: center; z-index: 3; backdrop-filter: blur(2px);">
-                        <mat-icon style="font-size: 3.5rem; width: 3.5rem; height: 3.5rem; color: rgba(255,255,255,0.9);">lock</mat-icon>
+                  }
+                </div>
+
+                <div class="card-body">
+                  <h3 class="publication-title" [title]="art.titulo">{{ art.titulo }}</h3>
+                  <p class="publication-desc">{{ art.descripcion }}</p>
+
+                  <div class="publication-metadata">
+                    @if (art.autor) {
+                      <div class="meta-row">
+                        <mat-icon class="meta-icon">person</mat-icon>
+                        <span class="meta-text">{{ art.autor }}</span>
+                      </div>
+                    }
+                    @if (art.fecha_publicacion) {
+                      <div class="meta-row">
+                        <mat-icon class="meta-icon">calendar_today</mat-icon>
+                        <span class="meta-text">{{ art.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
                       </div>
                     }
                   </div>
-                  <!-- Body -->
-                  <div class="articulo-body" style="padding: 1.5rem; flex: 1;">
-                    <h3 class="articulo-titulo" [title]="rep.nombre_indicador" style="margin: 0 0 0.5rem 0; font-size: 1.25rem; font-weight: 600; color: #1e293b;">{{ rep.nombre_indicador }}</h3>
-                    <p class="articulo-desc" style="color: #64748b; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.5;">{{ rep.descripcion_indicador }}</p>
-                    <div class="articulo-meta" style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; color: #94a3b8;">
-                      @if (rep.fuente) {
-                        <div class="meta-row" style="display: flex; align-items: center; gap: 0.5rem;">
-                          <mat-icon style="font-size: 1.25rem; width: 1.25rem; height: 1.25rem;">source</mat-icon>
-                          <span>{{ rep.fuente }}</span>
-                        </div>
-                      }
-                      @if (rep.fecha_publicacion) {
-                        <div class="meta-row" style="display: flex; align-items: center; gap: 0.5rem;">
-                          <mat-icon style="font-size: 1.25rem; width: 1.25rem; height: 1.25rem;">calendar_today</mat-icon>
-                          <span>{{ rep.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                  <!-- Actions -->
-                  <div class="articulo-actions" style="padding: 1.5rem; border-top: 1px solid #f1f5f9; display: flex; gap: 1rem;">
-                    @if (tieneAcceso(rep)) {
-                      @if (rep.link_url) {
-                        <a mat-flat-button color="primary" [href]="rep.link_url" target="_blank" style="flex: 1;">
-                          <mat-icon>open_in_new</mat-icon>
-                          Ver en PowerBI
-                        </a>
-                      }
-                      @if (rep.ficha_indicador) {
-                        <a mat-stroked-button [href]="rep.ficha_indicador" target="_blank">
-                          <mat-icon>download</mat-icon>
-                          Ficha
-                        </a>
-                      }
+                </div>
+
+                <div class="card-actions">
+                  @if (art.enlace) {
+                    @if (tieneAcceso(art)) {
+                      <a
+                        mat-stroked-button
+                        [href]="art.enlace"
+                        target="_blank"
+                        rel="noopener"
+                        class="action-btn view-btn"
+                      >
+                        <mat-icon>visibility</mat-icon>
+                        Visualizar PDF
+                      </a>
                     } @else {
-                      <button mat-flat-button color="accent" style="flex: 1;" (click)="sugerirSuscripcion()">
+                      <button
+                        mat-flat-button
+                        color="accent"
+                        class="action-btn view-btn locked-btn"
+                        type="button"
+                        (click)="sugerirSuscripcion()"
+                      >
                         <mat-icon>lock</mat-icon>
-                        Suscribirse para acceder
+                        Suscribirse
                       </button>
                     }
-                  </div>
+                  }
                 </div>
-              }
-            </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty-state">
+            <mat-icon>picture_as_pdf</mat-icon>
+            <h3>No se encontraron reportes PDF</h3>
+            <p>Prueba buscando con otros terminos o sincroniza archivos desde SharePoint.</p>
           </div>
         }
-      } @else {
-        <div class="empty-state" style="text-align: center; padding: 4rem 2rem; color: #64748b;">
-          <mat-icon style="font-size: 4rem; width: 4rem; height: 4rem; margin-bottom: 1rem; color: #cbd5e1;">analytics</mat-icon>
-          <h3 style="font-size: 1.5rem; color: #1e293b; margin: 0 0 0.5rem 0;">No hay reportes disponibles</h3>
-          <p style="margin: 0;">Aún no se han publicado reportes o dashboards para el Atlas Territorial.</p>
-        </div>
-      }
-    </section>
-  </mat-tab>
-
+      </div>
+    </mat-tab>
   </mat-tab-group>
-
 </div>

@@ -8,8 +8,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
+import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { PublicacionService } from '@core/services/publicacion.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import type { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
@@ -34,12 +36,14 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
-    private readonly destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly deptoService = inject(DepartamentoService);
+  private readonly publicacionService = inject(PublicacionService);
   private readonly translate = inject(TranslateService);
   authService = inject(AuthService);
 
   departamentos = signal<Departamento[]>([]);
+  atlasReportes = signal<ObservatorioPublicacion[]>([]);
   loading = signal(true);
 
   // Computed values
@@ -222,6 +226,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartamentos();
+    this.loadAtlasReportes();
   }
 
   loadDepartamentos(): void {
@@ -235,6 +240,16 @@ export class DashboardComponent implements OnInit {
         this.loading.set(false);
       },
     });
+  }
+
+  loadAtlasReportes(): void {
+    this.publicacionService
+      .getRecentAtlasReports()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => this.atlasReportes.set(items || []),
+        error: () => this.atlasReportes.set([]),
+      });
   }
 
   getEstadoClass(estado: string): string {

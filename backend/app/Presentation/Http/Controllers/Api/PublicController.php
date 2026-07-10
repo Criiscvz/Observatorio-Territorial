@@ -14,8 +14,10 @@ use App\Application\Public\UseCases\GetPublicDepartamentosUseCase;
 use App\Application\Public\UseCases\GetTextAnalysisUseCase;
 use App\Application\Public\UseCases\GetUnivariableStatsUseCase;
 use App\Http\Controllers\Controller;
+use App\Models\ObservatorioPublicacion;
 use App\Presentation\Http\Requests\Public\BivariableStatsRequest;
 use App\Presentation\Http\Requests\Public\UnivariableStatsRequest;
+use App\Presentation\Http\Resources\Publicacion\PublicacionResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -68,6 +70,16 @@ class PublicController extends Controller
         }
 
         return response()->json($departamento->toArray());
+    }
+
+    public function atlas(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    {
+        $query = ObservatorioPublicacion::query()
+            ->where('tipo', 'ATLAS')
+            ->whereHas('departamento', fn($departamentoQuery) => $departamentoQuery->where('publico', true))
+            ->latest('fecha_publicacion');
+
+        return PublicacionResource::collection($query->get());
     }
 
     #[OA\Get(

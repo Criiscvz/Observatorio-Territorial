@@ -35,4 +35,13 @@ return [
         ],
     ],
 
+    'sharepoint' => [
+        'tenant_id' => env('MICROSOFT_TENANT_ID'),
+        'client_id' => env('MICROSOFT_CLIENT_ID'),
+        'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
+        'site_id' => env('SHAREPOINT_SITE_ID'),
+        'drive_id' => env('SHAREPOINT_DRIVE_ID'),
+        'folder_path' => env('SHAREPOINT_FOLDER_PATH', ''),
+    ],
+
 ];

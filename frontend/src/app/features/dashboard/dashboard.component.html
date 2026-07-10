@@ -290,6 +290,53 @@
           }
         </div>
       </div>
+
+      <!-- Reportes Atlas Recientes -->
+      <div class="content-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon orange">
+              <mat-icon>picture_as_pdf</mat-icon>
+            </div>
+            <div>
+              <h3 class="card-title">Reportes Atlas recientes</h3>
+              <p class="card-subtitle">PDF sincronizados desde SharePoint</p>
+            </div>
+          </div>
+          <a class="view-all" routerLink="/publico/atlas">
+            Ver Atlas
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+        </div>
+
+        <div class="card-body">
+          @if (atlasReportes().length > 0) {
+            <div class="items-list">
+              @for (reporte of atlasReportes(); track reporte.id) {
+                <a class="list-item" [href]="reporte.sharepoint_url || reporte.link_url" target="_blank" rel="noopener" matRipple>
+                  <div class="item-icon orange">
+                    <mat-icon>picture_as_pdf</mat-icon>
+                  </div>
+                  <div class="item-content">
+                    <span class="item-title">{{ reporte.titulo }}</span>
+                    <span class="item-meta">
+                      {{ reporte.fecha_publicacion | date: 'dd/MM/yyyy' }}
+                      <span class="badge info">{{ reporte.fuente }}</span>
+                    </span>
+                  </div>
+                  <mat-icon class="item-arrow">open_in_new</mat-icon>
+                </a>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>picture_as_pdf</mat-icon>
+              <p>No hay reportes Atlas sincronizados.</p>
+              <a routerLink="/publico/atlas" class="empty-action">Ver Atlas</a>
+            </div>
+          }
+        </div>
+      </div>
     </section>
 
     <!-- Quick Actions -->

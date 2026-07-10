@@ -52,6 +52,13 @@
   gap: 16px;
   margin-bottom: 18px;
 }
+.heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
 .section-heading h2 {
   margin: 0;
   font-size: 1.25rem;
@@ -381,14 +388,69 @@
 .publication-meta strong {
   color: var(--uleam-red);
 }
+.sharepoint-status {
+  color: var(--text-tertiary);
+}
+.sharepoint-status.synced {
+  color: var(--success-color);
+}
+.sharepoint-status.error {
+  color: var(--error-color);
+}
 .publication-links {
   justify-content: flex-end;
+}
+.powerbi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.powerbi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 240px;
+  padding: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+.powerbi-card-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: var(--info-color);
+  background: var(--info-bg);
+  border-radius: 4px;
+}
+.powerbi-card-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.powerbi-card-copy h3 {
+  margin: 8px 0 6px;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+.powerbi-card-copy p {
+  margin: 0 0 12px;
+  color: var(--text-secondary);
+}
+.powerbi-actions {
+  justify-content: space-between;
 }
 @media (max-width: 960px) {
   .detail-header {
     flex-direction: column;
   }
   .resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .powerbi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .publication-item {
@@ -401,7 +463,8 @@
 }
 @media (max-width: 640px) {
   .form-grid,
-  .resource-grid {
+  .resource-grid,
+  .powerbi-grid {
     grid-template-columns: 1fr;
   }
   .full-width {

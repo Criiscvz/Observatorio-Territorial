@@ -65,6 +65,7 @@ export class DepartamentoDetailComponent implements OnInit {
   loadingPublicaciones = signal(false);
   showPublicationForm = signal(false);
   savingPublication = signal(false);
+  syncingSharePoint = signal<TipoPublicacion | null>(null);
   selectedFile = signal<File | null>(null);
   isDraggingFile = signal(false);
   fileError = signal('');
@@ -88,8 +89,24 @@ export class DepartamentoDetailComponent implements OnInit {
     return this.publicaciones().filter((item) => item.tipo === 'REPORTE');
   }
 
+  get atlas(): ObservatorioPublicacion[] {
+    return this.publicaciones().filter((item) => item.tipo === 'ATLAS');
+  }
+
   get tipo(): TipoPublicacion {
     return this.publicationForm.controls.tipo.value;
+  }
+
+  get isArticulo(): boolean {
+    return this.tipo === 'ARTICULO';
+  }
+
+  get isReporte(): boolean {
+    return this.tipo === 'REPORTE';
+  }
+
+  get isAtlas(): boolean {
+    return this.tipo === 'ATLAS';
   }
 
   ngOnInit(): void {
@@ -98,7 +115,11 @@ export class DepartamentoDetailComponent implements OnInit {
     });
     this.publicationForm.controls.tipo.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((tipo) => this.configurePublicationValidators(tipo));
+      .subscribe((tipo) => {
+        this.configurePublicationValidators(tipo);
+        this.selectedFile.set(null);
+        this.fileError.set('');
+      });
     this.configurePublicationValidators('ARTICULO');
   }
 
@@ -129,13 +150,18 @@ export class DepartamentoDetailComponent implements OnInit {
     });
   }
 
-  togglePublicationForm(): void {
-    const willOpen = !this.showPublicationForm();
-    this.showPublicationForm.set(willOpen);
-    if (!willOpen) {
-      this.resetPublicationForm();
-    }
-    this.serverError.set('');
+  openPublicationForm(tipo: TipoPublicacion): void {
+    this.resetPublicationForm(tipo);
+    this.configurePublicationValidators(tipo);
+    this.showPublicationForm.set(true);
+    queueMicrotask(() =>
+      document.querySelector('.publication-form')?.scrollIntoView({ behavior: 'smooth' }),
+    );
+  }
+
+  closePublicationForm(): void {
+    this.showPublicationForm.set(false);
+    this.resetPublicationForm();
   }
 
   editPublication(publicacion: ObservatorioPublicacion): void {
@@ -144,7 +170,7 @@ export class DepartamentoDetailComponent implements OnInit {
       tipo: publicacion.tipo,
       titulo: publicacion.titulo,
       fecha_publicacion: publicacion.fecha_publicacion,
-      link_url: publicacion.link_url,
+      link_url: publicacion.link_url ?? '',
       descripcion: publicacion.descripcion ?? '',
       autores: publicacion.autores ?? '',
       fuente: publicacion.fuente,
@@ -225,13 +251,13 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   savePublication(): void {
-    if (this.tipo === 'ATLAS') return;
     this.publicationForm.markAllAsTouched();
     const editing = this.editingPublication();
-    if (!editing && !this.selectedFile()) {
+    const requiresPdf = this.isAtlas;
+    if (!editing && requiresPdf && !this.selectedFile()) {
       this.fileError.set('Debe seleccionar un archivo PDF.');
     }
-    if (this.publicationForm.invalid || (!editing && !this.selectedFile())) return;
+    if (this.publicationForm.invalid || (!editing && requiresPdf && !this.selectedFile())) return;
 
     const departamento = this.departamento();
     if (!departamento) return;
@@ -278,6 +304,53 @@ export class DepartamentoDetailComponent implements OnInit {
     this.publicacionService.download(publicacion);
   }
 
+  openReport(publicacion: ObservatorioPublicacion): void {
+    const url = publicacion.link_url;
+    if (url) window.open(url, '_blank', 'noopener');
+  }
+
+  syncSharePointReportes(): void {
+    const departamento = this.departamento();
+    if (!departamento || this.syncingSharePoint()) return;
+    this.syncingSharePoint.set('REPORTE');
+    this.publicacionService.syncSharePointReportes(departamento.id).subscribe({
+      next: (items) => {
+        this.syncingSharePoint.set(null);
+        this.loadPublicaciones(departamento.id);
+        this.snackBar.open(`Reportes Power BI sincronizados: ${items.length}.`, 'Cerrar', {
+          duration: 4000,
+        });
+      },
+      error: (error) => {
+        this.syncingSharePoint.set(null);
+        this.snackBar.open(error?.error?.message || 'No se pudo sincronizar Power BI.', 'Cerrar', {
+          duration: 5000,
+        });
+      },
+    });
+  }
+
+  syncSharePointAtlas(): void {
+    const departamento = this.departamento();
+    if (!departamento || this.syncingSharePoint()) return;
+    this.syncingSharePoint.set('ATLAS');
+    this.publicacionService.syncSharePointAtlas(departamento.id).subscribe({
+      next: (items) => {
+        this.syncingSharePoint.set(null);
+        this.loadPublicaciones(departamento.id);
+        this.snackBar.open(`PDF de Atlas sincronizados: ${items.length}.`, 'Cerrar', {
+          duration: 4000,
+        });
+      },
+      error: (error) => {
+        this.syncingSharePoint.set(null);
+        this.snackBar.open(error?.error?.message || 'No se pudo sincronizar Atlas.', 'Cerrar', {
+          duration: 5000,
+        });
+      },
+    });
+  }
+
   getEstadoClass(estado: string): string {
     return estado === 'COMPLETADO'
       ? 'badge-success'
@@ -309,6 +382,10 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   private configurePublicationValidators(tipo: TipoPublicacion): void {
+    this.publicationForm.controls.link_url.setValidators([
+      ...(tipo === 'ARTICULO' || tipo === 'REPORTE' ? [Validators.required] : []),
+      Validators.pattern(/^https?:\/\/.+/i),
+    ]);
     this.publicationForm.controls.descripcion.setValidators([
       Validators.required,
       Validators.maxLength(3000),
@@ -317,14 +394,15 @@ export class DepartamentoDetailComponent implements OnInit {
       ...(tipo === 'ARTICULO' ? [Validators.required] : []),
       Validators.maxLength(1000),
     ]);
+    this.publicationForm.controls.link_url.updateValueAndValidity();
     this.publicationForm.controls.descripcion.updateValueAndValidity();
     this.publicationForm.controls.autores.updateValueAndValidity();
   }
 
-  private resetPublicationForm(): void {
+  private resetPublicationForm(tipo: TipoPublicacion = 'ARTICULO'): void {
     this.editingPublication.set(null);
     this.publicationForm.reset({
-      tipo: 'ARTICULO',
+      tipo,
       titulo: '',
       fecha_publicacion: '',
       link_url: '',

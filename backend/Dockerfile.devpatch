@@ -1,0 +1,8 @@
+FROM backend-backend
+
+WORKDIR /var/www/html
+
+COPY app ./app
+COPY config ./config
+COPY database ./database
+COPY routes ./routes

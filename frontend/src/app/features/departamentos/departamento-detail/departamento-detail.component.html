@@ -33,9 +33,17 @@
 
     @if (isAdmin()) {
       <section class="publication-action">
-        <button mat-raised-button color="primary" type="button" (click)="togglePublicationForm()">
-          <mat-icon>{{ showPublicationForm() ? 'close' : 'library_add' }}</mat-icon>
-          {{ showPublicationForm() ? 'Cerrar formulario' : 'Agregar Artículo / Reporte / Atlas' }}
+        <button mat-raised-button color="primary" type="button" (click)="openPublicationForm('ARTICULO')">
+          <mat-icon>article</mat-icon>
+          Agregar artículo
+        </button>
+        <button mat-raised-button color="primary" type="button" (click)="openPublicationForm('REPORTE')">
+          <mat-icon>bar_chart</mat-icon>
+          Agregar reporte Power BI
+        </button>
+        <button mat-raised-button color="primary" type="button" (click)="openPublicationForm('ATLAS')">
+          <mat-icon>picture_as_pdf</mat-icon>
+          Agregar Atlas PDF
         </button>
       </section>
 
@@ -48,7 +56,7 @@
               }}</span>
               <h2 id="publication-form-title">
                 @if (editingPublication()) {
-                  Editar {{ tipo === 'ARTICULO' ? 'artículo' : 'reporte' }}
+                  Editar {{ isArticulo ? 'artículo' : isAtlas ? 'Atlas' : 'reporte Power BI' }}
                 } @else {
                   Contenido del Observatorio
                 }
@@ -69,32 +77,25 @@
                 <mat-button-toggle value="REPORTE"
                   ><mat-icon>summarize</mat-icon>Reporte</mat-button-toggle
                 >
-                <mat-button-toggle value="ATLAS"><mat-icon>map</mat-icon>Atlas</mat-button-toggle>
+                <mat-button-toggle value="ATLAS"
+                  ><mat-icon>picture_as_pdf</mat-icon>Atlas</mat-button-toggle
+                >
               </mat-button-toggle-group>
               <p class="code-hint">
-                @if (tipo === 'ATLAS') {
-                  Funcionalidad próximamente disponible
+                @if (isAtlas) {
+                  Se generará automáticamente: <strong>ATL-####</strong>
                 } @else if (editingPublication()) {
                   Código: <strong>{{ editingPublication()?.codigo }}</strong>
                 } @else {
                   Se generará automáticamente:
-                  <strong>{{ tipo === 'ARTICULO' ? 'ART-####' : 'REP-####' }}</strong>
+                  <strong>{{ isArticulo ? 'ART-####' : 'REP-####' }}</strong>
                 }
               </p>
             </div>
 
-            @if (tipo === 'ATLAS') {
-              <div class="coming-soon">
-                <mat-icon>schedule</mat-icon>
-                <div>
-                  <strong>Atlas</strong>
-                  <p>Funcionalidad de Atlas próximamente disponible.</p>
-                </div>
-              </div>
-            } @else {
               <div class="form-grid">
                 <mat-form-field appearance="outline"
-                  ><mat-label>{{ tipo === 'ARTICULO' ? 'Título' : 'Nombre' }}</mat-label
+                  ><mat-label>{{ isArticulo ? 'Título' : 'Nombre' }}</mat-label
                   ><input matInput formControlName="titulo" maxlength="255" />
                   @if (
                     publicationForm.controls.titulo.touched &&
@@ -113,10 +114,15 @@
                     <mat-error>Ingrese una fecha válida.</mat-error>
                   }
                 </mat-form-field>
+                @if (!isAtlas) {
                 <mat-form-field appearance="outline" class="url-field"
-                  ><mat-label>Link URL</mat-label
+                  ><mat-label>{{ isReporte ? 'URL de Power BI' : 'Link URL' }}</mat-label
                   ><input matInput type="url" formControlName="link_url" autocomplete="url" />
-                  <mat-hint>Ejemplo: https://www.ejemplo.com/recurso</mat-hint>
+                  <mat-hint>{{
+                    isReporte
+                      ? 'Ejemplo: https://app.powerbi.com/view?r=...'
+                      : 'Ejemplo: https://www.ejemplo.com/recurso'
+                  }}</mat-hint>
                   @if (
                     publicationForm.controls.link_url.touched &&
                     publicationForm.controls.link_url.invalid
@@ -124,6 +130,7 @@
                     <mat-error>Ingrese una URL válida con http o https.</mat-error>
                   }
                 </mat-form-field>
+                }
                 <mat-form-field appearance="outline"
                   ><mat-label>Fuente</mat-label><input matInput formControlName="fuente" />
                   @if (
@@ -133,7 +140,7 @@
                     <mat-error>La fuente es obligatoria.</mat-error>
                   }
                 </mat-form-field>
-                @if (tipo === 'ARTICULO') {
+                @if (isArticulo) {
                   <mat-form-field appearance="outline" class="full-width"
                     ><mat-label>Autor o autores</mat-label
                     ><input matInput formControlName="autores" />
@@ -147,7 +154,7 @@
                 }
                 <mat-form-field appearance="outline" class="full-width"
                   ><mat-label>{{
-                    tipo === 'ARTICULO' ? 'Breve descripción' : 'Descripción'
+                    isArticulo ? 'Breve descripción' : 'Descripción'
                   }}</mat-label
                   ><textarea matInput formControlName="descripcion" rows="3"></textarea>
                   @if (
@@ -157,6 +164,7 @@
                     <mat-error>La descripción es obligatoria.</mat-error>
                   }
                 </mat-form-field>
+                @if (isAtlas) {
                 <div class="file-field full-width">
                   <input
                     #pdfInput
@@ -215,7 +223,7 @@
                   </div>
                   @if (fileError()) {
                     <div class="file-message file-message-error">
-                      <mat-icon>error</mat-icon>
+                    <mat-icon>error</mat-icon>
                       <span>{{ fileError() }}</span>
                     </div>
                   }
@@ -232,12 +240,13 @@
                     </div>
                   }
                 </div>
+                }
               </div>
               @if (serverError()) {
                 <div class="server-error"><mat-icon>error</mat-icon>{{ serverError() }}</div>
               }
               <div class="form-actions">
-                <button mat-button type="button" (click)="togglePublicationForm()">Cancelar</button
+                <button mat-button type="button" (click)="closePublicationForm()">Cancelar</button
                 ><button
                   mat-raised-button
                   color="primary"
@@ -250,10 +259,9 @@
                     <mat-icon>save</mat-icon>
                   }
                   {{ editingPublication() ? 'Actualizar' : 'Guardar' }}
-                  {{ tipo === 'ARTICULO' ? 'artículo' : 'reporte' }}
+                  {{ isArticulo ? 'artículo' : isAtlas ? 'Atlas' : 'reporte' }}
                 </button>
               </div>
-            }
           </form>
         </section>
       }
@@ -336,11 +344,16 @@
                 </div>
               </div>
               <div class="publication-links">
+                @if (item.link_url) {
                 <a mat-button color="primary" [href]="item.link_url" target="_blank" rel="noopener"
                   ><mat-icon>open_in_new</mat-icon>Ver fuente</a
-                ><button mat-stroked-button type="button" (click)="download(item)">
+                >
+                }
+                @if (item.download_url || item.sharepoint_url) {
+                <button mat-stroked-button type="button" (click)="download(item)">
                   <mat-icon>download</mat-icon>PDF
                 </button>
+                }
                 @if (isAdmin()) {
                   <button mat-button type="button" (click)="editPublication(item)">
                     <mat-icon>edit</mat-icon>Editar
@@ -359,18 +372,35 @@
       <div class="section-heading">
         <div>
           <span class="eyebrow">Biblioteca</span>
-          <h2>Reportes subidos</h2>
+          <h2>Reportes Power BI</h2>
         </div>
-        <span class="count">{{ reportes.length }}</span>
+        <div class="heading-actions">
+          @if (isAdmin()) {
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="syncSharePointReportes()"
+              [disabled]="syncingSharePoint() === 'REPORTE'"
+            >
+              @if (syncingSharePoint() === 'REPORTE') {
+                <mat-spinner diameter="18"></mat-spinner>
+              } @else {
+                <mat-icon>sync</mat-icon>
+              }
+              SharePoint
+            </button>
+          }
+          <span class="count">{{ reportes.length }}</span>
+        </div>
       </div>
       @if (loadingPublicaciones()) {
         <mat-spinner diameter="32"></mat-spinner>
       } @else if (reportes.length) {
-        <div class="resource-list">
+        <div class="powerbi-grid">
           @for (item of reportes; track item.id) {
-            <article class="publication-item">
-              <div class="publication-icon report"><mat-icon>summarize</mat-icon></div>
-              <div class="publication-copy">
+            <article class="powerbi-card">
+              <div class="powerbi-card-icon"><mat-icon>bar_chart</mat-icon></div>
+              <div class="powerbi-card-copy">
                 <div class="publication-meta">
                   <strong>{{ item.codigo }}</strong
                   ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
@@ -381,11 +411,9 @@
                   <span><b>Fuente:</b> {{ item.fuente }}</span>
                 </div>
               </div>
-              <div class="publication-links">
-                <a mat-button color="primary" [href]="item.link_url" target="_blank" rel="noopener"
-                  ><mat-icon>open_in_new</mat-icon>Ver fuente</a
-                ><button mat-stroked-button type="button" (click)="download(item)">
-                  <mat-icon>download</mat-icon>PDF
+              <div class="publication-links powerbi-actions">
+                <button mat-raised-button color="primary" type="button" (click)="openReport(item)">
+                  <mat-icon>open_in_new</mat-icon>Abrir Power BI
                 </button>
                 @if (isAdmin()) {
                   <button mat-button type="button" (click)="editPublication(item)">
@@ -398,6 +426,70 @@
         </div>
       } @else {
         <p class="empty-copy">Todavía no hay reportes asociados a este Observatorio.</p>
+      }
+    </section>
+
+    <section class="publications-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Biblioteca</span>
+          <h2>Atlas PDF</h2>
+        </div>
+        <div class="heading-actions">
+          @if (isAdmin()) {
+            <button
+              mat-stroked-button
+              type="button"
+              (click)="syncSharePointAtlas()"
+              [disabled]="syncingSharePoint() === 'ATLAS'"
+            >
+              @if (syncingSharePoint() === 'ATLAS') {
+                <mat-spinner diameter="18"></mat-spinner>
+              } @else {
+                <mat-icon>sync</mat-icon>
+              }
+              SharePoint
+            </button>
+          }
+          <span class="count">{{ atlas.length }}</span>
+        </div>
+      </div>
+      @if (loadingPublicaciones()) {
+        <mat-spinner diameter="32"></mat-spinner>
+      } @else if (atlas.length) {
+        <div class="resource-list">
+          @for (item of atlas; track item.id) {
+            <article class="publication-item">
+              <div class="publication-icon"><mat-icon>picture_as_pdf</mat-icon></div>
+              <div class="publication-copy">
+                <div class="publication-meta">
+                  <strong>{{ item.codigo }}</strong
+                  ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
+                </div>
+                <h3>{{ item.titulo }}</h3>
+                <p>{{ item.descripcion }}</p>
+                <div class="details">
+                  <span><b>Fuente:</b> {{ item.fuente }}</span>
+                  @if (item.nombre_archivo_original || item.sharepoint_file_name) {
+                    <span><b>Archivo:</b> {{ item.nombre_archivo_original || item.sharepoint_file_name }}</span>
+                  }
+                </div>
+              </div>
+              <div class="publication-links">
+                <button mat-stroked-button type="button" (click)="download(item)">
+                  <mat-icon>download</mat-icon>PDF
+                </button>
+                @if (isAdmin()) {
+                  <button mat-button type="button" (click)="editPublication(item)">
+                    <mat-icon>edit</mat-icon>Editar
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="empty-copy">Todavía no hay reportes PDF de Atlas asociados a este Observatorio.</p>
       }
     </section>
   </div>

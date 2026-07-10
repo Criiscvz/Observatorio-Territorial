@@ -2,7 +2,10 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ObservatorioPublicacion } from '../models/publicacion/publicacion.interface';
+import {
+  ObservatorioPublicacion,
+  SharePointFile,
+} from '../models/publicacion/publicacion.interface';
 import { ApiService } from './api.service';
 
 interface ResourceResponse<T> {
@@ -19,6 +22,76 @@ export class PublicacionService {
     return this.api
       .get<ResourceResponse<ObservatorioPublicacion[]>>(
         `/departamentos/${departamentoId}/publicaciones`,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getRecentAtlasReports(): Observable<ObservatorioPublicacion[]> {
+    return this.api
+      .get<ResourceResponse<ObservatorioPublicacion[]>>('/departamentos/publicaciones/atlas/recientes')
+      .pipe(map((response) => response.data));
+  }
+
+  getPublicAtlas(): Observable<ObservatorioPublicacion[]> {
+    return this.api
+      .get<ResourceResponse<ObservatorioPublicacion[]>>('/publico/atlas')
+      .pipe(map((response) => response.data));
+  }
+
+  getAtlasSharePointFiles(departamentoId: string): Observable<SharePointFile[]> {
+    return this.api
+      .get<ResourceResponse<SharePointFile[]>>(
+        `/departamentos/${departamentoId}/publicaciones/atlas/sharepoint/files`,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getReporteSharePointFiles(departamentoId: string): Observable<SharePointFile[]> {
+    return this.api
+      .get<ResourceResponse<SharePointFile[]>>(
+        `/departamentos/${departamentoId}/publicaciones/reportes/sharepoint/files`,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  importSharePointAtlas(
+    departamentoId: string,
+    sharepointFileId: string,
+  ): Observable<ObservatorioPublicacion> {
+    return this.api
+      .post<ResourceResponse<ObservatorioPublicacion>>(
+        `/departamentos/${departamentoId}/publicaciones/atlas/sharepoint/import`,
+        { sharepoint_file_id: sharepointFileId },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  importSharePointReporte(
+    departamentoId: string,
+    sharepointFileId: string,
+  ): Observable<ObservatorioPublicacion> {
+    return this.api
+      .post<ResourceResponse<ObservatorioPublicacion>>(
+        `/departamentos/${departamentoId}/publicaciones/reportes/sharepoint/import`,
+        { sharepoint_file_id: sharepointFileId },
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  syncSharePointAtlas(departamentoId: string): Observable<ObservatorioPublicacion[]> {
+    return this.api
+      .post<ResourceResponse<ObservatorioPublicacion[]>>(
+        `/departamentos/${departamentoId}/publicaciones/atlas/sharepoint/sync`,
+        {},
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  syncSharePointReportes(departamentoId: string): Observable<ObservatorioPublicacion[]> {
+    return this.api
+      .post<ResourceResponse<ObservatorioPublicacion[]>>(
+        `/departamentos/${departamentoId}/publicaciones/reportes/sharepoint/sync`,
+        {},
       )
       .pipe(map((response) => response.data));
   }
@@ -43,6 +116,11 @@ export class PublicacionService {
   }
 
   download(publicacion: ObservatorioPublicacion): void {
+    if (publicacion.sharepoint_url) {
+      window.open(publicacion.sharepoint_url, '_blank', 'noopener');
+      return;
+    }
+    if (!publicacion.download_url) return;
     this.http
       .get(`${this.apiUrl}${publicacion.download_url.replace('/api', '')}`, {
         responseType: 'blob',
@@ -51,7 +129,7 @@ export class PublicacionService {
         const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = publicacion.nombre_archivo_original;
+        anchor.download = publicacion.nombre_archivo_original || `${publicacion.titulo}.pdf`;
         anchor.click();
         URL.revokeObjectURL(url);
       });

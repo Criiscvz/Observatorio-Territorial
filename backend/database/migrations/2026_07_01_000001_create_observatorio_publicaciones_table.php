@@ -16,6 +16,7 @@ return new class extends Migration
         DB::table('publicacion_contadores')->insert([
             ['tipo' => 'ARTICULO', 'siguiente_numero' => 1],
             ['tipo' => 'REPORTE', 'siguiente_numero' => 1],
+            ['tipo' => 'ATLAS', 'siguiente_numero' => 1],
         ]);
         Schema::create('observatorio_publicaciones', function (Blueprint $table) {
             $table->uuid('id')->primary();

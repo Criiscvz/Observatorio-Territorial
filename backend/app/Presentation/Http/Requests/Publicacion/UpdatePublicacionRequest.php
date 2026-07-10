@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Presentation\Http\Requests\Publicacion;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdatePublicacionRequest extends FormRequest
 {
@@ -18,7 +19,12 @@ class UpdatePublicacionRequest extends FormRequest
         return [
             'titulo' => ['required', 'string', 'max:255'],
             'fecha_publicacion' => ['required', 'date'],
-            'link_url' => ['required', 'url:http,https', 'max:2048'],
+            'link_url' => [
+                Rule::requiredIf(in_array($this->route('publicacion')?->tipo, ['ARTICULO', 'REPORTE'], true)),
+                'nullable',
+                'url:http,https',
+                'max:2048',
+            ],
             'descripcion' => ['required', 'string', 'max:3000'],
             'autores' => [
                 $this->route('publicacion')?->tipo === 'ARTICULO' ? 'required' : 'nullable',
@@ -26,7 +32,14 @@ class UpdatePublicacionRequest extends FormRequest
                 'max:1000',
             ],
             'fuente' => ['required', 'string', 'max:255'],
-            'archivo' => ['nullable', 'file', 'mimetypes:application/pdf,application/x-pdf', 'mimes:pdf', 'max:20480'],
+            'archivo' => [
+                Rule::prohibitedIf($this->route('publicacion')?->tipo !== 'ATLAS'),
+                'nullable',
+                'file',
+                'mimetypes:application/pdf,application/x-pdf',
+                'mimes:pdf',
+                'max:20480',
+            ],
         ];
     }
 
@@ -41,6 +54,7 @@ class UpdatePublicacionRequest extends FormRequest
             'descripcion.required' => 'La descripción es obligatoria.',
             'autores.required' => 'El autor o autores son obligatorios para un artículo.',
             'fuente.required' => 'La fuente es obligatoria.',
+            'archivo.prohibited' => 'Solo Atlas permite subir archivos PDF.',
             'archivo.mimetypes' => 'El documento debe ser un archivo PDF válido.',
             'archivo.mimes' => 'Solo se permiten archivos PDF.',
             'archivo.max' => 'El PDF no debe superar los 20 MB.',

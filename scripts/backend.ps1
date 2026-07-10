@@ -11,6 +11,7 @@ param(
 
 $BackendPath = Join-Path $PSScriptRoot "..\backend"
 $ImageName = "backend-backend"
+$DevImageName = "backend-backend-dev"
 $ContainerName = "observatorio-backend-dev"
 $EnvFile = Join-Path $BackendPath ".env"
 $DockerNetwork = "observatirio_default"
@@ -29,11 +30,23 @@ function Get-DockerMongoUri {
 }
 
 function Ensure-BackendImage {
-    $exists = docker image inspect $ImageName 2>$null
+    $exists = docker image inspect $DevImageName 2>$null
+    if (-not $?) {
+        $exists = docker image inspect $ImageName 2>$null
+    }
     if (-not $?) {
         Write-Host "Imagen $ImageName no encontrada. Construyendo..." -ForegroundColor Yellow
         docker build -t $ImageName -f Dockerfile .
     }
+}
+
+function Get-BackendImage {
+    docker image inspect $DevImageName 2>$null | Out-Null
+    if ($?) {
+        return $DevImageName
+    }
+
+    return $ImageName
 }
 
 function Run-Artisan {
@@ -43,6 +56,7 @@ function Run-Artisan {
     )
 
     Ensure-BackendImage
+    $RunImageName = Get-BackendImage
     $MongoUri = Get-DockerMongoUri
     docker run --rm `
       --network $DockerNetwork `
@@ -52,7 +66,7 @@ function Run-Artisan {
       -e DB_PORT=5432 `
       -e "MONGODB_URI=$MongoUri" `
       --entrypoint php `
-      $ImageName artisan @Args
+      $RunImageName artisan @Args
 }
 
 Push-Location $BackendPath
@@ -61,6 +75,7 @@ try {
     switch ($Command) {
         "start" {
             Ensure-BackendImage
+            $RunImageName = Get-BackendImage
             $MongoUri = Get-DockerMongoUri
             Write-Host "Iniciando backend en http://127.0.0.1:8000 con PHP 8.4 (Docker)..." -ForegroundColor Green
             docker rm -f $ContainerName 2>$null | Out-Null
@@ -75,7 +90,7 @@ try {
               -e DB_PORT=5432 `
               -e "MONGODB_URI=$MongoUri" `
               --entrypoint php `
-              $ImageName artisan serve --host=0.0.0.0 --port=8000 | Out-Null
+              $RunImageName artisan serve --host=0.0.0.0 --port=8000 | Out-Null
             Write-Host "Backend iniciado. Usa '.\scripts\backend.ps1 logs' para ver salida." -ForegroundColor Green
         }
         "stop" {
@@ -88,8 +103,8 @@ try {
             docker logs -f $ContainerName
         }
         "install" {
-            Write-Host "Construyendo imagen backend (incluye Composer install en Dockerfile)..." -ForegroundColor Green
-            docker build -t $ImageName -f Dockerfile .
+            Write-Host "Construyendo imagen backend de desarrollo con codigo local..." -ForegroundColor Green
+            docker build -t $DevImageName -f Dockerfile.devpatch .
         }
         "migrate" {
             Write-Host "Ejecutando migraciones..." -ForegroundColor Green
@@ -132,7 +147,7 @@ try {
             Write-Host "  start              - Iniciar backend en Docker (PHP 8.4)"
             Write-Host "  stop               - Detener backend en Docker"
             Write-Host "  logs               - Ver logs del backend"
-            Write-Host "  install            - Construir imagen backend (Composer)"
+            Write-Host "  install            - Construir imagen backend de desarrollo con codigo local"
             Write-Host "  migrate            - Ejecutar migraciones"
             Write-Host "  seed               - Ejecutar seeders"
             Write-Host "  migrate-fresh      - Resetear BD y migrar"

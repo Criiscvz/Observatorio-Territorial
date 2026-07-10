@@ -17,14 +17,27 @@ class StorePublicacionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tipo' => ['required', Rule::in(['ARTICULO', 'REPORTE'])],
+            'tipo' => ['required', Rule::in(['ARTICULO', 'REPORTE', 'ATLAS'])],
             'titulo' => ['required', 'string', 'max:255'],
             'fecha_publicacion' => ['required', 'date'],
-            'link_url' => ['required', 'url:http,https', 'max:2048'],
+            'link_url' => [
+                Rule::requiredIf(in_array($this->input('tipo'), ['ARTICULO', 'REPORTE'], true)),
+                'nullable',
+                'url:http,https',
+                'max:2048',
+            ],
             'descripcion' => ['required', 'string', 'max:3000'],
             'autores' => [Rule::requiredIf($this->input('tipo') === 'ARTICULO'), 'nullable', 'string', 'max:1000'],
             'fuente' => ['required', 'string', 'max:255'],
-            'archivo' => ['required', 'file', 'mimetypes:application/pdf,application/x-pdf', 'mimes:pdf', 'max:20480'],
+            'archivo' => [
+                Rule::prohibitedIf($this->input('tipo') !== 'ATLAS'),
+                Rule::requiredIf($this->input('tipo') === 'ATLAS'),
+                'nullable',
+                'file',
+                'mimetypes:application/pdf,application/x-pdf',
+                'mimes:pdf',
+                'max:20480',
+            ],
         ];
     }
 
@@ -41,6 +54,7 @@ class StorePublicacionRequest extends FormRequest
             'autores.required' => 'El autor o autores son obligatorios para un artículo.',
             'fuente.required' => 'La fuente es obligatoria.',
             'archivo.required' => 'Debe subir el documento PDF.',
+            'archivo.prohibited' => 'Solo Atlas permite subir archivos PDF.',
             'archivo.mimetypes' => 'El documento debe ser un archivo PDF válido.',
             'archivo.mimes' => 'Solo se permiten archivos PDF.',
             'archivo.max' => 'El PDF no debe superar los 20 MB.',

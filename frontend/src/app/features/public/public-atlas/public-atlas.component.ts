@@ -10,8 +10,8 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import { ArticulosService, Articulo } from '@core/services/articulos.service';
-import { ReportesService, Reporte } from '@core/services/reportes.service';
+import { Articulo } from '@core/services/articulos.service';
+import { PublicacionService } from '@core/services/publicacion.service';
 import { AuthService } from '@core/services/auth.service';
 import { PermisosService } from '@core/services/permisos.service';
 
@@ -34,8 +34,7 @@ import { PermisosService } from '@core/services/permisos.service';
 })
 export class PublicAtlasComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
-  private readonly articulosService = inject(ArticulosService);
-  private readonly reportesService = inject(ReportesService);
+  private readonly publicacionService = inject(PublicacionService);
   private readonly authService = inject(AuthService);
   private readonly permisosService = inject(PermisosService);
 
@@ -43,7 +42,6 @@ export class PublicAtlasComponent implements OnInit {
   selectedCategory = signal<string>('TODAS');
 
   articulos = signal<Articulo[]>([]);
-  reportes = signal<Reporte[]>([]);
 
   // Computed properties for permissions
   canCreate = computed(() => {
@@ -57,24 +55,42 @@ export class PublicAtlasComponent implements OnInit {
   }
 
   loadData(): void {
-    // Cargar todos los artículos (sin filtrar por departamento)
-    this.articulosService.getAll()
+    this.publicacionService.getPublicAtlas()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => this.articulos.set(data));
+      .subscribe((data) =>
+        this.articulos.set(
+          data.map((item) => ({
+            id: item.id,
+            titulo: item.titulo,
+            descripcion: item.descripcion,
+            autor: item.autores,
+            fuente: item.fuente,
+            enlace: item.sharepoint_url || item.link_url,
+            fecha_publicacion: item.fecha_publicacion,
+            departamento_id: item.departamento_id,
+            visibilidad: 'publico',
+            categoria: {
+              id: 'atlas',
+              nombre: 'Atlas',
+              codigo: 'ATLAS',
+              color: '#6366F1',
+              icono: 'picture_as_pdf',
+            },
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+          })),
+        ),
+      );
 
-    // Cargar todos los reportes (sin filtrar por departamento)
-    this.reportesService.getAll()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) => this.reportes.set(data));
   }
 
-  canEdit(item: Articulo | Reporte): boolean {
+  canEdit(item: Articulo): boolean {
     const user = this.authService.user();
     if (!user) return false;
     return this.permisosService.puedeEditar(user.id, 'atlas');
   }
 
-  canDelete(item: Articulo | Reporte): boolean {
+  canDelete(item: Articulo): boolean {
     const user = this.authService.user();
     if (!user) return false;
     return this.permisosService.esAdmin(user.id, 'atlas');
@@ -111,11 +127,7 @@ export class PublicAtlasComponent implements OnInit {
     return list;
   });
 
-  // ── Reportes (PowerBI) ──
-
-  reportesAgrupados = computed(() => {
-    return this.reportesService.agruparPorCategoria(this.reportes());
-  });
+  // ── Reportes (PDF) ──
 
   // ── Interfaz ──
 
@@ -151,7 +163,7 @@ export class PublicAtlasComponent implements OnInit {
     }
   }
 
-  tieneAcceso(item: Articulo | Reporte): boolean {
+  tieneAcceso(item: Articulo): boolean {
     const vis = item.visibilidad || 'publico';
     if (vis === 'publico') return true;
 
@@ -165,3 +177,4 @@ export class PublicAtlasComponent implements OnInit {
     alert('Esta publicación es exclusiva para suscriptores. Inicia sesión o suscríbete para acceder al contenido.');
   }
 }
+
