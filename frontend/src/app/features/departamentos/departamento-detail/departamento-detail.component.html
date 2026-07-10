@@ -31,7 +31,7 @@
       }
     </header>
 
-    @if (isAdmin()) {
+    @if (canManagePublications) {
       <section class="publication-action">
         <button mat-raised-button color="primary" type="button" (click)="openPublicationForm('ARTICULO')">
           <mat-icon>article</mat-icon>
@@ -58,42 +58,55 @@
                 @if (editingPublication()) {
                   Editar {{ isArticulo ? 'artículo' : isAtlas ? 'Atlas' : 'reporte Power BI' }}
                 } @else {
-                  Contenido del Observatorio
+                  Agregar {{ getPublicacionTipoLabel(tipo) }}
                 }
               </h2>
             </div>
           </div>
           <form [formGroup]="publicationForm" (ngSubmit)="savePublication()">
             <div class="type-row">
-              <mat-button-toggle-group
-                formControlName="tipo"
-                aria-label="Tipo de publicación"
-                class="type-selector"
-                [disabled]="!!editingPublication()"
-              >
-                <mat-button-toggle value="ARTICULO"
-                  ><mat-icon>article</mat-icon>Artículo</mat-button-toggle
-                >
-                <mat-button-toggle value="REPORTE"
-                  ><mat-icon>summarize</mat-icon>Reporte</mat-button-toggle
-                >
-                <mat-button-toggle value="ATLAS"
-                  ><mat-icon>picture_as_pdf</mat-icon>Atlas</mat-button-toggle
-                >
-              </mat-button-toggle-group>
+              <div class="selected-type-pill">
+                <mat-icon>{{ isArticulo ? 'article' : isReporte ? 'bar_chart' : 'picture_as_pdf' }}</mat-icon>
+                {{ getPublicacionTipoLabel(tipo) }}
+              </div>
               <p class="code-hint">
-                @if (isAtlas) {
-                  Se generará automáticamente: <strong>ATL-####</strong>
-                } @else if (editingPublication()) {
-                  Código: <strong>{{ editingPublication()?.codigo }}</strong>
-                } @else {
-                  Se generará automáticamente:
-                  <strong>{{ isArticulo ? 'ART-####' : 'REP-####' }}</strong>
-                }
+                {{ getCodeHint() }}
               </p>
             </div>
 
               <div class="form-grid">
+                @if (canChoosePublicationStatus) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Estado</mat-label>
+                    <mat-select formControlName="estado">
+                      <mat-option value="PUBLICACION">Publicación</mat-option>
+                      <mat-option value="EN_REVISION">En revisión</mat-option>
+                      <mat-option value="SUSPENDIDO">Suspendido</mat-option>
+                      <mat-option value="ARCHIVADO">Archivado</mat-option>
+                      <mat-option value="ELIMINADO">Eliminado</mat-option>
+                    </mat-select>
+                    @if (
+                      publicationForm.controls.estado.touched &&
+                      publicationForm.controls.estado.invalid
+                    ) {
+                      <mat-error>Seleccione un estado válido.</mat-error>
+                    }
+                  </mat-form-field>
+                  <div class="visibility-field">
+                    <mat-checkbox formControlName="solo_suscriptores">
+                      Solo para suscriptores
+                    </mat-checkbox>
+                    <p>ADMIN siempre puede verlo. Los usuarios normales no verán contenido restringido.</p>
+                  </div>
+                } @else {
+                  <div class="review-note full-width">
+                    <mat-icon>pending_actions</mat-icon>
+                    <div>
+                      <strong>Se enviará a revisión</strong>
+                      <p>Un administrador debe aprobarlo antes de que sea público.</p>
+                    </div>
+                  </div>
+                }
                 <mat-form-field appearance="outline"
                   ><mat-label>{{ isArticulo ? 'Título' : 'Nombre' }}</mat-label
                   ><input matInput formControlName="titulo" maxlength="255" />
@@ -164,7 +177,6 @@
                     <mat-error>La descripción es obligatoria.</mat-error>
                   }
                 </mat-form-field>
-                @if (isAtlas) {
                 <div class="file-field full-width">
                   <input
                     #pdfInput
@@ -233,14 +245,17 @@
                       <div>
                         <strong
                           >Documento actual:
-                          {{ editingPublication()?.nombre_archivo_original }}</strong
+                          {{
+                            editingPublication()?.nombre_archivo_original ||
+                              editingPublication()?.sharepoint_file_name ||
+                              'sin archivo local'
+                          }}</strong
                         >
                         <p>Puedes subir un nuevo PDF para reemplazar el documento actual.</p>
                       </div>
                     </div>
                   }
                 </div>
-                }
               </div>
               @if (serverError()) {
                 <div class="server-error"><mat-icon>error</mat-icon>{{ serverError() }}</div>
@@ -294,7 +309,7 @@
                   ><mat-icon>analytics</mat-icon
                   >{{ 'departamentos.detail.viewAnalysis' | translate }}</a
                 >
-                @if (isAdmin()) {
+                @if (canManagePublications) {
                   <button mat-icon-button [matMenuTriggerFor]="datasetMenu">
                     <mat-icon>more_vert</mat-icon></button
                   ><mat-menu #datasetMenu="matMenu"
@@ -327,11 +342,11 @@
       @if (loadingPublicaciones()) {
         <mat-spinner diameter="32"></mat-spinner>
       } @else if (articulos.length) {
-        <div class="resource-list">
+        <div class="powerbi-grid">
           @for (item of articulos; track item.id) {
-            <article class="publication-item">
-              <div class="publication-icon"><mat-icon>article</mat-icon></div>
-              <div class="publication-copy">
+            <article class="powerbi-card">
+              <div class="powerbi-card-icon"><mat-icon>article</mat-icon></div>
+              <div class="powerbi-card-copy">
                 <div class="publication-meta">
                   <strong>{{ item.codigo }}</strong
                   ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
@@ -341,9 +356,20 @@
                 <div class="details">
                   <span><b>Autores:</b> {{ item.autores }}</span
                   ><span><b>Fuente:</b> {{ item.fuente }}</span>
+                  @if (item.creador) {
+                    <span><b>Subido por:</b> {{ item.creador.name }} ({{ item.creador.rol }})</span>
+                  }
+                </div>
+                <div class="publication-badges">
+                  <span [class]="getEstadoPublicacionClass(item.estado)">{{
+                    getEstadoPublicacionLabel(item.estado)
+                  }}</span>
+                  @if (item.solo_suscriptores) {
+                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Solo suscriptores</span>
+                  }
                 </div>
               </div>
-              <div class="publication-links">
+              <div class="publication-links powerbi-actions">
                 @if (item.link_url) {
                 <a mat-button color="primary" [href]="item.link_url" target="_blank" rel="noopener"
                   ><mat-icon>open_in_new</mat-icon>Ver fuente</a
@@ -354,7 +380,7 @@
                   <mat-icon>download</mat-icon>PDF
                 </button>
                 }
-                @if (isAdmin()) {
+                @if (canEditPublication(item)) {
                   <button mat-button type="button" (click)="editPublication(item)">
                     <mat-icon>edit</mat-icon>Editar
                   </button>
@@ -409,13 +435,24 @@
                 <p>{{ item.descripcion }}</p>
                 <div class="details">
                   <span><b>Fuente:</b> {{ item.fuente }}</span>
+                  @if (item.creador) {
+                    <span><b>Subido por:</b> {{ item.creador.name }} ({{ item.creador.rol }})</span>
+                  }
+                </div>
+                <div class="publication-badges">
+                  <span [class]="getEstadoPublicacionClass(item.estado)">{{
+                    getEstadoPublicacionLabel(item.estado)
+                  }}</span>
+                  @if (item.solo_suscriptores) {
+                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Solo suscriptores</span>
+                  }
                 </div>
               </div>
               <div class="publication-links powerbi-actions">
                 <button mat-raised-button color="primary" type="button" (click)="openReport(item)">
                   <mat-icon>open_in_new</mat-icon>Abrir Power BI
                 </button>
-                @if (isAdmin()) {
+                @if (canEditPublication(item)) {
                   <button mat-button type="button" (click)="editPublication(item)">
                     <mat-icon>edit</mat-icon>Editar
                   </button>
@@ -457,11 +494,11 @@
       @if (loadingPublicaciones()) {
         <mat-spinner diameter="32"></mat-spinner>
       } @else if (atlas.length) {
-        <div class="resource-list">
+        <div class="powerbi-grid">
           @for (item of atlas; track item.id) {
-            <article class="publication-item">
-              <div class="publication-icon"><mat-icon>picture_as_pdf</mat-icon></div>
-              <div class="publication-copy">
+            <article class="powerbi-card">
+              <div class="powerbi-card-icon"><mat-icon>picture_as_pdf</mat-icon></div>
+              <div class="powerbi-card-copy">
                 <div class="publication-meta">
                   <strong>{{ item.codigo }}</strong
                   ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
@@ -473,13 +510,24 @@
                   @if (item.nombre_archivo_original || item.sharepoint_file_name) {
                     <span><b>Archivo:</b> {{ item.nombre_archivo_original || item.sharepoint_file_name }}</span>
                   }
+                  @if (item.creador) {
+                    <span><b>Subido por:</b> {{ item.creador.name }} ({{ item.creador.rol }})</span>
+                  }
+                </div>
+                <div class="publication-badges">
+                  <span [class]="getEstadoPublicacionClass(item.estado)">{{
+                    getEstadoPublicacionLabel(item.estado)
+                  }}</span>
+                  @if (item.solo_suscriptores) {
+                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Solo suscriptores</span>
+                  }
                 </div>
               </div>
-              <div class="publication-links">
+              <div class="publication-links powerbi-actions">
                 <button mat-stroked-button type="button" (click)="download(item)">
                   <mat-icon>download</mat-icon>PDF
                 </button>
-                @if (isAdmin()) {
+                @if (canEditPublication(item)) {
                   <button mat-button type="button" (click)="editPublication(item)">
                     <mat-icon>edit</mat-icon>Editar
                   </button>

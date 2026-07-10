@@ -34,7 +34,7 @@ class ProfileController extends Controller
     public function show(Request $request): JsonResponse
     {
         $user = $request->user();
-        $user->load('perfil');
+        $user->load(['perfil', 'departamentos']);
 
         return response()->json([
             'success' => true,
@@ -75,6 +75,7 @@ class ProfileController extends Controller
 
         $dto = UpdateProfileDTO::fromArray($validated);
         $user = $this->updateProfileUseCase->execute($request->user(), $dto);
+        $user->load(['perfil', 'departamentos']);
 
         return response()->json([
             'success' => true,
@@ -121,6 +122,7 @@ class ProfileController extends Controller
             $request->user(),
             $request->file('avatar')
         );
+        $user->load(['perfil', 'departamentos']);
 
         return response()->json([
             'success' => true,
@@ -152,7 +154,7 @@ class ProfileController extends Controller
             $user->perfil->update(['avatar' => null]);
         }
 
-        $user->load('perfil');
+        $user->load(['perfil', 'departamentos']);
 
         return response()->json([
             'success' => true,

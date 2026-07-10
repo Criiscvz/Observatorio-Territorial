@@ -18,6 +18,12 @@ class StorePublicacionRequest extends FormRequest
     {
         return [
             'tipo' => ['required', Rule::in(['ARTICULO', 'REPORTE', 'ATLAS'])],
+            'estado' => [
+                Rule::requiredIf($this->user()?->rol === 'ADMIN'),
+                'nullable',
+                Rule::in(['PUBLICACION', 'EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO', 'ELIMINADO']),
+            ],
+            'solo_suscriptores' => ['sometimes', 'boolean'],
             'titulo' => ['required', 'string', 'max:255'],
             'fecha_publicacion' => ['required', 'date'],
             'link_url' => [
@@ -30,9 +36,7 @@ class StorePublicacionRequest extends FormRequest
             'autores' => [Rule::requiredIf($this->input('tipo') === 'ARTICULO'), 'nullable', 'string', 'max:1000'],
             'fuente' => ['required', 'string', 'max:255'],
             'archivo' => [
-                Rule::prohibitedIf($this->input('tipo') !== 'ATLAS'),
-                Rule::requiredIf($this->input('tipo') === 'ATLAS'),
-                'nullable',
+                'required',
                 'file',
                 'mimetypes:application/pdf,application/x-pdf',
                 'mimes:pdf',
@@ -44,7 +48,10 @@ class StorePublicacionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'tipo.in' => 'Atlas todavía no está disponible para guardarse.',
+            'tipo.in' => 'El tipo de publicación no es válido.',
+            'estado.required' => 'El estado de publicación es obligatorio.',
+            'estado.in' => 'El estado de publicación no es válido.',
+            'solo_suscriptores.boolean' => 'La visibilidad para suscriptores no es válida.',
             'titulo.required' => 'El título o nombre es obligatorio.',
             'fecha_publicacion.required' => 'La fecha de publicación es obligatoria.',
             'fecha_publicacion.date' => 'La fecha de publicación no es válida.',
@@ -54,7 +61,6 @@ class StorePublicacionRequest extends FormRequest
             'autores.required' => 'El autor o autores son obligatorios para un artículo.',
             'fuente.required' => 'La fuente es obligatoria.',
             'archivo.required' => 'Debe subir el documento PDF.',
-            'archivo.prohibited' => 'Solo Atlas permite subir archivos PDF.',
             'archivo.mimetypes' => 'El documento debe ser un archivo PDF válido.',
             'archivo.mimes' => 'Solo se permiten archivos PDF.',
             'archivo.max' => 'El PDF no debe superar los 20 MB.',

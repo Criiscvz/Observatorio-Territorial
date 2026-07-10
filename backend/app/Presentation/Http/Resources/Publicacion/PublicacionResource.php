@@ -12,7 +12,16 @@ class PublicacionResource extends JsonResource
         return [
             'id' => $this->id,
             'departamento_id' => $this->departamento_id,
+            'creado_por' => $this->creado_por,
+            'creador' => $this->whenLoaded('creadoPor', fn() => [
+                'id' => $this->creadoPor?->id,
+                'name' => $this->creadoPor?->name,
+                'email' => $this->creadoPor?->email,
+                'rol' => $this->creadoPor?->rol,
+            ]),
             'tipo' => $this->tipo,
+            'estado' => $this->estado,
+            'solo_suscriptores' => (bool) $this->solo_suscriptores,
             'codigo' => $this->codigo,
             'titulo' => $this->titulo,
             'fecha_publicacion' => $this->fecha_publicacion?->format('Y-m-d'),

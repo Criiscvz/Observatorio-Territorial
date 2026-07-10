@@ -14,6 +14,7 @@ import { Articulo } from '@core/services/articulos.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { AuthService } from '@core/services/auth.service';
 import { PermisosService } from '@core/services/permisos.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-public-atlas',
@@ -65,10 +66,10 @@ export class PublicAtlasComponent implements OnInit {
             descripcion: item.descripcion,
             autor: item.autores,
             fuente: item.fuente,
-            enlace: item.sharepoint_url || item.link_url,
+            enlace: item.sharepoint_url || item.link_url || this.buildDownloadUrl(item.download_url),
             fecha_publicacion: item.fecha_publicacion,
             departamento_id: item.departamento_id,
-            visibilidad: 'publico',
+            visibilidad: item.solo_suscriptores ? 'suscriptor' : 'publico',
             categoria: {
               id: 'atlas',
               nombre: 'Atlas',
@@ -82,6 +83,12 @@ export class PublicAtlasComponent implements OnInit {
         ),
       );
 
+  }
+
+  private buildDownloadUrl(downloadUrl?: string | null): string | null {
+    if (!downloadUrl) return null;
+    if (/^https?:\/\//i.test(downloadUrl)) return downloadUrl;
+    return `${environment.apiUrl}${downloadUrl.replace(/^\/api/, '')}`;
   }
 
   canEdit(item: Articulo): boolean {

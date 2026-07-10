@@ -45,9 +45,15 @@ class EloquentPermisoRepository implements PermisoRepositoryInterface
         // Upsert: buscar si ya existe un permiso para este usuario+módulo+departamento
         $existing = $this->model
             ->where('user_id', $permiso->userId)
-            ->where('modulo', $permiso->modulo)
-            ->where('departamento_id', $permiso->departamentoId)
-            ->first();
+            ->where('modulo', $permiso->modulo);
+
+        if ($permiso->departamentoId !== null) {
+            $existing->where('departamento_id', $permiso->departamentoId);
+        } else {
+            $existing->whereNull('departamento_id');
+        }
+
+        $existing = $existing->first();
 
         if ($existing) {
             $existing->update([

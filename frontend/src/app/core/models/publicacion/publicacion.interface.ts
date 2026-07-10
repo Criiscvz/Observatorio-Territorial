@@ -1,9 +1,24 @@
-﻿export type TipoPublicacion = 'ARTICULO' | 'REPORTE' | 'ATLAS';
+export type TipoPublicacion = 'ARTICULO' | 'REPORTE' | 'ATLAS';
+export type EstadoPublicacion =
+  | 'PUBLICACION'
+  | 'EN_REVISION'
+  | 'SUSPENDIDO'
+  | 'ARCHIVADO'
+  | 'ELIMINADO';
 
 export interface ObservatorioPublicacion {
   id: string;
   departamento_id: string;
+  creado_por?: number | null;
+  creador?: {
+    id: number;
+    name: string;
+    email: string;
+    rol: string;
+  } | null;
   tipo: TipoPublicacion;
+  estado: EstadoPublicacion;
+  solo_suscriptores: boolean;
   codigo: string;
   titulo: string;
   fecha_publicacion: string;

@@ -22,6 +22,11 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ObservatorioPublicacionController extends Controller
 {
+    private const ESTADO_PUBLICACION = 'PUBLICACION';
+    private const ESTADO_EN_REVISION = 'EN_REVISION';
+    private const ESTADO_ELIMINADO = 'ELIMINADO';
+    private const SUBSCRIBER_ROLE = 'SUBSCRIBER';
+
     public function __construct(private readonly SharePointService $sharePointService)
     {
     }
@@ -50,16 +55,35 @@ class ObservatorioPublicacionController extends Controller
         return $this->list($request, $departamento, 'ATLAS');
     }
 
+    public function canUpload(Request $request, Departamento $departamento): JsonResponse
+    {
+        $user = $request->user();
+        $departamentoRole = $departamento->usuarios()
+            ->where('users.id', $user->id)
+            ->first()?->pivot?->rol;
+        $hasPermission = in_array($departamentoRole, ['ADMIN', 'EDITOR'], true);
+        $canUpload = $user->rol === 'ADMIN' || ($user->rol === 'EDITOR' && $hasPermission);
+
+        return response()->json([
+            'can_upload' => $canUpload,
+            'role' => $user->rol,
+            'has_permission' => $hasPermission,
+            'departamento_role' => $user->rol === 'ADMIN' ? 'ADMIN' : $departamentoRole,
+        ]);
+    }
+
     public function store(StorePublicacionRequest $request, Departamento $departamento): JsonResponse
     {
+        $this->ensureCanManage($request, $departamento);
         $data = $request->validated();
+        $estado = $request->user()->rol === 'ADMIN' ? $data['estado'] : self::ESTADO_EN_REVISION;
         $file = $request->file('archivo');
         $path = $file
             ? $file->storeAs('publicaciones/'.$departamento->id, Str::uuid().'.pdf', 'local')
             : null;
 
         try {
-            $publicacion = DB::transaction(function () use ($data, $request, $departamento, $file, $path) {
+            $publicacion = DB::transaction(function () use ($data, $request, $departamento, $file, $path, $estado) {
                 $counter = DB::table('publicacion_contadores')->where('tipo', $data['tipo'])->lockForUpdate()->first();
                 abort_unless($counter, 500, 'No se pudo generar el código de publicación.');
                 $number = (int) $counter->siguiente_numero;
@@ -69,6 +93,8 @@ class ObservatorioPublicacionController extends Controller
                     'departamento_id' => $departamento->id,
                     'creado_por' => $request->user()->id,
                     'tipo' => $data['tipo'],
+                    'estado' => $estado,
+                    'solo_suscriptores' => $request->user()->rol === 'ADMIN' && $request->boolean('solo_suscriptores'),
                     'codigo' => match ($data['tipo']) {
                         'ARTICULO' => 'ART-',
                         'ATLAS' => 'ATL-',
@@ -91,12 +117,13 @@ class ObservatorioPublicacionController extends Controller
             throw $exception;
         }
 
-        return (new PublicacionResource($publicacion->refresh()))->response()->setStatusCode(201);
+        return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response()->setStatusCode(201);
     }
 
     public function download(Request $request, ObservatorioPublicacion $publicacion): BinaryFileResponse|\Illuminate\Http\RedirectResponse
     {
         $this->ensureCanView($request, $publicacion->departamento);
+        $this->ensureCanViewPublication($request, $publicacion);
         if (! $publicacion->archivo_pdf && $publicacion->sharepoint_url) {
             return redirect()->away($publicacion->sharepoint_url);
         }
@@ -111,7 +138,14 @@ class ObservatorioPublicacionController extends Controller
 
     public function update(UpdatePublicacionRequest $request, ObservatorioPublicacion $publicacion): JsonResponse
     {
+        $this->ensureCanManage($request, $publicacion->departamento);
+        abort_unless(
+            $request->user()->rol === 'ADMIN' || (int) $publicacion->creado_por === (int) $request->user()->id,
+            403,
+            'No puedes editar publicaciones de otros usuarios.'
+        );
         $data = $request->validated();
+        $isAdmin = $request->user()->rol === 'ADMIN';
         $newFile = $request->file('archivo');
         $oldPath = $publicacion->archivo_pdf;
         $newPath = null;
@@ -125,8 +159,10 @@ class ObservatorioPublicacionController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($data, $publicacion, $newFile, $newPath) {
+            DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, $isAdmin) {
                 $publicacion->update([
+                    'estado' => $isAdmin ? $data['estado'] : $publicacion->estado,
+                    'solo_suscriptores' => $isAdmin ? $request->boolean('solo_suscriptores') : $publicacion->solo_suscriptores,
                     'titulo' => $data['titulo'],
                     'fecha_publicacion' => $data['fecha_publicacion'],
                     'link_url' => $data['link_url'] ?? null,
@@ -146,11 +182,11 @@ class ObservatorioPublicacionController extends Controller
             throw $exception;
         }
 
-        if ($newPath && $oldPath !== $newPath) {
+        if ($newPath && $oldPath && $oldPath !== $newPath) {
             Storage::disk('local')->delete($oldPath);
         }
 
-        return (new PublicacionResource($publicacion->refresh()))->response();
+        return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response();
     }
 
     public function sharePointFiles(Request $request, Departamento $departamento): JsonResponse
@@ -258,6 +294,8 @@ class ObservatorioPublicacionController extends Controller
                 'departamento_id' => $departamento->id,
                 'creado_por' => $request->user()->id,
                 'tipo' => 'ATLAS',
+                'estado' => self::ESTADO_PUBLICACION,
+                'solo_suscriptores' => false,
                 'codigo' => 'ATL-'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
                 'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
                 'fecha_publicacion' => $lastModified->toDateString(),
@@ -322,6 +360,8 @@ class ObservatorioPublicacionController extends Controller
                     'departamento_id' => $departamento->id,
                     'creado_por' => $request->user()->id,
                     'tipo' => 'ATLAS',
+                    'estado' => self::ESTADO_PUBLICACION,
+                    'solo_suscriptores' => false,
                     'codigo' => 'ATL-'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
                     'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
                     'fecha_publicacion' => $lastModified->toDateString(),
@@ -359,6 +399,10 @@ class ObservatorioPublicacionController extends Controller
             ->limit(6);
 
         if ($request->user()->rol !== 'ADMIN') {
+            $query->where('estado', self::ESTADO_PUBLICACION);
+            if (! $this->isSubscriber($request->user())) {
+                $query->where('solo_suscriptores', false);
+            }
             $query->whereHas('departamento', function ($departamentoQuery) use ($request) {
                 $departamentoQuery
                     ->where('publico', true)
@@ -414,6 +458,8 @@ class ObservatorioPublicacionController extends Controller
                 'departamento_id' => $departamento->id,
                 'creado_por' => $request->user()->id,
                 'tipo' => $tipo,
+                'estado' => self::ESTADO_PUBLICACION,
+                'solo_suscriptores' => false,
                 'codigo' => ($tipo === 'ATLAS' ? 'ATL-' : 'REP-').str_pad((string) $number, 4, '0', STR_PAD_LEFT),
                 'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
                 'fecha_publicacion' => $lastModified->toDateString(),
@@ -439,10 +485,11 @@ class ObservatorioPublicacionController extends Controller
     private function list(Request $request, Departamento $departamento, ?string $tipo): AnonymousResourceCollection
     {
         $this->ensureCanView($request, $departamento);
-        $query = $departamento->publicaciones()->latest('fecha_publicacion');
+        $query = $departamento->publicaciones()->with('creadoPor')->latest('fecha_publicacion');
         if ($tipo) {
             $query->where('tipo', $tipo);
         }
+        $this->applyVisibilityFilter($query, $request);
         return PublicacionResource::collection($query->get());
     }
 
@@ -452,6 +499,69 @@ class ObservatorioPublicacionController extends Controller
         $hasAccess = $user->rol === 'ADMIN' || $departamento->publico
             || $departamento->usuarios()->where('users.id', $user->id)->exists();
         abort_unless($hasAccess, 403, 'No tienes acceso a este observatorio.');
+    }
+
+    private function applyVisibilityFilter($query, Request $request): void
+    {
+        $user = $request->user();
+        if ($user->rol === 'ADMIN') {
+            return;
+        }
+
+        if ($user->rol === 'EDITOR') {
+            $query->where(function ($visibilityQuery) use ($user) {
+                $visibilityQuery
+                    ->where('estado', self::ESTADO_PUBLICACION)
+                    ->orWhere('creado_por', $user->id);
+            });
+        } else {
+            $query->where('estado', self::ESTADO_PUBLICACION);
+        }
+
+        if (! $this->isSubscriber($user)) {
+            $query->where('solo_suscriptores', false);
+        }
+    }
+
+    private function ensureCanViewPublication(Request $request, ObservatorioPublicacion $publicacion): void
+    {
+        $user = $request->user();
+        if ($user->rol === 'ADMIN') {
+            return;
+        }
+
+        if ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id) {
+            return;
+        }
+
+        abort_unless($publicacion->estado === self::ESTADO_PUBLICACION, 404, 'La publicación no está disponible.');
+
+        if ($publicacion->solo_suscriptores) {
+            abort_unless($this->isSubscriber($user), 403, 'Esta publicación es solo para suscriptores.');
+        }
+    }
+
+    private function ensureCanManage(Request $request, Departamento $departamento): void
+    {
+        $user = $request->user();
+        if ($user->rol === 'ADMIN') {
+            return;
+        }
+
+        abort_unless($user->rol === 'EDITOR', 403, 'No tienes permisos para gestionar publicaciones.');
+        abort_unless(
+            $departamento->usuarios()
+                ->where('users.id', $user->id)
+                ->wherePivotIn('rol', ['ADMIN', 'EDITOR'])
+                ->exists(),
+            403,
+            'No tienes acceso de edición a este observatorio.'
+        );
+    }
+
+    private function isSubscriber($user): bool
+    {
+        return in_array($user->rol, [self::SUBSCRIBER_ROLE, 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 
 }

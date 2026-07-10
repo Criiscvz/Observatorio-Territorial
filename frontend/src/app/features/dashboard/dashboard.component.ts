@@ -13,6 +13,7 @@ import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { environment } from '../../../environments/environment';
 import type { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
@@ -74,6 +75,13 @@ export class DashboardComponent implements OnInit {
     });
     return count;
   });
+
+  getAtlasUrl(reporte: ObservatorioPublicacion): string | null {
+    const url = reporte.sharepoint_url || reporte.link_url || reporte.download_url;
+    if (!url) return null;
+    if (/^https?:\/\//i.test(url)) return url;
+    return `${environment.apiUrl}${url.replace(/^\/api/, '')}`;
+  }
 
   departamentosPublicos = computed(() => {
     return this.departamentos().filter((d) => d.publico).length;

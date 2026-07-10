@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
+import { Observable, of, tap } from 'rxjs';
 import { PermisosApiService } from './permisos-api.service';
 import {
   ModuloPermiso,
   NivelPermiso,
   PermisoConfig,
+  SavePermisosResponse,
   MODULOS_PERMISO,
   NIVEL_LABELS,
 } from '../models/permisos';
@@ -75,6 +77,11 @@ export class PermisosService {
     );
     if (all) return all.nivel;
 
+    const scoped = permisos
+      .filter((p) => p.modulo === modulo)
+      .sort((a, b) => this.nivelWeight(b.nivel) - this.nivelWeight(a.nivel));
+    if (scoped.length > 0) return scoped[0].nivel;
+
     return 'ninguno';
   }
 
@@ -115,7 +122,7 @@ export class PermisosService {
    * Guarda los permisos de un usuario.
    * Para observatorios se envía al backend; para atlas/reportes se guarda en localStorage.
    */
-  saveUserPermisos(userId: number, permisos: PermisoConfig[]): void {
+  saveUserPermisos(userId: number, permisos: PermisoConfig[]): Observable<SavePermisosResponse> {
     // Separar observatorios del resto
     const observatorioPermisos = permisos.filter((p) => p.modulo === 'observatorios');
     const frontendPermisos = permisos.filter((p) => p.modulo !== 'observatorios');
@@ -123,26 +130,31 @@ export class PermisosService {
     // Guardar atlas/reportes en localStorage
     localStorage.setItem(`${STORAGE_KEY}_${userId}`, JSON.stringify(frontendPermisos));
 
-    // Sincronizar observatorios con backend (fire-and-forget)
-    if (observatorioPermisos.length > 0) {
-      this.permisosApi.saveUserPermisos(userId, observatorioPermisos).subscribe({
-        error: () => {
-          // Si falla el backend, guardar localmente como respaldo
-          console.warn('No se pudieron sincronizar permisos de observatorios con el backend.');
-        },
+    if (observatorioPermisos.length === 0) {
+      this.cache.set(userId, permisos);
+      return of({
+        message: 'Permisos guardados localmente.',
+        permisos,
       });
     }
 
-    // Actualizar cache
-    this.cache.set(userId, permisos);
+    return this.permisosApi.saveUserPermisos(userId, observatorioPermisos).pipe(
+      tap((response) => {
+        const merged = [
+          ...frontendPermisos,
+          ...response.permisos.filter((p) => p.modulo === 'observatorios'),
+        ];
+        this.cache.set(userId, merged);
+      }),
+    );
   }
 
   /**
    * Carga permisos de observatorios desde el backend y los fusiona con los locales.
    */
-  syncFromBackend(userId: number): void {
-    this.permisosApi.getUserPermisos(userId).subscribe({
-      next: (backendPermisos) => {
+  syncFromBackend(userId: number): Observable<PermisoConfig[]> {
+    return this.permisosApi.getUserPermisos(userId).pipe(
+      tap((backendPermisos) => {
         const stored = localStorage.getItem(`${STORAGE_KEY}_${userId}`);
         const frontendPermisos: PermisoConfig[] = stored ? JSON.parse(stored) : [];
 
@@ -153,12 +165,8 @@ export class PermisosService {
         ];
 
         this.cache.set(userId, merged);
-      },
-      error: () => {
-        // Usar cache local si backend no responde
-        console.warn('No se pudieron cargar permisos del backend.');
-      },
-    });
+      }),
+    );
   }
 
   // ───────────────────────────────

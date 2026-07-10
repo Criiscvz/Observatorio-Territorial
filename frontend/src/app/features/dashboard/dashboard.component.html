@@ -313,7 +313,7 @@
           @if (atlasReportes().length > 0) {
             <div class="items-list">
               @for (reporte of atlasReportes(); track reporte.id) {
-                <a class="list-item" [href]="reporte.sharepoint_url || reporte.link_url" target="_blank" rel="noopener" matRipple>
+                <a class="list-item" [href]="getAtlasUrl(reporte)" target="_blank" rel="noopener" matRipple>
                   <div class="item-icon orange">
                     <mat-icon>picture_as_pdf</mat-icon>
                   </div>

@@ -76,6 +76,8 @@ class PublicController extends Controller
     {
         $query = ObservatorioPublicacion::query()
             ->where('tipo', 'ATLAS')
+            ->where('estado', 'PUBLICACION')
+            ->where('solo_suscriptores', false)
             ->whereHas('departamento', fn($departamentoQuery) => $departamentoQuery->where('publico', true))
             ->latest('fecha_publicacion');
 

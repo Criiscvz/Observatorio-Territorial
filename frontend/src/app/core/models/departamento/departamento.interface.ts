@@ -11,4 +11,5 @@ export interface Departamento {
   updated_at: string;
   datasets?: Dataset[];
   datasets_count?: number;
+  user_role?: 'ADMIN' | 'EDITOR' | 'LECTOR' | string | null;
 }

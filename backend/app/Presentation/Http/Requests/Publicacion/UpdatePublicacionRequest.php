@@ -16,24 +16,31 @@ class UpdatePublicacionRequest extends FormRequest
 
     public function rules(): array
     {
+        $publicacion = $this->route('publicacion');
+
         return [
+            'estado' => [
+                Rule::requiredIf($this->user()?->rol === 'ADMIN'),
+                'nullable',
+                Rule::in(['PUBLICACION', 'EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO', 'ELIMINADO']),
+            ],
+            'solo_suscriptores' => ['sometimes', 'boolean'],
             'titulo' => ['required', 'string', 'max:255'],
             'fecha_publicacion' => ['required', 'date'],
             'link_url' => [
-                Rule::requiredIf(in_array($this->route('publicacion')?->tipo, ['ARTICULO', 'REPORTE'], true)),
+                Rule::requiredIf(in_array($publicacion?->tipo, ['ARTICULO', 'REPORTE'], true)),
                 'nullable',
                 'url:http,https',
                 'max:2048',
             ],
             'descripcion' => ['required', 'string', 'max:3000'],
             'autores' => [
-                $this->route('publicacion')?->tipo === 'ARTICULO' ? 'required' : 'nullable',
+                $publicacion?->tipo === 'ARTICULO' ? 'required' : 'nullable',
                 'string',
                 'max:1000',
             ],
             'fuente' => ['required', 'string', 'max:255'],
             'archivo' => [
-                Rule::prohibitedIf($this->route('publicacion')?->tipo !== 'ATLAS'),
                 'nullable',
                 'file',
                 'mimetypes:application/pdf,application/x-pdf',
@@ -46,6 +53,9 @@ class UpdatePublicacionRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'estado.required' => 'El estado de publicación es obligatorio.',
+            'estado.in' => 'El estado de publicación no es válido.',
+            'solo_suscriptores.boolean' => 'La visibilidad para suscriptores no es válida.',
             'titulo.required' => 'El título o nombre es obligatorio.',
             'fecha_publicacion.required' => 'La fecha de publicación es obligatoria.',
             'fecha_publicacion.date' => 'La fecha de publicación no es válida.',
@@ -54,7 +64,6 @@ class UpdatePublicacionRequest extends FormRequest
             'descripcion.required' => 'La descripción es obligatoria.',
             'autores.required' => 'El autor o autores son obligatorios para un artículo.',
             'fuente.required' => 'La fuente es obligatoria.',
-            'archivo.prohibited' => 'Solo Atlas permite subir archivos PDF.',
             'archivo.mimetypes' => 'El documento debe ser un archivo PDF válido.',
             'archivo.mimes' => 'Solo se permiten archivos PDF.',
             'archivo.max' => 'El PDF no debe superar los 20 MB.',

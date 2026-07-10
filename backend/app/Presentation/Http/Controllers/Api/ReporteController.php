@@ -6,6 +6,7 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\ReporteModel;
+use App\Models\ObservatorioPublicacion;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -43,7 +44,25 @@ class ReporteController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return response()->json($reportes);
+        $publicaciones = ObservatorioPublicacion::query()
+            ->with('departamento')
+            ->where('tipo', 'REPORTE')
+            ->where('estado', 'PUBLICACION')
+            ->when(
+                $request->filled('departamento_id'),
+                fn($publicationQuery) => $publicationQuery->where('departamento_id', $request->query('departamento_id'))
+            )
+            ->latest('fecha_publicacion')
+            ->get()
+            ->filter(fn(ObservatorioPublicacion $publicacion) => $this->canViewPublication($request, $publicacion))
+            ->map(fn(ObservatorioPublicacion $publicacion) => $this->mapPublicacionToReporte($publicacion));
+
+        return response()->json(
+            $reportes
+                ->concat($publicaciones)
+                ->sortByDesc(fn($item) => (string) ($item['fecha_publicacion'] ?? $item->fecha_publicacion ?? $item['created_at'] ?? $item->created_at ?? ''))
+                ->values()
+        );
     }
 
     #[OA\Get(
@@ -320,5 +339,44 @@ class ReporteController extends Controller
 
         // URL completa usando APP_URL + endpoint API (evita problemas de CORS)
         return rtrim(config('app.url'), '/') . '/api/reportes/fichas/' . $filename;
+    }
+
+    private function mapPublicacionToReporte(ObservatorioPublicacion $publicacion): array
+    {
+        $downloadUrl = $publicacion->archivo_pdf
+            ? rtrim(config('app.url'), '/')."/api/departamentos/publicaciones/{$publicacion->id}/download"
+            : null;
+
+        return [
+            'id' => $publicacion->id,
+            'nombre_indicador' => $publicacion->titulo,
+            'descripcion_indicador' => $publicacion->descripcion,
+            'fecha_publicacion' => $publicacion->fecha_publicacion?->format('Y-m-d'),
+            'link_url' => $publicacion->link_url,
+            'ficha_indicador' => $publicacion->sharepoint_url ?: $downloadUrl,
+            'fuente' => $publicacion->fuente,
+            'categoria_id' => null,
+            'departamento_id' => $publicacion->departamento_id,
+            'visibilidad' => $publicacion->solo_suscriptores ? 'suscriptor' : 'publico',
+            'categoria' => null,
+            'departamento' => $publicacion->departamento,
+            'created_at' => $publicacion->created_at?->toIso8601String(),
+            'updated_at' => $publicacion->updated_at?->toIso8601String(),
+        ];
+    }
+
+    private function canViewPublication(Request $request, ObservatorioPublicacion $publicacion): bool
+    {
+        if ($publicacion->estado !== 'PUBLICACION') {
+            return false;
+        }
+
+        if (! $publicacion->solo_suscriptores) {
+            return true;
+        }
+
+        $user = $request->user('sanctum');
+
+        return $user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 }

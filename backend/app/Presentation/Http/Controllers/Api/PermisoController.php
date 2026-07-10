@@ -7,7 +7,9 @@ namespace App\Presentation\Http\Controllers\Api;
 use App\Application\Permiso\UseCases\GetPermisosUseCase;
 use App\Application\Permiso\UseCases\SavePermisoUseCase;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Presentation\Http\Requests\Permiso\SavePermisosRequest;
+use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -42,9 +44,12 @@ class PermisoController extends Controller
     public function save(int $userId, SavePermisosRequest $request): JsonResponse
     {
         $results = $this->savePermisoUseCase->saveAll($userId, $request->validated()['permisos']);
+        $user = User::with(['perfil', 'departamentos'])->findOrFail($userId);
+
         return response()->json([
             'message' => 'Permisos guardados correctamente.',
             'permisos' => array_map(fn($r) => $r->toArray(), $results),
+            'user' => new UserResource($user),
         ]);
     }
 }

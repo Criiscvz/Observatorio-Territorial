@@ -241,10 +241,18 @@ export class ProfileComponent implements OnInit {
   }
 
   getRoleBadgeClass(): string {
-    return this.user()?.rol === 'ADMIN' ? 'badge-admin' : 'badge-user';
+    const role = this.user()?.rol ?? 'USER';
+    return `badge-${role.toLowerCase()}`;
   }
 
   getRoleLabel(): string {
-    return this.user()?.rol === 'ADMIN' ? 'profile.roles.admin' : 'profile.roles.user';
+    const roleLabels: Record<string, string> = {
+      ADMIN: 'profile.roles.admin',
+      EDITOR: 'profile.roles.editor',
+      SUBSCRIBER: 'profile.roles.subscriber',
+      USER: 'profile.roles.user',
+    };
+
+    return roleLabels[this.user()?.rol ?? 'USER'] ?? 'profile.roles.user';
   }
 }

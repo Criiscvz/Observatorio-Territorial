@@ -6,6 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
@@ -45,6 +46,7 @@ interface ModuloEditState {
     MatFormFieldModule,
     MatButtonModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
     MatDividerModule,
     TranslateModule,
@@ -169,6 +171,74 @@ interface ModuloEditState {
     .obs-select {
       width: 100%;
     }
+    .observatorios-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+    .search-field {
+      width: 100%;
+    }
+    .selection-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #475569;
+      font-size: 13px;
+    }
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .observatorios-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      max-height: 320px;
+      overflow: auto;
+      padding: 4px;
+    }
+    .observatorio-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      border: 1px solid rgba(99,102,241,0.14);
+      border-radius: 10px;
+      padding: 12px;
+      background: #fff;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      &.selected {
+        border-color: rgba(99,102,241,0.55);
+        background: rgba(99,102,241,0.08);
+        box-shadow: 0 6px 16px rgba(99,102,241,0.08);
+      }
+    }
+    .observatorio-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      strong {
+        color: #1e1b4b;
+        font-size: 14px;
+      }
+      span {
+        color: #64748b;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+    }
+    .empty-observatorios {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #64748b;
+      font-size: 13px;
+      padding: 12px;
+    }
     .obs-hint {
       font-size: 12px;
       color: #94a3b8;
@@ -189,10 +259,39 @@ interface ModuloEditState {
       .modulo-config { padding-left: 0; }
       .config-row { flex-direction: column; align-items: stretch; }
       .nivel-select { width: 100%; }
+      .observatorios-list { grid-template-columns: 1fr; }
       .dialog-actions {
         flex-direction: column-reverse;
         align-items: stretch;
         button { justify-content: center; width: 100%; }
+      }
+    }
+    :host-context(.dark-theme), :host-context(.dark) {
+      .dialog-title,
+      .user-details h3,
+      .modulo-title,
+      .observatorio-copy strong {
+        color: #f8fafc;
+      }
+      .user-info,
+      .modulo-card,
+      .observatorio-option {
+        background: rgba(15, 23, 42, 0.72);
+        border-color: rgba(148, 163, 184, 0.24);
+      }
+      .observatorio-option.selected {
+        background: rgba(99, 102, 241, 0.2);
+        border-color: rgba(129, 140, 248, 0.7);
+      }
+      .user-details .email,
+      .selection-summary,
+      .observatorio-copy span,
+      .obs-hint,
+      .empty-observatorios {
+        color: #cbd5e1;
+      }
+      .dialog-actions {
+        border-top-color: rgba(148, 163, 184, 0.22);
       }
     }
   `],
@@ -208,18 +307,35 @@ export class UserPermissionsDialogComponent implements OnInit {
   modules: ModuloEditState[] = [];
   departamentos: Departamento[] = [];
   loadingDepartamentos = false;
+  observatorioSearch = '';
+  selectedDepartamentoIds: string[] = [];
 
   ngOnInit(): void {
-    this.loadCurrentConfig();
+    this.permisosService.syncFromBackend(this.user.id).subscribe({
+      next: () => this.loadCurrentConfig(),
+      error: () => this.loadCurrentConfig(),
+    });
     this.loadDepartamentos();
   }
 
   private loadCurrentConfig(): void {
     const currentPermisos = this.permisosService.getUserPermisos(this.user.id);
+    const observatorioPermisos = currentPermisos.filter(
+      (p) => p.modulo === 'observatorios' && p.nivel !== 'ninguno',
+    );
+    const allObservatorios = observatorioPermisos.some((p) => p.departamento_id === null);
+    this.selectedDepartamentoIds = allObservatorios
+      ? this.departamentos.map((dep) => dep.id)
+      : observatorioPermisos
+          .map((p) => p.departamento_id)
+          .filter((id): id is string => !!id);
 
     this.modules = MODULOS_PERMISO.map((modulo) => {
-      const config = currentPermisos.find((p) => p.modulo === modulo);
-      const habilitado = config ? config.nivel !== 'ninguno' : false;
+      const configs = currentPermisos.filter((p) => p.modulo === modulo);
+      const config = configs.find((p) => p.nivel !== 'ninguno') ?? configs[0];
+      const habilitado = modulo === 'observatorios'
+        ? this.selectedDepartamentoIds.length > 0
+        : config ? config.nivel !== 'ninguno' : false;
 
       return {
         modulo,
@@ -243,6 +359,7 @@ export class UserPermissionsDialogComponent implements OnInit {
     this.departamentoService.getAll().subscribe({
       next: (deps) => {
         this.departamentos = deps;
+        this.loadCurrentConfig();
         this.loadingDepartamentos = false;
       },
       error: () => {
@@ -256,8 +373,58 @@ export class UserPermissionsDialogComponent implements OnInit {
     if (!checked) {
       mod.nivel = 'ninguno';
       mod.departamentoId = null;
+      if (mod.modulo === 'observatorios') {
+        this.selectedDepartamentoIds = [];
+      }
     } else {
       mod.nivel = 'lectura';
+    }
+  }
+
+  filteredDepartamentos(): Departamento[] {
+    const term = this.observatorioSearch.trim().toLowerCase();
+    if (!term) return this.departamentos;
+
+    return this.departamentos.filter((dep) =>
+      [dep.nombre, dep.codigo_interno, dep.descripcion]
+        .filter(Boolean)
+        .some((value) => value!.toLowerCase().includes(term)),
+    );
+  }
+
+  isDepartamentoSelected(departamentoId: string): boolean {
+    return this.selectedDepartamentoIds.includes(departamentoId);
+  }
+
+  toggleDepartamento(departamentoId: string, checked: boolean): void {
+    this.selectedDepartamentoIds = checked
+      ? Array.from(new Set([...this.selectedDepartamentoIds, departamentoId]))
+      : this.selectedDepartamentoIds.filter((id) => id !== departamentoId);
+
+    const observatorios = this.modules.find((mod) => mod.modulo === 'observatorios');
+    if (observatorios) {
+      observatorios.habilitado = this.selectedDepartamentoIds.length > 0;
+      if (observatorios.habilitado && observatorios.nivel === 'ninguno') {
+        observatorios.nivel = 'escritura';
+      }
+    }
+  }
+
+  selectAllDepartamentos(): void {
+    this.selectedDepartamentoIds = this.departamentos.map((dep) => dep.id);
+    const observatorios = this.modules.find((mod) => mod.modulo === 'observatorios');
+    if (observatorios) {
+      observatorios.habilitado = this.selectedDepartamentoIds.length > 0;
+      observatorios.nivel = observatorios.nivel === 'ninguno' ? 'escritura' : observatorios.nivel;
+    }
+  }
+
+  clearDepartamentos(): void {
+    this.selectedDepartamentoIds = [];
+    const observatorios = this.modules.find((mod) => mod.modulo === 'observatorios');
+    if (observatorios) {
+      observatorios.habilitado = false;
+      observatorios.nivel = 'ninguno';
     }
   }
 
@@ -273,12 +440,22 @@ export class UserPermissionsDialogComponent implements OnInit {
     for (const mod of this.modules) {
       if (mod.habilitado) {
         if (mod.modulo === 'observatorios') {
-          // Guardar "todos" como null en departamento_id
-          result.push({
-            modulo: mod.modulo,
-            nivel: mod.nivel,
-            departamento_id: mod.departamentoId, // null = todos
-          });
+          if (this.selectedDepartamentoIds.length === 0) {
+            result.push({
+              modulo: mod.modulo,
+              nivel: 'ninguno',
+              departamento_id: null,
+            });
+            continue;
+          }
+
+          for (const departamentoId of this.selectedDepartamentoIds) {
+            result.push({
+              modulo: mod.modulo,
+              nivel: mod.nivel,
+              departamento_id: departamentoId,
+            });
+          }
         } else {
           result.push({
             modulo: mod.modulo,

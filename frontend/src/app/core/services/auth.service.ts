@@ -70,8 +70,9 @@ export class AuthService {
   getCurrentUser(): Observable<User> {
     return this.api.get<User>('/user').pipe(
       tap((user) => {
-        this.userSignal.set(user);
-        this.storeUser(user);
+        const normalizedUser = this.normalizeUser(user);
+        this.userSignal.set(normalizedUser);
+        this.storeUser(normalizedUser);
       })
     );
   }
@@ -112,8 +113,8 @@ export class AuthService {
     const user = this.userSignal();
     if (!user?.departamentos) return false;
 
-    const depto = user.departamentos.find((d) => d.id === departamentoId);
-    return depto ? roles.includes(depto.rol) : false;
+    const depto = user.departamentos.find((d) => String(d.id) === String(departamentoId));
+    return depto ? roles.includes(String(depto.rol).toUpperCase()) : false;
   }
 
   /**
@@ -128,8 +129,9 @@ export class AuthService {
    * Actualizar datos del usuario en el estado local
    */
   updateUser(user: User): void {
-    this.userSignal.set(user);
-    this.storeUser(user);
+    const normalizedUser = this.normalizeUser(user);
+    this.userSignal.set(normalizedUser);
+    this.storeUser(normalizedUser);
   }
 
   /**
@@ -145,10 +147,11 @@ export class AuthService {
 
   private handleAuthSuccess(response: AuthResponse): void {
     // El token se mantiene SOLO en la señal en memoria para evitar exposición por XSS.
+    const normalizedUser = this.normalizeUser(response.user);
     this.tokenSignal.set(response.token);
-    this.userSignal.set(response.user);
+    this.userSignal.set(normalizedUser);
     // El perfil del usuario se guarda en sessionStorage (mismo tab, se elimina al cerrar).
-    this.storeUser(response.user);
+    this.storeUser(normalizedUser);
   }
 
   private clearAuth(): void {
@@ -164,7 +167,7 @@ export class AuthService {
   private getStoredUser(): User | null {
     if (typeof window === 'undefined') return null;
     const user = sessionStorage.getItem(USER_KEY);
-    return user ? JSON.parse(user) : null;
+    return user ? this.normalizeUser(JSON.parse(user)) : null;
   }
 
   /**
@@ -177,5 +180,35 @@ export class AuthService {
     if (typeof window !== 'undefined') {
       sessionStorage.setItem(USER_KEY, JSON.stringify(user));
     }
+  }
+
+  private normalizeUser(user: User | (Partial<User> & Record<string, any>)): User {
+    const rawRole =
+      user.rol ??
+      user['role'] ??
+      (Array.isArray(user['roles'])
+        ? (user['roles'][0]?.nombre ?? user['roles'][0]?.name ?? user['roles'][0])
+        : undefined);
+
+    return {
+      ...(user as User),
+      rol: this.normalizeRole(rawRole),
+      departamentos: (user.departamentos ?? []).map((departamento: any) => ({
+        ...departamento,
+        id: String(departamento.id),
+        rol: String(departamento.rol ?? departamento.role ?? '').toUpperCase(),
+      })),
+    };
+  }
+
+  private normalizeRole(role: unknown): UserRole {
+    const normalized = String(role ?? 'USER').trim().toUpperCase();
+    if (normalized === 'SUSCRIPTOR' || normalized === 'SUBSCRIPTOR') {
+      return 'SUBSCRIBER';
+    }
+    if (['ADMIN', 'USER', 'SUBSCRIBER', 'EDITOR'].includes(normalized)) {
+      return normalized as UserRole;
+    }
+    return 'USER';
   }
 }

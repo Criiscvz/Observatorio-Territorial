@@ -1,4 +1,5 @@
 import { ModuloPermiso, NivelPermiso } from './modulo-permiso.type';
+import { User } from '../user/user.interface';
 
 /**
  * Configuración de permiso para un módulo específico.
@@ -40,4 +41,5 @@ export interface UserPermisos {
 export interface SavePermisosResponse {
   message: string;
   permisos: PermisoConfig[];
+  user?: User;
 }

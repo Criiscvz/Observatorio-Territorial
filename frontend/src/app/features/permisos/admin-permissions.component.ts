@@ -109,6 +109,16 @@ export class AdminPermissionsComponent implements OnInit {
           const all = responses.flatMap((r) => r.data);
           this.users.set(all);
           this.loadingUsers.set(false);
+
+          const editors = all.filter((user) => user.rol === 'EDITOR');
+          if (editors.length > 0) {
+            forkJoin(editors.map((user) => this.permisosService.syncFromBackend(user.id)))
+              .pipe(takeUntilDestroyed(this.destroyRef))
+              .subscribe({
+                next: () => this.users.set([...this.users()]),
+                error: () => this.users.set([...this.users()]),
+              });
+          }
         },
         error: () => {
           this.snackBar.open(
@@ -168,14 +178,32 @@ export class AdminPermissionsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PermisoConfig[] | undefined) => {
         if (result) {
-          this.permisosService.saveUserPermisos(user.id, result);
-          // Refresh users signal to update indicators
-          this.users.set([...this.users()]);
-          this.snackBar.open(
-            'Permisos guardados correctamente.',
-            'Cerrar',
-            { duration: 3000 },
-          );
+          this.permisosService
+            .saveUserPermisos(user.id, result)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (response) => {
+                if (response.user) {
+                  this.users.update((users) =>
+                    users.map((item) => (item.id === response.user!.id ? response.user! : item))
+                  );
+                } else {
+                  this.users.set([...this.users()]);
+                }
+                this.snackBar.open(
+                  response.message || 'Permisos guardados correctamente.',
+                  'Cerrar',
+                  { duration: 3000 },
+                );
+              },
+              error: () => {
+                this.snackBar.open(
+                  'No se pudieron guardar los permisos.',
+                  'Cerrar',
+                  { duration: 4000 },
+                );
+              },
+            });
         }
       });
   }
@@ -189,12 +217,25 @@ export class AdminPermissionsComponent implements OnInit {
       { modulo: 'reportes', nivel: 'ninguno' },
     ];
 
-    this.permisosService.saveUserPermisos(user.id, [...observatorioPermisos, ...emptyFrontend]);
-    this.users.set([...this.users()]);
-    this.snackBar.open(
-      `Permisos de ${user.name} restablecidos.`,
-      'Cerrar',
-      { duration: 3000 },
-    );
+    this.permisosService
+      .saveUserPermisos(user.id, [...observatorioPermisos, ...emptyFrontend])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.users.set([...this.users()]);
+          this.snackBar.open(
+            `Permisos de ${user.name} restablecidos.`,
+            'Cerrar',
+            { duration: 3000 },
+          );
+        },
+        error: () => {
+          this.snackBar.open(
+            'No se pudieron restablecer los permisos.',
+            'Cerrar',
+            { duration: 4000 },
+          );
+        },
+      });
   }
 }

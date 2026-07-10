@@ -12,6 +12,13 @@ interface ResourceResponse<T> {
   data: T;
 }
 
+export interface CanUploadPublicacionResponse {
+  can_upload: boolean;
+  role: string;
+  has_permission: boolean;
+  departamento_role?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PublicacionService {
   private readonly api = inject(ApiService);
@@ -36,6 +43,12 @@ export class PublicacionService {
     return this.api
       .get<ResourceResponse<ObservatorioPublicacion[]>>('/publico/atlas')
       .pipe(map((response) => response.data));
+  }
+
+  canUpload(departamentoId: string): Observable<CanUploadPublicacionResponse> {
+    return this.api.get<CanUploadPublicacionResponse>(
+      `/departamentos/${departamentoId}/publicaciones/can-upload`,
+    );
   }
 
   getAtlasSharePointFiles(departamentoId: string): Observable<SharePointFile[]> {

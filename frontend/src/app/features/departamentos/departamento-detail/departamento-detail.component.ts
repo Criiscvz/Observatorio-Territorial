@@ -10,11 +10,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
 import {
   ObservatorioPublicacion,
+  EstadoPublicacion,
   TipoPublicacion,
 } from '@core/models/publicacion/publicacion.interface';
 import { AuthService } from '@core/services/auth.service';
@@ -35,6 +38,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     MatButtonToggleModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
+    MatCheckboxModule,
     MatIconModule,
     MatMenuModule,
     MatProgressSpinnerModule,
@@ -57,6 +62,7 @@ export class DepartamentoDetailComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
 
   readonly isAdmin = this.authService.isAdmin;
+  readonly isEditor = this.authService.isEditor;
   departamento = signal<Departamento | null>(null);
   datasets = signal<Dataset[]>([]);
   publicaciones = signal<ObservatorioPublicacion[]>([]);
@@ -66,6 +72,7 @@ export class DepartamentoDetailComponent implements OnInit {
   showPublicationForm = signal(false);
   savingPublication = signal(false);
   syncingSharePoint = signal<TipoPublicacion | null>(null);
+  canUploadPublications = signal(false);
   selectedFile = signal<File | null>(null);
   isDraggingFile = signal(false);
   fileError = signal('');
@@ -73,6 +80,8 @@ export class DepartamentoDetailComponent implements OnInit {
 
   readonly publicationForm = this.fb.nonNullable.group({
     tipo: ['ARTICULO' as TipoPublicacion, Validators.required],
+    estado: ['PUBLICACION' as EstadoPublicacion, Validators.required],
+    solo_suscriptores: [false],
     titulo: ['', [Validators.required, Validators.maxLength(255)]],
     fecha_publicacion: ['', Validators.required],
     link_url: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+/i)]],
@@ -109,6 +118,27 @@ export class DepartamentoDetailComponent implements OnInit {
     return this.tipo === 'ATLAS';
   }
 
+  get canManagePublications(): boolean {
+    const departamento = this.departamento();
+    if (!departamento) return false;
+    return (
+      this.isAdmin() ||
+      this.canUploadPublications() ||
+      (this.isEditor() &&
+        (['ADMIN', 'EDITOR'].includes(departamento.user_role ?? '') ||
+          this.authService.hasRoleInDepartamento(departamento.id, ['ADMIN', 'EDITOR'])))
+    );
+  }
+
+  get canChoosePublicationStatus(): boolean {
+    return this.isAdmin();
+  }
+
+  canEditPublication(publicacion: ObservatorioPublicacion): boolean {
+    const user = this.authService.user();
+    return this.isAdmin() || (this.isEditor() && !!user && publicacion.creado_por === user.id);
+  }
+
   ngOnInit(): void {
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       if (params['id']) this.loadDepartamento(params['id']);
@@ -117,7 +147,6 @@ export class DepartamentoDetailComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((tipo) => {
         this.configurePublicationValidators(tipo);
-        this.selectedFile.set(null);
         this.fileError.set('');
       });
     this.configurePublicationValidators('ARTICULO');
@@ -130,9 +159,20 @@ export class DepartamentoDetailComponent implements OnInit {
         this.departamento.set(departamento);
         this.datasets.set(departamento?.datasets || []);
         this.loading.set(false);
+        this.loadCanUpload(id);
         this.loadPublicaciones(id);
       },
-      error: () => this.loading.set(false),
+      error: () => {
+        this.canUploadPublications.set(false);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadCanUpload(id: string): void {
+    this.publicacionService.canUpload(id).subscribe({
+      next: (response) => this.canUploadPublications.set(!!response.can_upload),
+      error: () => this.canUploadPublications.set(false),
     });
   }
 
@@ -168,6 +208,8 @@ export class DepartamentoDetailComponent implements OnInit {
     this.editingPublication.set(publicacion);
     this.publicationForm.reset({
       tipo: publicacion.tipo,
+      estado: publicacion.estado ?? 'PUBLICACION',
+      solo_suscriptores: !!publicacion.solo_suscriptores,
       titulo: publicacion.titulo,
       fecha_publicacion: publicacion.fecha_publicacion,
       link_url: publicacion.link_url ?? '',
@@ -253,7 +295,7 @@ export class DepartamentoDetailComponent implements OnInit {
   savePublication(): void {
     this.publicationForm.markAllAsTouched();
     const editing = this.editingPublication();
-    const requiresPdf = this.isAtlas;
+    const requiresPdf = true;
     if (!editing && requiresPdf && !this.selectedFile()) {
       this.fileError.set('Debe seleccionar un archivo PDF.');
     }
@@ -263,7 +305,9 @@ export class DepartamentoDetailComponent implements OnInit {
     if (!departamento) return;
     const formData = new FormData();
     const values = this.publicationForm.getRawValue();
-    Object.entries(values).forEach(([key, value]) => formData.append(key, value));
+    Object.entries(values).forEach(([key, value]) => {
+      formData.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value));
+    });
     if (this.selectedFile()) {
       formData.append('archivo', this.selectedFile()!);
     }
@@ -280,7 +324,9 @@ export class DepartamentoDetailComponent implements OnInit {
         this.showPublicationForm.set(false);
         this.loadPublicaciones(departamento.id);
         this.snackBar.open(
-          editing
+          !this.isAdmin()
+            ? 'Contenido enviado a revisión.'
+            : editing
             ? 'Publicación actualizada correctamente.'
             : 'Publicación guardada correctamente.',
           'Cerrar',
@@ -361,6 +407,37 @@ export class DepartamentoDetailComponent implements OnInit {
           : 'badge-neutral';
   }
 
+  getPublicacionTipoLabel(tipo: TipoPublicacion): string {
+    return tipo === 'ARTICULO' ? 'Artículo' : tipo === 'REPORTE' ? 'Reporte' : 'Atlas';
+  }
+
+  getCodeHint(): string {
+    const editing = this.editingPublication();
+    if (editing) return `Código: ${editing.codigo}`;
+    return `Se generará automáticamente: ${
+      this.isArticulo ? 'ART-####' : this.isReporte ? 'REP-####' : 'ATL-####'
+    }`;
+  }
+
+  getEstadoPublicacionLabel(estado?: EstadoPublicacion | string | null): string {
+    switch (estado) {
+      case 'SUSPENDIDO':
+        return 'Suspendido';
+      case 'EN_REVISION':
+        return 'En revisión';
+      case 'ARCHIVADO':
+        return 'Archivado';
+      case 'ELIMINADO':
+        return 'Eliminado';
+      default:
+        return 'Publicación';
+    }
+  }
+
+  getEstadoPublicacionClass(estado?: EstadoPublicacion | string | null): string {
+    return `publication-state state-${(estado || 'PUBLICACION').toString().toLowerCase()}`;
+  }
+
   deleteDepartamento(): void {
     const depto = this.departamento();
     if (!depto) return;
@@ -403,6 +480,8 @@ export class DepartamentoDetailComponent implements OnInit {
     this.editingPublication.set(null);
     this.publicationForm.reset({
       tipo,
+      estado: 'PUBLICACION',
+      solo_suscriptores: false,
       titulo: '',
       fecha_publicacion: '',
       link_url: '',

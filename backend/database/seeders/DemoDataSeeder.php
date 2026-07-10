@@ -63,7 +63,7 @@ class DemoDataSeeder extends Seeder
                 'name' => 'Carlos Mendoza Reyes',
                 'email' => 'carlos.mendoza@uleam.edu.ec',
                 'password' => Hash::make('password123'),
-                'rol' => 'USER',
+                'rol' => 'EDITOR',
                 'email_verified_at' => now(),
             ],
             [

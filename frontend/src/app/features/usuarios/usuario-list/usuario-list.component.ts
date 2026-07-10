@@ -253,12 +253,30 @@ export class UsuarioListComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (result) {
-          this.permisosService.saveUserPermisos(user.id, result);
-          this.snackBar.open(
-            'Permisos guardados correctamente para el usuario.',
-            'Cerrar',
-            { duration: 3000 }
-          );
+          this.permisosService
+            .saveUserPermisos(user.id, result)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+              next: (response) => {
+                if (response.user) {
+                  this.users.update((users) =>
+                    users.map((item) => (item.id === response.user!.id ? response.user! : item))
+                  );
+                }
+                this.snackBar.open(
+                  response.message || 'Permisos guardados correctamente para el usuario.',
+                  'Cerrar',
+                  { duration: 3000 }
+                );
+              },
+              error: () => {
+                this.snackBar.open(
+                  'No se pudieron guardar los permisos del usuario.',
+                  'Cerrar',
+                  { duration: 4000 }
+                );
+              },
+            });
         }
       });
   }

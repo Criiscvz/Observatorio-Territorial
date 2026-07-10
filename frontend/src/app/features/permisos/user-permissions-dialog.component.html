@@ -1,25 +1,24 @@
 <div class="dialog-container">
   <h2 mat-dialog-title class="dialog-title">
     <mat-icon>security</mat-icon>
-    <span>Configurar Permisos</span>
+    <span>Configurar permisos</span>
   </h2>
 
   <mat-dialog-content class="dialog-content">
-    <!-- Info del usuario -->
     <div class="user-info">
       <div class="user-avatar">{{ (user.name || 'U').charAt(0).toUpperCase() }}</div>
       <div class="user-details">
         <h3>{{ user.name }}</h3>
         <p class="email">{{ user.email }}</p>
-        <span class="role-badge" [ngClass]="'badge-' + user.rol.toLowerCase()">{{ user.rol }}</span>
+        <span class="role-badge" [ngClass]="'badge-' + user.rol.toLowerCase()">
+          {{ user.rol }}
+        </span>
       </div>
     </div>
 
-    <!-- Módulos -->
     <div class="modulos-list">
       @for (mod of modules; track mod.modulo) {
         <div class="modulo-card" [class.habilitado]="mod.habilitado">
-          <!-- Cabecera del módulo -->
           <div class="modulo-header">
             <mat-checkbox
               [checked]="mod.habilitado"
@@ -32,7 +31,6 @@
             </mat-checkbox>
           </div>
 
-          <!-- Configuración (visible solo si está habilitado) -->
           @if (mod.habilitado) {
             <div class="modulo-config">
               <div class="config-row">
@@ -48,24 +46,67 @@
                 </mat-form-field>
               </div>
 
-              <!-- Selector de departamento (solo para módulo observatorios) -->
               @if (mod.modulo === 'observatorios') {
-                <div class="config-row">
-                  <mat-form-field appearance="outline" class="obs-select">
-                    <mat-label>Dimensión / Departamento</mat-label>
-                    <mat-select [(ngModel)]="mod.departamentoId">
-                      <mat-option [value]="null">Todos los departamentos</mat-option>
-                      @for (dep of departamentos; track dep.id) {
-                        <mat-option [value]="dep.id">{{ dep.nombre }}</mat-option>
-                      }
-                    </mat-select>
+                <div class="observatorios-panel">
+                  <mat-form-field appearance="outline" class="search-field">
+                    <mat-label>Buscar Observatorio</mat-label>
+                    <mat-icon matPrefix>search</mat-icon>
+                    <input
+                      matInput
+                      [(ngModel)]="observatorioSearch"
+                      placeholder="Nombre, codigo o descripcion"
+                    />
                   </mat-form-field>
-                </div>
-                @if (mod.departamentoId === null) {
+
+                  <div class="selection-summary">
+                    <span>
+                      {{ selectedDepartamentoIds.length }} de {{ departamentos.length }}
+                      Observatorios seleccionados
+                    </span>
+                    <div class="quick-actions">
+                      <button mat-button type="button" (click)="selectAllDepartamentos()">
+                        Seleccionar todos
+                      </button>
+                      <button mat-button type="button" (click)="clearDepartamentos()">
+                        Limpiar
+                      </button>
+                    </div>
+                  </div>
+
+                  @if (loadingDepartamentos) {
+                    <div class="empty-observatorios">
+                      <mat-spinner diameter="22"></mat-spinner>
+                      <span>Cargando Observatorios...</span>
+                    </div>
+                  } @else if (filteredDepartamentos().length) {
+                    <div class="observatorios-list">
+                      @for (dep of filteredDepartamentos(); track dep.id) {
+                        <label
+                          class="observatorio-option"
+                          [class.selected]="isDepartamentoSelected(dep.id)"
+                        >
+                          <mat-checkbox
+                            [checked]="isDepartamentoSelected(dep.id)"
+                            (change)="toggleDepartamento(dep.id, $event.checked)"
+                          ></mat-checkbox>
+                          <span class="observatorio-copy">
+                            <strong>{{ dep.nombre }}</strong>
+                            <span>{{ dep.codigo_interno }}</span>
+                          </span>
+                        </label>
+                      }
+                    </div>
+                  } @else {
+                    <div class="empty-observatorios">
+                      <mat-icon>search_off</mat-icon>
+                      <span>No hay Observatorios que coincidan con la busqueda.</span>
+                    </div>
+                  }
+
                   <p class="obs-hint">
-                    El usuario tendrá acceso a <strong>todos</strong> los departamentos registrados.
+                    Cada Observatorio seleccionado se guardara como un acceso independiente.
                   </p>
-                }
+                </div>
               }
             </div>
           }
@@ -78,7 +119,7 @@
     <button mat-button (click)="cancel()">Cancelar</button>
     <button mat-flat-button color="primary" (click)="save()">
       <mat-icon>save</mat-icon>
-      Guardar Permisos
+      Guardar permisos
     </button>
   </mat-dialog-actions>
 </div>
