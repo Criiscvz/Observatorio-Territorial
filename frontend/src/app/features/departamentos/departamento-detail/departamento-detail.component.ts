@@ -118,20 +118,36 @@ export class DepartamentoDetailComponent implements OnInit {
     return this.tipo === 'ATLAS';
   }
 
+  get shouldShowPdfUpload(): boolean {
+    return this.isArticulo || this.isAtlas;
+  }
+
   get canManagePublications(): boolean {
     const departamento = this.departamento();
     if (!departamento) return false;
-    return (
-      this.isAdmin() ||
+
+    const hasObservatorioPermission =
       this.canUploadPublications() ||
-      (this.isEditor() &&
-        (['ADMIN', 'EDITOR'].includes(departamento.user_role ?? '') ||
-          this.authService.hasRoleInDepartamento(departamento.id, ['ADMIN', 'EDITOR'])))
-    );
+      ['ADMIN', 'EDITOR'].includes(String(departamento.user_role ?? '').toUpperCase()) ||
+      this.authService.hasRoleInDepartamento(departamento.id, ['ADMIN', 'EDITOR']);
+
+    return this.isAdmin() || (this.isEditor() && hasObservatorioPermission);
+  }
+
+  get canUploadButtonGroup(): boolean {
+    return this.canManagePublications;
   }
 
   get canChoosePublicationStatus(): boolean {
     return this.isAdmin();
+  }
+
+  get panelTitle(): string {
+    return this.isEditor() && !this.isAdmin() ? 'Panel de Editor' : 'Panel de Administrador';
+  }
+
+  get panelRoleLabel(): string {
+    return this.isEditor() && !this.isAdmin() ? 'Editor' : 'Administrador';
   }
 
   canEditPublication(publicacion: ObservatorioPublicacion): boolean {
@@ -171,7 +187,12 @@ export class DepartamentoDetailComponent implements OnInit {
 
   loadCanUpload(id: string): void {
     this.publicacionService.canUpload(id).subscribe({
-      next: (response) => this.canUploadPublications.set(!!response.can_upload),
+      next: (response) => {
+        const canUpload =
+          !!response.can_upload ||
+          (String(response.role ?? '').toUpperCase() === 'EDITOR' && !!response.has_permission);
+        this.canUploadPublications.set(canUpload);
+      },
       error: () => this.canUploadPublications.set(false),
     });
   }
@@ -215,7 +236,7 @@ export class DepartamentoDetailComponent implements OnInit {
       link_url: publicacion.link_url ?? '',
       descripcion: publicacion.descripcion ?? '',
       autores: publicacion.autores ?? '',
-      fuente: publicacion.fuente,
+      fuente: publicacion.fuente ?? '',
     });
     this.configurePublicationValidators(publicacion.tipo);
     this.selectedFile.set(null);
@@ -295,7 +316,7 @@ export class DepartamentoDetailComponent implements OnInit {
   savePublication(): void {
     this.publicationForm.markAllAsTouched();
     const editing = this.editingPublication();
-    const requiresPdf = true;
+    const requiresPdf = this.shouldShowPdfUpload;
     if (!editing && requiresPdf && !this.selectedFile()) {
       this.fileError.set('Debe seleccionar un archivo PDF.');
     }
@@ -474,6 +495,10 @@ export class DepartamentoDetailComponent implements OnInit {
     this.publicationForm.controls.link_url.updateValueAndValidity();
     this.publicationForm.controls.descripcion.updateValueAndValidity();
     this.publicationForm.controls.autores.updateValueAndValidity();
+    if (tipo === 'REPORTE') {
+      this.selectedFile.set(null);
+      this.fileError.set('');
+    }
   }
 
   private resetPublicationForm(tipo: TipoPublicacion = 'ARTICULO'): void {

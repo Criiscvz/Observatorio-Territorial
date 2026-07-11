@@ -31,7 +31,10 @@ class UserResource extends JsonResource
                     'id' => $d->id,
                     'nombre' => $d->nombre,
                     'codigo_interno' => $d->codigo_interno,
+                    'descripcion' => $d->descripcion,
+                    'publico' => $d->publico,
                     'rol' => $d->pivot->rol,
+                    'assigned_at' => $d->pivot->created_at?->toISOString(),
                 ])
             ),
             'created_at' => $this->created_at?->toISOString(),

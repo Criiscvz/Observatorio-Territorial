@@ -42,7 +42,8 @@ class ReporteController extends Controller
         $reportes = $query
             ->orderByRaw('fecha_publicacion DESC NULLS LAST')
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+            ->filter(fn($reporte) => $this->canViewLegacyContent($request, $reporte));
 
         $publicaciones = ObservatorioPublicacion::query()
             ->with('departamento')
@@ -87,7 +88,7 @@ class ReporteController extends Controller
 
         if ($reporte->visibilidad === 'suscriptor') {
             $user = $request->user('sanctum');
-            if (!$user || !in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER'])) {
+            if (!$this->isSubscriber($user)) {
                 return response()->json(['message' => 'Acceso exclusivo para suscriptores.'], 403);
             }
         }
@@ -310,7 +311,7 @@ class ReporteController extends Controller
         $reporte = ReporteModel::where('ficha_indicador', 'like', '%' . $filename)->first();
         if ($reporte && $reporte->visibilidad === 'suscriptor') {
             $user = request()->user('sanctum');
-            if (!$user || !in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER'])) {
+            if (!$this->isSubscriber($user)) {
                 return response()->json(['message' => 'Acceso exclusivo para suscriptores.'], 403)
                     ->header('Access-Control-Allow-Origin', '*')
                     ->header('Cross-Origin-Resource-Policy', 'cross-origin');
@@ -377,6 +378,20 @@ class ReporteController extends Controller
 
         $user = $request->user('sanctum');
 
+        return $this->isSubscriber($user);
+    }
+
+    private function canViewLegacyContent(Request $request, $reporte): bool
+    {
+        if (($reporte->visibilidad ?? 'publico') !== 'suscriptor') {
+            return true;
+        }
+
+        return $this->isSubscriber($request->user('sanctum'));
+    }
+
+    private function isSubscriber($user): bool
+    {
         return $user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 }

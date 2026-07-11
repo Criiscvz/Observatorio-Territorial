@@ -14,8 +14,17 @@ class StorePublicacionRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('titulo') && $this->filled('nombre')) {
+            $this->merge(['titulo' => $this->input('nombre')]);
+        }
+    }
+
     public function rules(): array
     {
+        $tipo = $this->input('tipo');
+
         return [
             'tipo' => ['required', Rule::in(['ARTICULO', 'REPORTE', 'ATLAS'])],
             'estado' => [
@@ -33,15 +42,17 @@ class StorePublicacionRequest extends FormRequest
                 'max:2048',
             ],
             'descripcion' => ['required', 'string', 'max:3000'],
-            'autores' => [Rule::requiredIf($this->input('tipo') === 'ARTICULO'), 'nullable', 'string', 'max:1000'],
+            'autores' => [Rule::requiredIf($tipo === 'ARTICULO'), 'nullable', 'string', 'max:1000'],
             'fuente' => ['required', 'string', 'max:255'],
-            'archivo' => [
-                'required',
-                'file',
-                'mimetypes:application/pdf,application/x-pdf',
-                'mimes:pdf',
-                'max:20480',
-            ],
+            'archivo' => $tipo === 'REPORTE'
+                ? ['nullable']
+                : [
+                    Rule::requiredIf(in_array($tipo, ['ARTICULO', 'ATLAS'], true)),
+                    'file',
+                    'mimetypes:application/pdf,application/x-pdf',
+                    'mimes:pdf',
+                    'max:20480',
+                ],
         ];
     }
 

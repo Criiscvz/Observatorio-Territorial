@@ -26,6 +26,12 @@ class AdminUserSeeder extends Seeder
                 'password' => env('INITIAL_USER_PASSWORD'),
                 'rol' => 'USER',
             ],
+            [
+                'name' => env('SUBSCRIBER_NAME'),
+                'email' => env('SUBSCRIBER_EMAIL'),
+                'password' => env('SUBSCRIBER_PASSWORD'),
+                'rol' => 'SUBSCRIBER',
+            ],
         ];
 
         foreach ($users as $userData) {

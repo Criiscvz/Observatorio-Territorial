@@ -41,7 +41,8 @@ class ArticuloController extends Controller
         $articulos = $query
             ->orderByRaw('fecha_publicacion DESC NULLS LAST')
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+            ->filter(fn($articulo) => $this->canViewLegacyContent($request, $articulo));
 
         $publicaciones = ObservatorioPublicacion::query()
             ->with('departamento')
@@ -86,7 +87,7 @@ class ArticuloController extends Controller
 
         if ($articulo->visibilidad === 'suscriptor') {
             $user = $request->user('sanctum');
-            if (!$user || !in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER'])) {
+            if (!$this->isSubscriber($user)) {
                 return response()->json(['message' => 'Acceso exclusivo para suscriptores.'], 403);
             }
         }
@@ -282,6 +283,24 @@ class ArticuloController extends Controller
 
         $user = $request->user('sanctum');
 
+        return $this->isSubscriber($user);
+    }
+
+    private function canViewLegacyContent(Request $request, $articulo): bool
+    {
+        if (($articulo->estado ?? 'PUBLICADO') && ! in_array($articulo->estado, ['PUBLICADO', 'PUBLICACION'], true)) {
+            return false;
+        }
+
+        if (($articulo->visibilidad ?? 'publico') !== 'suscriptor') {
+            return true;
+        }
+
+        return $this->isSubscriber($request->user('sanctum'));
+    }
+
+    private function isSubscriber($user): bool
+    {
         return $user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 }

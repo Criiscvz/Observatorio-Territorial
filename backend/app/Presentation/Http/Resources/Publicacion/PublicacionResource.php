@@ -30,7 +30,9 @@ class PublicacionResource extends JsonResource
             'autores' => $this->autores,
             'fuente' => $this->fuente,
             'nombre_archivo_original' => $this->nombre_archivo_original,
-            'download_url' => "/api/departamentos/publicaciones/{$this->id}/download",
+            'download_url' => ($this->archivo_pdf || $this->sharepoint_url)
+                ? "/api/departamentos/publicaciones/{$this->id}/download"
+                : null,
             'sharepoint_url' => $this->sharepoint_url,
             'sharepoint_file_id' => $this->sharepoint_file_id,
             'sharepoint_file_name' => $this->sharepoint_file_name,

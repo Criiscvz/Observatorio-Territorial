@@ -15,6 +15,8 @@ import { Dataset, Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { ArticulosService, Articulo } from '@core/services/articulos.service';
 import { ReportesService, Reporte } from '@core/services/reportes.service';
+import { AuthService } from '@core/services/auth.service';
+import { PublicacionService } from '@core/services/publicacion.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -43,12 +45,15 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   private readonly deptoService = inject(DepartamentoService);
   private readonly articulosService = inject(ArticulosService);
   private readonly reportesService = inject(ReportesService);
+  private readonly authService = inject(AuthService);
+  private readonly publicacionService = inject(PublicacionService);
   private readonly destroyRef = inject(DestroyRef);
 
   departamento = signal<Departamento | null>(null);
   articulos = signal<Articulo[]>([]);
   reportes = signal<Reporte[]>([]);
   loading = signal(true);
+  canAccessEditorPanel = signal(false);
   datasetSearchTerm = '';
 
   deptoGradient = 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)';
@@ -68,6 +73,8 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   reportesAgrupados = computed(() =>
     this.reportesService.agruparPorCategoria(this.reportes())
   );
+
+  showEditorPanelButton = computed(() => this.authService.isEditor() && this.canAccessEditorPanel());
 
   get datasets(): Dataset[] {
     const all = this.departamento()?.datasets || [];
@@ -98,6 +105,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       next: (depto) => {
         this.departamento.set(depto);
         this.loading.set(false);
+        this.loadEditorAccess(id);
         // Cargar artículos y reportes filtrados por este departamento
         this.articulosService.getAll(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (arts) => this.articulos.set(arts),
@@ -110,9 +118,30 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       },
       error: () => {
         this.departamento.set(null);
+        this.canAccessEditorPanel.set(false);
         this.loading.set(false);
       },
     });
+  }
+
+  private loadEditorAccess(id: string): void {
+    if (!this.authService.isEditor()) {
+      this.canAccessEditorPanel.set(false);
+      return;
+    }
+
+    this.publicacionService
+      .canUpload(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          const canUpload =
+            !!response.can_upload ||
+            (String(response.role ?? '').toUpperCase() === 'EDITOR' && !!response.has_permission);
+          this.canAccessEditorPanel.set(canUpload);
+        },
+        error: () => this.canAccessEditorPanel.set(false),
+      });
   }
 
   getDatasetColor(index: number): string {

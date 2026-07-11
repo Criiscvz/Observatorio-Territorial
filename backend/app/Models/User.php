@@ -176,7 +176,7 @@ class User extends Authenticatable
      */
     public function isSubscriber(): bool
     {
-        return $this->rol === 'SUBSCRIBER';
+        return in_array($this->rol, ['SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 
     /**

@@ -123,6 +123,50 @@
   color: var(--primary-600);
 }
 
+.editor-panel-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -0.75rem 0 2rem;
+  padding: 1rem 1.25rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-left: 4px solid var(--primary-600);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.editor-panel-entry div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  color: var(--text-primary);
+}
+
+.editor-panel-entry span {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.editor-panel-entry a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .editor-panel-entry {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .editor-panel-entry a {
+    justify-content: center;
+  }
+}
+
 /* Datasets Section */
 .datasets-section {
   margin-top: 2rem;

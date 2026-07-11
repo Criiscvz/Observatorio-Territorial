@@ -7,4 +7,5 @@ export interface DepartamentoConRol {
   descripcion?: string;
   publico?: boolean;
   rol: DepartamentoRole; // Rol del usuario en este departamento
+  assigned_at?: string | null;
 }

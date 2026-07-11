@@ -64,6 +64,36 @@ export class AdminPermissionsComponent implements OnInit {
   readonly moduloLabels = MODULO_LABELS;
   readonly moduloIcons = MODULO_ICONS;
   readonly nivelLabels = NIVEL_LABELS;
+  readonly roleSummaries = [
+    {
+      rol: 'ADMIN',
+      label: 'Administrador',
+      icon: 'admin_panel_settings',
+      description: 'Control total del sistema, usuarios, observatorios y biblioteca.',
+      access: 'Acceso completo',
+    },
+    {
+      rol: 'EDITOR',
+      label: 'Editor',
+      icon: 'edit_note',
+      description: 'Gestiona contenidos en los Observatorios asignados.',
+      access: 'Configurable por usuario',
+    },
+    {
+      rol: 'SUBSCRIBER',
+      label: 'Suscriptor',
+      icon: 'workspace_premium',
+      description: 'Puede ver contenido publicado marcado como solo para suscriptores.',
+      access: 'Lectura suscriptor',
+    },
+    {
+      rol: 'USER',
+      label: 'Usuario',
+      icon: 'person',
+      description: 'Acceso de lectura a contenido público publicado.',
+      access: 'Lectura pública',
+    },
+  ];
 
   users = signal<User[]>([]);
   loadingUsers = signal(true);
@@ -157,6 +187,10 @@ export class AdminPermissionsComponent implements OnInit {
 
   getInitial(user: User): string {
     return user.name?.charAt(0)?.toUpperCase() || 'U';
+  }
+
+  getActivePermissionsCount(user: User): number {
+    return this.getUserPermisos(user).filter((permiso) => permiso.nivel !== 'ninguno').length;
   }
 
   tienePermisosPersonalizados(user: User): boolean {

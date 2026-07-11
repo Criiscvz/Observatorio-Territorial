@@ -11,6 +11,9 @@
         <p class="code-line">
           {{ 'departamentos.detail.code' | translate }}: {{ departamento()?.codigo_interno }}
         </p>
+        <p class="panel-role-line">
+          {{ panelTitle }} · Rol: {{ panelRoleLabel }}
+        </p>
       </div>
       @if (isAdmin()) {
         <div class="header-actions">
@@ -177,85 +180,87 @@
                     <mat-error>La descripción es obligatoria.</mat-error>
                   }
                 </mat-form-field>
-                <div class="file-field full-width">
-                  <input
-                    #pdfInput
-                    id="publication-pdf"
-                    class="file-input"
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    (change)="onFileSelected($event)"
-                  />
-                  <div
-                    class="upload-zone"
-                    [class.is-dragging]="isDraggingFile()"
-                    [class.has-file]="!!selectedFile()"
-                    [class.has-error]="!!fileError()"
-                    role="button"
-                    tabindex="0"
-                    (click)="pdfInput.click()"
-                    (keydown.enter)="pdfInput.click()"
-                    (keydown.space)="$event.preventDefault(); pdfInput.click()"
-                    (dragover)="onFileDragOver($event)"
-                    (dragleave)="onFileDragLeave($event)"
-                    (drop)="onFileDropped($event)"
-                  >
-                    @if (selectedFile()) {
-                      <div class="file-success-icon"><mat-icon>check_circle</mat-icon></div>
-                      <div class="upload-copy">
-                        <strong>Archivo cargado correctamente</strong>
-                        <span class="selected-file-name">{{ selectedFile()?.name }}</span>
-                        <span>{{ formatFileSize(selectedFile()!.size) }} · PDF</span>
+                @if (shouldShowPdfUpload) {
+                  <div class="file-field full-width">
+                    <input
+                      #pdfInput
+                      id="publication-pdf"
+                      class="file-input"
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      (change)="onFileSelected($event)"
+                    />
+                    <div
+                      class="upload-zone"
+                      [class.is-dragging]="isDraggingFile()"
+                      [class.has-file]="!!selectedFile()"
+                      [class.has-error]="!!fileError()"
+                      role="button"
+                      tabindex="0"
+                      (click)="pdfInput.click()"
+                      (keydown.enter)="pdfInput.click()"
+                      (keydown.space)="$event.preventDefault(); pdfInput.click()"
+                      (dragover)="onFileDragOver($event)"
+                      (dragleave)="onFileDragLeave($event)"
+                      (drop)="onFileDropped($event)"
+                    >
+                      @if (selectedFile()) {
+                        <div class="file-success-icon"><mat-icon>check_circle</mat-icon></div>
+                        <div class="upload-copy">
+                          <strong>Archivo cargado correctamente</strong>
+                          <span class="selected-file-name">{{ selectedFile()?.name }}</span>
+                          <span>{{ formatFileSize(selectedFile()!.size) }} · PDF</span>
+                        </div>
+                        <div class="file-actions">
+                          <button
+                            mat-button
+                            type="button"
+                            (click)="pdfInput.click(); $event.stopPropagation()"
+                          >
+                            <mat-icon>swap_horiz</mat-icon>Cambiar
+                          </button>
+                          <button
+                            mat-button
+                            type="button"
+                            color="warn"
+                            (click)="removeSelectedFile(pdfInput, $event)"
+                          >
+                            <mat-icon>close</mat-icon>Quitar
+                          </button>
+                        </div>
+                      } @else {
+                        <div class="upload-icon"><mat-icon>cloud_upload</mat-icon></div>
+                        <div class="upload-copy">
+                          <strong>Arrastra o haz click para subir un documento</strong>
+                          <span>Solo se permiten archivos PDF</span>
+                          <small>Máximo 20 MB</small>
+                        </div>
+                      }
+                    </div>
+                    @if (fileError()) {
+                      <div class="file-message file-message-error">
+                      <mat-icon>error</mat-icon>
+                        <span>{{ fileError() }}</span>
                       </div>
-                      <div class="file-actions">
-                        <button
-                          mat-button
-                          type="button"
-                          (click)="pdfInput.click(); $event.stopPropagation()"
-                        >
-                          <mat-icon>swap_horiz</mat-icon>Cambiar
-                        </button>
-                        <button
-                          mat-button
-                          type="button"
-                          color="warn"
-                          (click)="removeSelectedFile(pdfInput, $event)"
-                        >
-                          <mat-icon>close</mat-icon>Quitar
-                        </button>
-                      </div>
-                    } @else {
-                      <div class="upload-icon"><mat-icon>cloud_upload</mat-icon></div>
-                      <div class="upload-copy">
-                        <strong>Arrastra o haz click para subir un documento</strong>
-                        <span>Solo se permiten archivos PDF</span>
-                        <small>Máximo 20 MB</small>
+                    }
+                    @if (editingPublication() && !selectedFile()) {
+                      <div class="current-document">
+                        <div class="current-document-icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                        <div>
+                          <strong
+                            >Documento actual:
+                            {{
+                              editingPublication()?.nombre_archivo_original ||
+                                editingPublication()?.sharepoint_file_name ||
+                                'sin archivo local'
+                            }}</strong
+                          >
+                          <p>Puedes subir un nuevo PDF para reemplazar el documento actual.</p>
+                        </div>
                       </div>
                     }
                   </div>
-                  @if (fileError()) {
-                    <div class="file-message file-message-error">
-                    <mat-icon>error</mat-icon>
-                      <span>{{ fileError() }}</span>
-                    </div>
-                  }
-                  @if (editingPublication() && !selectedFile()) {
-                    <div class="current-document">
-                      <div class="current-document-icon"><mat-icon>picture_as_pdf</mat-icon></div>
-                      <div>
-                        <strong
-                          >Documento actual:
-                          {{
-                            editingPublication()?.nombre_archivo_original ||
-                              editingPublication()?.sharepoint_file_name ||
-                              'sin archivo local'
-                          }}</strong
-                        >
-                        <p>Puedes subir un nuevo PDF para reemplazar el documento actual.</p>
-                      </div>
-                    </div>
-                  }
-                </div>
+                }
               </div>
               @if (serverError()) {
                 <div class="server-error"><mat-icon>error</mat-icon>{{ serverError() }}</div>

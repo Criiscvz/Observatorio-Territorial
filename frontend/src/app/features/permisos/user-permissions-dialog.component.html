@@ -1,8 +1,11 @@
 <div class="dialog-container">
-  <h2 mat-dialog-title class="dialog-title">
-    <mat-icon>security</mat-icon>
-    <span>Configurar permisos</span>
-  </h2>
+  <div mat-dialog-title class="dialog-title">
+    <div class="title-icon"><mat-icon>security</mat-icon></div>
+    <div>
+      <span class="eyebrow">Gestión de acceso</span>
+      <h2>Configurar permisos</h2>
+    </div>
+  </div>
 
   <mat-dialog-content class="dialog-content">
     <div class="user-info">
@@ -10,11 +13,27 @@
       <div class="user-details">
         <h3>{{ user.name }}</h3>
         <p class="email">{{ user.email }}</p>
-        <span class="role-badge" [ngClass]="'badge-' + user.rol.toLowerCase()">
-          {{ user.rol }}
-        </span>
+        <div class="user-facts">
+          <span class="role-badge" [ngClass]="'badge-' + user.rol.toLowerCase()">
+            {{ user.rol }}
+          </span>
+          <span class="status-badge">
+            <mat-icon>verified_user</mat-icon>
+            Usuario activo
+          </span>
+        </div>
       </div>
     </div>
+
+    <section class="dialog-section">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">Permisos por usuario</span>
+          <h3>Módulos disponibles</h3>
+        </div>
+        <span class="section-count">{{ modules.length }} módulos</span>
+      </div>
+    </section>
 
     <div class="modulos-list">
       @for (mod of modules; track mod.modulo) {
@@ -24,11 +43,14 @@
               [checked]="mod.habilitado"
               (change)="onToggleModulo(mod, $event.checked)"
             >
-              <div class="modulo-icon-box" style="display:inline-flex;margin-right:8px;">
+              <div class="modulo-icon-box">
                 <mat-icon>{{ mod.icon }}</mat-icon>
               </div>
               <span class="modulo-title">{{ mod.label }}</span>
             </mat-checkbox>
+            <span class="access-state" [class.enabled]="mod.habilitado">
+              {{ mod.habilitado ? 'Activo' : 'Sin acceso' }}
+            </span>
           </div>
 
           @if (mod.habilitado) {
@@ -48,6 +70,13 @@
 
               @if (mod.modulo === 'observatorios') {
                 <div class="observatorios-panel">
+                  <div class="section-heading compact">
+                    <div>
+                      <span class="eyebrow">Observatorios asignados</span>
+                      <h3>Selecciona uno o varios Observatorios</h3>
+                    </div>
+                  </div>
+
                   <mat-form-field appearance="outline" class="search-field">
                     <mat-label>Buscar Observatorio</mat-label>
                     <mat-icon matPrefix>search</mat-icon>
@@ -92,6 +121,9 @@
                           <span class="observatorio-copy">
                             <strong>{{ dep.nombre }}</strong>
                             <span>{{ dep.codigo_interno }}</span>
+                            <small>
+                              {{ isDepartamentoSelected(dep.id) ? 'Con acceso' : 'Sin acceso' }}
+                            </small>
                           </span>
                         </label>
                       }

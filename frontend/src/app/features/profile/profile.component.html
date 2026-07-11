@@ -190,6 +190,58 @@
           </div>
         </mat-card-content>
       </mat-card>
+
+      <mat-card class="profile-card observatorios-card">
+        <mat-card-header>
+          <mat-card-title>Observatorios asignados</mat-card-title>
+          <mat-card-subtitle>
+            Observatorios donde tienes permisos registrados.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (isAdminUser()) {
+            <div class="admin-access-note">
+              <mat-icon>verified_user</mat-icon>
+              <div>
+                <strong>Administrador: acceso completo</strong>
+                <p>Este usuario puede gestionar todos los Observatorios del sistema.</p>
+              </div>
+            </div>
+          } @else if (assignedObservatorios().length > 0) {
+            <div class="observatorios-list">
+              @for (observatorio of assignedObservatorios(); track observatorio.id) {
+                <article class="observatorio-item">
+                  <div class="observatorio-icon">
+                    <mat-icon>account_tree</mat-icon>
+                  </div>
+                  <div class="observatorio-copy">
+                    <h3>{{ observatorio.nombre }}</h3>
+                    <p>{{ observatorio.descripcion || observatorio.codigo_interno }}</p>
+                    <div class="observatorio-meta">
+                      <span class="access-chip">{{ getObservatorioRoleLabel(observatorio.rol) }}</span>
+                      @if (observatorio.assigned_at) {
+                        <span>Asignado: {{ observatorio.assigned_at | date: 'mediumDate' }}</span>
+                      }
+                    </div>
+                  </div>
+                  <a
+                    mat-stroked-button
+                    [routerLink]="['/admin/departamentos', observatorio.id]"
+                  >
+                    <mat-icon>open_in_new</mat-icon>
+                    Entrar
+                  </a>
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="empty-observatorios">
+              <mat-icon>info</mat-icon>
+              <p>No tienes observatorios asignados.</p>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
     </div>
   }
 </div>

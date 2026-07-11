@@ -72,16 +72,24 @@ class PublicController extends Controller
         return response()->json($departamento->toArray());
     }
 
-    public function atlas(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function atlas(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         $query = ObservatorioPublicacion::query()
             ->where('tipo', 'ATLAS')
             ->where('estado', 'PUBLICACION')
-            ->where('solo_suscriptores', false)
             ->whereHas('departamento', fn($departamentoQuery) => $departamentoQuery->where('publico', true))
             ->latest('fecha_publicacion');
 
+        if (! $this->isSubscriber($request->user('sanctum'))) {
+            $query->where('solo_suscriptores', false);
+        }
+
         return PublicacionResource::collection($query->get());
+    }
+
+    private function isSubscriber($user): bool
+    {
+        return $user && in_array($user->rol, ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 
     #[OA\Get(

@@ -54,6 +54,8 @@ export class ProfileComponent implements OnInit {
   loading = signal(true);
   saving = signal(false);
   uploadingAvatar = signal(false);
+  assignedObservatorios = computed(() => this.user()?.departamentos ?? []);
+  isAdminUser = computed(() => this.user()?.rol === 'ADMIN');
 
   // Computed para obtener la URL completa del avatar
   avatarUrl = computed(() => {
@@ -94,6 +96,7 @@ export class ProfileComponent implements OnInit {
     this.profileService.getProfile().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (user) => {
         this.user.set(user);
+        this.authService.updateUser(user);
         this.patchForm(user);
         this.loading.set(false);
       },
@@ -254,5 +257,15 @@ export class ProfileComponent implements OnInit {
     };
 
     return roleLabels[this.user()?.rol ?? 'USER'] ?? 'profile.roles.user';
+  }
+
+  getObservatorioRoleLabel(role?: string | null): string {
+    const labels: Record<string, string> = {
+      ADMIN: 'Administrador',
+      EDITOR: 'Editor',
+      LECTOR: 'Lector',
+    };
+
+    return labels[String(role ?? '').toUpperCase()] ?? 'Con acceso';
   }
 }

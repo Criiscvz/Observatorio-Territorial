@@ -14,9 +14,17 @@ class UpdatePublicacionRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->filled('titulo') && $this->filled('nombre')) {
+            $this->merge(['titulo' => $this->input('nombre')]);
+        }
+    }
+
     public function rules(): array
     {
         $publicacion = $this->route('publicacion');
+        $tipo = $publicacion?->tipo;
 
         return [
             'estado' => [
@@ -35,18 +43,20 @@ class UpdatePublicacionRequest extends FormRequest
             ],
             'descripcion' => ['required', 'string', 'max:3000'],
             'autores' => [
-                $publicacion?->tipo === 'ARTICULO' ? 'required' : 'nullable',
+                $tipo === 'ARTICULO' ? 'required' : 'nullable',
                 'string',
                 'max:1000',
             ],
             'fuente' => ['required', 'string', 'max:255'],
-            'archivo' => [
-                'nullable',
-                'file',
-                'mimetypes:application/pdf,application/x-pdf',
-                'mimes:pdf',
-                'max:20480',
-            ],
+            'archivo' => $tipo === 'REPORTE'
+                ? ['nullable']
+                : [
+                    'nullable',
+                    'file',
+                    'mimetypes:application/pdf,application/x-pdf',
+                    'mimes:pdf',
+                    'max:20480',
+                ],
         ];
     }
 

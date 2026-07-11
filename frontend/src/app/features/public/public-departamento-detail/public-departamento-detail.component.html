@@ -45,6 +45,23 @@
       </div>
     </div>
 
+    @if (showEditorPanelButton()) {
+      <section class="editor-panel-entry">
+        <div>
+          <strong>Panel del editor</strong>
+          <span>Gestiona Artículos, Reportes y Atlas de este Observatorio.</span>
+        </div>
+        <a
+          mat-raised-button
+          color="primary"
+          [routerLink]="['/admin/departamentos', departamento()!.id]"
+        >
+          <mat-icon>edit_note</mat-icon>
+          Ir al panel del editor
+        </a>
+      </section>
+    }
+
     <!-- Tabs -->
     <mat-tab-group class="content-tabs" animationDuration="200ms">
 

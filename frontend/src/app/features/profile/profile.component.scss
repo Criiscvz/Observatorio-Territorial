@@ -297,6 +297,79 @@
   color: var(--text-primary);
 }
 
+/* Observatorios asignados */
+.observatorios-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.observatorio-item,
+.admin-access-note,
+.empty-observatorios {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+}
+
+.observatorio-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  color: var(--primary-600);
+  background: rgba(99, 102, 241, 0.12);
+  border-radius: var(--radius-md);
+}
+
+.observatorio-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.observatorio-copy h3 {
+  margin: 0 0 0.25rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.observatorio-copy p,
+.admin-access-note p,
+.empty-observatorios p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.observatorio-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+  color: var(--text-tertiary);
+  font-size: 0.8rem;
+}
+
+.access-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  color: #047857;
+  background: rgba(16, 185, 129, 0.14);
+  font-weight: 700;
+}
+
+.admin-access-note mat-icon,
+.empty-observatorios mat-icon {
+  color: var(--primary-600);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .profile-container {
@@ -314,5 +387,10 @@
 
   .avatar-actions {
     justify-content: center;
+  }
+
+  .observatorio-item {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

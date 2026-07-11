@@ -14,6 +14,13 @@ class UpdateUserRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->filled('rol')) {
+            $this->merge(['rol' => $this->normalizeRole($this->input('rol'))]);
+        }
+    }
+
     public function rules(): array
     {
         $userId = $this->route('id');
@@ -46,5 +53,12 @@ class UpdateUserRequest extends FormRequest
             'rol.in' => 'El rol debe ser ADMIN, USER, SUBSCRIBER o EDITOR',
             'is_active.boolean' => 'El campo is_active debe ser verdadero o falso',
         ];
+    }
+
+    private function normalizeRole(string $role): string
+    {
+        $normalized = strtoupper(trim($role));
+
+        return in_array($normalized, ['SUSCRIPTOR', 'SUBSCRIPTOR'], true) ? 'SUBSCRIBER' : $normalized;
     }
 }

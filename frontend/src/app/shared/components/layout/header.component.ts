@@ -90,7 +90,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
               </div>
               <div class="user-info">
                 <span class="user-name">{{ user.name }}</span>
-                <span class="user-role">{{ 'layout.header.administrator' | translate }}</span>
+                <span class="user-role">{{ getRoleLabel(user.rol) }}</span>
               </div>
               <mat-icon class="dropdown-icon">expand_more</mat-icon>
             </button>
@@ -426,11 +426,25 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
   ],
 })
 export class HeaderComponent {
-    private readonly destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   authService = inject(AuthService);
   themeService = inject(ThemeService);
   languageService = inject(LanguageService);
   toggleSidenav = output<void>();
+
+  getRoleLabel(role: string | null | undefined): string {
+    const normalizedRole = String(role ?? '').toUpperCase();
+    const labels: Record<string, string> = {
+      ADMIN: 'Administrador',
+      EDITOR: 'Editor',
+      USER: 'Usuario',
+      SUBSCRIBER: 'Suscriptor',
+      SUSCRIPTOR: 'Suscriptor',
+      SUBSCRIPTOR: 'Suscriptor',
+    };
+
+    return labels[normalizedRole] ?? 'Usuario';
+  }
 
   logout(): void {
     this.authService.logout().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();

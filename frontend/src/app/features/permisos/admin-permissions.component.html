@@ -10,6 +10,37 @@
     </div>
   </div>
 
+  <!-- Permisos por rol -->
+  <section class="roles-panel">
+    <div class="section-heading">
+      <div>
+        <span class="eyebrow">Permisos por roles</span>
+        <h2>Resumen de acceso por tipo de usuario</h2>
+      </div>
+      <span class="section-pill">Roles del sistema</span>
+    </div>
+
+    <div class="roles-grid">
+      @for (role of roleSummaries; track role.rol) {
+        <article class="role-card">
+          <div class="role-card-icon">
+            <mat-icon>{{ role.icon }}</mat-icon>
+          </div>
+          <div class="role-card-copy">
+            <div class="role-card-head">
+              <h3>{{ role.label }}</h3>
+              <span class="role-badge" [ngClass]="getRoleBadgeClass(role.rol)">
+                {{ role.rol }}
+              </span>
+            </div>
+            <p>{{ role.description }}</p>
+            <strong>{{ role.access }}</strong>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+
   <!-- Permisos por usuario -->
   <mat-card class="permissions-card">
     <mat-card-header>
@@ -57,6 +88,9 @@
                 <div class="user-meta">
                   <span class="user-name" [title]="user.name">{{ user.name }}</span>
                   <span class="user-email" [title]="user.email">{{ user.email }}</span>
+                  <span class="user-permission-summary">
+                    {{ getActivePermissionsCount(user) }} permisos activos
+                  </span>
                 </div>
                 <span class="role-badge" [ngClass]="getRoleBadgeClass(user.rol)">{{ user.rol }}</span>
               </div>
