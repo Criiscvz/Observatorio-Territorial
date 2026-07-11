@@ -9,6 +9,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
@@ -17,6 +19,7 @@ import { ArticulosService, Articulo } from '@core/services/articulos.service';
 import { ReportesService, Reporte } from '@core/services/reportes.service';
 import { AuthService } from '@core/services/auth.service';
 import { PublicacionService } from '@core/services/publicacion.service';
+import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -32,6 +35,8 @@ import { TranslateModule } from '@ngx-translate/core';
     MatFormFieldModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    MatDialogModule,
+    MatSnackBarModule,
     MatChipsModule,
     MatTabsModule,
     TranslateModule,
@@ -47,13 +52,14 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   private readonly reportesService = inject(ReportesService);
   private readonly authService = inject(AuthService);
   private readonly publicacionService = inject(PublicacionService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
 
   departamento = signal<Departamento | null>(null);
   articulos = signal<Articulo[]>([]);
   reportes = signal<Reporte[]>([]);
   loading = signal(true);
-  canAccessEditorPanel = signal(false);
   datasetSearchTerm = '';
 
   deptoGradient = 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)';
@@ -73,8 +79,6 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   reportesAgrupados = computed(() =>
     this.reportesService.agruparPorCategoria(this.reportes())
   );
-
-  showEditorPanelButton = computed(() => this.authService.isEditor() && this.canAccessEditorPanel());
 
   get datasets(): Dataset[] {
     const all = this.departamento()?.datasets || [];
@@ -105,7 +109,6 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       next: (depto) => {
         this.departamento.set(depto);
         this.loading.set(false);
-        this.loadEditorAccess(id);
         // Cargar artículos y reportes filtrados por este departamento
         this.articulosService.getAll(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
           next: (arts) => this.articulos.set(arts),
@@ -118,32 +121,10 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       },
       error: () => {
         this.departamento.set(null);
-        this.canAccessEditorPanel.set(false);
         this.loading.set(false);
       },
     });
   }
-
-  private loadEditorAccess(id: string): void {
-    if (!this.authService.isEditor()) {
-      this.canAccessEditorPanel.set(false);
-      return;
-    }
-
-    this.publicacionService
-      .canUpload(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response) => {
-          const canUpload =
-            !!response.can_upload ||
-            (String(response.role ?? '').toUpperCase() === 'EDITOR' && !!response.has_permission);
-          this.canAccessEditorPanel.set(canUpload);
-        },
-        error: () => this.canAccessEditorPanel.set(false),
-      });
-  }
-
   getDatasetColor(index: number): string {
     return this.datasetColors[index % this.datasetColors.length];
   }
@@ -156,4 +137,48 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       default: return 'type-text';
     }
   }
+
+  isSubscriberContent(item: Articulo | Reporte): boolean {
+    return item.bloqueado === true || item.visibilidad === 'suscriptor';
+  }
+
+  canViewSubscriberContent(item: Articulo | Reporte): boolean {
+    if (!this.isSubscriberContent(item)) return true;
+    const user = this.authService.user();
+    return !!user && ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(user.rol);
+  }
+
+  showSubscriberMessage(): void {
+    this.dialog.open(SubscriberAccessDialogComponent, {
+      width: 'min(92vw, 460px)',
+      maxWidth: '92vw',
+      panelClass: 'subscriber-access-dialog-panel',
+      backdropClass: 'subscriber-access-dialog-backdrop',
+      autoFocus: false,
+      restoreFocus: false,
+      data: {
+        title: 'Contenido exclusivo para suscriptores',
+        message:
+          'Este contenido está disponible exclusivamente para usuarios suscriptores. Inicie sesión con una cuenta suscriptora o suscríbase para obtener acceso.',
+        icon: 'lock',
+        closeText: 'Entendido',
+      },
+    });
+  }
+
+  openArticlePdf(articulo: Articulo): void {
+    this.publicacionService
+      .openPdf({
+        download_url: articulo.download_url ?? articulo.enlace ?? null,
+        sharepoint_url: null,
+      })
+      .subscribe((opened) => {
+        if (!opened) {
+          this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
+            duration: 3500,
+          });
+        }
+      });
+  }
 }
+

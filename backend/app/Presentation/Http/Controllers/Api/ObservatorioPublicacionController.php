@@ -129,11 +129,13 @@ class ObservatorioPublicacionController extends Controller
         }
         abort_unless(Storage::disk('local')->exists($publicacion->archivo_pdf), 404, 'El PDF no está disponible.');
 
-        return response()->download(
-            Storage::disk('local')->path($publicacion->archivo_pdf),
-            $publicacion->nombre_archivo_original ?? $publicacion->titulo.'.pdf',
-            ['Content-Type' => 'application/pdf']
-        );
+        $filename = $publicacion->nombre_archivo_original ?? $publicacion->titulo.'.pdf';
+        $safeFilename = str_replace('"', '\"', $filename);
+
+        return response()->file(Storage::disk('local')->path($publicacion->archivo_pdf), [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$safeFilename.'"',
+        ]);
     }
 
     public function update(UpdatePublicacionRequest $request, ObservatorioPublicacion $publicacion): JsonResponse
@@ -400,9 +402,6 @@ class ObservatorioPublicacionController extends Controller
 
         if ($request->user()->rol !== 'ADMIN') {
             $query->where('estado', self::ESTADO_PUBLICACION);
-            if (! $this->isSubscriber($request->user())) {
-                $query->where('solo_suscriptores', false);
-            }
             $query->whereHas('departamento', function ($departamentoQuery) use ($request) {
                 $departamentoQuery
                     ->where('publico', true)
@@ -518,9 +517,6 @@ class ObservatorioPublicacionController extends Controller
             $query->where('estado', self::ESTADO_PUBLICACION);
         }
 
-        if (! $this->isSubscriber($user)) {
-            $query->where('solo_suscriptores', false);
-        }
     }
 
     private function ensureCanViewPublication(Request $request, ObservatorioPublicacion $publicacion): void

@@ -367,8 +367,14 @@ export class DepartamentoDetailComponent implements OnInit {
     });
   }
 
-  download(publicacion: ObservatorioPublicacion): void {
-    this.publicacionService.download(publicacion);
+  openPdf(publicacion: ObservatorioPublicacion): void {
+    this.publicacionService.openPdf(publicacion).subscribe((opened) => {
+      if (!opened) {
+        this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
+          duration: 3500,
+        });
+      }
+    });
   }
 
   openReport(publicacion: ObservatorioPublicacion): void {

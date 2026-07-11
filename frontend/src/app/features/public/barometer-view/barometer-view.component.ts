@@ -6,12 +6,17 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CategoriaDataset, Dataset } from '@core/models';
 import { CategoriaService } from '@core/services/categoria.service';
 import { ArticulosService, Articulo } from '@core/services/articulos.service';
 import { ReportesService, Reporte } from '@core/services/reportes.service';
+import { AuthService } from '@core/services/auth.service';
+import { PublicacionService } from '@core/services/publicacion.service';
+import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -24,6 +29,8 @@ import { TranslateModule } from '@ngx-translate/core';
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatDialogModule,
+    MatSnackBarModule,
     MatChipsModule,
     MatTabsModule,
     TranslateModule,
@@ -37,6 +44,10 @@ export class BarometerViewComponent implements OnInit {
   private readonly categoriaService = inject(CategoriaService);
   private readonly articulosService = inject(ArticulosService);
   private readonly reportesService = inject(ReportesService);
+  private readonly authService = inject(AuthService);
+  private readonly publicacionService = inject(PublicacionService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
 
   categoria = signal<CategoriaDataset | null>(null);
@@ -173,5 +184,48 @@ export class BarometerViewComponent implements OnInit {
     const { outcome } = await prompt.userChoice;
     this.installOutcome.set(outcome);
     this.deferredPrompt.set(null);
+  }
+
+  isSubscriberContent(item: Articulo | Reporte): boolean {
+    return item.bloqueado === true || item.visibilidad === 'suscriptor';
+  }
+
+  canViewSubscriberContent(item: Articulo | Reporte): boolean {
+    if (!this.isSubscriberContent(item)) return true;
+    const user = this.authService.user();
+    return !!user && ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(user.rol);
+  }
+
+  showSubscriberMessage(): void {
+    this.dialog.open(SubscriberAccessDialogComponent, {
+      width: 'min(92vw, 460px)',
+      maxWidth: '92vw',
+      panelClass: 'subscriber-access-dialog-panel',
+      backdropClass: 'subscriber-access-dialog-backdrop',
+      autoFocus: false,
+      restoreFocus: false,
+      data: {
+        title: 'Contenido exclusivo para suscriptores',
+        message:
+          'Este contenido está disponible exclusivamente para usuarios suscriptores. Inicie sesión con una cuenta suscriptora o suscríbase para obtener acceso.',
+        icon: 'lock',
+        closeText: 'Entendido',
+      },
+    });
+  }
+
+  openArticlePdf(articulo: Articulo): void {
+    this.publicacionService
+      .openPdf({
+        download_url: articulo.download_url ?? articulo.enlace ?? null,
+        sharepoint_url: null,
+      })
+      .subscribe((opened) => {
+        if (!opened) {
+          this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
+            duration: 3500,
+          });
+        }
+      });
   }
 }

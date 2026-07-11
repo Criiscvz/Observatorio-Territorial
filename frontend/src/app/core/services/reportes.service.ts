@@ -14,6 +14,7 @@ export interface Reporte {
   categoria_id?: string | null;
   departamento_id?: string | null;
   visibilidad?: string;
+  bloqueado?: boolean;
   categoria?: {
     id: string;
     nombre: string;
@@ -46,7 +47,7 @@ export class ReportesService {
   agruparPorCategoria(reportes: Reporte[]): { categoria: string; color: string; items: Reporte[] }[] {
     const mapa = new Map<string, { color: string; items: Reporte[] }>();
     for (const rep of reportes) {
-      const key = rep.categoria?.nombre ?? 'Sin categoría';
+      const key = rep.categoria?.nombre ?? 'Reportes ULEAM';
       const color = rep.categoria?.color ?? '#6366F1';
       if (!mapa.has(key)) {
         mapa.set(key, { color, items: [] });

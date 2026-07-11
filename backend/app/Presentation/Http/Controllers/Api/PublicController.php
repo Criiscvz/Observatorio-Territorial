@@ -80,16 +80,12 @@ class PublicController extends Controller
             ->whereHas('departamento', fn($departamentoQuery) => $departamentoQuery->where('publico', true))
             ->latest('fecha_publicacion');
 
-        if (! $this->isSubscriber($request->user('sanctum'))) {
-            $query->where('solo_suscriptores', false);
-        }
-
         return PublicacionResource::collection($query->get());
     }
 
     private function isSubscriber($user): bool
     {
-        return $user && in_array($user->rol, ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
+        return $user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 
     #[OA\Get(

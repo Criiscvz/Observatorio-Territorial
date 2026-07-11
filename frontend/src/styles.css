@@ -1816,3 +1816,34 @@ body:has(.mobile-sidebar-overlay) {
   overscroll-behavior: contain !important;
 }
 
+/* Subscriber access dialog */
+.subscriber-access-dialog-panel {
+  max-width: calc(100vw - 32px) !important;
+  overflow: visible !important;
+}
+
+.subscriber-access-dialog-panel .mat-mdc-dialog-container {
+  --mdc-dialog-container-color: transparent !important;
+  padding: 0 !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+.subscriber-access-dialog-panel .mat-mdc-dialog-surface,
+.subscriber-access-dialog-panel .mdc-dialog__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+}
+
+.subscriber-access-dialog-panel .mat-mdc-dialog-content,
+.subscriber-access-dialog-panel .mat-mdc-dialog-actions,
+.subscriber-access-dialog-panel [mat-dialog-title] {
+  box-sizing: border-box;
+}
+
+.subscriber-access-dialog-backdrop {
+  background: rgba(5, 12, 28, 0.72) !important;
+  backdrop-filter: blur(4px);
+}

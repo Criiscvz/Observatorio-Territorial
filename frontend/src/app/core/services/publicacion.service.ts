@@ -1,6 +1,6 @@
-﻿import { HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ObservatorioPublicacion,
@@ -11,6 +11,8 @@ import { ApiService } from './api.service';
 interface ResourceResponse<T> {
   data: T;
 }
+
+type PdfSource = Pick<ObservatorioPublicacion, 'download_url' | 'sharepoint_url'>;
 
 export interface CanUploadPublicacionResponse {
   can_upload: boolean;
@@ -128,23 +130,46 @@ export class PublicacionService {
       .pipe(map((response) => response.data));
   }
 
-  download(publicacion: ObservatorioPublicacion): void {
+  getPdfUrl(publicacion: PdfSource): string | null {
     if (publicacion.sharepoint_url) {
-      window.open(publicacion.sharepoint_url, '_blank', 'noopener');
-      return;
+      return publicacion.sharepoint_url;
     }
-    if (!publicacion.download_url) return;
-    this.http
-      .get(`${this.apiUrl}${publicacion.download_url.replace('/api', '')}`, {
-        responseType: 'blob',
-      })
-      .subscribe((blob) => {
-        const url = URL.createObjectURL(blob);
-        const anchor = document.createElement('a');
-        anchor.href = url;
-        anchor.download = publicacion.nombre_archivo_original || `${publicacion.titulo}.pdf`;
-        anchor.click();
-        URL.revokeObjectURL(url);
-      });
+
+    if (!publicacion.download_url) {
+      return null;
+    }
+
+    if (/^https?:\/\//i.test(publicacion.download_url)) {
+      return publicacion.download_url;
+    }
+
+    return `${this.apiUrl}${publicacion.download_url.replace('/api', '')}`;
+  }
+
+  openPdf(publicacion: PdfSource): Observable<boolean> {
+    const pdfUrl = this.getPdfUrl(publicacion);
+
+    if (!pdfUrl) {
+      return of(false);
+    }
+
+    if (publicacion.sharepoint_url) {
+      window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      return of(true);
+    }
+
+    return this.http.get(pdfUrl, { responseType: 'blob' }).pipe(
+      map((blob) => {
+        const objectUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+        window.open(objectUrl, '_blank', 'noopener,noreferrer');
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+        return true;
+      }),
+      catchError(() => of(false)),
+    );
+  }
+
+  download(publicacion: ObservatorioPublicacion): void {
+    this.openPdf(publicacion).subscribe();
   }
 }

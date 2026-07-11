@@ -5,6 +5,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatRippleModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
@@ -12,6 +13,7 @@ import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.in
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { PublicacionService } from '@core/services/publicacion.service';
+import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 import type { EChartsOption } from 'echarts';
@@ -28,6 +30,7 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatDialogModule,
     MatRippleModule,
     MatTooltipModule,
     TranslateModule,
@@ -41,6 +44,7 @@ export class DashboardComponent implements OnInit {
   private readonly deptoService = inject(DepartamentoService);
   private readonly publicacionService = inject(PublicacionService);
   private readonly translate = inject(TranslateService);
+  private readonly dialog = inject(MatDialog);
   authService = inject(AuthService);
 
   departamentos = signal<Departamento[]>([]);
@@ -77,10 +81,35 @@ export class DashboardComponent implements OnInit {
   });
 
   getAtlasUrl(reporte: ObservatorioPublicacion): string | null {
+    if (this.isContentLocked(reporte)) return null;
     const url = reporte.sharepoint_url || reporte.link_url || reporte.download_url;
     if (!url) return null;
     if (/^https?:\/\//i.test(url)) return url;
     return `${environment.apiUrl}${url.replace(/^\/api/, '')}`;
+  }
+
+  isContentLocked(reporte: ObservatorioPublicacion): boolean {
+    if (reporte.bloqueado) return true;
+    if (!reporte.solo_suscriptores) return false;
+    return !this.authService.isAdmin() && !this.authService.isSubscriber();
+  }
+
+  showSubscriberMessage(): void {
+    this.dialog.open(SubscriberAccessDialogComponent, {
+      width: 'min(92vw, 460px)',
+      maxWidth: '92vw',
+      panelClass: 'subscriber-access-dialog-panel',
+      backdropClass: 'subscriber-access-dialog-backdrop',
+      autoFocus: false,
+      restoreFocus: false,
+      data: {
+        title: 'Contenido exclusivo para suscriptores',
+        message:
+          'Este contenido está disponible exclusivamente para usuarios suscriptores. Inicie sesión con una cuenta suscriptora o suscríbase para obtener acceso.',
+        icon: 'lock',
+        closeText: 'Entendido',
+      },
+    });
   }
 
   departamentosPublicos = computed(() => {

@@ -11,11 +11,13 @@ export interface Articulo {
   fuente?: string | null;
   estado?: string | null;
   enlace?: string | null;
+  download_url?: string | null;
   fecha_publicacion?: string | null;
   fecha_recepcion?: string | null;
   categoria_id?: string | null;
   departamento_id?: string | null;
   visibilidad?: string;
+  bloqueado?: boolean;
   categoria?: {
     id: string;
     nombre: string;
@@ -48,8 +50,8 @@ export class ArticulosService {
   agruparPorCategoria(articulos: Articulo[]): { categoria: string; color: string; items: Articulo[] }[] {
     const mapa = new Map<string, { color: string; items: Articulo[] }>();
     for (const art of articulos) {
-      const key = art.categoria?.nombre ?? 'Sin categoría';
-      const color = art.categoria?.color ?? '#6366F1';
+      const key = art.categoria?.nombre ?? 'Artículos ULEAM';
+      const color = art.categoria?.color ?? '#C8102E';
       if (!mapa.has(key)) {
         mapa.set(key, { color, items: [] });
       }

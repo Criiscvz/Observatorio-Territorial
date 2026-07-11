@@ -19,6 +19,7 @@ export interface ObservatorioPublicacion {
   tipo: TipoPublicacion;
   estado: EstadoPublicacion;
   solo_suscriptores: boolean;
+  bloqueado?: boolean;
   codigo: string;
   titulo: string;
   fecha_publicacion: string;

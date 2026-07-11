@@ -417,6 +417,7 @@
 }
 
 .list-item {
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -425,6 +426,10 @@
   text-decoration: none;
   transition: background var(--transition-fast);
   cursor: pointer;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
 
   &:hover {
     background: var(--hover-bg);
@@ -526,6 +531,27 @@
   color: var(--text-tertiary);
   font-size: 20px;
   transition: transform var(--transition-fast);
+}
+
+.locked-list-item {
+  .item-title {
+    color: var(--text-primary);
+  }
+}
+
+.badge.subscriber {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+  text-transform: none;
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
 }
 
 /* Empty State */

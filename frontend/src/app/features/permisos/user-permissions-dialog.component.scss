@@ -224,6 +224,22 @@
   font-weight: 800;
 }
 
+.modulo-title-wrap {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.modulo-title-wrap small {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: normal;
+}
+
 .modulo-config {
   display: grid;
   gap: 14px;
@@ -240,6 +256,53 @@
 
 .nivel-select {
   width: min(100%, 260px);
+}
+
+.acciones-panel {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+}
+
+.acciones-title {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.acciones-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.accion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 1px solid var(--success-border);
+  border-radius: 4px;
+  background: var(--success-bg);
+  color: var(--success-color);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.accion-chip mat-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
+.acciones-empty {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
 }
 
 .observatorios-panel {

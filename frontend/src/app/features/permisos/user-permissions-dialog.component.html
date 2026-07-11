@@ -1,150 +1,125 @@
 <div class="dialog-container">
   <div mat-dialog-title class="dialog-title">
-    <div class="title-icon"><mat-icon>security</mat-icon></div>
+    <div class="title-icon"><mat-icon>edit_note</mat-icon></div>
     <div>
       <span class="eyebrow">Gestión de acceso</span>
-      <h2>Configurar permisos</h2>
+      <h2>Configurar acceso del editor</h2>
     </div>
   </div>
 
   <mat-dialog-content class="dialog-content">
     <div class="user-info">
-      <div class="user-avatar">{{ (user.name || 'U').charAt(0).toUpperCase() }}</div>
+      <div class="user-avatar">{{ (user.name || 'E').charAt(0).toUpperCase() }}</div>
       <div class="user-details">
         <h3>{{ user.name }}</h3>
         <p class="email">{{ user.email }}</p>
         <div class="user-facts">
-          <span class="role-badge" [ngClass]="'badge-' + user.rol.toLowerCase()">
-            {{ user.rol }}
-          </span>
+          <span class="role-badge badge-editor">EDITOR</span>
           <span class="status-badge">
             <mat-icon>verified_user</mat-icon>
-            Usuario activo
+            {{ user.is_active === false ? 'Usuario inactivo' : 'Usuario activo' }}
           </span>
         </div>
       </div>
     </div>
 
-    <section class="dialog-section">
+    <section class="observatorios-panel">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">Permisos por usuario</span>
-          <h3>Módulos disponibles</h3>
+          <span class="eyebrow">Observatorios asignados</span>
+          <h3>Selecciona uno o varios Observatorios</h3>
         </div>
-        <span class="section-count">{{ modules.length }} módulos</span>
+        <span class="section-count">
+          {{ selectedDepartamentoIds.length }} seleccionados
+        </span>
       </div>
-    </section>
 
-    <div class="modulos-list">
-      @for (mod of modules; track mod.modulo) {
-        <div class="modulo-card" [class.habilitado]="mod.habilitado">
-          <div class="modulo-header">
-            <mat-checkbox
-              [checked]="mod.habilitado"
-              (change)="onToggleModulo(mod, $event.checked)"
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar Observatorio</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input
+          matInput
+          [ngModel]="observatorioSearch"
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="Nombre, código o descripción"
+        />
+      </mat-form-field>
+
+      <div class="selection-summary">
+        <span>
+          {{ selectedDepartamentoIds.length }} de {{ departamentos.length }}
+          Observatorios con acceso
+        </span>
+        <div class="quick-actions">
+          <button mat-button type="button" (click)="selectAllDepartamentos()">
+            Seleccionar todos
+          </button>
+          <button mat-button type="button" (click)="clearDepartamentos()">
+            Limpiar
+          </button>
+        </div>
+      </div>
+
+      @if (loadingDepartamentos) {
+        <div class="empty-observatorios">
+          <mat-spinner diameter="22"></mat-spinner>
+          <span>Cargando Observatorios...</span>
+        </div>
+      } @else if (loadDepartamentosError) {
+        <div class="empty-observatorios">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ loadDepartamentosError }}</span>
+        </div>
+      } @else if (filteredDepartamentosList.length) {
+        <div class="observatorios-list">
+          @for (dep of filteredDepartamentosList; track dep.id) {
+            <label
+              class="observatorio-option"
+              [class.selected]="isDepartamentoSelected(dep.id)"
             >
-              <div class="modulo-icon-box">
-                <mat-icon>{{ mod.icon }}</mat-icon>
-              </div>
-              <span class="modulo-title">{{ mod.label }}</span>
-            </mat-checkbox>
-            <span class="access-state" [class.enabled]="mod.habilitado">
-              {{ mod.habilitado ? 'Activo' : 'Sin acceso' }}
-            </span>
-          </div>
-
-          @if (mod.habilitado) {
-            <div class="modulo-config">
-              <div class="config-row">
-                <mat-form-field appearance="outline" class="nivel-select">
-                  <mat-label>Nivel de acceso</mat-label>
-                  <mat-select [(ngModel)]="mod.nivel">
-                    @for (nivel of mod.nivelesDisponibles; track nivel) {
-                      <mat-option [value]="nivel">
-                        {{ nivelLabels[nivel] }}
-                      </mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-              </div>
-
-              @if (mod.modulo === 'observatorios') {
-                <div class="observatorios-panel">
-                  <div class="section-heading compact">
-                    <div>
-                      <span class="eyebrow">Observatorios asignados</span>
-                      <h3>Selecciona uno o varios Observatorios</h3>
-                    </div>
-                  </div>
-
-                  <mat-form-field appearance="outline" class="search-field">
-                    <mat-label>Buscar Observatorio</mat-label>
-                    <mat-icon matPrefix>search</mat-icon>
-                    <input
-                      matInput
-                      [(ngModel)]="observatorioSearch"
-                      placeholder="Nombre, codigo o descripcion"
-                    />
-                  </mat-form-field>
-
-                  <div class="selection-summary">
-                    <span>
-                      {{ selectedDepartamentoIds.length }} de {{ departamentos.length }}
-                      Observatorios seleccionados
-                    </span>
-                    <div class="quick-actions">
-                      <button mat-button type="button" (click)="selectAllDepartamentos()">
-                        Seleccionar todos
-                      </button>
-                      <button mat-button type="button" (click)="clearDepartamentos()">
-                        Limpiar
-                      </button>
-                    </div>
-                  </div>
-
-                  @if (loadingDepartamentos) {
-                    <div class="empty-observatorios">
-                      <mat-spinner diameter="22"></mat-spinner>
-                      <span>Cargando Observatorios...</span>
-                    </div>
-                  } @else if (filteredDepartamentos().length) {
-                    <div class="observatorios-list">
-                      @for (dep of filteredDepartamentos(); track dep.id) {
-                        <label
-                          class="observatorio-option"
-                          [class.selected]="isDepartamentoSelected(dep.id)"
-                        >
-                          <mat-checkbox
-                            [checked]="isDepartamentoSelected(dep.id)"
-                            (change)="toggleDepartamento(dep.id, $event.checked)"
-                          ></mat-checkbox>
-                          <span class="observatorio-copy">
-                            <strong>{{ dep.nombre }}</strong>
-                            <span>{{ dep.codigo_interno }}</span>
-                            <small>
-                              {{ isDepartamentoSelected(dep.id) ? 'Con acceso' : 'Sin acceso' }}
-                            </small>
-                          </span>
-                        </label>
-                      }
-                    </div>
-                  } @else {
-                    <div class="empty-observatorios">
-                      <mat-icon>search_off</mat-icon>
-                      <span>No hay Observatorios que coincidan con la busqueda.</span>
-                    </div>
-                  }
-
-                  <p class="obs-hint">
-                    Cada Observatorio seleccionado se guardara como un acceso independiente.
-                  </p>
-                </div>
-              }
-            </div>
+              <mat-checkbox
+                [checked]="isDepartamentoSelected(dep.id)"
+                (change)="toggleDepartamento(dep.id, $event.checked)"
+              ></mat-checkbox>
+              <span class="observatorio-copy">
+                <strong>{{ dep.nombre }}</strong>
+                <span>{{ dep.codigo_interno }}</span>
+                <small>
+                  {{ isDepartamentoSelected(dep.id) ? 'Con acceso' : 'Sin acceso' }}
+                </small>
+              </span>
+            </label>
           }
         </div>
+      } @else {
+        <div class="empty-observatorios">
+          <mat-icon>search_off</mat-icon>
+          <span>No hay Observatorios que coincidan con la búsqueda.</span>
+        </div>
       }
-    </div>
+    </section>
+
+    <section class="editor-permissions-panel">
+      <div class="section-heading compact">
+        <div>
+          <span class="eyebrow">Permisos del editor</span>
+          <h3>Acciones incluidas por rol</h3>
+        </div>
+      </div>
+
+      <div class="acciones-list">
+        @for (permission of editorPermissions; track permission) {
+          <span class="accion-chip">
+            <mat-icon>check_circle</mat-icon>
+            {{ permission }}
+          </span>
+        }
+      </div>
+
+      <p class="obs-hint">
+        Estos permisos son propios del rol EDITOR. Lo configurable aquí es a qué Observatorios puede acceder.
+      </p>
+    </section>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end" class="dialog-actions">

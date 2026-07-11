@@ -77,6 +77,45 @@
   color: #C8102E;
 }
 
+.editor-panel-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -0.75rem 0 2rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--card-border);
+  border-left: 4px solid #c8102e;
+  border-radius: var(--radius-lg);
+  background: var(--card-bg);
+  box-shadow: 0 8px 24px var(--shadow-color);
+}
+
+.editor-panel-entry div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.editor-panel-entry strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.editor-panel-entry span {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.editor-panel-entry a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+
 /* Filters & Search */
 .filters-section {
   display: flex;
@@ -385,6 +424,17 @@
     gap: 1rem;
   }
 
+  .editor-panel-entry {
+    align-items: stretch;
+    flex-direction: column;
+    margin-top: -0.5rem;
+  }
+
+  .editor-panel-entry a {
+    justify-content: center;
+    width: 100%;
+  }
+
   .filters-section {
     padding: 1.25rem;
   }
@@ -634,9 +684,9 @@
 .subscription-badge {
   position: absolute;
   top: 1rem;
-  left: 1rem;
-  background: rgba(200, 16, 46, 0.95); /* ULEAM red */
-  color: white;
+  right: 1rem;
+  background: rgba(245, 158, 11, 0.94);
+  color: #111827;
   padding: 0.25rem 0.75rem;
   border-radius: var(--radius-full);
   font-size: 0.725rem;
@@ -652,13 +702,6 @@
     font-size: 13px;
     width: 13px;
     height: 13px;
-  }
-}
-
-.publication-card.locked, .articulo-card.locked {
-  .category-badge {
-    left: auto;
-    right: 1rem;
   }
 }
 
@@ -699,13 +742,17 @@
 
 .card-actions .locked-btn {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); /* Amber paywall gradient */
-  color: white;
+  color: #111827;
   box-shadow: 0 4px 10px rgba(245, 158, 11, 0.15);
+  min-height: 40px;
+  padding-inline: 1rem;
+  font-weight: 800;
 
   &:hover {
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
     box-shadow: 0 6px 14px rgba(245, 158, 11, 0.25);
   }
 }
+
 
 

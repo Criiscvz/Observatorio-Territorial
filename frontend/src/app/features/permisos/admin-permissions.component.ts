@@ -23,10 +23,6 @@ import {
   ModuloPermiso,
   NivelPermiso,
   PermisoConfig,
-  MODULOS_PERMISO,
-  MODULO_LABELS,
-  MODULO_ICONS,
-  NIVEL_LABELS,
 } from '@core/models/permisos';
 import { UserPermissionsDialogComponent } from './user-permissions-dialog.component';
 
@@ -60,10 +56,13 @@ export class AdminPermissionsComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly modulos = MODULOS_PERMISO;
-  readonly moduloLabels = MODULO_LABELS;
-  readonly moduloIcons = MODULO_ICONS;
-  readonly nivelLabels = NIVEL_LABELS;
+  readonly editorPermissions = [
+    'Crear Artículos',
+    'Crear Reportes',
+    'Crear Atlas',
+    'Envíos en revisión',
+    'Panel del editor',
+  ];
   readonly roleSummaries = [
     {
       rol: 'ADMIN',
@@ -71,6 +70,7 @@ export class AdminPermissionsComponent implements OnInit {
       icon: 'admin_panel_settings',
       description: 'Control total del sistema, usuarios, observatorios y biblioteca.',
       access: 'Acceso completo',
+      permissions: ['Todos los módulos', 'Aprobar y publicar', 'Asignar permisos'],
     },
     {
       rol: 'EDITOR',
@@ -78,6 +78,7 @@ export class AdminPermissionsComponent implements OnInit {
       icon: 'edit_note',
       description: 'Gestiona contenidos en los Observatorios asignados.',
       access: 'Configurable por usuario',
+      permissions: ['Observatorios asignados', 'Crear Artículos, Reportes y Atlas', 'Envíos en revisión'],
     },
     {
       rol: 'SUBSCRIBER',
@@ -85,6 +86,7 @@ export class AdminPermissionsComponent implements OnInit {
       icon: 'workspace_premium',
       description: 'Puede ver contenido publicado marcado como solo para suscriptores.',
       access: 'Lectura suscriptor',
+      permissions: ['Contenido publicado', 'Contenido solo suscriptores'],
     },
     {
       rol: 'USER',
@@ -98,17 +100,15 @@ export class AdminPermissionsComponent implements OnInit {
   users = signal<User[]>([]);
   loadingUsers = signal(true);
   searchTerm = signal('');
-  roleFilter = signal<string>('ALL');
 
   filteredUsers = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     return this.users().filter((user) => {
-      const isEditor = user.rol === 'EDITOR';
       const matchesTerm =
         !term ||
         user.name?.toLowerCase().includes(term) ||
         user.email?.toLowerCase().includes(term);
-      return isEditor && matchesTerm;
+      return user.rol === 'EDITOR' && matchesTerm;
     });
   });
 
@@ -190,7 +190,13 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   getActivePermissionsCount(user: User): number {
-    return this.getUserPermisos(user).filter((permiso) => permiso.nivel !== 'ninguno').length;
+    return this.getAssignedObservatoriosCount(user);
+  }
+
+  getAssignedObservatoriosCount(user: User): number {
+    return this.getUserPermisos(user).filter(
+      (permiso) => permiso.modulo === 'observatorios' && permiso.nivel !== 'ninguno',
+    ).length;
   }
 
   tienePermisosPersonalizados(user: User): boolean {
@@ -201,7 +207,7 @@ export class AdminPermissionsComponent implements OnInit {
 
   openPermissionsDialog(user: User): void {
     const dialogRef = this.dialog.open(UserPermissionsDialogComponent, {
-      width: '520px',
+      width: '760px',
       maxWidth: '95vw',
       autoFocus: false,
       data: user,
@@ -243,16 +249,16 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   resetUserPermissions(user: User): void {
-    // Eliminar solo permisos de atlas/reportes (frontend), mantener observatorios
-    const current = this.permisosService.getUserPermisos(user.id);
-    const observatorioPermisos = current.filter((p) => p.modulo === 'observatorios');
-    const emptyFrontend: PermisoConfig[] = [
-      { modulo: 'atlas', nivel: 'ninguno' },
-      { modulo: 'reportes', nivel: 'ninguno' },
+    const emptyPermissions: PermisoConfig[] = [
+      {
+        modulo: 'observatorios',
+        nivel: 'ninguno',
+        departamento_id: null,
+      },
     ];
 
     this.permisosService
-      .saveUserPermisos(user.id, [...observatorioPermisos, ...emptyFrontend])
+      .saveUserPermisos(user.id, emptyPermissions)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {

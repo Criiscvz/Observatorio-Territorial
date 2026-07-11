@@ -42,7 +42,8 @@ class ArticuloController extends Controller
             ->orderByRaw('fecha_publicacion DESC NULLS LAST')
             ->orderByDesc('created_at')
             ->get()
-            ->filter(fn($articulo) => $this->canViewLegacyContent($request, $articulo));
+            ->filter(fn($articulo) => $this->canViewLegacyContent($request, $articulo))
+            ->map(fn($articulo) => $this->mapLegacyArticulo($request, $articulo));
 
         $publicaciones = ObservatorioPublicacion::query()
             ->with('departamento')
@@ -55,7 +56,7 @@ class ArticuloController extends Controller
             ->latest('fecha_publicacion')
             ->get()
             ->filter(fn(ObservatorioPublicacion $publicacion) => $this->canViewPublication($request, $publicacion))
-            ->map(fn(ObservatorioPublicacion $publicacion) => $this->mapPublicacionToArticulo($publicacion));
+            ->map(fn(ObservatorioPublicacion $publicacion) => $this->mapPublicacionToArticulo($request, $publicacion));
 
         return response()->json(
             $articulos
@@ -247,23 +248,53 @@ class ArticuloController extends Controller
         return response()->json(['message' => 'Artículo eliminado exitosamente']);
     }
 
-    private function mapPublicacionToArticulo(ObservatorioPublicacion $publicacion): array
+    private function mapLegacyArticulo(Request $request, $articulo): array
+    {
+        $isSubscriberOnly = ($articulo->visibilidad ?? 'publico') === 'suscriptor';
+        $isLocked = $isSubscriberOnly && ! $this->isSubscriber($request->user('sanctum'));
+
+        return [
+            'id' => $articulo->id,
+            'titulo' => $articulo->titulo,
+            'descripcion' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $articulo->descripcion,
+            'autor' => $articulo->autor,
+            'fuente' => $articulo->fuente,
+            'estado' => $articulo->estado,
+            'enlace' => $isLocked ? null : $articulo->enlace,
+            'download_url' => null,
+            'fecha_publicacion' => $articulo->fecha_publicacion,
+            'fecha_recepcion' => $articulo->fecha_recepcion,
+            'categoria_id' => $articulo->categoria_id,
+            'departamento_id' => $articulo->departamento_id,
+            'visibilidad' => $isSubscriberOnly ? 'suscriptor' : 'publico',
+            'bloqueado' => $isLocked,
+            'categoria' => $articulo->categoria,
+            'departamento' => $articulo->departamento,
+            'created_at' => $articulo->created_at?->toIso8601String(),
+            'updated_at' => $articulo->updated_at?->toIso8601String(),
+        ];
+    }
+
+    private function mapPublicacionToArticulo(Request $request, ObservatorioPublicacion $publicacion): array
     {
         $downloadUrl = rtrim(config('app.url'), '/')."/api/departamentos/publicaciones/{$publicacion->id}/download";
+        $isLocked = $publicacion->solo_suscriptores && ! $this->isSubscriber($request->user('sanctum'));
 
         return [
             'id' => $publicacion->id,
             'titulo' => $publicacion->titulo,
-            'descripcion' => $publicacion->descripcion,
+            'descripcion' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $publicacion->descripcion,
             'autor' => $publicacion->autores,
             'fuente' => $publicacion->fuente,
             'estado' => $publicacion->estado,
-            'enlace' => $publicacion->link_url ?: ($publicacion->sharepoint_url ?: $downloadUrl),
+            'enlace' => $isLocked ? null : ($publicacion->archivo_pdf ? $downloadUrl : null),
+            'download_url' => $isLocked || ! $publicacion->archivo_pdf ? null : $downloadUrl,
             'fecha_publicacion' => $publicacion->fecha_publicacion?->format('Y-m-d'),
             'fecha_recepcion' => $publicacion->created_at?->format('Y-m-d'),
             'categoria_id' => null,
             'departamento_id' => $publicacion->departamento_id,
             'visibilidad' => $publicacion->solo_suscriptores ? 'suscriptor' : 'publico',
+            'bloqueado' => $isLocked,
             'categoria' => null,
             'departamento' => $publicacion->departamento,
             'created_at' => $publicacion->created_at?->toIso8601String(),
@@ -277,13 +308,7 @@ class ArticuloController extends Controller
             return false;
         }
 
-        if (! $publicacion->solo_suscriptores) {
-            return true;
-        }
-
-        $user = $request->user('sanctum');
-
-        return $this->isSubscriber($user);
+        return true;
     }
 
     private function canViewLegacyContent(Request $request, $articulo): bool
@@ -292,11 +317,11 @@ class ArticuloController extends Controller
             return false;
         }
 
-        if (($articulo->visibilidad ?? 'publico') !== 'suscriptor') {
-            return true;
+        if (($articulo->visibilidad ?? 'publico') === 'privado') {
+            return false;
         }
 
-        return $this->isSubscriber($request->user('sanctum'));
+        return true;
     }
 
     private function isSubscriber($user): bool

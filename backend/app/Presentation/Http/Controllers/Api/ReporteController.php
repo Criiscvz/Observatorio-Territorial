@@ -43,7 +43,8 @@ class ReporteController extends Controller
             ->orderByRaw('fecha_publicacion DESC NULLS LAST')
             ->orderByDesc('created_at')
             ->get()
-            ->filter(fn($reporte) => $this->canViewLegacyContent($request, $reporte));
+            ->filter(fn($reporte) => $this->canViewLegacyContent($request, $reporte))
+            ->map(fn($reporte) => $this->mapLegacyReporte($request, $reporte));
 
         $publicaciones = ObservatorioPublicacion::query()
             ->with('departamento')
@@ -56,7 +57,7 @@ class ReporteController extends Controller
             ->latest('fecha_publicacion')
             ->get()
             ->filter(fn(ObservatorioPublicacion $publicacion) => $this->canViewPublication($request, $publicacion))
-            ->map(fn(ObservatorioPublicacion $publicacion) => $this->mapPublicacionToReporte($publicacion));
+            ->map(fn(ObservatorioPublicacion $publicacion) => $this->mapPublicacionToReporte($request, $publicacion));
 
         return response()->json(
             $reportes
@@ -342,23 +343,49 @@ class ReporteController extends Controller
         return rtrim(config('app.url'), '/') . '/api/reportes/fichas/' . $filename;
     }
 
-    private function mapPublicacionToReporte(ObservatorioPublicacion $publicacion): array
+    private function mapLegacyReporte(Request $request, $reporte): array
+    {
+        $isSubscriberOnly = ($reporte->visibilidad ?? 'publico') === 'suscriptor';
+        $isLocked = $isSubscriberOnly && ! $this->isSubscriber($request->user('sanctum'));
+
+        return [
+            'id' => $reporte->id,
+            'nombre_indicador' => $reporte->nombre_indicador,
+            'descripcion_indicador' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $reporte->descripcion_indicador,
+            'fecha_publicacion' => $reporte->fecha_publicacion,
+            'link_url' => $isLocked ? null : $reporte->link_url,
+            'ficha_indicador' => $isLocked ? null : $reporte->ficha_indicador,
+            'fuente' => $reporte->fuente,
+            'categoria_id' => $reporte->categoria_id,
+            'departamento_id' => $reporte->departamento_id,
+            'visibilidad' => $isSubscriberOnly ? 'suscriptor' : 'publico',
+            'bloqueado' => $isLocked,
+            'categoria' => $reporte->categoria,
+            'departamento' => $reporte->departamento,
+            'created_at' => $reporte->created_at?->toIso8601String(),
+            'updated_at' => $reporte->updated_at?->toIso8601String(),
+        ];
+    }
+
+    private function mapPublicacionToReporte(Request $request, ObservatorioPublicacion $publicacion): array
     {
         $downloadUrl = $publicacion->archivo_pdf
             ? rtrim(config('app.url'), '/')."/api/departamentos/publicaciones/{$publicacion->id}/download"
             : null;
+        $isLocked = $publicacion->solo_suscriptores && ! $this->isSubscriber($request->user('sanctum'));
 
         return [
             'id' => $publicacion->id,
             'nombre_indicador' => $publicacion->titulo,
-            'descripcion_indicador' => $publicacion->descripcion,
+            'descripcion_indicador' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $publicacion->descripcion,
             'fecha_publicacion' => $publicacion->fecha_publicacion?->format('Y-m-d'),
-            'link_url' => $publicacion->link_url,
-            'ficha_indicador' => $publicacion->sharepoint_url ?: $downloadUrl,
+            'link_url' => $isLocked ? null : $publicacion->link_url,
+            'ficha_indicador' => $isLocked ? null : ($publicacion->sharepoint_url ?: $downloadUrl),
             'fuente' => $publicacion->fuente,
             'categoria_id' => null,
             'departamento_id' => $publicacion->departamento_id,
             'visibilidad' => $publicacion->solo_suscriptores ? 'suscriptor' : 'publico',
+            'bloqueado' => $isLocked,
             'categoria' => null,
             'departamento' => $publicacion->departamento,
             'created_at' => $publicacion->created_at?->toIso8601String(),
@@ -372,22 +399,16 @@ class ReporteController extends Controller
             return false;
         }
 
-        if (! $publicacion->solo_suscriptores) {
-            return true;
-        }
-
-        $user = $request->user('sanctum');
-
-        return $this->isSubscriber($user);
+        return true;
     }
 
     private function canViewLegacyContent(Request $request, $reporte): bool
     {
-        if (($reporte->visibilidad ?? 'publico') !== 'suscriptor') {
-            return true;
+        if (($reporte->visibilidad ?? 'publico') === 'privado') {
+            return false;
         }
 
-        return $this->isSubscriber($request->user('sanctum'));
+        return true;
     }
 
     private function isSubscriber($user): bool

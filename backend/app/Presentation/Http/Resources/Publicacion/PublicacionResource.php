@@ -9,6 +9,12 @@ class PublicacionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $user = $request->user('sanctum') ?: $request->user();
+        $isSubscriberContent = (bool) $this->solo_suscriptores;
+        $canViewSubscriberContent = ! $isSubscriberContent
+            || ($user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true));
+        $isLocked = $isSubscriberContent && ! $canViewSubscriberContent;
+
         return [
             'id' => $this->id,
             'departamento_id' => $this->departamento_id,
@@ -22,18 +28,19 @@ class PublicacionResource extends JsonResource
             'tipo' => $this->tipo,
             'estado' => $this->estado,
             'solo_suscriptores' => (bool) $this->solo_suscriptores,
+            'bloqueado' => $isLocked,
             'codigo' => $this->codigo,
             'titulo' => $this->titulo,
             'fecha_publicacion' => $this->fecha_publicacion?->format('Y-m-d'),
-            'link_url' => $this->link_url,
-            'descripcion' => $this->descripcion,
+            'link_url' => $isLocked ? null : $this->link_url,
+            'descripcion' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $this->descripcion,
             'autores' => $this->autores,
             'fuente' => $this->fuente,
-            'nombre_archivo_original' => $this->nombre_archivo_original,
-            'download_url' => ($this->archivo_pdf || $this->sharepoint_url)
+            'nombre_archivo_original' => $isLocked ? null : $this->nombre_archivo_original,
+            'download_url' => (! $isLocked && ($this->archivo_pdf || $this->sharepoint_url))
                 ? "/api/departamentos/publicaciones/{$this->id}/download"
                 : null,
-            'sharepoint_url' => $this->sharepoint_url,
+            'sharepoint_url' => $isLocked ? null : $this->sharepoint_url,
             'sharepoint_file_id' => $this->sharepoint_file_id,
             'sharepoint_file_name' => $this->sharepoint_file_name,
             'sharepoint_file_type' => $this->sharepoint_file_type,

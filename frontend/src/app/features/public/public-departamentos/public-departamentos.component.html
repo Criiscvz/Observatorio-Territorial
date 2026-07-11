@@ -35,6 +35,19 @@
     </span>
   </div>
 
+  @if (showEditorPanelButton()) {
+    <section class="editor-panel-entry">
+      <div>
+        <strong>Panel del editor</strong>
+        <span>Gestiona artículos, reportes y atlas de tus Observatorios asignados.</span>
+      </div>
+      <a mat-raised-button color="primary" routerLink="/admin/dashboard">
+        <mat-icon>edit_note</mat-icon>
+        Ir al panel del editor
+      </a>
+    </section>
+  }
+
   @if (loading()) {
     <div class="loading-container">
       <mat-spinner diameter="48"></mat-spinner>

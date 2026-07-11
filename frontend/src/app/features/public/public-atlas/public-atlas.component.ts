@@ -7,6 +7,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -14,6 +17,7 @@ import { Articulo } from '@core/services/articulos.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { AuthService } from '@core/services/auth.service';
 import { PermisosService } from '@core/services/permisos.service';
+import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -28,6 +32,9 @@ import { environment } from '../../../../environments/environment';
     MatInputModule,
     MatChipsModule,
     MatTabsModule,
+    MatDialogModule,
+    MatSnackBarModule,
+    RouterLink,
     TranslateModule,
   ],
   templateUrl: './public-atlas.component.html',
@@ -38,11 +45,14 @@ export class PublicAtlasComponent implements OnInit {
   private readonly publicacionService = inject(PublicacionService);
   private readonly authService = inject(AuthService);
   private readonly permisosService = inject(PermisosService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
 
   searchTerm = signal('');
   selectedCategory = signal<string>('TODAS');
 
   articulos = signal<Articulo[]>([]);
+  readonly showEditorPanelButton = computed(() => this.authService.isEditor());
 
   // Computed properties for permissions
   canCreate = computed(() => {
@@ -66,13 +76,15 @@ export class PublicAtlasComponent implements OnInit {
             descripcion: item.descripcion,
             autor: item.autores,
             fuente: item.fuente,
-            enlace: item.sharepoint_url || item.link_url || this.buildDownloadUrl(item.download_url),
+            enlace: this.buildDownloadUrl(item.download_url),
+            download_url: item.download_url,
             fecha_publicacion: item.fecha_publicacion,
             departamento_id: item.departamento_id,
             visibilidad: item.solo_suscriptores ? 'suscriptor' : 'publico',
+            bloqueado: item.bloqueado,
             categoria: {
               id: 'atlas',
-              nombre: 'Atlas',
+              nombre: 'Atlas ULEAM',
               codigo: 'ATLAS',
               color: '#6366F1',
               icono: 'picture_as_pdf',
@@ -103,7 +115,7 @@ export class PublicAtlasComponent implements OnInit {
     return this.permisosService.esAdmin(user.id, 'atlas');
   }
 
-  // ── Artículos (Publicaciones) ──
+  // â”€â”€ ArtÃ­culos (Publicaciones) â”€â”€
 
   categoriasArticulos = computed<string[]>(() => {
     const list = this.articulos()
@@ -134,9 +146,9 @@ export class PublicAtlasComponent implements OnInit {
     return list;
   });
 
-  // ── Reportes (PDF) ──
+  // â”€â”€ Reportes (PDF) â”€â”€
 
-  // ── Interfaz ──
+  // â”€â”€ Interfaz â”€â”€
 
   onSearch(term: string): void {
     this.searchTerm.set(term);
@@ -152,6 +164,7 @@ export class PublicAtlasComponent implements OnInit {
 
   getCategoryIcon(cat: string): string {
     switch (cat) {
+      case 'Atlas ULEAM': return 'map';
       case 'Economía': return 'trending_up';
       case 'Vitalidad Ecológica': return 'eco';
       case 'Gobernanza': return 'groups';
@@ -162,6 +175,7 @@ export class PublicAtlasComponent implements OnInit {
 
   getCategoryColor(cat: string): string {
     switch (cat) {
+      case 'Atlas ULEAM': return '#6366F1';
       case 'Economía': return '#C8102E'; // ULEAM Red
       case 'Vitalidad Ecológica': return '#10B981'; // Green
       case 'Gobernanza': return '#6366F1'; // Indigo
@@ -177,11 +191,41 @@ export class PublicAtlasComponent implements OnInit {
     const user = this.authService.user();
     if (!user) return false;
 
-    return ['ADMIN', 'EDITOR', 'SUBSCRIBER'].includes(user.rol);
+    return ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(user.rol);
   }
 
   sugerirSuscripcion(): void {
-    alert('Esta publicación es exclusiva para suscriptores. Inicia sesión o suscríbete para acceder al contenido.');
+    this.dialog.open(SubscriberAccessDialogComponent, {
+      width: 'min(92vw, 460px)',
+      maxWidth: '92vw',
+      panelClass: 'subscriber-access-dialog-panel',
+      backdropClass: 'subscriber-access-dialog-backdrop',
+      autoFocus: false,
+      restoreFocus: false,
+      data: {
+        title: 'Contenido exclusivo para suscriptores',
+        message:
+          'Este contenido está disponible exclusivamente para usuarios suscriptores. Inicie sesión con una cuenta suscriptora o suscríbase para obtener acceso.',
+        icon: 'lock',
+        closeText: 'Entendido',
+      },
+    });
+  }
+
+  visualizarPdf(item: Articulo): void {
+    this.publicacionService
+      .openPdf({
+        download_url: item.download_url ?? item.enlace ?? null,
+        sharepoint_url: null,
+      })
+      .subscribe((opened) => {
+        if (!opened) {
+          this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
+            duration: 3500,
+          });
+        }
+      });
   }
 }
+
 

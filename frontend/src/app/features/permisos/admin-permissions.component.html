@@ -1,23 +1,21 @@
 <div class="page-container">
-  <!-- Header -->
   <div class="page-header">
     <div class="header-icon">
       <mat-icon>security</mat-icon>
     </div>
     <div class="header-info">
       <h1>{{ 'permissions.title' | translate }}</h1>
-      <p>Gestiona los permisos de cada usuario sobre los módulos del sistema.</p>
+      <p>Configura el acceso de editores a Observatorios. Los demás roles funcionan automáticamente.</p>
     </div>
   </div>
 
-  <!-- Permisos por rol -->
   <section class="roles-panel">
     <div class="section-heading">
       <div>
         <span class="eyebrow">Permisos por roles</span>
         <h2>Resumen de acceso por tipo de usuario</h2>
       </div>
-      <span class="section-pill">Roles del sistema</span>
+      <span class="section-pill">Resumen informativo</span>
     </div>
 
     <div class="roles-grid">
@@ -35,33 +33,36 @@
             </div>
             <p>{{ role.description }}</p>
             <strong>{{ role.access }}</strong>
+            <div class="role-permissions">
+              @for (permission of (role.permissions || []); track permission) {
+                <span>{{ permission }}</span>
+              }
+            </div>
           </div>
         </article>
       }
     </div>
   </section>
 
-  <!-- Permisos por usuario -->
   <mat-card class="permissions-card">
     <mat-card-header>
       <mat-card-title>
         <mat-icon>manage_accounts</mat-icon>
-        Permisos por Usuario
+        Editores con acceso a Observatorios
       </mat-card-title>
       <mat-card-subtitle>
-        Configura qué módulos puede ver y editar cada usuario. Los cambios aplican inmediatamente.
+        Solo los usuarios EDITOR requieren configuración manual. Aquí se asignan uno o varios Observatorios.
       </mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content class="card-content">
-      <!-- Filtros -->
       <div class="users-toolbar">
-        <mat-form-field appearance="outline" class="search-field" style="max-width: 100%; width: 100%;">
+        <mat-form-field appearance="outline" class="search-field">
           <mat-icon matPrefix>search</mat-icon>
           <input
             matInput
             type="text"
-            placeholder="Buscar por nombre o correo"
+            placeholder="Buscar editor por nombre o correo"
             [ngModel]="searchTerm()"
             (ngModelChange)="searchTerm.set($event)"
           />
@@ -71,81 +72,64 @@
       @if (loadingUsers()) {
         <div class="users-loading">
           <mat-spinner diameter="36"></mat-spinner>
-          <p>Cargando usuarios...</p>
+          <p>Cargando editores...</p>
         </div>
       } @else if (filteredUsers().length === 0) {
         <div class="users-empty">
           <mat-icon>group_off</mat-icon>
-          <p>No se encontraron usuarios con los filtros aplicados.</p>
+          <p>No se encontraron usuarios con rol EDITOR.</p>
         </div>
       } @else {
         <div class="users-grid">
           @for (user of filteredUsers(); track user.id) {
             <div class="user-card">
-              <!-- Cabecera del usuario -->
               <div class="user-card-head">
                 <div class="user-avatar">{{ getInitial(user) }}</div>
                 <div class="user-meta">
                   <span class="user-name" [title]="user.name">{{ user.name }}</span>
                   <span class="user-email" [title]="user.email">{{ user.email }}</span>
                   <span class="user-permission-summary">
-                    {{ getActivePermissionsCount(user) }} permisos activos
+                    {{ getAssignedObservatoriosCount(user) }} Observatorios asignados
                   </span>
                 </div>
-                <span class="role-badge" [ngClass]="getRoleBadgeClass(user.rol)">{{ user.rol }}</span>
+                <span class="role-badge badge-editor">EDITOR</span>
               </div>
 
-              <!-- Cuerpo: módulos -->
               <div class="user-card-body">
-                @if (user.rol === 'ADMIN') {
-                  <div class="admin-note">
-                    <mat-icon>verified_user</mat-icon>
-                    <span>Los administradores tienen acceso total a todos los módulos.</span>
-                  </div>
-                } @else {
-                  <div class="modulos-permisos">
-                    @for (modulo of modulos; track modulo) {
-                      <div class="modulo-row">
-                        <div class="modulo-icon-wrapper">
-                          <mat-icon class="modulo-icon">{{ moduloIcons[modulo] }}</mat-icon>
-                        </div>
-                        <div class="modulo-info">
-                          <span class="modulo-label">{{ moduloLabels[modulo] }}</span>
-                          <span
-                            class="nivel-chip"
-                            [ngClass]="getNivelChipClass(getModuloNivel(user, modulo))"
-                          >
-                            {{ nivelLabels[getModuloNivel(user, modulo)] }}
-                          </span>
-                        </div>
+                <div class="admin-note editor-note">
+                  <mat-icon>info</mat-icon>
+                  <span>El editor solo puede gestionar contenido en los Observatorios asignados.</span>
+                </div>
+
+                <div class="modulos-permisos">
+                  @for (permission of editorPermissions; track permission) {
+                    <div class="modulo-row">
+                      <div class="modulo-icon-wrapper">
+                        <mat-icon class="modulo-icon">check_circle</mat-icon>
                       </div>
-                    }
-                  </div>
-                }
+                      <div class="modulo-info">
+                        <span class="modulo-label">{{ permission }}</span>
+                        <span class="nivel-chip nivel-write">Incluido</span>
+                      </div>
+                    </div>
+                  }
+                </div>
               </div>
 
-              <!-- Acciones -->
               <div class="user-card-actions">
-                @if (user.rol !== 'ADMIN') {
-                  <button
-                    mat-stroked-button
-                    class="reset-btn"
-                    matTooltip="Restablecer permisos de atlas y reportes"
-                    (click)="resetUserPermissions(user)"
-                  >
-                    <mat-icon>restart_alt</mat-icon>
-                    Restablecer
-                  </button>
-                  <button mat-flat-button color="primary" (click)="openPermissionsDialog(user)">
-                    <mat-icon>security</mat-icon>
-                    Gestionar
-                  </button>
-                } @else {
-                  <button mat-stroked-button disabled>
-                    <mat-icon>lock</mat-icon>
-                    Sin restricciones
-                  </button>
-                }
+                <button
+                  mat-stroked-button
+                  class="reset-btn"
+                  matTooltip="Quitar todos los Observatorios asignados"
+                  (click)="resetUserPermissions(user)"
+                >
+                  <mat-icon>restart_alt</mat-icon>
+                  Quitar accesos
+                </button>
+                <button mat-flat-button color="primary" (click)="openPermissionsDialog(user)">
+                  <mat-icon>security</mat-icon>
+                  Gestionar Observatorios
+                </button>
               </div>
             </div>
           }

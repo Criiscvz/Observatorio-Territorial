@@ -31,6 +31,19 @@
           </div>
         </div>
 
+        @if (showEditorPanelButton()) {
+          <section class="editor-panel-entry">
+            <div>
+              <strong>Panel del editor</strong>
+              <span>Gestiona artículos, reportes y atlas de tus Observatorios asignados.</span>
+            </div>
+            <a mat-raised-button color="primary" routerLink="/admin/dashboard">
+              <mat-icon>edit_note</mat-icon>
+              Ir al panel del editor
+            </a>
+          </section>
+        }
+
         <div class="filters-section">
           <div class="search-container">
             <mat-form-field appearance="outline" class="search-field">
@@ -88,8 +101,14 @@
                   <div class="cover-pattern"></div>
                   <span class="category-badge">
                     <mat-icon>{{ getCategoryIcon(art.categoria?.nombre || '') }}</mat-icon>
-                    {{ art.categoria?.nombre || 'Atlas' }}
+                    {{ art.categoria?.nombre || 'Atlas ULEAM' }}
                   </span>
+                  @if (art.visibilidad === 'suscriptor') {
+                    <span class="subscription-badge">
+                      <mat-icon>lock</mat-icon>
+                      Suscriptor
+                    </span>
+                  }
                   <div class="cover-doc-info">
                     <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
                   </div>
@@ -121,30 +140,27 @@
                 </div>
 
                 <div class="card-actions">
-                  @if (art.enlace) {
-                    @if (tieneAcceso(art)) {
-                      <a
-                        mat-stroked-button
-                        [href]="art.enlace"
-                        target="_blank"
-                        rel="noopener"
-                        class="action-btn view-btn"
-                      >
-                        <mat-icon>visibility</mat-icon>
-                        Visualizar PDF
-                      </a>
-                    } @else {
-                      <button
-                        mat-flat-button
-                        color="accent"
-                        class="action-btn view-btn locked-btn"
-                        type="button"
-                        (click)="sugerirSuscripcion()"
-                      >
-                        <mat-icon>lock</mat-icon>
-                        Suscribirse
-                      </button>
-                    }
+                  @if (!tieneAcceso(art)) {
+                    <button
+                      mat-flat-button
+                      color="accent"
+                      class="action-btn view-btn locked-btn"
+                      type="button"
+                      (click)="sugerirSuscripcion()"
+                    >
+                      <mat-icon>lock</mat-icon>
+                      Suscriptor
+                    </button>
+                  } @else {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      (click)="visualizarPdf(art)"
+                      class="action-btn view-btn"
+                    >
+                      <mat-icon>visibility</mat-icon>
+                      Visualizar PDF
+                    </button>
                   }
                 </div>
               </div>

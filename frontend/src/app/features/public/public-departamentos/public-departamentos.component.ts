@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, inject, OnInit, PLATFORM_ID, signal, DestroyRef } from '@angular/core';
+import { Component, computed, inject, OnInit, PLATFORM_ID, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { AuthService } from '@core/services/auth.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { PublicDocumentListComponent } from '../public-document-list/public-document-list.component';
 
@@ -40,11 +41,13 @@ export class PublicDepartamentosComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly deptoService = inject(DepartamentoService);
+  private readonly authService = inject(AuthService);
 
   departamentos = signal<Departamento[]>([]);
   filteredDepartamentos = signal<Departamento[]>([]);
   loading = signal(true);
   searchTerm = '';
+  readonly showEditorPanelButton = computed(() => this.authService.isEditor());
 
   private readonly deptoGradients = [
     'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
