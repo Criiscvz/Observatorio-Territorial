@@ -13,7 +13,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/{departamento}/publicaciones/reportes/sharepoint/import', [ObservatorioPublicacionController::class, 'importSharePointReporte'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/reportes/sharepoint/sync', [ObservatorioPublicacionController::class, 'syncSharePointReportes'])->middleware('role:ADMIN');
     Route::get('/{departamento}/publicaciones/atlas/sharepoint/files', [ObservatorioPublicacionController::class, 'sharePointFiles'])->middleware('role:ADMIN');
+    Route::get('/{departamento}/publicaciones/atlas/sharepoint/browse', [ObservatorioPublicacionController::class, 'browseSharePointAtlas'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/atlas/sharepoint/import', [ObservatorioPublicacionController::class, 'importSharePointAtlas'])->middleware('role:ADMIN');
+    Route::post('/{departamento}/publicaciones/atlas/sharepoint/import-many', [ObservatorioPublicacionController::class, 'importManySharePointAtlas'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/atlas/sharepoint/sync', [ObservatorioPublicacionController::class, 'syncSharePointAtlas'])->middleware('role:ADMIN');
     Route::get('/publicaciones/atlas/recientes', [ObservatorioPublicacionController::class, 'recentAtlasReports']);
     Route::get('/publicaciones/{publicacion}/download', [ObservatorioPublicacionController::class, 'download']);

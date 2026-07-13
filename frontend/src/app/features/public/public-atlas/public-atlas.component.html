@@ -29,6 +29,20 @@
               </span>
             </div>
           </div>
+          @if (canImportFromSharePoint()) {
+            <div class="header-actions">
+              <button
+                mat-raised-button
+                color="primary"
+                type="button"
+                [disabled]="departamentos().length === 0"
+                (click)="importarDesdeSharePoint()"
+              >
+                <mat-icon>cloud_download</mat-icon>
+                Importar desde SharePoint
+              </button>
+            </div>
+          }
         </div>
 
         @if (showEditorPanelButton()) {

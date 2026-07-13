@@ -42,6 +42,7 @@ return [
         'site_id' => env('SHAREPOINT_SITE_ID'),
         'drive_id' => env('SHAREPOINT_DRIVE_ID'),
         'folder_path' => env('SHAREPOINT_FOLDER_PATH', ''),
+        'verify_pdf_content' => env('SHAREPOINT_VERIFY_PDF_CONTENT', false),
     ],
 
 ];

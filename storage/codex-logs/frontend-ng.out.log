@@ -1,0 +1,89 @@
+[33m>[39m Building...
+[32m√[39m Building...
+[35mBrowser bundles[39m     
+[1mInitial chunk files[22m [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m          [2m | [22m[2mstyles[22m                              [2m | [22m[36m172.32 kB[39m[2m | [22m
+[32mmain.js[39m             [2m | [22m[2mmain[22m                                [2m | [22m [36m29.72 kB[39m[2m | [22m
+[32mchunk-F5CRY37Z.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m  [36m6.86 kB[39m[2m | [22m
+[32mchunk-AXI4IKM6.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m  [36m1.79 kB[39m[2m | [22m
+[32mchunk-VUJOFXKG.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m[36m938 bytes[39m[2m | [22m
+
+[1m [22m                   [2m | [22m[1mInitial total[22m                       [2m | [22m[1m211.62 kB[22m
+
+[1mLazy chunk files[22m    [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m
+[32mchunk-GDH7247J.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m[36m222.56 kB[39m[2m | [22m
+[32mchunk-7TELALIF.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m[36m174.78 kB[39m[2m | [22m
+[32mchunk-5ZNQWAF5.js[39m   [2m | [22m[2mdepartamento-detail-component[22m       [2m | [22m[36m147.19 kB[39m[2m | [22m
+[32mchunk-ITYZV7CE.js[39m   [2m | [22m[2mdataset-view-component[22m              [2m | [22m[36m129.27 kB[39m[2m | [22m
+[32mchunk-XT36MNMN.js[39m   [2m | [22m[2mbarometer-view-component[22m            [2m | [22m[36m106.39 kB[39m[2m | [22m
+[32mchunk-XZV4KZAH.js[39m   [2m | [22m[2mpublic-home-component[22m               [2m | [22m[36m104.57 kB[39m[2m | [22m
+[32mchunk-NHZJPL4A.js[39m   [2m | [22m[2mpublic-departamento-detail-component[22m[2m | [22m[36m101.15 kB[39m[2m | [22m
+[32mchunk-7UTKERUN.js[39m   [2m | [22m[2mdashboard-component[22m                 [2m | [22m[36m100.50 kB[39m[2m | [22m
+[32mchunk-T7IO7BRR.js[39m   [2m | [22m[2mmain-layout-component[22m               [2m | [22m [36m73.72 kB[39m[2m | [22m
+[32mchunk-PQ5R5HAO.js[39m   [2m | [22m[2mpublic-atlas-component[22m              [2m | [22m [36m69.94 kB[39m[2m | [22m
+[32mchunk-HTOWSRHH.js[39m   [2m | [22m[2musuario-list-component[22m              [2m | [22m [36m68.42 kB[39m[2m | [22m
+[32mchunk-XII3FINJ.js[39m   [2m | [22m[2mdataset-upload-component[22m            [2m | [22m [36m65.52 kB[39m[2m | [22m
+[32mchunk-QXZQTJYV.js[39m   [2m | [22m[2mprofile-component[22m                   [2m | [22m [36m65.38 kB[39m[2m | [22m
+[32mchunk-ALJ7IA5L.js[39m   [2m | [22m[2mpublic-departamentos-component[22m      [2m | [22m [36m52.91 kB[39m[2m | [22m
+[32mchunk-LM44KAH3.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m [36m51.21 kB[39m[2m | [22m
+[2m...and 27 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+
+[35mServer bundles[39m      
+[1mInitial chunk files[22m [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m
+[32mmain.server.mjs[39m     [2m | [22m[2mmain.server[22m                         [2m | [22m [36m31.31 kB[39m[2m | [22m
+[32mchunk-JZTCUP7Q.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m  [36m6.90 kB[39m[2m | [22m
+[32mchunk-Z7ZHNCMP.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m  [36m1.82 kB[39m[2m | [22m
+[32mserver.mjs[39m          [2m | [22m[2mserver[22m                              [2m | [22m  [36m1.81 kB[39m[2m | [22m
+[32mchunk-54EZUNS5.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m[36m972 bytes[39m[2m | [22m
+[32mpolyfills.server.mjs[39m[2m | [22m[2mpolyfills.server[22m                    [2m | [22m[36m243 bytes[39m[2m | [22m
+
+[1mLazy chunk files[22m    [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m
+[32mchunk-A7PPFK33.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m[36m222.60 kB[39m[2m | [22m
+[32mchunk-ICBGMC5Z.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m[36m174.82 kB[39m[2m | [22m
+[32mchunk-4ST7BG2V.mjs[39m  [2m | [22m[2mdepartamento-detail-component[22m       [2m | [22m[36m147.23 kB[39m[2m | [22m
+[32mchunk-KECL237J.mjs[39m  [2m | [22m[2mdataset-view-component[22m              [2m | [22m[36m129.31 kB[39m[2m | [22m
+[32mchunk-BSBQ3V5W.mjs[39m  [2m | [22m[2mbarometer-view-component[22m            [2m | [22m[36m106.43 kB[39m[2m | [22m
+[32mchunk-LJTP6WFF.mjs[39m  [2m | [22m[2mpublic-home-component[22m               [2m | [22m[36m104.61 kB[39m[2m | [22m
+[32mchunk-TCSLGOQD.mjs[39m  [2m | [22m[2mpublic-departamento-detail-component[22m[2m | [22m[36m101.19 kB[39m[2m | [22m
+[32mchunk-G3VXHWPU.mjs[39m  [2m | [22m[2mdashboard-component[22m                 [2m | [22m[36m100.54 kB[39m[2m | [22m
+[32mchunk-NGFFPQUF.mjs[39m  [2m | [22m[2mmain-layout-component[22m               [2m | [22m [36m73.76 kB[39m[2m | [22m
+[32mchunk-TMH2JTJW.mjs[39m  [2m | [22m[2mpublic-atlas-component[22m              [2m | [22m [36m69.98 kB[39m[2m | [22m
+[32mchunk-6MXV6HCU.mjs[39m  [2m | [22m[2musuario-list-component[22m              [2m | [22m [36m68.47 kB[39m[2m | [22m
+[32mchunk-VA7GIQWX.mjs[39m  [2m | [22m[2mdataset-upload-component[22m            [2m | [22m [36m65.56 kB[39m[2m | [22m
+[32mchunk-QZB4ZK5S.mjs[39m  [2m | [22m[2mprofile-component[22m                   [2m | [22m [36m65.42 kB[39m[2m | [22m
+[32mchunk-OZXPJJYA.mjs[39m  [2m | [22m[2mpublic-departamentos-component[22m      [2m | [22m [36m52.95 kB[39m[2m | [22m
+[32mchunk-ZMRUPTBV.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m [36m51.24 kB[39m[2m | [22m
+[2m...and 27 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [42.267 seconds] - 2026-07-13T05:24:37.315Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+[2m0:24:40[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m Re-optimizing dependencies because lockfile has changed
+[2m0:24:40[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because lockfile has changed
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m4200[22m/[39m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[35mBrowser bundles[39m    
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                        [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                         [2m | [22m [36m29.72 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                        [2m | [22m [1mRaw size[22m
+[32mchunk-NNAMNY3T.js[39m  [2m | [22m[2mdepartamento-detail-component[22m[2m | [22m[36m147.19 kB[39m[2m | [22m
+[32mchunk-IM6CMJDO.js[39m  [2m | [22m[2mpublic-atlas-component[22m       [2m | [22m [36m69.94 kB[39m[2m | [22m
+[32mchunk-BACGXFYC.js[39m  [2m | [22m[2m-[22m                            [2m | [22m [36m36.31 kB[39m[2m | [22m
+
+
+[35mServer bundles[39m     
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                        [2m | [22m [1mRaw size[22m
+[32mmain.server.mjs[39m    [2m | [22m[2mmain.server[22m                  [2m | [22m [36m31.31 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                        [2m | [22m [1mRaw size[22m
+[32mchunk-6SSIR3WA.mjs[39m [2m | [22m[2mdepartamento-detail-component[22m[2m | [22m[36m147.23 kB[39m[2m | [22m
+[32mchunk-NSYMNFA5.mjs[39m [2m | [22m[2mpublic-atlas-component[22m       [2m | [22m [36m69.98 kB[39m[2m | [22m
+[32mchunk-UUGZ5BN6.mjs[39m [2m | [22m[2m-[22m                            [2m | [22m [36m36.34 kB[39m[2m | [22m
+
+Application bundle generation complete. [25.802 seconds] - 2026-07-13T05:43:58.946Z
+
+Page reload sent to client(s).

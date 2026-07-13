@@ -1,0 +1,51 @@
+
+   INFO  Server running on [http://127.0.0.1:8000].  
+
+  Press Ctrl+C to stop the server
+
+  2026-07-13 00:49:32 /api/publico/departamentos ............................................................... ~ 6s
+  2026-07-13 00:50:47 /api/health ........................................................................ ~ 518.69ms
+  2026-07-13 00:50:47 /api/login ........................................................................... ~ 0.68ms
+  2026-07-13 00:50:48 /api/login ............................................................................... ~ 2s
+  2026-07-13 00:50:50 /api/departamentos ................................................................... ~ 0.95ms
+  2026-07-13 00:50:50 /api/departamentos ................................................................... ~ 5.19ms
+  2026-07-13 00:50:50 /api/departamentos/publicaciones/atlas/recientes .................................... ~ 23.15ms
+  2026-07-13 00:50:51 /api/departamentos ....................................................................... ~ 1s
+  2026-07-13 00:50:52 /api/departamentos/publicaciones/atlas/recientes ................................... ~ 520.72ms
+  2026-07-13 00:50:52 /api/departamentos ................................................................... ~ 1.36ms
+  2026-07-13 00:51:00 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20 .............................. ~ 4.45ms
+  2026-07-13 00:51:01 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20 ............................ ~ 512.19ms
+  2026-07-13 00:51:01 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones/can-upload ..... ~ 1.68ms
+  2026-07-13 00:51:01 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones ................ ~ 1.68ms
+  2026-07-13 00:51:01 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones/can-upload ... ~ 515.36ms
+  2026-07-13 00:51:01 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones .............. ~ 510.37ms
+  2026-07-13 00:51:05 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones/atlas/sharepoint/browse  ~ 3.78ms
+  2026-07-13 00:51:06 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones/atlas/sharepoint/browse  ~ 2s
+  2026-07-13 00:51:08 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones/atlas/sharepoint/browse  ~ 12s
+  2026-07-13 00:51:20 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones/atlas/sharepoint/browse  ~ 3s
+  2026-07-13 00:51:23 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones/atlas/sharepoint/import-many  ~ 4s
+  2026-07-13 00:51:28 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones/atlas/sharepoint/import-many  ~ 2s
+  2026-07-13 00:51:31 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones .............. ~ 500.24ms
+  2026-07-13 00:51:31 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20/publicaciones .............. ~ 508.75ms
+  2026-07-13 00:51:31 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20 ................................. ~ 31s
+  2026-07-13 00:52:03 /api/departamentos/019f59de-8e58-7174-970d-f5a1006d7f20 .............................. ~ 3.85ms
+  2026-07-13 00:52:04 /api/departamentos ................................................................... ~ 0.98ms
+  2026-07-13 00:52:04 /api/departamentos ................................................................... ~ 4.36ms
+  2026-07-13 00:52:04 /api/departamentos/publicaciones/atlas/recientes ..................................... ~ 1.38ms
+  2026-07-13 00:52:04 /api/departamentos ................................................................... ~ 8.40ms
+  2026-07-13 00:52:04 /api/departamentos/publicaciones/atlas/recientes ................................... ~ 537.55ms
+  2026-07-13 00:52:04 /api/departamentos ................................................................... ~ 1.02ms
+  2026-07-13 00:52:09 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3 .............................. ~ 4.34ms
+  2026-07-13 00:52:09 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3 .............................. ~ 4.15ms
+  2026-07-13 00:52:09 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones/can-upload ..... ~ 1.14ms
+  2026-07-13 00:52:09 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones .............. ~ 518.76ms
+  2026-07-13 00:52:09 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones/can-upload ..... ~ 0.64ms
+  2026-07-13 00:52:10 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones ................ ~ 1.07ms
+  2026-07-13 00:52:18 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones/atlas/sharepoint/browse  ~ 515.30ms
+  2026-07-13 00:52:18 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones/atlas/sharepoint/browse  ~ 0.86ms
+  2026-07-13 00:52:18 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones/atlas/sharepoint/browse  ~ 1s
+  2026-07-13 00:52:20 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones/atlas/sharepoint/browse  ~ 1s
+  2026-07-13 00:52:21 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones/atlas/sharepoint/import-many  ~ 2s
+  2026-07-13 00:52:24 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones/atlas/sharepoint/import-many  ~ 1s
+  2026-07-13 00:52:26 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones .............. ~ 513.24ms
+  2026-07-13 00:52:26 /api/departamentos/019f59de-8e64-7312-a75c-0dbe46cd25f3/publicaciones .............. ~ 517.00ms

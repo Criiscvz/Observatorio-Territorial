@@ -1,5 +1,5 @@
 ﻿# ============================================
-# Backend Scripts (Laravel/PHP 8.4 via Docker)
+# Backend Scripts (Laravel/PHP local)
 # Uso: .\scripts\backend.ps1 [comando]
 # ============================================
 
@@ -74,33 +74,29 @@ Push-Location $BackendPath
 try {
     switch ($Command) {
         "start" {
-            Ensure-BackendImage
-            $RunImageName = Get-BackendImage
-            $MongoUri = Get-DockerMongoUri
-            Write-Host "Iniciando backend en http://127.0.0.1:8000 con PHP 8.4 (Docker)..." -ForegroundColor Green
-            docker rm -f $ContainerName 2>$null | Out-Null
-            docker run -d `
-              --name $ContainerName `
-              --rm `
-              --network $DockerNetwork `
-              -p 8000:8000 `
-              --add-host=host.docker.internal:host-gateway `
-              --env-file "$EnvFile" `
-              -e DB_HOST=observatorio_db `
-              -e DB_PORT=5432 `
-              -e "MONGODB_URI=$MongoUri" `
-              --entrypoint php `
-              $RunImageName artisan serve --host=0.0.0.0 --port=8000 | Out-Null
-            Write-Host "Backend iniciado. Usa '.\scripts\backend.ps1 logs' para ver salida." -ForegroundColor Green
+            Write-Host "Iniciando backend en http://127.0.0.1:8000 con PHP local..." -ForegroundColor Green
+            php artisan serve --host=127.0.0.1 --port=8000
         }
         "stop" {
             Write-Host "Deteniendo backend..." -ForegroundColor Yellow
-            docker rm -f $ContainerName 2>$null | Out-Null
+            $listenPids = netstat -ano -p tcp |
+                Select-String '127\.0\.0\.1:8000\s+0\.0\.0\.0:0\s+LISTENING' |
+                ForEach-Object { ($_ -split '\s+')[-1] } |
+                Sort-Object -Unique
+
+            foreach ($processId in $listenPids) {
+                Stop-Process -Id ([int] $processId) -Force -ErrorAction SilentlyContinue
+            }
+
+            if (Get-Command docker -ErrorAction SilentlyContinue) {
+                docker rm -f $ContainerName 2>$null | Out-Null
+            }
+
             Write-Host "Backend detenido" -ForegroundColor Green
         }
         "logs" {
-            Write-Host "Mostrando logs del backend..." -ForegroundColor Green
-            docker logs -f $ContainerName
+            Write-Host "El backend local escribe logs en backend/storage/logs/laravel.log" -ForegroundColor Green
+            Get-Content -LiteralPath (Join-Path $BackendPath 'storage/logs/laravel.log') -Tail 80 -Wait
         }
         "install" {
             Write-Host "Construyendo imagen backend de desarrollo con codigo local..." -ForegroundColor Green
@@ -144,8 +140,8 @@ try {
         }
         "help" {
             Write-Host "Backend Scripts - Comandos disponibles:" -ForegroundColor Yellow
-            Write-Host "  start              - Iniciar backend en Docker (PHP 8.4)"
-            Write-Host "  stop               - Detener backend en Docker"
+            Write-Host "  start              - Iniciar backend local en http://127.0.0.1:8000"
+            Write-Host "  stop               - Detener backend local en el puerto 8000"
             Write-Host "  logs               - Ver logs del backend"
             Write-Host "  install            - Construir imagen backend de desarrollo con codigo local"
             Write-Host "  migrate            - Ejecutar migraciones"

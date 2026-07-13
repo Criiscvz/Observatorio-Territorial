@@ -1,0 +1,131 @@
+<h2 mat-dialog-title>Importar desde SharePoint</h2>
+
+<mat-dialog-content class="dialog-body">
+  <div class="dialog-toolbar">
+    <mat-form-field appearance="outline" class="department-field">
+      <mat-label>Observatorio destino</mat-label>
+      <mat-select
+        [ngModel]="selectedDepartamentoId()"
+        (ngModelChange)="changeDepartamento($event)"
+        [disabled]="loading() || importing()"
+      >
+        @for (departamento of data.departamentos; track departamento.id) {
+          <mat-option [value]="departamento.id">{{ departamento.nombre }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <div class="selected-counter">
+      <mat-icon>checklist</mat-icon>
+      {{ selectedCount() }} seleccionados
+    </div>
+  </div>
+
+  @if (browser()) {
+    <nav class="breadcrumb" aria-label="Ruta actual de SharePoint">
+      @for (crumb of browser()!.breadcrumbs; track crumb.id; let last = $last) {
+        <button
+          type="button"
+          class="breadcrumb-item"
+          [class.current]="last"
+          [disabled]="last || loading() || importing()"
+          (click)="loadFolder(crumb.id)"
+        >
+          {{ crumb.name }}
+        </button>
+        @if (!last) {
+          <mat-icon>chevron_right</mat-icon>
+        }
+      }
+    </nav>
+  }
+
+  @if (error()) {
+    <div class="status-message error">
+      <mat-icon>error</mat-icon>
+      {{ error() }}
+    </div>
+  }
+
+  <div class="browser-actions">
+    <button
+      mat-stroked-button
+      type="button"
+      [disabled]="!browser()?.parent || loading() || importing()"
+      (click)="goBack()"
+    >
+      <mat-icon>arrow_back</mat-icon>
+      Regresar
+    </button>
+
+    <mat-checkbox
+      [checked]="allVisibleSelected()"
+      [disabled]="visiblePdfItems().length === 0 || loading() || importing()"
+      (change)="toggleVisible($event.checked)"
+    >
+      Seleccionar PDF visibles
+    </mat-checkbox>
+  </div>
+
+  <div class="browser-panel">
+    @if (loading()) {
+      <div class="loading-state">
+        <mat-spinner diameter="36"></mat-spinner>
+        <span>Cargando carpeta...</span>
+      </div>
+    } @else if (browser()?.items?.length) {
+      <div class="items-list">
+        @for (item of browser()!.items; track item.id) {
+          <div class="browser-item" [class.selected]="isSelected(item)" [class.folder]="item.type === 'folder'">
+            @if (item.type === 'folder') {
+              <button type="button" class="item-main folder-button" (click)="openFolder(item)">
+                <mat-icon>folder</mat-icon>
+                <span class="item-name">{{ item.name }}</span>
+              </button>
+            } @else {
+              <mat-checkbox
+                class="item-check"
+                [checked]="isSelected(item)"
+                [disabled]="importing()"
+                (change)="toggleFile(item, $event.checked)"
+              />
+              <div class="item-main">
+                <mat-icon>picture_as_pdf</mat-icon>
+                <span class="item-name">{{ item.name }}</span>
+              </div>
+            }
+
+            <div class="item-meta">
+              <span>{{ item.type === 'folder' ? 'Carpeta' : 'PDF' }}</span>
+              <span>{{ item.last_modified_at | date: 'dd/MM/yyyy HH:mm' }}</span>
+              <span>{{ item.type === 'folder' ? '-' : formatSize(item.size) }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty-folder">
+        <mat-icon>folder_off</mat-icon>
+        <span>Esta carpeta no contiene subcarpetas ni PDFs visibles.</span>
+      </div>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" [disabled]="importing()" (click)="cancel()">Cancelar</button>
+  <button
+    mat-raised-button
+    color="primary"
+    type="button"
+    [disabled]="selectedCount() === 0 || importing()"
+    (click)="importSelected()"
+  >
+    @if (importing()) {
+      <mat-spinner diameter="18"></mat-spinner>
+    } @else {
+      <mat-icon>cloud_download</mat-icon>
+    }
+    Importar seleccionados
+  </button>
+</mat-dialog-actions>

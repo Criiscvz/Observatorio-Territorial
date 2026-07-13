@@ -17,8 +17,11 @@ import { Articulo } from '@core/services/articulos.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { AuthService } from '@core/services/auth.service';
 import { PermisosService } from '@core/services/permisos.service';
+import { DepartamentoService } from '@core/services/departamento.service';
+import { Departamento } from '@core/models';
 import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
 import { environment } from '../../../../environments/environment';
+import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-dialog.component';
 
 @Component({
   selector: 'app-public-atlas',
@@ -45,6 +48,7 @@ export class PublicAtlasComponent implements OnInit {
   private readonly publicacionService = inject(PublicacionService);
   private readonly authService = inject(AuthService);
   private readonly permisosService = inject(PermisosService);
+  private readonly departamentoService = inject(DepartamentoService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
 
@@ -52,7 +56,9 @@ export class PublicAtlasComponent implements OnInit {
   selectedCategory = signal<string>('TODAS');
 
   articulos = signal<Articulo[]>([]);
+  departamentos = signal<Departamento[]>([]);
   readonly showEditorPanelButton = computed(() => this.authService.isEditor());
+  readonly canImportFromSharePoint = computed(() => this.authService.isAdmin());
 
   // Computed properties for permissions
   canCreate = computed(() => {
@@ -63,6 +69,7 @@ export class PublicAtlasComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+    this.loadDepartamentos();
   }
 
   loadData(): void {
@@ -95,6 +102,38 @@ export class PublicAtlasComponent implements OnInit {
         ),
       );
 
+  }
+
+  loadDepartamentos(): void {
+    this.departamentoService
+      .getPublicos()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (departamentos) => this.departamentos.set(departamentos ?? []),
+        error: () => this.departamentos.set([]),
+      });
+  }
+
+  importarDesdeSharePoint(): void {
+    const dialogRef = this.dialog.open(SharePointAtlasImportDialogComponent, {
+      width: 'min(96vw, 980px)',
+      maxWidth: '96vw',
+      autoFocus: false,
+      restoreFocus: false,
+      data: {
+        departamentos: this.departamentos(),
+      },
+    });
+
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (!result) return;
+        const totals = result.totals;
+        const message = `${totals.imported} importados, ${totals.duplicates} duplicados, ${totals.rejected} rechazados, ${totals.errors} errores`;
+        this.snackBar.open(message, 'Cerrar', { duration: 7000 });
+        this.loadData();
+      });
   }
 
   private buildDownloadUrl(downloadUrl?: string | null): string | null {

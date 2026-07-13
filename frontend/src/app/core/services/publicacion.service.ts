@@ -4,6 +4,8 @@ import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ObservatorioPublicacion,
+  SharePointAtlasImportResponse,
+  SharePointBrowseResponse,
   SharePointFile,
 } from '../models/publicacion/publicacion.interface';
 import { ApiService } from './api.service';
@@ -61,6 +63,18 @@ export class PublicacionService {
       .pipe(map((response) => response.data));
   }
 
+  browseAtlasSharePointFolder(
+    departamentoId: string,
+    itemId?: string | null,
+  ): Observable<SharePointBrowseResponse> {
+    return this.api
+      .get<ResourceResponse<SharePointBrowseResponse>>(
+        `/departamentos/${departamentoId}/publicaciones/atlas/sharepoint/browse`,
+        itemId ? { item_id: itemId } : undefined,
+      )
+      .pipe(map((response) => response.data));
+  }
+
   getReporteSharePointFiles(departamentoId: string): Observable<SharePointFile[]> {
     return this.api
       .get<ResourceResponse<SharePointFile[]>>(
@@ -79,6 +93,16 @@ export class PublicacionService {
         { sharepoint_file_id: sharepointFileId },
       )
       .pipe(map((response) => response.data));
+  }
+
+  importManySharePointAtlas(
+    departamentoId: string,
+    sharepointFileIds: string[],
+  ): Observable<SharePointAtlasImportResponse> {
+    return this.api.post<SharePointAtlasImportResponse>(
+      `/departamentos/${departamentoId}/publicaciones/atlas/sharepoint/import-many`,
+      { sharepoint_file_ids: sharepointFileIds },
+    );
   }
 
   importSharePointReporte(

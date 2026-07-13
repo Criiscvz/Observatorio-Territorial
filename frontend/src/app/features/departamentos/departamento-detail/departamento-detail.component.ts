@@ -12,6 +12,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
@@ -24,6 +25,7 @@ import { AuthService } from '@core/services/auth.service';
 import { DatasetService } from '@core/services/dataset.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { PublicacionService } from '@core/services/publicacion.service';
+import { SharePointAtlasImportDialogComponent } from '@features/public/public-atlas/sharepoint-atlas-import-dialog.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -43,6 +45,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     MatIconModule,
     MatMenuModule,
     MatProgressSpinnerModule,
+    MatDialogModule,
     MatSnackBarModule,
     TranslateModule,
   ],
@@ -57,6 +60,7 @@ export class DepartamentoDetailComponent implements OnInit {
   private readonly publicacionService = inject(PublicacionService);
   private readonly authService = inject(AuthService);
   private readonly translate = inject(TranslateService);
+  private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
@@ -422,6 +426,35 @@ export class DepartamentoDetailComponent implements OnInit {
         });
       },
     });
+  }
+
+  importSharePointAtlas(): void {
+    const departamento = this.departamento();
+    if (!departamento) return;
+
+    const dialogRef = this.dialog.open(SharePointAtlasImportDialogComponent, {
+      width: 'min(96vw, 980px)',
+      maxWidth: '96vw',
+      autoFocus: false,
+      restoreFocus: false,
+      data: {
+        departamentos: [departamento],
+      },
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (!result) return;
+        const totals = result.totals;
+        this.loadPublicaciones(departamento.id);
+        this.snackBar.open(
+          `${totals.imported} importados, ${totals.duplicates} duplicados, ${totals.rejected} rechazados, ${totals.errors} errores`,
+          'Cerrar',
+          { duration: 7000 },
+        );
+      });
   }
 
   getEstadoClass(estado: string): string {

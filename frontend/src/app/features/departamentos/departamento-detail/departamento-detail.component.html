@@ -407,6 +407,10 @@
         </div>
         <div class="heading-actions">
           @if (isAdmin()) {
+            <button mat-raised-button color="primary" type="button" (click)="importSharePointAtlas()">
+              <mat-icon>cloud_download</mat-icon>
+              Importar desde SharePoint
+            </button>
             <button
               mat-stroked-button
               type="button"

@@ -52,3 +52,53 @@ export interface SharePointFile {
   last_modified_at?: string | null;
   powerbi_url?: string | null;
 }
+
+export interface SharePointBrowserItem {
+  id: string;
+  parent_id?: string | null;
+  name: string;
+  type: 'folder' | 'pdf';
+  web_url?: string | null;
+  mime_type?: string | null;
+  size?: number | null;
+  last_modified_at?: string | null;
+  is_pdf: boolean;
+  selectable: boolean;
+}
+
+export interface SharePointNavigationItem {
+  id: string;
+  parent_id?: string | null;
+  name: string;
+  web_url?: string | null;
+}
+
+export interface SharePointBrowseResponse {
+  current: SharePointNavigationItem;
+  root: SharePointNavigationItem;
+  parent?: SharePointNavigationItem | null;
+  breadcrumbs: SharePointNavigationItem[];
+  items: SharePointBrowserItem[];
+}
+
+export interface SharePointAtlasImportSummary {
+  imported: ObservatorioPublicacion[];
+  duplicates: Array<{
+    sharepoint_file_id: string;
+    name?: string | null;
+    publicacion_id?: string | null;
+    message: string;
+  }>;
+  rejected: Array<{ sharepoint_file_id: string; message: string }>;
+  errors: Array<{ sharepoint_file_id: string; message: string }>;
+}
+
+export interface SharePointAtlasImportResponse {
+  data: SharePointAtlasImportSummary;
+  totals: {
+    imported: number;
+    duplicates: number;
+    rejected: number;
+    errors: number;
+  };
+}

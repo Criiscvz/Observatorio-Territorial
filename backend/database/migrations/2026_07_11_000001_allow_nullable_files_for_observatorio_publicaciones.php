@@ -12,6 +12,10 @@ return new class extends Migration
             return;
         }
 
+        if (Schema::getConnection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::statement('ALTER TABLE observatorio_publicaciones ALTER COLUMN archivo_pdf DROP NOT NULL');
         DB::statement('ALTER TABLE observatorio_publicaciones ALTER COLUMN nombre_archivo_original DROP NOT NULL');
     }

@@ -26,6 +26,10 @@ return new class extends Migration
 
     private function indexExists(string $table, string $indexName): bool
     {
+        if (Schema::getConnection()->getDriverName() !== 'pgsql') {
+            return Schema::hasIndex($table, $indexName);
+        }
+
         $result = DB::select("
             SELECT indexname FROM pg_indexes 
             WHERE tablename = ? AND indexname = ?

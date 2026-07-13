@@ -27,13 +27,12 @@ class CheckPermissionMiddlewareTest extends TestCase
      */
     public function test_admin_is_allowed_automatically(): void
     {
-        $user = new User([
-            'id' => 1,
+        $user = (new User([
             'name' => 'Test Admin',
             'email' => 'admin@test.com',
             'rol' => 'ADMIN',
             'is_active' => true,
-        ]);
+        ]))->forceFill(['id' => 1]);
 
         Sanctum::actingAs($user);
 
@@ -48,13 +47,12 @@ class CheckPermissionMiddlewareTest extends TestCase
      */
     public function test_user_with_sufficient_permission_is_allowed(): void
     {
-        $user = new User([
-            'id' => 2,
+        $user = (new User([
             'name' => 'Test User',
             'email' => 'user@test.com',
             'rol' => 'USER',
             'is_active' => true,
-        ]);
+        ]))->forceFill(['id' => 2]);
 
         Sanctum::actingAs($user);
 
@@ -80,13 +78,12 @@ class CheckPermissionMiddlewareTest extends TestCase
      */
     public function test_user_with_admin_permission_is_allowed_for_escritura(): void
     {
-        $user = new User([
-            'id' => 3,
+        $user = (new User([
             'name' => 'Test User 2',
             'email' => 'user2@test.com',
             'rol' => 'USER',
             'is_active' => true,
-        ]);
+        ]))->forceFill(['id' => 3]);
 
         Sanctum::actingAs($user);
 
@@ -111,13 +108,12 @@ class CheckPermissionMiddlewareTest extends TestCase
      */
     public function test_user_with_insufficient_permission_is_forbidden(): void
     {
-        $user = new User([
-            'id' => 4,
+        $user = (new User([
             'name' => 'Test User 3',
             'email' => 'user3@test.com',
             'rol' => 'USER',
             'is_active' => true,
-        ]);
+        ]))->forceFill(['id' => 4]);
 
         Sanctum::actingAs($user);
 
