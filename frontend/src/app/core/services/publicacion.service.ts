@@ -58,6 +58,14 @@ export class PublicacionService {
       .pipe(map((response) => response.data));
   }
 
+  getPublicAtlasByDepartamento(departamentoId: string): Observable<ObservatorioPublicacion[]> {
+    return this.api
+      .get<ResourceResponse<ObservatorioPublicacion[]>>(
+        `/publico/departamentos/${departamentoId}/atlas`,
+      )
+      .pipe(map((response) => response.data));
+  }
+
   canUpload(departamentoId: string): Observable<CanUploadPublicacionResponse> {
     return this.api.get<CanUploadPublicacionResponse>(
       `/departamentos/${departamentoId}/publicaciones/can-upload`,

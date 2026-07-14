@@ -42,12 +42,6 @@
         }
       </mat-menu>
 
-      <!-- Atlas -->
-      <a routerLink="/publico/atlas" class="nav-link">
-        <mat-icon>auto_stories</mat-icon>
-        {{ 'public.home.nav.atlas' | translate }}
-      </a>
-
       <!-- Menú Barómetro -->
       <button class="nav-link" [matMenuTriggerFor]="barometerMenu">
         <mat-icon>speed</mat-icon>
@@ -163,8 +157,8 @@
         </mat-menu>
       } @else {
         <!-- Usuario no autenticado: mostrar login/register -->
-        <a mat-stroked-button routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
-        <a mat-raised-button color="primary" routerLink="/auth/register">{{
+        <a mat-stroked-button class="public-auth-button public-auth-button--login" routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
+        <a mat-raised-button class="public-auth-button public-auth-button--register" color="primary" routerLink="/auth/register">{{
           'public.header.register' | translate
         }}</a>
       }
@@ -426,12 +420,6 @@
           }
         </div>
       }
-
-      <!-- Atlas -->
-      <a routerLink="/publico/atlas" class="nav-link" (click)="mobileMenuOpen.set(false)">
-        <mat-icon>auto_stories</mat-icon>
-        {{ 'public.home.nav.atlas' | translate }}
-      </a>
 
       <!-- Menu Barometro -->
       <button class="nav-link" (click)="showBarometer.set(!showBarometer())">

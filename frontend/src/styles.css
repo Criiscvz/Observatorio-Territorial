@@ -1252,6 +1252,7 @@ a:not([class*='mat-']):not([class*='btn']):not([class*='nav']) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: nowrap;
 }
 
 .nav-link {
@@ -1315,6 +1316,26 @@ a:not([class*='mat-']):not([class*='btn']):not([class*='nav']) {
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.public-auth-button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: max-content;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.public-auth-button .mdc-button__label {
+  white-space: nowrap;
+}
+
+.public-auth-button--login,
+.public-auth-button--register {
+  padding-inline: 1.25rem !important;
 }
 
 /* Language selector */

@@ -7,16 +7,18 @@
         <h1 class="welcome-title">{{ authService.user()?.name || 'Usuario' }}</h1>
         <p class="welcome-subtitle">{{ 'dashboard.welcomeMessage' | translate }}</p>
       </div>
-      <div class="header-actions">
-        <a class="action-btn secondary" routerLink="/admin/datasets/nuevo">
-          <mat-icon>cloud_upload</mat-icon>
-          <span>{{ 'common.buttons.import' | translate }}</span>
-        </a>
-        <a class="action-btn primary" routerLink="/admin/departamentos/nuevo">
-          <mat-icon>add</mat-icon>
-          <span>{{ 'dashboard.quickActions.newDepartment' | translate }}</span>
-        </a>
-      </div>
+      @if (authService.isAdmin()) {
+        <div class="header-actions">
+          <a class="action-btn secondary" routerLink="/admin/datasets/nuevo">
+            <mat-icon>cloud_upload</mat-icon>
+            <span>{{ 'common.buttons.import' | translate }}</span>
+          </a>
+          <a class="action-btn primary" routerLink="/admin/departamentos/nuevo">
+            <mat-icon>add</mat-icon>
+            <span>{{ 'dashboard.quickActions.newDepartment' | translate }}</span>
+          </a>
+        </div>
+      }
     </div>
   </header>
 
@@ -232,9 +234,11 @@
             <div class="empty-state">
               <mat-icon>folder_off</mat-icon>
               <p>{{ 'dashboard.recentDepartments.empty' | translate }}</p>
-              <a routerLink="/admin/departamentos/nuevo" class="empty-action">{{
-                'layout.sidebar.createOne' | translate
-              }}</a>
+              @if (authService.isAdmin()) {
+                <a routerLink="/admin/departamentos/nuevo" class="empty-action">{{
+                  'layout.sidebar.createOne' | translate
+                }}</a>
+              }
             </div>
           }
         </div>
@@ -283,9 +287,11 @@
             <div class="empty-state">
               <mat-icon>description</mat-icon>
               <p>{{ 'dashboard.recentDatasets.empty' | translate }}</p>
-              <a routerLink="/admin/datasets/nuevo" class="empty-action">{{
-                'common.buttons.import' | translate
-              }}</a>
+              @if (authService.isAdmin()) {
+                <a routerLink="/admin/datasets/nuevo" class="empty-action">{{
+                  'common.buttons.import' | translate
+                }}</a>
+              }
             </div>
           }
         </div>
@@ -365,21 +371,23 @@
     <section class="quick-actions">
       <h3 class="section-title">{{ 'dashboard.quickActions.title' | translate }}</h3>
       <div class="actions-grid">
-        <a class="quick-action" routerLink="/admin/departamentos/nuevo" matRipple>
-          <div class="action-icon purple">
-            <mat-icon>add_business</mat-icon>
-          </div>
-          <span class="action-label">{{ 'dashboard.quickActions.newDepartment' | translate }}</span>
-          <p class="action-desc">{{ 'dashboard.quickActions.newDepartmentDesc' | translate }}</p>
-        </a>
+        @if (authService.isAdmin()) {
+          <a class="quick-action" routerLink="/admin/departamentos/nuevo" matRipple>
+            <div class="action-icon purple">
+              <mat-icon>add_business</mat-icon>
+            </div>
+            <span class="action-label">{{ 'dashboard.quickActions.newDepartment' | translate }}</span>
+            <p class="action-desc">{{ 'dashboard.quickActions.newDepartmentDesc' | translate }}</p>
+          </a>
 
-        <a class="quick-action" routerLink="/admin/datasets/nuevo" matRipple>
-          <div class="action-icon blue">
-            <mat-icon>cloud_upload</mat-icon>
-          </div>
-          <span class="action-label">{{ 'dashboard.quickActions.uploadDataset' | translate }}</span>
-          <p class="action-desc">{{ 'dashboard.quickActions.uploadDatasetDesc' | translate }}</p>
-        </a>
+          <a class="quick-action" routerLink="/admin/datasets/nuevo" matRipple>
+            <div class="action-icon blue">
+              <mat-icon>cloud_upload</mat-icon>
+            </div>
+            <span class="action-label">{{ 'dashboard.quickActions.uploadDataset' | translate }}</span>
+            <p class="action-desc">{{ 'dashboard.quickActions.uploadDatasetDesc' | translate }}</p>
+          </a>
+        }
 
         <a class="quick-action" routerLink="/admin/datasets" matRipple>
           <div class="action-icon teal">

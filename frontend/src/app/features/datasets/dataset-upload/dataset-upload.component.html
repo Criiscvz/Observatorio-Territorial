@@ -1,15 +1,17 @@
-<div class="max-w-5xl mx-auto">
-  <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">
-    {{ 'datasets.upload.title' | translate }}
-  </h1>
+<div class="dataset-upload-page">
+  <header class="dataset-upload-header">
+    <span class="eyebrow">Gestión de datos</span>
+    <h1>{{ 'datasets.upload.title' | translate }}</h1>
+    <p>Sube archivos CSV o Excel y configura las columnas que alimentarán el observatorio.</p>
+  </header>
 
-  <mat-stepper [linear]="true" #stepper>
+  <mat-stepper [linear]="true" #stepper class="dataset-stepper">
     <!-- Step 1: Subir archivo -->
     <mat-step [stepControl]="facade.uploadForm" [label]="'datasets.upload.steps.upload' | translate">
-      <mat-card class="mt-4">
+      <mat-card class="dataset-upload-card mt-4">
         <mat-card-content>
           <form [formGroup]="facade.uploadForm" class="space-y-4">
-            <mat-form-field class="w-full" appearance="outline">
+            <mat-form-field class="dataset-field w-full" appearance="outline">
               <mat-label>{{ 'datasets.upload.form.department' | translate }}</mat-label>
               <mat-select formControlName="departamento_id">
                 @for (depto of facade.departamentos(); track depto.id) {
@@ -18,16 +20,12 @@
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field class="w-full" appearance="outline">
+            <mat-form-field class="dataset-field w-full" appearance="outline">
               <mat-label>{{ 'datasets.upload.form.name' | translate }}</mat-label>
-              <input
-                matInput
-                formControlName="nombre"
-                [placeholder]="'datasets.upload.form.namePlaceholder' | translate"
-              />
+              <input matInput formControlName="nombre" />
             </mat-form-field>
 
-            <mat-form-field class="w-full" appearance="outline">
+            <mat-form-field class="dataset-field w-full" appearance="outline">
               <mat-label>{{ 'datasets.upload.form.description' | translate }}</mat-label>
               <textarea matInput formControlName="descripcion" rows="3"></textarea>
             </mat-form-field>
@@ -36,8 +34,10 @@
             <div
               class="drop-zone"
               [class.has-file]="facade.selectedFile()"
+              [class.is-dragging]="isDragging()"
               (click)="fileInput.click()"
               (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
               (drop)="onDrop($event)"
             >
               <input
@@ -52,7 +52,7 @@
                 <mat-icon class="icon success">check_circle</mat-icon>
                 <p class="file-name">{{ facade.selectedFile()?.name }}</p>
                 <p class="file-size">{{ facade.formatFileSize(facade.selectedFile()?.size || 0) }}</p>
-                <button mat-button color="warn" (click)="clearFile($event)" class="mt-2">
+                <button type="button" mat-button color="warn" (click)="clearFile($event)" class="mt-2">
                   <mat-icon>close</mat-icon> {{ 'datasets.upload.dropzone.removeFile' | translate }}
                 </button>
               } @else {
@@ -80,10 +80,11 @@
 
         <mat-card-actions align="end">
           <button
+            type="button"
             mat-raised-button
             color="primary"
             [disabled]="facade.uploadForm.invalid || !facade.selectedFile() || facade.uploading()"
-            (click)="facade.uploadAndAnalyze(stepper)"
+            (click)="uploadAndAnalyze(stepper, $event)"
           >
             <mat-icon>upload</mat-icon>
             {{ 'datasets.upload.uploadAndAnalyze' | translate }}
@@ -94,7 +95,7 @@
 
     <!-- Step 2: Validar columnas -->
     <mat-step [label]="'datasets.upload.steps.configure' | translate">
-      <mat-card class="mt-4">
+      <mat-card class="dataset-upload-card mt-4">
         <mat-card-header>
           <mat-card-title>{{ 'datasets.upload.configure.title' | translate }}</mat-card-title>
           <mat-card-subtitle>
@@ -203,6 +204,7 @@
                   </mat-checkbox>
 
                   <button
+                    type="button"
                     mat-button
                     [color]="col.excluida ? 'primary' : 'warn'"
                     (click)="facade.toggleExcluir(col)"
@@ -228,14 +230,15 @@
         </mat-card-content>
 
         <mat-card-actions align="end" class="!px-4 !pb-4">
-          <button mat-button matStepperPrevious [disabled]="facade.processing()">
+          <button type="button" mat-button matStepperPrevious [disabled]="facade.processing()">
             <mat-icon>arrow_back</mat-icon> {{ 'common.buttons.previous' | translate }}
           </button>
           <button
+            type="button"
             mat-raised-button
             color="primary"
             [disabled]="facade.processing() || facade.columnasActivas().length === 0"
-            (click)="facade.confirmImport(stepper)"
+            (click)="confirmImport(stepper, $event)"
           >
             @if (facade.processing()) {
               <mat-icon class="animate-spin">refresh</mat-icon>
@@ -251,7 +254,7 @@
 
     <!-- Step 3: Completado -->
     <mat-step [label]="'datasets.upload.steps.complete' | translate">
-      <mat-card class="mt-4">
+      <mat-card class="dataset-upload-card mt-4">
         <mat-card-content class="success-state">
           <mat-icon class="success-icon">check_circle</mat-icon>
           <h2 class="success-title">{{ 'datasets.upload.success.title' | translate }}</h2>
@@ -263,10 +266,11 @@
           </p>
 
           <div class="success-actions">
-            <button mat-button routerLink="/admin/datasets">
+            <button type="button" mat-button routerLink="/admin/datasets">
               <mat-icon>list</mat-icon> {{ 'datasets.upload.success.viewDatasets' | translate }}
             </button>
             <button
+              type="button"
               mat-raised-button
               color="primary"
               [routerLink]="['/admin/datasets', facade.datasetId()]"

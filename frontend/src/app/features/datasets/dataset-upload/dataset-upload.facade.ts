@@ -76,7 +76,16 @@ export class DatasetUploadFacade {
    * @param stepper - Referencia al MatStepper para avanzar al siguiente paso.
    */
   uploadAndAnalyze(stepper: any): void {
-    if (!this.selectedFile()) return;
+    if (this.uploadForm.invalid) {
+      this.uploadForm.markAllAsTouched();
+      this.error.set(this.translate.instant('datasets.upload.errors.requiredFields'));
+      return;
+    }
+
+    if (!this.selectedFile()) {
+      this.error.set(this.translate.instant('datasets.upload.errors.fileRequired'));
+      return;
+    }
 
     this.uploading.set(true);
     this.error.set(null);
@@ -115,9 +124,14 @@ export class DatasetUploadFacade {
 
   /** Confirma la importación con las columnas activas (no excluidas) */
   confirmImport(stepper: any): void {
-    if (!this.datasetId()) return;
+    if (!this.datasetId()) {
+      this.error.set(this.translate.instant('datasets.upload.errors.analyzeFirst'));
+      return;
+    }
 
-    const columnasAImportar = this.columnasActivas();
+    const columnasAImportar = this.columnasActivas().map((columna) =>
+      this.toImportColumnPayload(columna),
+    );
 
     if (columnasAImportar.length === 0) {
       this.error.set(this.translate.instant('datasets.upload.errors.noColumns'));
@@ -146,6 +160,19 @@ export class DatasetUploadFacade {
   toggleExcluir(columna: ColumnaExtendida): void {
     columna.excluida = !columna.excluida;
     this.columnas.set([...this.columnas()]);
+  }
+
+  private toImportColumnPayload(columna: ColumnaExtendida): ColumnaAnalizada {
+    return {
+      nombre_columna: columna.nombre_columna,
+      nombre_original: columna.nombre_original,
+      tipo_detectado: columna.tipo_detectado,
+      tipo_dato: columna.tipo_dato,
+      es_visible: columna.es_visible ?? true,
+      orden: columna.orden,
+      opciones: columna.opciones ?? undefined,
+      muestra_valores: columna.muestra_valores,
+    };
   }
 
   /**

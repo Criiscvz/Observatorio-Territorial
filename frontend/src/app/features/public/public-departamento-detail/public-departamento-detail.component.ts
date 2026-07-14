@@ -19,6 +19,7 @@ import { ArticulosService, Articulo } from '@core/services/articulos.service';
 import { ReportesService, Reporte } from '@core/services/reportes.service';
 import { AuthService } from '@core/services/auth.service';
 import { PublicacionService } from '@core/services/publicacion.service';
+import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -59,6 +60,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   departamento = signal<Departamento | null>(null);
   articulos = signal<Articulo[]>([]);
   reportes = signal<Reporte[]>([]);
+  atlas = signal<ObservatorioPublicacion[]>([]);
   loading = signal(true);
   datasetSearchTerm = '';
 
@@ -79,6 +81,14 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   reportesAgrupados = computed(() =>
     this.reportesService.agruparPorCategoria(this.reportes())
   );
+
+  atlasAgrupados = computed(() => [
+    {
+      categoria: 'Atlas ULEAM',
+      color: '#6366F1',
+      items: this.atlas(),
+    },
+  ]);
 
   get datasets(): Dataset[] {
     const all = this.departamento()?.datasets || [];
@@ -118,6 +128,13 @@ export class PublicDepartamentoDetailComponent implements OnInit {
           next: (reps) => this.reportes.set(reps),
           error: () => this.reportes.set([]),
         });
+        this.publicacionService
+          .getPublicAtlasByDepartamento(id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (items) => this.atlas.set(items),
+            error: () => this.atlas.set([]),
+          });
       },
       error: () => {
         this.departamento.set(null);
@@ -138,11 +155,15 @@ export class PublicDepartamentoDetailComponent implements OnInit {
     }
   }
 
-  isSubscriberContent(item: Articulo | Reporte): boolean {
-    return item.bloqueado === true || item.visibilidad === 'suscriptor';
+  isSubscriberContent(item: Articulo | Reporte | ObservatorioPublicacion): boolean {
+    return (
+      item.bloqueado === true ||
+      ('visibilidad' in item && item.visibilidad === 'suscriptor') ||
+      ('solo_suscriptores' in item && item.solo_suscriptores)
+    );
   }
 
-  canViewSubscriberContent(item: Articulo | Reporte): boolean {
+  canViewSubscriberContent(item: Articulo | Reporte | ObservatorioPublicacion): boolean {
     if (!this.isSubscriberContent(item)) return true;
     if (!this.authService.isAuthenticated()) return false;
 
@@ -197,6 +218,16 @@ export class PublicDepartamentoDetailComponent implements OnInit {
           });
         }
       });
+  }
+
+  openAtlasPdf(atlas: ObservatorioPublicacion): void {
+    this.publicacionService.openPdf(atlas).subscribe((opened) => {
+      if (!opened) {
+        this.snackBar.open('No hay PDF disponible para este Atlas.', 'Cerrar', {
+          duration: 3500,
+        });
+      }
+    });
   }
 }
 

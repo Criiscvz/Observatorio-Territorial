@@ -72,6 +72,23 @@ class PublicController extends Controller
         return response()->json($departamento->toArray());
     }
 
+    public function departamentoAtlas(string $id): \Illuminate\Http\Resources\Json\AnonymousResourceCollection|JsonResponse
+    {
+        $departamento = $this->getDepartamentosUseCase->getById($id);
+
+        if (!$departamento) {
+            return response()->json(['message' => 'Departamento no encontrado o no público'], 404);
+        }
+
+        $query = ObservatorioPublicacion::query()
+            ->where('departamento_id', $id)
+            ->where('tipo', 'ATLAS')
+            ->where('estado', 'PUBLICACION')
+            ->latest('fecha_publicacion');
+
+        return PublicacionResource::collection($query->get());
+    }
+
     public function atlas(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
         $query = ObservatorioPublicacion::query()

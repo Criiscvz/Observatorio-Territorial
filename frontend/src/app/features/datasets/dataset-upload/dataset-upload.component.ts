@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -56,6 +56,7 @@ export class DatasetUploadComponent implements OnInit {
 
   /** El Façade expone todo el estado y la lógica de negocio a la plantilla */
   readonly facade = inject(DatasetUploadFacade);
+  readonly isDragging = signal(false);
 
   ngOnInit(): void {
     this.facade.loadDepartamentos();
@@ -79,10 +80,12 @@ export class DatasetUploadComponent implements OnInit {
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
+    this.isDragging.set(true);
   }
 
   onDrop(event: DragEvent): void {
     event.preventDefault();
+    this.isDragging.set(false);
     const files = event.dataTransfer?.files;
     if (files?.length) {
       this.facade.selectedFile.set(files[0]);
@@ -90,8 +93,26 @@ export class DatasetUploadComponent implements OnInit {
     }
   }
 
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging.set(false);
+  }
+
   clearFile(event: Event): void {
+    event.preventDefault();
     event.stopPropagation();
     this.facade.selectedFile.set(null);
+  }
+
+  uploadAndAnalyze(stepper: unknown, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.facade.uploadAndAnalyze(stepper);
+  }
+
+  confirmImport(stepper: unknown, event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.facade.confirmImport(stepper);
   }
 }

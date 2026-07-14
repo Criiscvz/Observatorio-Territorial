@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 // Departamentos públicos
 Route::get('/departamentos', [PublicController::class, 'departamentos']);
 Route::get('/departamentos/{id}', [PublicController::class, 'departamento']);
+Route::get('/departamentos/{id}/atlas', [PublicController::class, 'departamentoAtlas']);
 Route::get('/atlas', [PublicController::class, 'atlas']);
 
 // Datasets públicos

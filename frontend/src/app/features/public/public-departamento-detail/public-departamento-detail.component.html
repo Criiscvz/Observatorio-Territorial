@@ -41,6 +41,10 @@
             <mat-icon>article</mat-icon>
             {{ articulos().length }} Artículos
           </span>
+          <span class="stat">
+            <mat-icon>map</mat-icon>
+            {{ atlas().length }} Atlas
+          </span>
         </div>
       </div>
     </div>
@@ -304,6 +308,93 @@
               <mat-icon>analytics</mat-icon>
               <h3>No hay reportes disponibles</h3>
               <p>Aún no se han publicado reportes o dashboards para este observatorio.</p>
+            </div>
+          }
+        </section>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>map</mat-icon>
+          <span>Atlas</span>
+        </ng-template>
+
+        <section class="tab-section atlas-section">
+          @if (atlas().length > 0) {
+            @for (grupo of atlasAgrupados(); track grupo.categoria) {
+              <div class="categoria-grupo">
+                <h2 class="categoria-titulo">
+                  <span class="categoria-line"></span>
+                  {{ grupo.categoria }}
+                  <span class="categoria-count">{{ grupo.items.length }}</span>
+                </h2>
+                <div class="articulos-grid">
+                  @for (item of grupo.items; track item.id) {
+                    <div class="articulo-card" [class.locked]="!canViewSubscriberContent(item)">
+                      <div class="articulo-cover" [style.background]="'linear-gradient(135deg, ' + grupo.color + ' 0%, #1e1b4b 100%)'">
+                        <div class="cover-pattern"></div>
+                        <span class="articulo-categoria-badge">
+                          <mat-icon>map</mat-icon>
+                          Atlas ULEAM
+                        </span>
+                        @if (isSubscriberContent(item)) {
+                          <span class="subscription-badge">
+                            <mat-icon>lock</mat-icon>
+                            <span>Suscriptor</span>
+                          </span>
+                        }
+                        <div class="cover-icon">
+                          <mat-icon>picture_as_pdf</mat-icon>
+                        </div>
+                        @if (!canViewSubscriberContent(item)) {
+                          <div class="lock-overlay">
+                            <mat-icon>lock</mat-icon>
+                          </div>
+                        }
+                      </div>
+
+                      <div class="articulo-body">
+                        <h3 class="articulo-titulo" [title]="item.titulo">{{ item.titulo }}</h3>
+                        <p class="articulo-desc">{{ item.descripcion }}</p>
+                        <div class="articulo-meta">
+                          @if (item.fuente) {
+                            <div class="meta-row">
+                              <mat-icon>source</mat-icon>
+                              <span>{{ item.fuente }}</span>
+                            </div>
+                          }
+                          @if (item.fecha_publicacion) {
+                            <div class="meta-row">
+                              <mat-icon>calendar_today</mat-icon>
+                              <span>{{ item.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="articulo-actions">
+                        @if (!canViewSubscriberContent(item)) {
+                          <button mat-stroked-button type="button" class="publication-action-button publication-action-button--subscriber" (click)="showSubscriberMessage()">
+                            <mat-icon>lock</mat-icon>
+                            <span>Suscribirse</span>
+                          </button>
+                        } @else {
+                          <button mat-stroked-button type="button" class="publication-action-button" (click)="openAtlasPdf(item)">
+                            <mat-icon>picture_as_pdf</mat-icon>
+                            Abrir PDF
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          } @else {
+            <div class="empty-state">
+              <mat-icon>map</mat-icon>
+              <h3>No hay Atlas publicados para este Observatorio.</h3>
+              <p>Aún no se han publicado Atlas para este observatorio.</p>
             </div>
           }
         </section>

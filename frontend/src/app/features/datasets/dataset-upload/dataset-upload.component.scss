@@ -1,21 +1,341 @@
+.dataset-upload-page {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
+.dataset-upload-header {
+  margin-bottom: 22px;
+  padding: 24px;
+  border: 1px solid var(--border-color, #d8dde5);
+  border-left: 4px solid #b3261e;
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--uleam-red);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dataset-upload-header h1 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.6rem, 2.5vw, 2.25rem);
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.dataset-upload-header p {
+  max-width: 720px;
+  margin: 8px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.96rem;
+  line-height: 1.55;
+}
+
+.dataset-upload-card {
+  overflow: hidden;
+  border: 1px solid var(--border-color, #d8dde5);
+  border-left: 4px solid #b3261e;
+  border-radius: 8px !important;
+  background: var(--card-bg) !important;
+  color: var(--text-primary);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+}
+
+::ng-deep .dataset-stepper,
+::ng-deep .dataset-stepper .mat-horizontal-stepper-wrapper,
+::ng-deep .dataset-stepper .mat-horizontal-content-container,
+::ng-deep .dataset-stepper .mat-horizontal-stepper-content {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+::ng-deep .dataset-stepper .mat-horizontal-stepper-header-container {
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+::ng-deep .dataset-stepper .mat-horizontal-content-container {
+  padding: 0;
+  margin: 0;
+}
+
+::ng-deep .dataset-stepper .mat-step-header {
+  min-height: 58px;
+  border-radius: 8px;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+::ng-deep .dataset-stepper .mat-step-header:hover {
+  background: var(--hover-bg);
+}
+
+::ng-deep .dataset-stepper .mat-step-icon {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+::ng-deep .dataset-stepper .mat-step-icon-selected,
+::ng-deep .dataset-stepper .mat-step-icon-state-edit,
+::ng-deep .dataset-stepper .mat-step-icon-state-done {
+  background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+  color: #fff;
+  border-color: transparent;
+}
+
+::ng-deep .dataset-stepper .mat-step-label,
+::ng-deep .dataset-stepper .mat-step-label-selected {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+::ng-deep .dataset-stepper .mat-stepper-horizontal-line {
+  border-top-color: var(--border-color);
+}
+
+::ng-deep .dataset-upload-card .mat-mdc-card-content {
+  padding: 24px !important;
+}
+
+::ng-deep .dataset-upload-card .mat-mdc-card-header {
+  padding: 24px 24px 0 !important;
+}
+
+::ng-deep .dataset-upload-card .mat-mdc-card-title {
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+::ng-deep .dataset-upload-card .mat-mdc-card-subtitle {
+  color: var(--text-secondary);
+}
+
+::ng-deep .dataset-upload-card .mat-mdc-card-actions {
+  padding: 0 24px 24px !important;
+  gap: 12px;
+}
+
+::ng-deep .dataset-upload-card .dataset-field {
+  --mdc-outlined-text-field-container-shape: 8px;
+  --mdc-outlined-text-field-outline-color: var(--border-color);
+  --mdc-outlined-text-field-hover-outline-color: var(--border-hover);
+  --mdc-outlined-text-field-focus-outline-color: var(--primary-500);
+  --mdc-outlined-text-field-label-text-color: var(--text-secondary);
+  --mdc-outlined-text-field-hover-label-text-color: var(--text-primary);
+  --mdc-outlined-text-field-focus-label-text-color: var(--primary-500);
+  --mdc-outlined-text-field-input-text-color: var(--text-primary);
+  --mdc-outlined-text-field-caret-color: var(--primary-500);
+}
+
+::ng-deep .dataset-upload-card .dataset-field .mat-mdc-text-field-wrapper {
+  background: var(--bg-secondary) !important;
+  border-radius: 8px !important;
+}
+
+::ng-deep .dataset-upload-card .dataset-field .mat-mdc-form-field-flex {
+  min-height: 56px;
+}
+
+::ng-deep .dataset-upload-card .dataset-field .mat-mdc-form-field-infix {
+  min-height: 56px;
+  padding-top: 16px;
+  padding-bottom: 12px;
+}
+
+::ng-deep .dataset-upload-card .dataset-field input.mat-mdc-input-element,
+::ng-deep .dataset-upload-card .dataset-field textarea.mat-mdc-input-element,
+::ng-deep .dataset-upload-card .dataset-field .mat-mdc-select-value,
+::ng-deep .dataset-upload-card .dataset-field .mat-mdc-select-arrow {
+  color: var(--text-primary) !important;
+}
+
+::ng-deep .dataset-upload-card .dataset-field .mdc-floating-label {
+  color: var(--text-secondary) !important;
+  background: transparent !important;
+}
+
+::ng-deep .dataset-upload-card .dataset-field.mat-focused .mdc-floating-label {
+  color: var(--primary-500) !important;
+}
+
+::ng-deep .dataset-upload-card .dataset-field .mdc-notched-outline__leading,
+::ng-deep .dataset-upload-card .dataset-field .mdc-notched-outline__notch,
+::ng-deep .dataset-upload-card .dataset-field .mdc-notched-outline__trailing {
+  border-color: var(--border-color) !important;
+}
+
+::ng-deep .dataset-upload-card .dataset-field.mat-focused .mdc-notched-outline__leading,
+::ng-deep .dataset-upload-card .dataset-field.mat-focused .mdc-notched-outline__notch,
+::ng-deep .dataset-upload-card .dataset-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--primary-500) !important;
+}
+
+::ng-deep .dataset-upload-card .dataset-field .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 230px;
+  padding: 32px 28px;
+  border: 2px dashed var(--border-hover);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(99, 102, 241, 0.06), transparent),
+    var(--bg-tertiary);
+  color: var(--text-primary);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.drop-zone:hover,
+.drop-zone:focus-visible,
+.drop-zone.is-dragging {
+  border-color: var(--primary-500);
+  background:
+    linear-gradient(180deg, rgba(99, 102, 241, 0.12), rgba(99, 102, 241, 0.03)),
+    var(--hover-bg);
+  box-shadow: 0 0 0 3px var(--shadow-color);
+  outline: none;
+}
+
+.drop-zone.is-dragging {
+  border-style: solid;
+}
+
+.drop-zone.has-file {
+  border-color: var(--success-color);
+  background:
+    linear-gradient(180deg, rgba(16, 185, 129, 0.13), rgba(16, 185, 129, 0.04)),
+    var(--success-bg);
+}
+
+.drop-zone .icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: var(--info-bg);
+  color: var(--info-color);
+  font-size: 34px;
+}
+
+.drop-zone .icon.success {
+  background: var(--success-bg);
+  color: var(--success-color);
+}
+
+.file-name {
+  max-width: min(100%, 680px);
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.file-size {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+}
+
+.drop-text {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.drop-hint,
+.drop-formats {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.drop-formats {
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+}
+
+.upload-progress,
+.processing-state {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.upload-progress p,
+.processing-state p {
+  margin: 0 0 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.alert {
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+}
+
+.alert.error {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-color);
+}
+
 ::ng-deep .mat-expansion-panel-body {
   padding-top: 8px !important;
 }
 
-// Fix para textos largos en el header del expansion panel
 ::ng-deep .mat-expansion-panel-header {
   height: auto !important;
-  min-height: 48px;
-  padding: 12px 24px !important;
+  min-height: 54px;
+  padding: 12px 22px !important;
 }
 
-::ng-deep .mat-expansion-panel-header-title,
-::ng-deep .mat-expansion-panel-header-description {
+::ng-deep .dataset-upload-card .mat-expansion-panel {
+  border: 1px solid var(--border-color);
+  border-radius: 8px !important;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  box-shadow: none !important;
+}
+
+::ng-deep .dataset-upload-card .mat-expansion-panel:not(:last-child) {
+  margin-bottom: 12px;
+}
+
+::ng-deep .dataset-upload-card .mat-expansion-panel-header-title,
+::ng-deep .dataset-upload-card .mat-expansion-panel-header-description {
   flex-basis: auto;
   margin-right: 8px;
+  color: var(--text-primary);
 }
 
-// Estilos para el título de columna con texto largo
 .column-title {
   display: flex;
   align-items: center;
@@ -23,138 +343,54 @@
   min-width: 0;
   flex: 1;
   max-width: 60%;
-
-  .column-name {
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-  }
 }
 
-.column-description {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  justify-content: flex-end;
-}
-
-.drop-zone {
-  border: 2px dashed var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-
-  &:hover {
-    border-color: var(--primary-400);
-    background: var(--hover-bg);
-  }
-
-  &.has-file {
-    border-color: var(--success-color);
-    background: var(--success-bg);
-  }
-
-  .icon {
-    font-size: 3rem;
-    width: 3rem;
-    height: 3rem;
-    color: var(--text-tertiary);
-
-    &.success {
-      color: var(--success-color);
-    }
-  }
-
-  .file-name {
-    font-size: 1.125rem;
-    font-weight: 500;
-    margin-top: 0.5rem;
-    color: var(--text-primary);
-  }
-
-  .file-size {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-  }
-
-  .drop-text {
-    font-size: 1.125rem;
-    color: var(--text-secondary);
-    margin-top: 0.5rem;
-  }
-
-  .drop-hint {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-  }
-
-  .drop-formats {
-    font-size: 0.75rem;
-    color: var(--text-tertiary);
-    margin-top: 0.5rem;
-  }
-}
-
-.upload-progress {
-  text-align: center;
-
-  p {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-  }
-}
-
-.alert {
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-
-  &.error {
-    background: var(--error-bg);
-    border: 1px solid var(--error-border);
-    color: var(--error-color);
-  }
+.column-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .excluded {
-  opacity: 0.5;
+  opacity: 0.58;
 }
 
 .excluded-label {
-  font-size: 0.875rem;
   color: var(--error-color);
+  font-size: 0.875rem;
 }
 
 .sample-values {
-  background: var(--bg-tertiary);
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
   margin-bottom: 0.75rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+}
 
-  .sample-label {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.25rem;
-  }
+.sample-label {
+  margin: 0 0 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
 
-  .sample-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-  }
+.sample-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
 
-  .sample-chip {
-    background: var(--card-bg);
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.875rem;
-    border: 1px solid var(--border-color);
-  }
+.sample-chip {
+  padding: 0.28rem 0.56rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 0.84rem;
 }
 
 .column-options {
@@ -162,45 +398,52 @@
   align-items: center;
   gap: 1rem;
   padding-bottom: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.processing-state {
-  margin-top: 1rem;
-  text-align: center;
-
-  p {
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-  }
+:host-context(.dark) .dataset-upload-header,
+:host-context(.dark) .dataset-upload-card,
+:host-context(.dark) ::ng-deep .dataset-stepper .mat-horizontal-stepper-header-container {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: #1e293b !important;
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.32);
 }
 
-.success-state {
-  text-align: center;
-  padding: 2rem;
+:host-context(.dark) .eyebrow {
+  color: var(--uleam-red-light);
+}
 
-  .success-icon {
-    font-size: 4rem;
-    width: 4rem;
-    height: 4rem;
-    color: var(--success-color);
+:host-context(.dark) ::ng-deep .dataset-upload-card .mat-mdc-text-field-wrapper,
+:host-context(.dark) ::ng-deep .dataset-upload-card .mat-expansion-panel {
+  background: rgba(15, 23, 42, 0.58) !important;
+}
+
+:host-context(.dark) .drop-zone {
+  border-color: rgba(148, 163, 184, 0.28);
+  background:
+    linear-gradient(180deg, rgba(99, 102, 241, 0.1), rgba(15, 23, 42, 0.12)),
+    rgba(15, 23, 42, 0.58);
+}
+
+:host-context(.dark) .drop-zone:hover,
+:host-context(.dark) .drop-zone.is-dragging {
+  background:
+    linear-gradient(180deg, rgba(99, 102, 241, 0.18), rgba(15, 23, 42, 0.16)),
+    rgba(15, 23, 42, 0.72);
+}
+
+:host-context(.dark) .sample-values {
+  border-color: rgba(148, 163, 184, 0.18);
+  background: rgba(15, 23, 42, 0.48);
+}
+
+@media (max-width: 768px) {
+  ::ng-deep .dataset-stepper .mat-horizontal-stepper-header-container {
+    overflow-x: auto;
   }
 
-  .success-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-top: 1rem;
-  }
-
-  .success-message {
-    color: var(--text-secondary);
-    margin-top: 0.5rem;
-  }
-
-  .success-actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
+  .drop-zone {
+    min-height: 210px;
+    padding: 24px 18px;
   }
 }

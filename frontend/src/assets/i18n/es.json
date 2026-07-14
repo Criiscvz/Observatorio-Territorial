@@ -195,7 +195,7 @@
       "users": "Usuarios y roles",
       "permissions": "Permisos de Roles",
       "departments": "Observatorios",
-      "newDepartment": "Nueva observatorio",
+      "newDepartment": "Nuevo Observatorio",
       "allDatasets": "Todos los Conjuntos de Datos",
       "publicView": "Vista Pública",
       "noDepartments": "Sin observatorios",
@@ -231,7 +231,7 @@
     },
     "quickActions": {
       "title": "Acciones Rápidas",
-      "newDepartment": "Nueva Observatorio",
+      "newDepartment": "Nuevo Observatorio",
       "newDepartmentDesc": "Crea un nuevo observatorio para organizar tus datos",
       "uploadDataset": "Subir Dataset",
       "uploadDatasetDesc": "Importa un archivo Excel o CSV para analizar",
@@ -340,6 +340,9 @@
       },
       "errors": {
         "analyzeFailed": "Error al analizar el archivo. Verifica que el formato sea válido (.xlsx, .xls, .csv).",
+        "requiredFields": "Completa el observatorio y el nombre del dataset antes de continuar.",
+        "fileRequired": "Debe seleccionar un archivo para importar.",
+        "analyzeFirst": "Primero debe subir y analizar el archivo antes de confirmar la importación.",
         "uploadFailed": "Error al subir el archivo. Verifica la conexión y que el archivo no exceda 10MB.",
         "noColumns": "Debes incluir al menos una columna para continuar la importación.",
         "importFailed": "Error al importar los datos. Verifica que las columnas estén correctamente configuradas."
@@ -448,13 +451,13 @@
     "title": "Observatorios",
     "list": {
       "title": "Observatorios",
-      "newDepartment": "Nueva Observatorio",
+      "newDepartment": "Nuevo Observatorio",
       "empty": "No hay observatorios",
       "emptyDescription": "Crea tu primera observatorio"
     },
     "form": {
       "titleEdit": "Editar Observatorio",
-      "titleNew": "Nueva Observatorio",
+      "titleNew": "Nuevo Observatorio",
       "name": "Nombre de la Observatorio",
       "namePlaceholder": "Ej: Vitalidad Ecológica",
       "code": "Código Interno",
@@ -526,7 +529,7 @@
   },
   "public": {
     "header": {
-      "login": "Iniciar Sesión",
+      "login": "Iniciar sesión",
       "register": "Registrarse"
     },
     "home": {

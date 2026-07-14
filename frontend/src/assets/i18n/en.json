@@ -340,6 +340,9 @@
       },
       "errors": {
         "analyzeFailed": "Failed to analyze the file. Verify the format is valid (.xlsx, .xls, .csv).",
+        "requiredFields": "Complete the observatory and dataset name before continuing.",
+        "fileRequired": "You must select a file to import.",
+        "analyzeFirst": "Upload and analyze the file before confirming the import.",
         "uploadFailed": "Failed to upload the file. Check the connection and that the file doesn't exceed 10MB.",
         "noColumns": "You must include at least one column to continue the import.",
         "importFailed": "Failed to import the data. Verify that the columns are correctly configured."
