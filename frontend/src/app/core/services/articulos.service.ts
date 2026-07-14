@@ -12,6 +12,7 @@ export interface Articulo {
   estado?: string | null;
   enlace?: string | null;
   download_url?: string | null;
+  sharepoint_url?: string | null;
   fecha_publicacion?: string | null;
   fecha_recepcion?: string | null;
   categoria_id?: string | null;

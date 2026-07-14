@@ -144,8 +144,11 @@ export class PublicDepartamentoDetailComponent implements OnInit {
 
   canViewSubscriberContent(item: Articulo | Reporte): boolean {
     if (!this.isSubscriberContent(item)) return true;
+    if (!this.authService.isAuthenticated()) return false;
+
     const user = this.authService.user();
-    return !!user && ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(user.rol);
+    const role = String(user?.rol ?? '').toUpperCase();
+    return ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
   }
 
   showSubscriberMessage(): void {
@@ -169,12 +172,27 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   openArticlePdf(articulo: Articulo): void {
     this.publicacionService
       .openPdf({
-        download_url: articulo.download_url ?? articulo.enlace ?? null,
-        sharepoint_url: null,
+        download_url: articulo.download_url ?? null,
+        sharepoint_url: articulo.sharepoint_url ?? null,
       })
       .subscribe((opened) => {
         if (!opened) {
           this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
+            duration: 3500,
+          });
+        }
+      });
+  }
+
+  openReportPdf(reporte: Reporte): void {
+    this.publicacionService
+      .openPdf({
+        download_url: reporte.download_url ?? reporte.ficha_indicador ?? null,
+        sharepoint_url: reporte.sharepoint_url ?? null,
+      })
+      .subscribe((opened) => {
+        if (!opened) {
+          this.snackBar.open('No hay PDF disponible para este reporte.', 'Cerrar', {
             duration: 3500,
           });
         }

@@ -318,18 +318,21 @@
                     <div class="item-icon orange">
                       <mat-icon>picture_as_pdf</mat-icon>
                     </div>
-                    <div class="item-content">
-                      <span class="item-title">{{ reporte.titulo }}</span>
-                      <span class="item-meta">
-                        {{ reporte.fecha_publicacion | date: 'dd/MM/yyyy' }}
-                        <span class="badge subscriber">
-                          <mat-icon>lock</mat-icon>
-                          Suscriptor
-                        </span>
-                      </span>
-                    </div>
-                    <mat-icon class="item-arrow">lock</mat-icon>
-                  </button>
+	                    <div class="item-content">
+	                      <span class="item-title">{{ reporte.titulo }}</span>
+	                      <span class="item-meta">
+	                        {{ reporte.fecha_publicacion | date: 'dd/MM/yyyy' }}
+	                        <span class="badge subscriber">
+	                          <mat-icon>lock</mat-icon>
+	                          Suscriptor
+	                        </span>
+	                      </span>
+	                    </div>
+	                    <span class="locked-action">
+	                      <mat-icon>lock</mat-icon>
+	                      Suscribirse
+	                    </span>
+	                  </button>
                 } @else {
                   <a class="list-item" [href]="getAtlasUrl(reporte)" target="_blank" rel="noopener" matRipple>
                     <div class="item-icon orange">

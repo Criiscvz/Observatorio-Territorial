@@ -48,10 +48,28 @@
           <mat-icon>picture_as_pdf</mat-icon>
           Agregar Atlas PDF
         </button>
+        <span class="publication-action-spacer"></span>
+        <button
+          mat-stroked-button
+          class="review-action-button"
+          type="button"
+          (click)="openReviewPanel()"
+        >
+          <mat-icon>fact_check</mat-icon>
+          Revisión
+          @if (reviewCount > 0) {
+            <span class="review-action-count">{{ reviewCount }}</span>
+          }
+        </button>
       </section>
 
       @if (showPublicationForm()) {
-        <section class="publication-form" aria-labelledby="publication-form-title">
+        <section
+          #publicationFormSection
+          class="publication-form"
+          [class.publication-form--highlight]="highlightPublicationForm()"
+          aria-labelledby="publication-form-title"
+        >
           <div class="section-heading">
             <div>
               <span class="eyebrow">{{
@@ -86,7 +104,6 @@
                       <mat-option value="EN_REVISION">En revisión</mat-option>
                       <mat-option value="SUSPENDIDO">Suspendido</mat-option>
                       <mat-option value="ARCHIVADO">Archivado</mat-option>
-                      <mat-option value="ELIMINADO">Eliminado</mat-option>
                     </mat-select>
                     @if (
                       publicationForm.controls.estado.touched &&
@@ -231,7 +248,15 @@
                       } @else {
                         <div class="upload-icon"><mat-icon>cloud_upload</mat-icon></div>
                         <div class="upload-copy">
-                          <strong>Arrastra o haz click para subir un documento</strong>
+                          <strong>
+                            {{
+                              isReporte
+                                ? 'Subir PDF del reporte'
+                                : isAtlas
+                                  ? 'Subir PDF del atlas'
+                                  : 'Subir PDF del artículo'
+                            }}
+                          </strong>
                           <span>Solo se permiten archivos PDF</span>
                           <small>Máximo 20 MB</small>
                         </div>
@@ -283,6 +308,153 @@
                 </button>
               </div>
           </form>
+        </section>
+      }
+
+      @if (showReviewPanel()) {
+        <section class="review-panel" aria-labelledby="review-panel-title">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Revisión</span>
+              <h2 id="review-panel-title">Publicaciones en revisión</h2>
+              <p class="section-subtitle">
+                Artículos, reportes y atlas pendientes de revisión
+              </p>
+            </div>
+            <div class="heading-actions">
+              <span class="count">{{ reviewCount }}</span>
+              <button mat-icon-button type="button" aria-label="Cerrar revisión" (click)="closeReviewPanel()">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          @if (loadingReviewPublicaciones()) {
+            <div class="review-loading">
+              <mat-spinner diameter="34"></mat-spinner>
+              <span>Cargando publicaciones en revisión...</span>
+            </div>
+          } @else if (reviewPublicaciones().length) {
+            <div class="powerbi-grid">
+              @for (item of reviewPublicaciones(); track item.id) {
+                <article class="powerbi-card review-card">
+                  @if (canEditPublication(item) || canDeletePublication(item)) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="publication-more-button"
+                      [matMenuTriggerFor]="reviewActionsMenu"
+                      aria-label="Más opciones"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #reviewActionsMenu="matMenu" xPosition="before" yPosition="below" class="publication-actions-menu">
+                      @if (canEditPublication(item)) {
+                        <button mat-menu-item class="menu-item-action" (click)="editPublication(item)">
+                          <mat-icon>edit</mat-icon>
+                          <span>Editar</span>
+                        </button>
+                      }
+                      @if (canDeletePublication(item)) {
+                        <button mat-menu-item class="danger-menu-item" (click)="deletePublication(item)">
+                          <mat-icon>delete</mat-icon>
+                          <span>Eliminar</span>
+                        </button>
+                      }
+                    </mat-menu>
+                  }
+                  <div class="review-card-topline">
+                    <div class="powerbi-card-icon"><mat-icon>{{ getPublicacionIcon(item.tipo) }}</mat-icon></div>
+                    <span class="publication-type-badge">{{ getPublicacionTipoBadge(item.tipo) }}</span>
+                  </div>
+                  <div class="powerbi-card-copy">
+                    <div class="publication-meta">
+                      <strong>{{ item.codigo }}</strong
+                      ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
+                    </div>
+                    <h3>{{ item.titulo }}</h3>
+                    <p>{{ item.descripcion }}</p>
+                    <div class="details">
+                      @if (item.fuente) {
+                        <span><b>Fuente:</b> {{ item.fuente }}</span>
+                      }
+                      @if (item.nombre_archivo_original || item.sharepoint_file_name) {
+                        <span><b>Archivo:</b> {{ item.nombre_archivo_original || item.sharepoint_file_name }}</span>
+                      }
+                      @if (item.creador) {
+                        <span><b>Subido por:</b> {{ item.creador.name }} ({{ item.creador.rol }})</span>
+                      }
+                    </div>
+                    <div class="publication-badges">
+                      <span [class]="getEstadoPublicacionClass(item.estado)">{{
+                        getEstadoPublicacionLabel(item.estado)
+                      }}</span>
+                      @if (item.solo_suscriptores) {
+                        <span class="subscriber-badge"><mat-icon>lock</mat-icon>Solo suscriptores</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="publication-links powerbi-actions">
+                    @if (hasPublicationPdf(item)) {
+                      <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
+                        <mat-icon>open_in_new</mat-icon>Abrir PDF
+                      </button>
+                    }
+                    @if (isAdmin()) {
+                      <button
+                        mat-stroked-button
+                        class="publication-card-action state-action publish-action"
+                        type="button"
+                        [disabled]="changingReviewStatus() === item.id + ':PUBLICACION'"
+                        (click)="changeReviewStatus(item, 'PUBLICACION')"
+                      >
+                        @if (changingReviewStatus() === item.id + ':PUBLICACION') {
+                          <mat-spinner diameter="16"></mat-spinner>
+                        } @else {
+                          <mat-icon>publish</mat-icon>
+                        }
+                        Publicar
+                      </button>
+                      <button
+                        mat-stroked-button
+                        class="publication-card-action state-action"
+                        type="button"
+                        [disabled]="changingReviewStatus() === item.id + ':SUSPENDIDO'"
+                        (click)="changeReviewStatus(item, 'SUSPENDIDO')"
+                      >
+                        @if (changingReviewStatus() === item.id + ':SUSPENDIDO') {
+                          <mat-spinner diameter="16"></mat-spinner>
+                        } @else {
+                          <mat-icon>pause_circle</mat-icon>
+                        }
+                        Suspender
+                      </button>
+                      <button
+                        mat-stroked-button
+                        class="publication-card-action state-action"
+                        type="button"
+                        [disabled]="changingReviewStatus() === item.id + ':ARCHIVADO'"
+                        (click)="changeReviewStatus(item, 'ARCHIVADO')"
+                      >
+                        @if (changingReviewStatus() === item.id + ':ARCHIVADO') {
+                          <mat-spinner diameter="16"></mat-spinner>
+                        } @else {
+                          <mat-icon>archive</mat-icon>
+                        }
+                        Archivar
+                      </button>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="empty-state review-empty">
+              <mat-icon>fact_check</mat-icon>
+              <h3>No hay publicaciones en revisión para este observatorio.</h3>
+              <p>Cuando un editor envíe artículos, reportes o atlas, aparecerán aquí.</p>
+            </div>
+          }
         </section>
       }
     }
@@ -350,6 +522,31 @@
         <div class="powerbi-grid">
           @for (item of articulos; track item.id) {
             <article class="powerbi-card">
+              @if (canEditPublication(item) || canDeletePublication(item)) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="publication-more-button"
+                  [matMenuTriggerFor]="articleActionsMenu"
+                  aria-label="Más opciones"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #articleActionsMenu="matMenu" xPosition="before" yPosition="below" class="publication-actions-menu">
+                  @if (canEditPublication(item)) {
+                    <button mat-menu-item class="menu-item-action" (click)="editPublication(item)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar</span>
+                    </button>
+                  }
+                  @if (canDeletePublication(item)) {
+                    <button mat-menu-item class="danger-menu-item" (click)="deletePublication(item)">
+                      <mat-icon>delete</mat-icon>
+                      <span>Eliminar</span>
+                    </button>
+                  }
+                </mat-menu>
+              }
               <div class="powerbi-card-icon"><mat-icon>article</mat-icon></div>
               <div class="powerbi-card-copy">
                 <div class="publication-meta">
@@ -375,20 +572,10 @@
                 </div>
               </div>
               <div class="publication-links powerbi-actions">
-                @if (item.link_url) {
-                <a mat-button color="primary" [href]="item.link_url" target="_blank" rel="noopener"
-                  ><mat-icon>open_in_new</mat-icon>Ver fuente</a
-                >
-                }
-                @if (item.download_url || item.sharepoint_url) {
-                <button mat-stroked-button type="button" (click)="openPdf(item)">
+                @if (hasPublicationPdf(item)) {
+                <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
                   <mat-icon>open_in_new</mat-icon>Abrir PDF
                 </button>
-                }
-                @if (canEditPublication(item)) {
-                  <button mat-button type="button" (click)="editPublication(item)">
-                    <mat-icon>edit</mat-icon>Editar
-                  </button>
                 }
               </div>
             </article>
@@ -434,6 +621,31 @@
         <div class="powerbi-grid">
           @for (item of reportes; track item.id) {
             <article class="powerbi-card">
+              @if (canEditPublication(item) || canDeletePublication(item)) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="publication-more-button"
+                  [matMenuTriggerFor]="reportActionsMenu"
+                  aria-label="Más opciones"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #reportActionsMenu="matMenu" xPosition="before" yPosition="below" class="publication-actions-menu">
+                  @if (canEditPublication(item)) {
+                    <button mat-menu-item class="menu-item-action" (click)="editPublication(item)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar</span>
+                    </button>
+                  }
+                  @if (canDeletePublication(item)) {
+                    <button mat-menu-item class="danger-menu-item" (click)="deletePublication(item)">
+                      <mat-icon>delete</mat-icon>
+                      <span>Eliminar</span>
+                    </button>
+                  }
+                </mat-menu>
+              }
               <div class="powerbi-card-icon"><mat-icon>bar_chart</mat-icon></div>
               <div class="powerbi-card-copy">
                 <div class="publication-meta">
@@ -458,13 +670,21 @@
                 </div>
               </div>
               <div class="publication-links powerbi-actions">
-                <button mat-raised-button color="primary" type="button" (click)="openReport(item)">
-                  <mat-icon>open_in_new</mat-icon>Abrir Power BI
-                </button>
-                @if (canEditPublication(item)) {
-                  <button mat-button type="button" (click)="editPublication(item)">
-                    <mat-icon>edit</mat-icon>Editar
+                @if (isPowerBiReport(item)) {
+                  <button mat-stroked-button class="publication-card-action" type="button" (click)="openReport(item)">
+                    <mat-icon>open_in_new</mat-icon>Abrir Power BI
                   </button>
+                } @else {
+                  @if (item.link_url) {
+                    <button mat-stroked-button class="publication-card-action" type="button" (click)="openSource(item)">
+                      <mat-icon>open_in_new</mat-icon>Ver fuente
+                    </button>
+                  }
+                  @if (hasPublicationPdf(item)) {
+                    <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
+                      <mat-icon>open_in_new</mat-icon>Abrir PDF
+                    </button>
+                  }
                 }
               </div>
             </article>
@@ -506,6 +726,31 @@
         <div class="powerbi-grid">
           @for (item of atlas; track item.id) {
             <article class="powerbi-card">
+              @if (canEditPublication(item) || canDeletePublication(item)) {
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="publication-more-button"
+                  [matMenuTriggerFor]="atlasActionsMenu"
+                  aria-label="Más opciones"
+                >
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #atlasActionsMenu="matMenu" xPosition="before" yPosition="below" class="publication-actions-menu">
+                  @if (canEditPublication(item)) {
+                    <button mat-menu-item class="menu-item-action" (click)="editPublication(item)">
+                      <mat-icon>edit</mat-icon>
+                      <span>Editar</span>
+                    </button>
+                  }
+                  @if (canDeletePublication(item)) {
+                    <button mat-menu-item class="danger-menu-item" (click)="deletePublication(item)">
+                      <mat-icon>delete</mat-icon>
+                      <span>Eliminar</span>
+                    </button>
+                  }
+                </mat-menu>
+              }
               <div class="powerbi-card-icon"><mat-icon>picture_as_pdf</mat-icon></div>
               <div class="powerbi-card-copy">
                 <div class="publication-meta">
@@ -533,14 +778,9 @@
                 </div>
               </div>
               <div class="publication-links powerbi-actions">
-                <button mat-stroked-button type="button" (click)="openPdf(item)">
+                <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
                   <mat-icon>open_in_new</mat-icon>Abrir PDF
                 </button>
-                @if (canEditPublication(item)) {
-                  <button mat-button type="button" (click)="editPublication(item)">
-                    <mat-icon>edit</mat-icon>Editar
-                  </button>
-                }
               </div>
             </article>
           }

@@ -355,6 +355,8 @@ class ReporteController extends Controller
             'fecha_publicacion' => $reporte->fecha_publicacion,
             'link_url' => $isLocked ? null : $reporte->link_url,
             'ficha_indicador' => $isLocked ? null : $reporte->ficha_indicador,
+            'download_url' => null,
+            'sharepoint_url' => null,
             'fuente' => $reporte->fuente,
             'categoria_id' => $reporte->categoria_id,
             'departamento_id' => $reporte->departamento_id,
@@ -370,7 +372,7 @@ class ReporteController extends Controller
     private function mapPublicacionToReporte(Request $request, ObservatorioPublicacion $publicacion): array
     {
         $downloadUrl = $publicacion->archivo_pdf
-            ? rtrim(config('app.url'), '/')."/api/departamentos/publicaciones/{$publicacion->id}/download"
+            ? "/api/departamentos/publicaciones/{$publicacion->id}/download"
             : null;
         $isLocked = $publicacion->solo_suscriptores && ! $this->isSubscriber($request->user('sanctum'));
 
@@ -381,6 +383,8 @@ class ReporteController extends Controller
             'fecha_publicacion' => $publicacion->fecha_publicacion?->format('Y-m-d'),
             'link_url' => $isLocked ? null : $publicacion->link_url,
             'ficha_indicador' => $isLocked ? null : ($publicacion->sharepoint_url ?: $downloadUrl),
+            'download_url' => $isLocked ? null : $downloadUrl,
+            'sharepoint_url' => $isLocked ? null : $publicacion->sharepoint_url,
             'fuente' => $publicacion->fuente,
             'categoria_id' => null,
             'departamento_id' => $publicacion->departamento_id,

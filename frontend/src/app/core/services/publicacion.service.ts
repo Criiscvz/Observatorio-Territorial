@@ -37,6 +37,15 @@ export class PublicacionService {
       .pipe(map((response) => response.data));
   }
 
+  getInReview(departamentoId: string): Observable<ObservatorioPublicacion[]> {
+    return this.api
+      .get<ResourceResponse<ObservatorioPublicacion[]>>(
+        `/departamentos/${departamentoId}/publicaciones`,
+        { estado: 'EN_REVISION' },
+      )
+      .pipe(map((response) => response.data));
+  }
+
   getRecentAtlasReports(): Observable<ObservatorioPublicacion[]> {
     return this.api
       .get<ResourceResponse<ObservatorioPublicacion[]>>('/departamentos/publicaciones/atlas/recientes')
@@ -154,6 +163,10 @@ export class PublicacionService {
       .pipe(map((response) => response.data));
   }
 
+  delete(publicacionId: string): Observable<{ message: string }> {
+    return this.api.delete<{ message: string }>(`/departamentos/publicaciones/${publicacionId}`);
+  }
+
   getPdfUrl(publicacion: PdfSource): string | null {
     if (publicacion.sharepoint_url) {
       return publicacion.sharepoint_url;
@@ -182,14 +195,27 @@ export class PublicacionService {
       return of(true);
     }
 
+    const pdfWindow = window.open('', '_blank');
+    if (pdfWindow) {
+      pdfWindow.opener = null;
+      pdfWindow.document.write('<p style="font-family: sans-serif">Cargando PDF...</p>');
+    }
+
     return this.http.get(pdfUrl, { responseType: 'blob' }).pipe(
       map((blob) => {
         const objectUrl = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
-        window.open(objectUrl, '_blank', 'noopener,noreferrer');
+        if (pdfWindow) {
+          pdfWindow.location.href = objectUrl;
+        } else {
+          window.open(objectUrl, '_blank', 'noopener,noreferrer');
+        }
         window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
         return true;
       }),
-      catchError(() => of(false)),
+      catchError(() => {
+        pdfWindow?.close();
+        return of(false);
+      }),
     );
   }
 

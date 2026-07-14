@@ -29,6 +29,24 @@ function Get-DockerMongoUri {
     return ($uri -replace '@(127\.0\.0\.1|localhost):', '@observatorio_mongo:')
 }
 
+function Ensure-BackendStorage {
+    $storagePaths = @(
+        (Join-Path $BackendPath "storage"),
+        (Join-Path $BackendPath "storage\app"),
+        (Join-Path $BackendPath "storage\app\private"),
+        (Join-Path $BackendPath "storage\app\private\publicaciones"),
+        (Join-Path $BackendPath "storage\app\public"),
+        (Join-Path $BackendPath "storage\framework"),
+        (Join-Path $BackendPath "storage\logs")
+    )
+
+    foreach ($path in $storagePaths) {
+        if (-not (Test-Path $path)) {
+            New-Item -ItemType Directory -Path $path -Force | Out-Null
+        }
+    }
+}
+
 function Ensure-BackendImage {
     $exists = docker image inspect $DevImageName 2>$null
     if (-not $?) {
@@ -56,12 +74,14 @@ function Run-Artisan {
     )
 
     Ensure-BackendImage
+    Ensure-BackendStorage
     $RunImageName = Get-BackendImage
     $MongoUri = Get-DockerMongoUri
     docker run --rm `
       --network $DockerNetwork `
       --add-host=host.docker.internal:host-gateway `
       --env-file "$EnvFile" `
+      -v "${BackendPath}\storage:/var/www/html/storage" `
       -e DB_HOST=observatorio_db `
       -e DB_PORT=5432 `
       -e "MONGODB_URI=$MongoUri" `
@@ -74,8 +94,30 @@ Push-Location $BackendPath
 try {
     switch ($Command) {
         "start" {
-            Write-Host "Iniciando backend en http://127.0.0.1:8000 con PHP local..." -ForegroundColor Green
-            php artisan serve --host=127.0.0.1 --port=8000
+            if (Test-Path (Join-Path $BackendPath "vendor/autoload.php")) {
+                Write-Host "Iniciando backend en http://127.0.0.1:8000 con PHP local..." -ForegroundColor Green
+                php artisan serve --host=127.0.0.1 --port=8000
+            } else {
+                Write-Host "vendor no existe localmente. Iniciando backend con Docker en http://127.0.0.1:8000..." -ForegroundColor Yellow
+                Ensure-BackendImage
+                Ensure-BackendStorage
+                $RunImageName = Get-BackendImage
+                $MongoUri = Get-DockerMongoUri
+                docker rm -f $ContainerName 2>$null | Out-Null
+                docker run -d `
+                  --name $ContainerName `
+                  --network $DockerNetwork `
+                  --add-host=host.docker.internal:host-gateway `
+                  --env-file "$EnvFile" `
+                  -v "${BackendPath}\storage:/var/www/html/storage" `
+                  -e DB_HOST=observatorio_db `
+                  -e DB_PORT=5432 `
+                  -e "MONGODB_URI=$MongoUri" `
+                  -p 127.0.0.1:8000:8000 `
+                  --entrypoint php `
+                  $RunImageName artisan serve --host=0.0.0.0 --port=8000 | Out-Null
+                Write-Host "Backend iniciado con Docker en http://127.0.0.1:8000" -ForegroundColor Green
+            }
         }
         "stop" {
             Write-Host "Deteniendo backend..." -ForegroundColor Yellow

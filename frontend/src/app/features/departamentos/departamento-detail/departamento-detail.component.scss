@@ -55,6 +55,34 @@
 .publication-action button {
   min-height: 42px;
 }
+.publication-action-spacer {
+  flex: 1 1 auto;
+}
+.review-action-button {
+  min-width: 136px;
+  border-color: rgba(148, 163, 184, 0.34) !important;
+  border-radius: 12px !important;
+  background: var(--card-bg);
+  color: var(--text-primary) !important;
+  font-weight: 800;
+}
+.review-action-button mat-icon {
+  margin-right: 6px;
+}
+.review-action-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--uleam-red);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
 .publication-form {
   padding: 24px;
   border: 1px solid var(--border-color, #d8dde5);
@@ -62,6 +90,18 @@
   background: var(--card-bg);
   color: var(--text-primary);
   border-radius: 6px;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+  scroll-margin-top: 96px;
+}
+.publication-form--highlight {
+  border-color: rgba(99, 102, 241, 0.58);
+  box-shadow:
+    0 0 0 2px rgba(99, 102, 241, 0.32),
+    0 18px 44px rgba(99, 102, 241, 0.2);
+  transform: translateY(-2px);
 }
 .section-heading {
   display: flex;
@@ -81,6 +121,11 @@
   margin: 0;
   font-size: 1.25rem;
   color: var(--text-primary);
+}
+.section-subtitle {
+  margin: 4px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 .eyebrow {
   display: block;
@@ -351,6 +396,47 @@
 .publications-section {
   padding-top: 8px;
 }
+.review-panel {
+  padding: 22px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--text-primary);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+.review-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 180px;
+  color: var(--text-secondary);
+}
+.review-card {
+  border-color: rgba(245, 158, 11, 0.34);
+}
+.review-card-topline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-right: 54px;
+}
+.publication-type-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid rgba(99, 102, 241, 0.24);
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.review-empty {
+  border-radius: 8px;
+  background: var(--bg-secondary);
+}
 .resource-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -502,7 +588,118 @@
   color: var(--error-color);
 }
 .publication-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   justify-content: flex-end;
+}
+
+.publication-card-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-color: rgba(148, 163, 184, 0.34) !important;
+  border-radius: 12px !important;
+  background: rgba(248, 250, 252, 0.72);
+  color: var(--text-primary) !important;
+  font-weight: 700;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.publication-card-action:hover {
+  border-color: rgba(99, 102, 241, 0.48) !important;
+  background: rgba(99, 102, 241, 0.12);
+  transform: translateY(-1px);
+}
+
+.publication-card-action mat-icon {
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  font-size: 18px;
+  line-height: 1;
+}
+.state-action {
+  min-width: 112px;
+}
+.publish-action {
+  border-color: rgba(34, 197, 94, 0.34) !important;
+}
+
+.publication-more-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.82);
+  color: var(--text-secondary);
+  line-height: 1;
+  box-sizing: border-box;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.publication-more-button:hover {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+.publication-more-button mat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.menu-item-action {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.menu-item-action mat-icon {
+  color: var(--text-secondary);
+}
+
+.menu-item-action:hover {
+  background: var(--bg-tertiary);
+}
+
+.danger-menu-item {
+  color: var(--error-color);
+  font-weight: 700;
+}
+
+.danger-menu-item mat-icon {
+  color: var(--error-color);
+}
+
+.danger-menu-item:hover {
+  background: var(--error-bg);
 }
 .powerbi-grid {
   display: grid;
@@ -510,6 +707,7 @@
   gap: 16px;
 }
 .powerbi-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -585,6 +783,15 @@
   .selected-type-pill {
     width: 100%;
   }
+  .publication-action-spacer {
+    display: none;
+  }
+  .review-panel {
+    padding: 16px;
+  }
+  .review-card-topline {
+    padding-right: 48px;
+  }
   .type-row {
     align-items: stretch;
     flex-direction: column;
@@ -618,4 +825,44 @@
 :host-context(.dark) .selected-type-pill,
 :host-context(.dark) .visibility-field {
   border-color: var(--border-hover);
+}
+
+:host-context(.dark) .publication-more-button {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.52);
+  color: #cbd5e1;
+}
+
+:host-context(.dark) .publication-more-button:hover {
+  border-color: rgba(129, 140, 248, 0.48);
+  background: rgba(99, 102, 241, 0.2);
+  color: #ffffff;
+}
+
+:host-context(.dark) .publication-card-action {
+  border-color: rgba(148, 163, 184, 0.26) !important;
+  background: rgba(15, 23, 42, 0.34);
+  color: #f8fafc !important;
+}
+
+:host-context(.dark) .publication-card-action:hover {
+  border-color: rgba(129, 140, 248, 0.5) !important;
+  background: rgba(99, 102, 241, 0.18);
+}
+
+:host-context(.dark) .review-action-button {
+  border-color: rgba(148, 163, 184, 0.26) !important;
+  background: rgba(15, 23, 42, 0.34);
+  color: #f8fafc !important;
+}
+
+:host-context(.dark) .review-panel {
+  background: rgba(15, 23, 42, 0.48);
+  box-shadow: 0 20px 56px rgba(2, 6, 23, 0.32);
+}
+
+:host-context(.dark) .publication-type-badge {
+  border-color: rgba(129, 140, 248, 0.32);
+  background: rgba(99, 102, 241, 0.18);
+  color: #f8fafc;
 }

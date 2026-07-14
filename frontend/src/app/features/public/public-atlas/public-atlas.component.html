@@ -1,4 +1,4 @@
-<div class="page-container">
+﻿<div class="page-container">
   <mat-tab-group class="atlas-tabs" animationDuration="200ms">
     <mat-tab>
       <ng-template mat-tab-label>
@@ -67,7 +67,7 @@
                 matInput
                 [value]="searchTerm()"
                 (input)="onSearch($any($event.target).value)"
-                placeholder="Titulo, descripcion o autor..."
+                placeholder="Titulo, descripción o autor..."
               />
               @if (searchTerm()) {
                 <button matSuffix mat-icon-button type="button" (click)="clearSearch()">
@@ -120,7 +120,7 @@
                   @if (art.visibilidad === 'suscriptor') {
                     <span class="subscription-badge">
                       <mat-icon>lock</mat-icon>
-                      Suscriptor
+                      <span>Suscriptor</span>
                     </span>
                   }
                   <div class="cover-doc-info">
@@ -156,24 +156,23 @@
                 <div class="card-actions">
                   @if (!tieneAcceso(art)) {
                     <button
-                      mat-flat-button
-                      color="accent"
-                      class="action-btn view-btn locked-btn"
+                      mat-stroked-button
+                      class="publication-action-button publication-action-button--subscriber"
                       type="button"
                       (click)="sugerirSuscripcion()"
                     >
                       <mat-icon>lock</mat-icon>
-                      Suscriptor
+                      <span>Suscribirse</span>
                     </button>
                   } @else {
                     <button
                       mat-stroked-button
                       type="button"
                       (click)="visualizarPdf(art)"
-                      class="action-btn view-btn"
+                      class="publication-action-button"
                     >
-                      <mat-icon>visibility</mat-icon>
-                      Visualizar PDF
+                      <mat-icon>picture_as_pdf</mat-icon>
+                      Abrir PDF
                     </button>
                   }
                 </div>
@@ -191,3 +190,8 @@
     </mat-tab>
   </mat-tab-group>
 </div>
+
+
+
+
+

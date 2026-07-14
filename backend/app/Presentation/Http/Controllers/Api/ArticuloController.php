@@ -277,7 +277,7 @@ class ArticuloController extends Controller
 
     private function mapPublicacionToArticulo(Request $request, ObservatorioPublicacion $publicacion): array
     {
-        $downloadUrl = rtrim(config('app.url'), '/')."/api/departamentos/publicaciones/{$publicacion->id}/download";
+        $downloadUrl = "/api/departamentos/publicaciones/{$publicacion->id}/download";
         $isLocked = $publicacion->solo_suscriptores && ! $this->isSubscriber($request->user('sanctum'));
 
         return [

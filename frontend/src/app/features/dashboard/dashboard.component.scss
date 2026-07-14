@@ -537,6 +537,36 @@
   .item-title {
     color: var(--text-primary);
   }
+
+  .locked-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 36px;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #111827;
+    font-size: 0.78rem;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 8px 18px rgba(245, 158, 11, 0.18);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+
+    mat-icon {
+      width: 17px;
+      height: 17px;
+      font-size: 17px;
+      flex-shrink: 0;
+      color: #111827;
+    }
+  }
+
+  &:hover .locked-action {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(245, 158, 11, 0.28);
+  }
 }
 
 .badge.subscriber {

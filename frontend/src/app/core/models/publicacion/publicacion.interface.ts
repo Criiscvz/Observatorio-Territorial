@@ -3,8 +3,7 @@ export type EstadoPublicacion =
   | 'PUBLICACION'
   | 'EN_REVISION'
   | 'SUSPENDIDO'
-  | 'ARCHIVADO'
-  | 'ELIMINADO';
+  | 'ARCHIVADO';
 
 export interface ObservatorioPublicacion {
   id: string;

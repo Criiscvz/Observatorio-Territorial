@@ -3,6 +3,8 @@
 use App\Presentation\Http\Controllers\Api\ObservatorioPublicacionController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/publicaciones/{publicacion}/download', [ObservatorioPublicacionController::class, 'download']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/{departamento}/publicaciones', [ObservatorioPublicacionController::class, 'index']);
     Route::get('/{departamento}/publicaciones/articulos', [ObservatorioPublicacionController::class, 'articulos']);
@@ -18,7 +20,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/{departamento}/publicaciones/atlas/sharepoint/import-many', [ObservatorioPublicacionController::class, 'importManySharePointAtlas'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/atlas/sharepoint/sync', [ObservatorioPublicacionController::class, 'syncSharePointAtlas'])->middleware('role:ADMIN');
     Route::get('/publicaciones/atlas/recientes', [ObservatorioPublicacionController::class, 'recentAtlasReports']);
-    Route::get('/publicaciones/{publicacion}/download', [ObservatorioPublicacionController::class, 'download']);
     Route::post('/{departamento}/publicaciones', [ObservatorioPublicacionController::class, 'store'])->middleware('role:ADMIN,EDITOR');
     Route::patch('/publicaciones/{publicacion}', [ObservatorioPublicacionController::class, 'update'])->middleware('role:ADMIN,EDITOR');
+    Route::delete('/publicaciones/{publicacion}', [ObservatorioPublicacionController::class, 'destroy'])->middleware('role:ADMIN,EDITOR');
 });

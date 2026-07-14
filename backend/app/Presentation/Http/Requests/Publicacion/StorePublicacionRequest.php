@@ -30,7 +30,7 @@ class StorePublicacionRequest extends FormRequest
             'estado' => [
                 Rule::requiredIf($this->user()?->rol === 'ADMIN'),
                 'nullable',
-                Rule::in(['PUBLICACION', 'EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO', 'ELIMINADO']),
+                Rule::in(['PUBLICACION', 'EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO']),
             ],
             'solo_suscriptores' => ['sometimes', 'boolean'],
             'titulo' => ['required', 'string', 'max:255'],
@@ -45,7 +45,6 @@ class StorePublicacionRequest extends FormRequest
             'autores' => [Rule::requiredIf($tipo === 'ARTICULO'), 'nullable', 'string', 'max:1000'],
             'fuente' => ['required', 'string', 'max:255'],
             'archivo' => match ($tipo) {
-                'REPORTE' => ['prohibited'],
                 'ARTICULO' => [
                     'nullable',
                     'file',
@@ -54,7 +53,7 @@ class StorePublicacionRequest extends FormRequest
                     'max:20480',
                 ],
                 default => [
-                    Rule::requiredIf($tipo === 'ATLAS'),
+                    Rule::requiredIf(in_array($tipo, ['REPORTE', 'ATLAS'], true)),
                     'file',
                     'mimetypes:application/pdf,application/x-pdf',
                     'mimes:pdf',

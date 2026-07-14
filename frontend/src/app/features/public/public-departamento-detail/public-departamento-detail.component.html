@@ -1,4 +1,4 @@
-<div class="page-container">
+﻿<div class="page-container">
   @if (loading()) {
     <div class="loading-container">
       <mat-spinner diameter="48"></mat-spinner>
@@ -47,7 +47,7 @@
     <!-- Tabs -->
     <mat-tab-group class="content-tabs" animationDuration="200ms">
 
-      <!-- ── Tab: Datasets ──────────────────────────────────────── -->
+      <!-- â”€â”€ Tab: Datasets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon>folder_open</mat-icon>
@@ -126,7 +126,7 @@
         </section>
       </mat-tab>
 
-      <!-- ── Tab: Artículos ─────────────────────────────────────── -->
+      <!-- â”€â”€ Tab: Artículos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon>article</mat-icon>
@@ -155,7 +155,7 @@
                         @if (isSubscriberContent(art)) {
                           <span class="subscription-badge">
                             <mat-icon>lock</mat-icon>
-                            Suscriptor
+                            <span>Suscriptor</span>
                           </span>
                         }
                         <div class="cover-icon">
@@ -189,16 +189,16 @@
                       <!-- Actions -->
                       @if (!canViewSubscriberContent(art)) {
                         <div class="articulo-actions">
-                          <button mat-flat-button type="button" class="btn-subscriber" (click)="showSubscriberMessage()">
+                          <button mat-stroked-button type="button" class="publication-action-button publication-action-button--subscriber" (click)="showSubscriberMessage()">
                             <mat-icon>lock</mat-icon>
-                            Suscriptor
+                            <span>Suscribirse</span>
                           </button>
                         </div>
                       } @else {
                         <div class="articulo-actions">
-                          <button mat-flat-button type="button" class="btn-leer" (click)="openArticlePdf(art)">
-                            <mat-icon>open_in_new</mat-icon>
-                            Leer artículo
+                          <button mat-stroked-button type="button" class="publication-action-button" (click)="openArticlePdf(art)">
+                            <mat-icon>picture_as_pdf</mat-icon>
+                            Abrir PDF
                           </button>
                         </div>
                       }
@@ -217,7 +217,7 @@
         </section>
       </mat-tab>
 
-      <!-- ── Tab: PowerBI ───────────────────────────────────────── -->
+      <!-- â”€â”€ Tab: PowerBI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon>bar_chart</mat-icon>
@@ -246,7 +246,7 @@
                         @if (isSubscriberContent(rep)) {
                           <span class="subscription-badge">
                             <mat-icon>lock</mat-icon>
-                            Suscriptor
+                            <span>Suscriptor</span>
                           </span>
                         }
                         <div class="cover-icon">
@@ -280,21 +280,18 @@
                       <!-- Actions -->
                       <div class="articulo-actions">
                         @if (!canViewSubscriberContent(rep)) {
-                          <button mat-flat-button type="button" class="btn-subscriber" (click)="showSubscriberMessage()">
+                          <button mat-stroked-button type="button" class="publication-action-button publication-action-button--subscriber" (click)="showSubscriberMessage()">
                             <mat-icon>lock</mat-icon>
-                            Suscriptor
+                            <span>Suscribirse</span>
                           </button>
-                        } @else if (rep.link_url) {
-                          <a mat-flat-button [href]="rep.link_url" target="_blank" class="btn-powerbi">
-                            <mat-icon>open_in_new</mat-icon>
-                            Ver reporte
-                          </a>
-                        }
-                        @if (canViewSubscriberContent(rep) && rep.ficha_indicador) {
-                          <a mat-stroked-button [href]="rep.ficha_indicador" target="_blank" class="btn-leer">
-                            <mat-icon>download</mat-icon>
-                            Ficha
-                          </a>
+                        } @else {
+                          @if (rep.link_url) {
+                            <a mat-stroked-button [href]="rep.link_url" target="_blank" class="publication-action-button">
+                              <mat-icon>open_in_new</mat-icon>
+                              Ver reporte
+                            </a>
+                          }
+                          <button mat-stroked-button type="button" class="publication-action-button" (click)="openReportPdf(rep)"><mat-icon>picture_as_pdf</mat-icon>Abrir PDF</button>
                         }
                       </div>
                     </div>
@@ -327,6 +324,11 @@
     </div>
   }
 </div>
+
+
+
+
+
 
 
 

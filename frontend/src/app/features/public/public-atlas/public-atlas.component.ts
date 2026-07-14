@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+﻿import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -85,6 +85,7 @@ export class PublicAtlasComponent implements OnInit {
             fuente: item.fuente,
             enlace: this.buildDownloadUrl(item.download_url),
             download_url: item.download_url,
+            sharepoint_url: item.sharepoint_url,
             fecha_publicacion: item.fecha_publicacion,
             departamento_id: item.departamento_id,
             visibilidad: item.solo_suscriptores ? 'suscriptor' : 'publico',
@@ -154,7 +155,7 @@ export class PublicAtlasComponent implements OnInit {
     return this.permisosService.esAdmin(user.id, 'atlas');
   }
 
-  // â”€â”€ ArtÃ­culos (Publicaciones) â”€â”€
+  // Artículos (publicaciones)
 
   categoriasArticulos = computed<string[]>(() => {
     const list = this.articulos()
@@ -185,9 +186,9 @@ export class PublicAtlasComponent implements OnInit {
     return list;
   });
 
-  // â”€â”€ Reportes (PDF) â”€â”€
+  // Reportes (PDF)
 
-  // â”€â”€ Interfaz â”€â”€
+  // Interfaz
 
   onSearch(term: string): void {
     this.searchTerm.set(term);
@@ -224,13 +225,18 @@ export class PublicAtlasComponent implements OnInit {
   }
 
   tieneAcceso(item: Articulo): boolean {
+    if (item.bloqueado === true) return false;
+
     const vis = item.visibilidad || 'publico';
     if (vis === 'publico') return true;
+
+    if (!this.authService.isAuthenticated()) return false;
 
     const user = this.authService.user();
     if (!user) return false;
 
-    return ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(user.rol);
+    const role = String(user.rol ?? '').toUpperCase();
+    return ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
   }
 
   sugerirSuscripcion(): void {
@@ -254,8 +260,8 @@ export class PublicAtlasComponent implements OnInit {
   visualizarPdf(item: Articulo): void {
     this.publicacionService
       .openPdf({
-        download_url: item.download_url ?? item.enlace ?? null,
-        sharepoint_url: null,
+        download_url: item.download_url ?? null,
+        sharepoint_url: item.sharepoint_url ?? null,
       })
       .subscribe((opened) => {
         if (!opened) {
@@ -266,5 +272,6 @@ export class PublicAtlasComponent implements OnInit {
       });
   }
 }
+
 
 

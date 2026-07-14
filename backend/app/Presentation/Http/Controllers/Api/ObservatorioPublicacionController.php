@@ -25,7 +25,6 @@ class ObservatorioPublicacionController extends Controller
 {
     private const ESTADO_PUBLICACION = 'PUBLICACION';
     private const ESTADO_EN_REVISION = 'EN_REVISION';
-    private const ESTADO_ELIMINADO = 'ELIMINADO';
     private const SUBSCRIBER_ROLE = 'SUBSCRIBER';
 
     public function __construct(private readonly SharePointService $sharePointService)
@@ -34,11 +33,12 @@ class ObservatorioPublicacionController extends Controller
 
     public function index(Request $request, Departamento $departamento): AnonymousResourceCollection
     {
-        $tipo = $request->filled('tipo')
-            ? $request->validate(['tipo' => ['in:ARTICULO,REPORTE,ATLAS']])['tipo']
-            : null;
+        $filters = $request->validate([
+            'tipo' => ['nullable', 'in:ARTICULO,REPORTE,ATLAS'],
+            'estado' => ['nullable', 'in:PUBLICACION,EN_REVISION,SUSPENDIDO,ARCHIVADO'],
+        ]);
 
-        return $this->list($request, $departamento, $tipo);
+        return $this->list($request, $departamento, $filters['tipo'] ?? null, $filters['estado'] ?? null);
     }
 
     public function articulos(Request $request, Departamento $departamento): AnonymousResourceCollection
@@ -190,6 +190,32 @@ class ObservatorioPublicacionController extends Controller
         }
 
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response();
+    }
+
+    public function destroy(Request $request, ObservatorioPublicacion $publicacion): JsonResponse
+    {
+        $this->ensureCanManage($request, $publicacion->departamento);
+
+        $user = $request->user();
+        abort_unless(
+            $user->rol === 'ADMIN' || ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id),
+            403,
+            'No tienes permiso para eliminar esta publicación.'
+        );
+
+        $filePath = $publicacion->archivo_pdf;
+
+        DB::transaction(function () use ($publicacion) {
+            $publicacion->delete();
+        });
+
+        if ($filePath && Storage::disk('local')->exists($filePath)) {
+            Storage::disk('local')->delete($filePath);
+        }
+
+        return response()->json([
+            'message' => 'Publicación eliminada correctamente.',
+        ]);
     }
 
     public function sharePointFiles(Request $request, Departamento $departamento): JsonResponse
@@ -604,12 +630,23 @@ class ObservatorioPublicacionController extends Controller
             ->first();
     }
 
-    private function list(Request $request, Departamento $departamento, ?string $tipo): AnonymousResourceCollection
+    private function list(
+        Request $request,
+        Departamento $departamento,
+        ?string $tipo,
+        ?string $estado = null,
+    ): AnonymousResourceCollection
     {
         $this->ensureCanView($request, $departamento);
-        $query = $departamento->publicaciones()->with('creadoPor')->latest('fecha_publicacion');
+        $query = $departamento->publicaciones()
+            ->with('creadoPor')
+            ->where('estado', '!=', 'ELIMINADO')
+            ->latest('fecha_publicacion');
         if ($tipo) {
             $query->where('tipo', $tipo);
+        }
+        if ($estado) {
+            $query->where('estado', $estado);
         }
         $this->applyVisibilityFilter($query, $request);
         return PublicacionResource::collection($query->get());
@@ -617,9 +654,10 @@ class ObservatorioPublicacionController extends Controller
 
     private function ensureCanView(Request $request, Departamento $departamento): void
     {
-        $user = $request->user();
-        $hasAccess = $user->rol === 'ADMIN' || $departamento->publico
-            || $departamento->usuarios()->where('users.id', $user->id)->exists();
+        $user = $request->user('sanctum') ?: $request->user();
+        $hasAccess = ($user?->rol === 'ADMIN')
+            || $departamento->publico
+            || ($user && $departamento->usuarios()->where('users.id', $user->id)->exists());
         abort_unless($hasAccess, 403, 'No tienes acceso a este observatorio.');
     }
 
@@ -644,12 +682,12 @@ class ObservatorioPublicacionController extends Controller
 
     private function ensureCanViewPublication(Request $request, ObservatorioPublicacion $publicacion): void
     {
-        $user = $request->user();
-        if ($user->rol === 'ADMIN') {
+        $user = $request->user('sanctum') ?: $request->user();
+        if ($user?->rol === 'ADMIN') {
             return;
         }
 
-        if ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id) {
+        if ($user?->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id) {
             return;
         }
 
@@ -680,7 +718,7 @@ class ObservatorioPublicacionController extends Controller
 
     private function isSubscriber($user): bool
     {
-        return in_array($user->rol, [self::SUBSCRIBER_ROLE, 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
+        return $user && in_array($user->rol, [self::SUBSCRIBER_ROLE, 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 
 }

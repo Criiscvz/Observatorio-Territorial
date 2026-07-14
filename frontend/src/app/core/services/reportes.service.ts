@@ -10,6 +10,8 @@ export interface Reporte {
   fecha_publicacion?: string | null;
   link_url?: string | null;        // URL de PowerBI
   ficha_indicador?: string | null; // URL del archivo PDF/Word
+  download_url?: string | null;
+  sharepoint_url?: string | null;
   fuente?: string | null;
   categoria_id?: string | null;
   departamento_id?: string | null;

@@ -30,7 +30,7 @@ class UpdatePublicacionRequest extends FormRequest
             'estado' => [
                 Rule::requiredIf($this->user()?->rol === 'ADMIN'),
                 'nullable',
-                Rule::in(['PUBLICACION', 'EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO', 'ELIMINADO']),
+                Rule::in(['PUBLICACION', 'EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO']),
             ],
             'solo_suscriptores' => ['sometimes', 'boolean'],
             'titulo' => ['required', 'string', 'max:255'],
@@ -48,15 +48,13 @@ class UpdatePublicacionRequest extends FormRequest
                 'max:1000',
             ],
             'fuente' => ['required', 'string', 'max:255'],
-            'archivo' => $tipo === 'REPORTE'
-                ? ['nullable']
-                : [
-                    'nullable',
-                    'file',
-                    'mimetypes:application/pdf,application/x-pdf',
-                    'mimes:pdf',
-                    'max:20480',
-                ],
+            'archivo' => [
+                'nullable',
+                'file',
+                'mimetypes:application/pdf,application/x-pdf',
+                'mimes:pdf',
+                'max:20480',
+            ],
         ];
     }
 
