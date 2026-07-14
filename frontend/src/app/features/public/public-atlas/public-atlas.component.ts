@@ -119,6 +119,8 @@ export class PublicAtlasComponent implements OnInit {
     const dialogRef = this.dialog.open(SharePointAtlasImportDialogComponent, {
       width: 'min(96vw, 980px)',
       maxWidth: '96vw',
+      panelClass: 'sharepoint-import-dialog-panel',
+      backdropClass: 'sharepoint-import-dialog-backdrop',
       autoFocus: false,
       restoreFocus: false,
       data: {

@@ -1,13 +1,165 @@
-.dialog-body {
-  width: min(920px, 86vw);
-  max-height: 70vh;
+:host {
+  display: block;
+  color: var(--text-primary);
+}
+
+.sharepoint-dialog {
+  width: min(980px, calc(100vw - 32px));
+  max-height: min(86vh, 820px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.14), transparent 36%),
+    var(--card-bg);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow: 0 28px 80px rgba(2, 6, 23, 0.26);
+}
+
+.sharepoint-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.65rem 1.75rem 1.25rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.sharepoint-dialog__title-group {
+  min-width: 0;
+}
+
+.sharepoint-dialog__eyebrow,
+.section-kicker {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  color: var(--primary-500);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sharepoint-dialog h2[mat-dialog-title] {
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: clamp(1.45rem, 2vw, 2rem);
+  font-weight: 850;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.sharepoint-dialog__title-group p {
+  max-width: 620px;
+  margin: 0.55rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.sharepoint-dialog__close {
+  flex: 0 0 auto;
+  border: 1px solid var(--card-border);
+  background: var(--bg-secondary);
+}
+
+.sharepoint-dialog__body {
+  flex: 1 1 auto;
+  width: 100%;
+  margin: 0;
+  padding: 1.25rem 1.75rem !important;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  overflow: auto;
+  background: transparent;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.42);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
 }
 
-.dialog-toolbar,
-.browser-actions {
+.sharepoint-config {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-secondary) 86%, transparent);
+}
+
+.department-field {
+  width: 100%;
+  margin: 0;
+}
+
+.department-field ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+.selected-counter {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.75rem 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(99, 102, 241, 0.24);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.selected-counter__icon {
+  display: inline-flex;
+  color: var(--primary-500);
+
+  mat-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+}
+
+.selected-counter__value {
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.selected-counter__label {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.sharepoint-section-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  background: var(--bg-secondary);
+}
+
+.sharepoint-section-card__heading,
+.browser-actions,
+.sharepoint-dialog__actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -15,39 +167,41 @@
   flex-wrap: wrap;
 }
 
-.department-field {
-  min-width: min(420px, 100%);
-  margin-bottom: -1.25rem;
+.sharepoint-section-card__heading h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.18rem;
+  font-weight: 850;
+  letter-spacing: 0;
 }
 
-.selected-counter {
+.section-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.55rem 0.85rem;
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  font-weight: 700;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(200, 16, 46, 0.1);
+  color: #c8102e;
+  font-weight: 800;
+  font-size: 0.82rem;
 
   mat-icon {
-    font-size: 18px;
     width: 18px;
     height: 18px;
-    color: #c8102e;
+    font-size: 18px;
   }
 }
 
 .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
   flex-wrap: wrap;
-  padding: 0.75rem;
+  padding: 0.72rem;
   border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  background: var(--bg-secondary);
+  border-radius: 15px;
+  background: var(--bg-tertiary);
 
   mat-icon {
     font-size: 16px;
@@ -60,11 +214,12 @@
 .breadcrumb-item {
   border: 0;
   background: transparent;
-  color: #c8102e;
-  font-weight: 700;
+  color: var(--primary-600);
+  font-weight: 800;
   cursor: pointer;
-  padding: 0.2rem 0.35rem;
-  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.5rem;
+  border-radius: 10px;
+  transition: background 0.18s ease, color 0.18s ease;
 
   &.current,
   &:disabled {
@@ -73,49 +228,93 @@
   }
 
   &:not(:disabled):hover {
-    background: rgba(200, 16, 46, 0.08);
+    background: rgba(99, 102, 241, 0.12);
   }
 }
 
 .status-message {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-lg);
-  font-size: 0.875rem;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: 700;
 
   &.error {
-    color: #991b1b;
-    background: #fee2e2;
-    border: 1px solid #fecaca;
+    color: var(--error-color);
+    background: var(--error-bg);
+    border: 1px solid var(--error-border);
   }
 }
 
-.browser-panel {
-  min-height: 340px;
+.sharepoint-secondary-button,
+.sharepoint-primary-button {
+  min-height: 44px;
+  border-radius: 13px !important;
+  font-weight: 800;
+
+  mat-icon,
+  mat-spinner {
+    margin-right: 0.45rem;
+  }
+}
+
+.visible-selector {
+  min-height: 44px;
+  padding: 0.42rem 0.75rem;
   border: 1px solid var(--card-border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
+  border-radius: 13px;
+  background: var(--bg-tertiary);
+}
+
+.browser-panel {
+  min-height: 360px;
+  max-height: 44vh;
+  border: 1px solid var(--card-border);
+  border-radius: 18px;
+  overflow: auto;
   background: var(--card-bg);
+
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.42);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
 }
 
 .loading-state,
 .empty-folder {
-  min-height: 340px;
+  min-height: 360px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.7rem;
+  padding: 2rem;
   color: var(--text-secondary);
+  text-align: center;
 }
 
 .empty-folder mat-icon {
-  font-size: 42px;
-  width: 42px;
-  height: 42px;
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
   color: var(--text-tertiary);
+}
+
+.empty-folder strong {
+  color: var(--text-primary);
+  font-size: 1rem;
 }
 
 .items-list {
@@ -128,28 +327,38 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
-  min-height: 64px;
-  padding: 0.7rem 0.9rem;
+  min-height: 74px;
+  padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--card-border);
+  transition: background 0.18s ease, border-color 0.18s ease;
 
   &:last-child {
     border-bottom: 0;
   }
 
+  &:hover {
+    background: var(--hover-bg);
+  }
+
   &.selected {
-    background: rgba(99, 102, 241, 0.08);
+    background: rgba(99, 102, 241, 0.11);
   }
 }
 
-.item-main {
+.item-content,
+.item-main,
+.folder-button {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+}
 
-  mat-icon {
-    color: #c8102e;
-  }
+.item-content {
+  gap: 0.8rem;
+}
+
+.item-main {
+  gap: 0.8rem;
 }
 
 .folder-button {
@@ -160,14 +369,39 @@
   cursor: pointer;
   text-align: left;
   padding: 0;
+}
+
+.item-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
 
   mat-icon {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+  }
+
+  &.folder {
+    background: rgba(245, 158, 11, 0.14);
     color: #f59e0b;
+  }
+
+  &.pdf {
+    background: rgba(200, 16, 46, 0.11);
+    color: #c8102e;
   }
 }
 
-.item-check {
-  flex-shrink: 0;
+.item-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .item-name {
@@ -175,27 +409,92 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-weight: 700;
+  color: var(--text-primary);
+  font-weight: 800;
+}
+
+.item-copy small {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.item-enter-icon {
+  margin-left: auto;
+  color: var(--text-tertiary);
+}
+
+.item-check {
+  flex-shrink: 0;
 }
 
 .item-meta {
   display: grid;
-  grid-template-columns: 72px 132px 72px;
-  gap: 0.75rem;
+  grid-template-columns: 76px 132px 72px;
+  gap: 0.85rem;
   color: var(--text-tertiary);
   font-size: 0.78rem;
+  font-weight: 650;
   text-align: right;
 }
 
-mat-dialog-actions button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
+.sharepoint-dialog__actions {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 1rem 1.75rem 1.35rem !important;
+  border-top: 1px solid var(--card-border);
+  background: color-mix(in srgb, var(--bg-secondary) 92%, transparent);
 }
 
-@media (max-width: 720px) {
-  .dialog-body {
-    width: 92vw;
+.sharepoint-primary-button {
+  padding-inline: 1.25rem !important;
+}
+
+:host-context(.dark) .sharepoint-dialog,
+.dark .sharepoint-dialog {
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.22), transparent 34%),
+    #111827;
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.56);
+}
+
+:host-context(.dark) .sharepoint-config,
+:host-context(.dark) .sharepoint-section-card,
+.dark .sharepoint-config,
+.dark .sharepoint-section-card {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+:host-context(.dark) .browser-panel,
+.dark .browser-panel {
+  background: rgba(15, 23, 42, 0.58);
+}
+
+:host-context(.dark) .section-pill,
+.dark .section-pill {
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.12);
+}
+
+@media (max-width: 760px) {
+  .sharepoint-dialog {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    border-radius: 20px;
+  }
+
+  .sharepoint-dialog__header,
+  .sharepoint-dialog__body,
+  .sharepoint-dialog__actions {
+    padding-inline: 1rem !important;
+  }
+
+  .sharepoint-config {
+    grid-template-columns: 1fr;
+  }
+
+  .selected-counter {
+    justify-content: flex-start;
   }
 
   .browser-item {
@@ -207,6 +506,6 @@ mat-dialog-actions button {
     width: 100%;
     grid-template-columns: repeat(3, 1fr);
     text-align: left;
-    padding-left: 2rem;
+    padding-left: 3.1rem;
   }
 }

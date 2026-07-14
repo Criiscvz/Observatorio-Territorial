@@ -1868,3 +1868,34 @@ body:has(.mobile-sidebar-overlay) {
   background: rgba(5, 12, 28, 0.72) !important;
   backdrop-filter: blur(4px);
 }
+/* SharePoint import dialog */
+.sharepoint-import-dialog-panel {
+  max-width: calc(100vw - 20px) !important;
+  overflow: visible !important;
+}
+
+.sharepoint-import-dialog-panel .mat-mdc-dialog-container {
+  --mdc-dialog-container-color: transparent !important;
+  padding: 0 !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+.sharepoint-import-dialog-panel .mat-mdc-dialog-surface,
+.sharepoint-import-dialog-panel .mdc-dialog__surface {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+}
+
+.sharepoint-import-dialog-panel .mat-mdc-dialog-content,
+.sharepoint-import-dialog-panel .mat-mdc-dialog-actions,
+.sharepoint-import-dialog-panel [mat-dialog-title] {
+  box-sizing: border-box;
+}
+
+.sharepoint-import-dialog-backdrop {
+  background: rgba(2, 6, 23, 0.64) !important;
+  backdrop-filter: blur(4px);
+}

@@ -598,21 +598,7 @@
               <mat-icon>cloud_download</mat-icon>
               Importar desde SharePoint
             </button>
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="syncSharePointReportes()"
-              [disabled]="syncingSharePoint() === 'REPORTE'"
-            >
-              @if (syncingSharePoint() === 'REPORTE') {
-                <mat-spinner diameter="18"></mat-spinner>
-              } @else {
-                <mat-icon>sync</mat-icon>
-              }
-              SharePoint
-            </button>
           }
-          <span class="count">{{ reportes.length }}</span>
         </div>
       </div>
       @if (loadingPublicaciones()) {
@@ -700,24 +686,6 @@
         <div>
           <span class="eyebrow">Biblioteca</span>
           <h2>Atlas PDF</h2>
-        </div>
-        <div class="heading-actions">
-          @if (isAdmin()) {
-            <button
-              mat-stroked-button
-              type="button"
-              (click)="syncSharePointAtlas()"
-              [disabled]="syncingSharePoint() === 'ATLAS'"
-            >
-              @if (syncingSharePoint() === 'ATLAS') {
-                <mat-spinner diameter="18"></mat-spinner>
-              } @else {
-                <mat-icon>sync</mat-icon>
-              }
-              SharePoint
-            </button>
-          }
-          <span class="count">{{ atlas.length }}</span>
         </div>
       </div>
       @if (loadingPublicaciones()) {
