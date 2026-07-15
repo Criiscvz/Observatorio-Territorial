@@ -429,7 +429,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   hasPublicationPdf(publicacion: ObservatorioPublicacion): boolean {
-    return !this.isPowerBiReport(publicacion) && !!(publicacion.download_url || publicacion.sharepoint_url);
+    return !!(publicacion.download_url || publicacion.sharepoint_url);
   }
 
   isPowerBiReport(publicacion: ObservatorioPublicacion): boolean {

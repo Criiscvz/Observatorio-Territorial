@@ -239,7 +239,7 @@ export class PublicAtlasComponent implements OnInit {
     if (!user) return false;
 
     const role = String(user.rol ?? '').toUpperCase();
-    return ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
+    return ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
   }
 
   sugerirSuscripcion(): void {

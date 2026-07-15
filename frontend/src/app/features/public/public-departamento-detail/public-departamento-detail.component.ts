@@ -169,7 +169,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
 
     const user = this.authService.user();
     const role = String(user?.rol ?? '').toUpperCase();
-    return ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
+    return ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
   }
 
   showSubscriberMessage(): void {

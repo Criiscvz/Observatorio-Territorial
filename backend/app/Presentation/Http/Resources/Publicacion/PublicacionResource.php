@@ -11,9 +11,19 @@ class PublicacionResource extends JsonResource
     {
         $user = $request->user('sanctum') ?: $request->user();
         $isSubscriberContent = (bool) $this->solo_suscriptores;
+        $routeAction = (string) ($request->route()?->getActionName() ?? '');
+        $isManagementRequest = str_contains($routeAction, 'ObservatorioPublicacionController');
+        $isEditorOwner = $isManagementRequest
+            && $user?->rol === 'EDITOR'
+            && (int) $this->creado_por === (int) $user->id;
         $canViewSubscriberContent = ! $isSubscriberContent
-            || ($user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true));
+            || ($user && in_array($user->rol, ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true))
+            || $isEditorOwner;
         $isLocked = $isSubscriberContent && ! $canViewSubscriberContent;
+        $downloadUrl = "/api/departamentos/publicaciones/{$this->id}/download";
+        if ($isEditorOwner) {
+            $downloadUrl .= '?context=management';
+        }
 
         return [
             'id' => $this->id,
@@ -38,7 +48,7 @@ class PublicacionResource extends JsonResource
             'fuente' => $this->fuente,
             'nombre_archivo_original' => $isLocked ? null : $this->nombre_archivo_original,
             'download_url' => (! $isLocked && ($this->archivo_pdf || $this->sharepoint_url))
-                ? "/api/departamentos/publicaciones/{$this->id}/download"
+                ? $downloadUrl
                 : null,
             'sharepoint_url' => $isLocked ? null : $this->sharepoint_url,
             'sharepoint_file_id' => $this->sharepoint_file_id,

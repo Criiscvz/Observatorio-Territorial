@@ -774,7 +774,11 @@ class ObservatorioPublicacionController extends Controller
             return;
         }
 
-        if ($user?->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id) {
+        if (
+            $request->query('context') === 'management'
+            && $user?->rol === 'EDITOR'
+            && (int) $publicacion->creado_por === (int) $user->id
+        ) {
             return;
         }
 

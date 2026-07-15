@@ -6,6 +6,7 @@ import { ApiDatasource } from '../datasources/remote/api.datasource';
 import { StorageDatasource } from '../datasources/local/storage.datasource';
 
 const TOKEN_KEY = 'auth_token';
+const EXPIRES_AT_KEY = 'auth_expires_at';
 
 @Injectable({ providedIn: 'root' })
 export class AuthRepositoryImpl extends AuthRepository {
@@ -14,13 +15,13 @@ export class AuthRepositoryImpl extends AuthRepository {
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {
     return this.api.post<AuthResponse>('/login', credentials).pipe(
-      tap(response => this.setToken(response.token))
+      tap(response => this.setSession(response))
     );
   }
 
   register(data: RegisterData): Observable<AuthResponse> {
     return this.api.post<AuthResponse>('/register', data).pipe(
-      tap(response => this.setToken(response.token))
+      tap(response => this.setSession(response))
     );
   }
 
@@ -48,5 +49,11 @@ export class AuthRepositoryImpl extends AuthRepository {
 
   clearToken(): void {
     this.storage.remove(TOKEN_KEY);
+    this.storage.remove(EXPIRES_AT_KEY);
+  }
+
+  private setSession(response: AuthResponse): void {
+    this.setToken(response.token);
+    this.storage.set(EXPIRES_AT_KEY, response.expires_at);
   }
 }

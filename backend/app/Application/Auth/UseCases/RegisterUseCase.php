@@ -30,9 +30,22 @@ class RegisterUseCase
             $user->load(['perfil', 'departamentos']);
 
             // Crear token de autenticación
-            $token = $user->createToken('auth-token')->plainTextToken;
+            $durationMinutes = $this->getSessionDurationMinutes($user);
+            $expiresAt = now()->addMinutes($durationMinutes);
+            $token = $user->createToken('auth-token', ['*'], $expiresAt)->plainTextToken;
 
-            return AuthResponseDTO::fromUser($user, $token);
+            return AuthResponseDTO::fromUser($user, $token, $expiresAt, $durationMinutes * 60);
         });
+    }
+
+    private function getSessionDurationMinutes(User $user): int
+    {
+        $role = strtoupper((string) ($user->rol ?? 'USER'));
+
+        return match ($role) {
+            'ADMIN', 'EDITOR' => 480,
+            'SUSCRIPTOR', 'SUBSCRIPTOR', 'SUBSCRIBER', 'USER' => 1440,
+            default => 1440,
+        };
     }
 }

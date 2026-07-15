@@ -4,25 +4,21 @@ import { catchError, map, of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 /**
- * Guard que protege rutas que requieren autenticación.
- * Verifica si el usuario tiene un token válido y opcionalmente valida con el backend.
+ * Guard que protege rutas que requieren autenticacion.
  */
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Si no hay token, redirigir a login
   if (!authService.isAuthenticated()) {
     router.navigate(['/auth/login']);
     return false;
   }
 
-  // Si ya tenemos el usuario en memoria, permitir acceso
   if (authService.user()) {
     return true;
   }
 
-  // Si hay token pero no usuario, validar con el backend
   return authService.checkAuth().pipe(
     map((isValid) => {
       if (!isValid) {
@@ -39,8 +35,7 @@ export const authGuard: CanActivateFn = () => {
 };
 
 /**
- * Guard que protege rutas públicas (login, register).
- * Redirige según el rol si el usuario ya está autenticado.
+ * Guard que protege rutas publicas de autenticacion.
  */
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
@@ -50,11 +45,21 @@ export const guestGuard: CanActivateFn = () => {
     return true;
   }
 
-  // Redirigir según el rol del usuario
-  if (authService.isAdmin() || authService.isEditor()) {
-    router.navigate(['/admin/dashboard']);
-  } else {
-    router.navigate(['/publico/departamentos']);
+  const redirectAuthenticatedUser = (): false => {
+    if (authService.isAdmin() || authService.isEditor()) {
+      router.navigate(['/admin/dashboard']);
+    } else {
+      router.navigate(['/publico/departamentos']);
+    }
+    return false;
+  };
+
+  if (authService.user()) {
+    return redirectAuthenticatedUser();
   }
-  return false;
+
+  return authService.checkAuth().pipe(
+    map((isValid) => (isValid ? redirectAuthenticatedUser() : true)),
+    catchError(() => of(true)),
+  );
 };

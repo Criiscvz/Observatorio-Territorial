@@ -680,11 +680,11 @@
                       <mat-icon>open_in_new</mat-icon>Ver fuente
                     </button>
                   }
-                  @if (hasPublicationPdf(item)) {
-                    <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
-                      <mat-icon>open_in_new</mat-icon>Abrir PDF
-                    </button>
-                  }
+                }
+                @if (hasPublicationPdf(item)) {
+                  <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
+                    <mat-icon>open_in_new</mat-icon>Abrir PDF
+                  </button>
                 }
               </div>
             </article>

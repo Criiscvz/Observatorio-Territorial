@@ -48,15 +48,13 @@ class UpdatePublicacionRequest extends FormRequest
                 'max:1000',
             ],
             'fuente' => ['required', 'string', 'max:255'],
-            'archivo' => $tipo === 'REPORTE'
-                ? ['prohibited']
-                : [
-                    'nullable',
-                    'file',
-                    'mimetypes:application/pdf,application/x-pdf',
-                    'mimes:pdf',
-                    'max:20480',
-                ],
+            'archivo' => [
+                'nullable',
+                'file',
+                'mimetypes:application/pdf,application/x-pdf',
+                'mimes:pdf',
+                'max:20480',
+            ],
         ];
     }
 

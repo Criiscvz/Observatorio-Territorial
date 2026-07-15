@@ -22,7 +22,9 @@ describe('AuthService', () => {
 
   const mockAuthResponse = {
     token: 'fake-jwt-token',
-    user: mockUser
+    user: mockUser,
+    expires_at: '2026-07-16T00:00:00+00:00',
+    expires_in: 86400,
   };
 
   beforeEach(() => {
@@ -41,7 +43,8 @@ describe('AuthService', () => {
     service = TestBed.inject(AuthService);
     httpMock = TestBed.inject(HttpTestingController);
     
-    // Clear session storage before each test
+    // Clear browser storage before each test
+    localStorage.clear();
     sessionStorage.clear();
   });
 
@@ -54,18 +57,18 @@ describe('AuthService', () => {
   });
 
   describe('login()', () => {
-    it('should authenticate user, store token in signal and user in sessionStorage', () => {
+    it('should authenticate user, store token and user in localStorage', () => {
       const loginData = { email: 'test@test.com', password: 'password' };
 
       service.login(loginData).subscribe(response => {
         expect(response).toEqual(mockAuthResponse);
-        // Token lives only in signal memory
         expect(service.token()).toBe('fake-jwt-token');
         expect(service.user()).toEqual(mockUser);
         expect(service.isAuthenticated()).toBe(true);
-        
-        // User is stored in session storage
-        const storedUser = JSON.parse(sessionStorage.getItem('auth_user') || '{}');
+
+        expect(localStorage.getItem('auth_token')).toBe('fake-jwt-token');
+        expect(localStorage.getItem('auth_expires_at')).toBe('2026-07-16T00:00:00+00:00');
+        const storedUser = JSON.parse(localStorage.getItem('auth_user') || '{}');
         expect(storedUser).toEqual(mockUser);
       });
 
@@ -82,13 +85,17 @@ describe('AuthService', () => {
       // Setup initial state
       service['tokenSignal'].set('fake-token');
       service['userSignal'].set(mockUser);
-      sessionStorage.setItem('auth_user', JSON.stringify(mockUser));
+      localStorage.setItem('auth_token', 'fake-token');
+      localStorage.setItem('auth_user', JSON.stringify(mockUser));
+      localStorage.setItem('auth_expires_at', '2026-07-16T00:00:00+00:00');
 
       service.logout().subscribe(() => {
         expect(service.token()).toBeNull();
         expect(service.user()).toBeNull();
         expect(service.isAuthenticated()).toBe(false);
-        expect(sessionStorage.getItem('auth_user')).toBeNull();
+        expect(localStorage.getItem('auth_token')).toBeNull();
+        expect(localStorage.getItem('auth_user')).toBeNull();
+        expect(localStorage.getItem('auth_expires_at')).toBeNull();
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
       });
 

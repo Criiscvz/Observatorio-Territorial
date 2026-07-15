@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { catchError, map, of } from 'rxjs';
 import { UserRole } from '../models';
+import { AuthService } from '../services/auth.service';
 
 /**
- * Guard que verifica si el usuario tiene rol ADMIN
- * Redirige a /admin/dashboard si no tiene permisos
+ * Guard que verifica si el usuario tiene rol ADMIN.
  */
 export const adminGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
@@ -15,13 +15,33 @@ export const adminGuard: CanActivateFn = () => {
     return true;
   }
 
-  // Redirigir a dashboard si no es admin
+  if (!authService.isAuthenticated()) {
+    router.navigate(['/auth/login']);
+    return false;
+  }
+
+  if (!authService.user()) {
+    return authService.checkAuth().pipe(
+      map((isValid) => {
+        if (isValid && authService.isAdmin()) {
+          return true;
+        }
+        router.navigate(['/admin/dashboard']);
+        return false;
+      }),
+      catchError(() => {
+        router.navigate(['/auth/login']);
+        return of(false);
+      }),
+    );
+  }
+
   router.navigate(['/admin/dashboard']);
   return false;
 };
 
 /**
- * Guard configurable que verifica si el usuario tiene alguno de los roles especificados
+ * Guard configurable que verifica si el usuario tiene alguno de los roles especificados.
  */
 export function roleGuard(...allowedRoles: UserRole[]): CanActivateFn {
   return () => {
@@ -32,14 +52,25 @@ export function roleGuard(...allowedRoles: UserRole[]): CanActivateFn {
       return true;
     }
 
-    // Redirigir según el rol del usuario
-    const userRole = authService.userRole();
-    if (!userRole) {
-      router.navigate(['/auth/login']);
-    } else {
-      router.navigate(['/admin/dashboard']);
+    if (authService.isAuthenticated() && !authService.user()) {
+      return authService.checkAuth().pipe(
+        map((isValid) => {
+          if (isValid && authService.hasAnyRole(allowedRoles)) {
+            return true;
+          }
+          const userRole = authService.userRole();
+          router.navigate([userRole ? '/admin/dashboard' : '/auth/login']);
+          return false;
+        }),
+        catchError(() => {
+          router.navigate(['/auth/login']);
+          return of(false);
+        }),
+      );
     }
-    
+
+    const userRole = authService.userRole();
+    router.navigate([userRole ? '/admin/dashboard' : '/auth/login']);
     return false;
   };
 }

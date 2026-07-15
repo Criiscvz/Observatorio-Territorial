@@ -5,12 +5,11 @@ import { AuthResponse, LoginRequest, RegisterRequest, User, UserRole } from '../
 import { ApiService } from './api.service';
 
 /**
- * Clave para almacenar el perfil del usuario en sessionStorage.
- * NOTA DE SEGURIDAD: El token JWT ya NO se persiste en localStorage ni en
- * sessionStorage. Vive únicamente en memoria (señal Angular) para minimizar
- * la superficie de ataque frente a inyecciones XSS.
+ * Claves usadas para restaurar la sesión después de recargar la página.
  */
+const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
+const EXPIRES_AT_KEY = 'auth_expires_at';
 
 @Injectable({
   providedIn: 'root',
@@ -21,11 +20,7 @@ export class AuthService {
 
   // State con signals
   private readonly userSignal = signal<User | null>(this.getStoredUser());
-  /**
-   * El token vive únicamente en memoria. No se inicializa desde ningún
-   * almacenamiento persistente para evitar robo de sesión por XSS.
-   */
-  private readonly tokenSignal = signal<string | null>(null);
+  private readonly tokenSignal = signal<string | null>(this.getStoredToken());
   private readonly loadingSignal = signal<boolean>(false);
 
   // Computed values
@@ -78,7 +73,8 @@ export class AuthService {
   }
 
   checkAuth(): Observable<boolean> {
-    if (!this.tokenSignal()) {
+    if (!this.tokenSignal() || this.isSessionExpired()) {
+      this.clearAuthSilent();
       return of(false);
     }
 
@@ -119,7 +115,6 @@ export class AuthService {
 
   /**
    * Obtener token actual (para uso en interceptors).
-   * El token solo existe en memoria durante la sesión activa.
    */
   getToken(): string | null {
     return this.tokenSignal();
@@ -141,6 +136,9 @@ export class AuthService {
     this.tokenSignal.set(null);
     this.userSignal.set(null);
     if (typeof window !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(EXPIRES_AT_KEY);
       sessionStorage.removeItem(USER_KEY);
     }
   }
@@ -150,8 +148,9 @@ export class AuthService {
     const normalizedUser = this.normalizeUser(response.user);
     this.tokenSignal.set(response.token);
     this.userSignal.set(normalizedUser);
-    // El perfil del usuario se guarda en sessionStorage (mismo tab, se elimina al cerrar).
+    this.storeToken(response.token);
     this.storeUser(normalizedUser);
+    this.storeExpiration(response.expires_at);
   }
 
   private clearAuth(): void {
@@ -160,25 +159,82 @@ export class AuthService {
   }
 
   /**
-   * El usuario se recupera de sessionStorage para mostrar datos básicos
-   * tras una recarga de página, sin exponer el token de sesión.
-   * Al recargar, checkAuth() verificará con el backend si la sesión es válida.
+   * El usuario se recupera para restaurar roles y permisos despues de recargar.
    */
   private getStoredUser(): User | null {
     if (typeof window === 'undefined') return null;
-    const user = sessionStorage.getItem(USER_KEY);
-    return user ? this.normalizeUser(JSON.parse(user)) : null;
+    if (!localStorage.getItem(TOKEN_KEY)) {
+      localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(USER_KEY);
+      return null;
+    }
+
+    if (this.isStoredSessionExpired()) return null;
+
+    const user = localStorage.getItem(USER_KEY) ?? sessionStorage.getItem(USER_KEY);
+    if (!user) return null;
+
+    try {
+      return this.normalizeUser(JSON.parse(user));
+    } catch {
+      localStorage.removeItem(USER_KEY);
+      sessionStorage.removeItem(USER_KEY);
+      return null;
+    }
   }
 
-  /**
-   * El perfil del usuario se almacena en sessionStorage:
-   * - No es accesible desde otras pestañas del navegador.
-   * - Se elimina automáticamente al cerrar la pestaña/navegador.
-   * - No contiene el token JWT.
-   */
+  private getStoredToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    if (this.isStoredSessionExpired()) {
+      this.clearStoredSession();
+      return null;
+    }
+
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  private storeToken(token: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(TOKEN_KEY, token);
+    }
+  }
+
   private storeUser(user: User): void {
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      sessionStorage.removeItem(USER_KEY);
+    }
+  }
+
+  private storeExpiration(expiresAt: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(EXPIRES_AT_KEY, expiresAt);
+    }
+  }
+
+  private isSessionExpired(): boolean {
+    if (typeof window === 'undefined') return false;
+    return this.isStoredSessionExpired();
+  }
+
+  private isStoredSessionExpired(): boolean {
+    if (typeof window === 'undefined') return false;
+
+    const expiresAt = localStorage.getItem(EXPIRES_AT_KEY);
+    if (!expiresAt) {
+      return !!localStorage.getItem(TOKEN_KEY);
+    }
+
+    const expiresAtTime = new Date(expiresAt).getTime();
+    return Number.isNaN(expiresAtTime) || expiresAtTime <= Date.now();
+  }
+
+  private clearStoredSession(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(EXPIRES_AT_KEY);
+      sessionStorage.removeItem(USER_KEY);
     }
   }
 

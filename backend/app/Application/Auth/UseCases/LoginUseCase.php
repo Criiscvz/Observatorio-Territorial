@@ -28,9 +28,23 @@ class LoginUseCase
         // Cargar relaciones necesarias
         $user->load(['perfil', 'departamentos']);
 
-        // Crear nuevo token
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $durationMinutes = $this->getSessionDurationMinutes($user);
+        $expiresAt = now()->addMinutes($durationMinutes);
 
-        return AuthResponseDTO::fromUser($user, $token);
+        // Crear nuevo token con expiracion por rol.
+        $token = $user->createToken('auth-token', ['*'], $expiresAt)->plainTextToken;
+
+        return AuthResponseDTO::fromUser($user, $token, $expiresAt, $durationMinutes * 60);
+    }
+
+    private function getSessionDurationMinutes(User $user): int
+    {
+        $role = strtoupper((string) ($user->rol ?? 'USER'));
+
+        return match ($role) {
+            'ADMIN', 'EDITOR' => 480,
+            'SUSCRIPTOR', 'SUBSCRIPTOR', 'SUBSCRIBER', 'USER' => 1440,
+            default => 1440,
+        };
     }
 }
