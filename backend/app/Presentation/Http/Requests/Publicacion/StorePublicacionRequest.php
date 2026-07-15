@@ -52,8 +52,9 @@ class StorePublicacionRequest extends FormRequest
                     'mimes:pdf',
                     'max:20480',
                 ],
+                'REPORTE' => ['prohibited'],
                 default => [
-                    Rule::requiredIf(in_array($tipo, ['REPORTE', 'ATLAS'], true)),
+                    Rule::requiredIf($tipo === 'ATLAS'),
                     'file',
                     'mimetypes:application/pdf,application/x-pdf',
                     'mimes:pdf',

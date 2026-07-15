@@ -3,7 +3,7 @@
     <div class="sharepoint-dialog__title-group">
       <span class="sharepoint-dialog__eyebrow">Gestión / SharePoint</span>
       <h2 mat-dialog-title>Importar desde SharePoint</h2>
-      <p>Selecciona archivos PDF desde SharePoint para importarlos al observatorio.</p>
+      <p>Selecciona archivos PDF desde {{ rootLabel }} para importarlos como {{ destinationLabel }}.</p>
     </div>
     <button
       mat-icon-button
@@ -43,11 +43,11 @@
       <div class="sharepoint-section-card__heading">
         <div>
           <span class="section-kicker">Biblioteca SharePoint</span>
-          <h3>{{ browser()?.current?.name || 'Atlas' }}</h3>
+          <h3>{{ browser()?.current?.name || rootLabel }}</h3>
         </div>
         <span class="section-pill">
           <mat-icon>picture_as_pdf</mat-icon>
-          Atlas PDF
+          {{ destinationLabel }}
         </span>
       </div>
 

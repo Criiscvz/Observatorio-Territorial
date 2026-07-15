@@ -23,7 +23,17 @@ class SharePointService
 
     public function browseAtlasFolder(?string $itemId = null): array
     {
-        $root = $this->configuredRootItem();
+        return $this->browsePdfFolder('folder_path', $itemId);
+    }
+
+    public function browseBarometerFolder(?string $itemId = null): array
+    {
+        return $this->browsePdfFolder('barometer_folder_path', $itemId, true);
+    }
+
+    private function browsePdfFolder(string $configKey, ?string $itemId, bool $required = false): array
+    {
+        $root = $this->configuredRootItem($configKey, $required);
         $folder = $itemId ? $this->getDriveItem($itemId) : $root;
 
         if (! isset($folder['folder'])) {
@@ -50,7 +60,20 @@ class SharePointService
 
     public function getPdfFileInsideRoot(string $fileId): array
     {
-        $root = $this->configuredRootItem();
+        return $this->getPdfFileInsideConfiguredRoot($fileId, 'folder_path');
+    }
+
+    public function getPdfFileInsideBarometerRoot(string $fileId): array
+    {
+        return $this->getPdfFileInsideConfiguredRoot($fileId, 'barometer_folder_path', true);
+    }
+
+    private function getPdfFileInsideConfiguredRoot(
+        string $fileId,
+        string $configKey,
+        bool $required = false,
+    ): array {
+        $root = $this->configuredRootItem($configKey, $required);
         $item = $this->getDriveItem($fileId);
 
         if ($this->ancestorsToRoot($item, (string) $root['id']) === []) {
@@ -73,7 +96,7 @@ class SharePointService
 
     public function listPdfFiles(): array
     {
-        $path = $this->folderPath();
+        $path = $this->folderPath('folder_path');
         $endpoint = $path === ''
             ? "/drives/{$this->driveId()}/root/children"
             : "/drives/{$this->driveId()}/root:/{$path}:/children";
@@ -99,7 +122,7 @@ class SharePointService
 
     public function listPowerBiLinks(): array
     {
-        $path = $this->folderPath();
+        $path = $this->folderPath('folder_path');
         $endpoint = $path === ''
             ? "/drives/{$this->driveId()}/root/children"
             : "/drives/{$this->driveId()}/root:/{$path}:/children";
@@ -204,18 +227,22 @@ class SharePointService
         return $token;
     }
 
-    private function folderPath(): string
+    private function folderPath(string $configKey, bool $required = false): string
     {
-        $folder = trim((string) config('services.sharepoint.folder_path', ''), '/');
+        $folder = trim((string) config("services.sharepoint.{$configKey}", ''), '/');
+
+        if ($required && $folder === '') {
+            throw new RuntimeException("Falta configurar services.sharepoint.{$configKey}.");
+        }
 
         return collect($folder === '' ? [] : explode('/', $folder))
             ->map(fn(string $segment) => rawurlencode($segment))
             ->implode('/');
     }
 
-    private function configuredRootItem(): array
+    private function configuredRootItem(string $configKey, bool $required = false): array
     {
-        $path = $this->folderPath();
+        $path = $this->folderPath($configKey, $required);
         $endpoint = $path === ''
             ? "/drives/{$this->driveId()}/root"
             : "/drives/{$this->driveId()}/root:/{$path}:";

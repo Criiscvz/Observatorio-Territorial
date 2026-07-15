@@ -279,6 +279,7 @@ class ArticuloController extends Controller
     {
         $downloadUrl = "/api/departamentos/publicaciones/{$publicacion->id}/download";
         $isLocked = $publicacion->solo_suscriptores && ! $this->isSubscriber($request->user('sanctum'));
+        $hasPdf = (bool) ($publicacion->archivo_pdf || $publicacion->sharepoint_url);
 
         return [
             'id' => $publicacion->id,
@@ -287,8 +288,9 @@ class ArticuloController extends Controller
             'autor' => $publicacion->autores,
             'fuente' => $publicacion->fuente,
             'estado' => $publicacion->estado,
-            'enlace' => $isLocked ? null : ($publicacion->archivo_pdf ? $downloadUrl : null),
-            'download_url' => $isLocked || ! $publicacion->archivo_pdf ? null : $downloadUrl,
+            'enlace' => $isLocked ? null : ($hasPdf ? $downloadUrl : $publicacion->link_url),
+            'download_url' => $isLocked || ! $hasPdf ? null : $downloadUrl,
+            'sharepoint_url' => $isLocked ? null : $publicacion->sharepoint_url,
             'fecha_publicacion' => $publicacion->fecha_publicacion?->format('Y-m-d'),
             'fecha_recepcion' => $publicacion->created_at?->format('Y-m-d'),
             'categoria_id' => null,

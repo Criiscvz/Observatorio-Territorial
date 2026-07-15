@@ -125,6 +125,7 @@ export class PublicAtlasComponent implements OnInit {
       restoreFocus: false,
       data: {
         departamentos: this.departamentos(),
+        target: 'atlas',
       },
     });
 

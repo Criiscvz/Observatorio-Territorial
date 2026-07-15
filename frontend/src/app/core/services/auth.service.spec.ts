@@ -16,7 +16,8 @@ describe('AuthService', () => {
     email: 'test@test.com',
     name: 'Test User',
     rol: 'USER',
-    perfil: null
+    perfil: null,
+    departamentos: []
   } as any;
 
   const mockAuthResponse = {

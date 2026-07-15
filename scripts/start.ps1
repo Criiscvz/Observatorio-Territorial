@@ -126,6 +126,7 @@ function Start-InitialSetup {
     Start-Sleep -Seconds 5
     Invoke-Script $BackendScript 'install'
     Invoke-Script $BackendScript 'migrate'
+    Invoke-Script $BackendScript 'seed-admin'
     Invoke-Script $FrontendScript 'install'
     Write-Host ''
     Write-Host 'Setup completado. Ahora ejecuta: .\scripts\start.ps1 all' -ForegroundColor Green

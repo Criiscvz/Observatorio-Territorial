@@ -239,6 +239,18 @@ class ObservatorioPublicacionController extends Controller
         ]);
     }
 
+    public function browseSharePointArticulos(Request $request, Departamento $departamento): JsonResponse
+    {
+        $this->ensureCanView($request, $departamento);
+        $data = $request->validate([
+            'item_id' => ['nullable', 'string', 'max:1024'],
+        ]);
+
+        return response()->json([
+            'data' => $this->sharePointService->browseBarometerFolder($data['item_id'] ?? null),
+        ]);
+    }
+
     public function sharePointPowerBiLinks(Request $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
@@ -369,6 +381,40 @@ class ObservatorioPublicacionController extends Controller
             'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
         ]);
 
+        return $this->importManySharePointPdfs(
+            request: $request,
+            departamento: $departamento,
+            fileIds: $data['sharepoint_file_ids'],
+            tipo: 'ATLAS',
+            resolveFile: fn(string $fileId) => $this->sharePointService->getPdfFileInsideRoot($fileId),
+        );
+    }
+
+    public function importManySharePointArticulos(Request $request, Departamento $departamento): JsonResponse
+    {
+        $this->ensureCanView($request, $departamento);
+        $data = $request->validate([
+            'sharepoint_file_ids' => ['required', 'array', 'min:1', 'max:50'],
+            'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
+        ]);
+
+        return $this->importManySharePointPdfs(
+            request: $request,
+            departamento: $departamento,
+            fileIds: $data['sharepoint_file_ids'],
+            tipo: 'ARTICULO',
+            resolveFile: fn(string $fileId) => $this->sharePointService->getPdfFileInsideBarometerRoot($fileId),
+        );
+    }
+
+    private function importManySharePointPdfs(
+        Request $request,
+        Departamento $departamento,
+        array $fileIds,
+        string $tipo,
+        callable $resolveFile,
+    ): JsonResponse {
+
         $summary = [
             'imported' => [],
             'duplicates' => [],
@@ -376,9 +422,9 @@ class ObservatorioPublicacionController extends Controller
             'errors' => [],
         ];
 
-        foreach ($data['sharepoint_file_ids'] as $fileId) {
+        foreach ($fileIds as $fileId) {
             try {
-                $file = $this->sharePointService->getPdfFileInsideRoot($fileId);
+                $file = $resolveFile($fileId);
                 $existing = $this->findSharePointPublication($departamento, (string) $file['id']);
                 if ($existing) {
                     $summary['duplicates'][] = [
@@ -390,10 +436,11 @@ class ObservatorioPublicacionController extends Controller
                     continue;
                 }
 
-                $publicacion = DB::transaction(fn() => $this->createAtlasFromSharePointFile(
+                $publicacion = DB::transaction(fn() => $this->createSharePointPdfPublication(
                     request: $request,
                     departamento: $departamento,
                     file: $file,
+                    tipo: $tipo,
                 ));
 
                 $summary['imported'][] = (new PublicacionResource($publicacion->refresh()))->resolve($request);
@@ -582,29 +629,33 @@ class ObservatorioPublicacionController extends Controller
         });
     }
 
-    private function createAtlasFromSharePointFile(
+    private function createSharePointPdfPublication(
         Request $request,
         Departamento $departamento,
         array $file,
+        string $tipo,
     ): ObservatorioPublicacion {
-        $counter = DB::table('publicacion_contadores')->where('tipo', 'ATLAS')->lockForUpdate()->first();
+        $counter = DB::table('publicacion_contadores')->where('tipo', $tipo)->lockForUpdate()->first();
         abort_unless($counter, 500, 'No se pudo generar el codigo de publicacion.');
         $number = (int) $counter->siguiente_numero;
-        DB::table('publicacion_contadores')->where('tipo', 'ATLAS')->update(['siguiente_numero' => $number + 1]);
+        DB::table('publicacion_contadores')->where('tipo', $tipo)->update(['siguiente_numero' => $number + 1]);
         $lastModified = $file['last_modified_at'] ? Carbon::parse($file['last_modified_at']) : now();
+        $isArticulo = $tipo === 'ARTICULO';
 
         return ObservatorioPublicacion::create([
             'departamento_id' => $departamento->id,
             'creado_por' => $request->user()->id,
-            'tipo' => 'ATLAS',
+            'tipo' => $tipo,
             'estado' => self::ESTADO_PUBLICACION,
             'solo_suscriptores' => false,
-            'codigo' => 'ATL-'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
+            'codigo' => ($isArticulo ? 'ART-' : 'ATL-').str_pad((string) $number, 4, '0', STR_PAD_LEFT),
             'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
             'fecha_publicacion' => $lastModified->toDateString(),
             'link_url' => $file['web_url'],
-            'descripcion' => 'Reporte PDF importado desde SharePoint.',
-            'autores' => $file['created_by'] ?? null,
+            'descripcion' => $isArticulo
+                ? 'Artículo PDF importado desde SharePoint.'
+                : 'Reporte PDF importado desde SharePoint.',
+            'autores' => $file['created_by'] ?? ($isArticulo ? 'ULEAM' : null),
             'fuente' => 'SharePoint',
             'archivo_pdf' => null,
             'nombre_archivo_original' => $file['name'],

@@ -24,7 +24,10 @@ import {
 import { AuthService } from '@core/services/auth.service';
 import { DatasetService } from '@core/services/dataset.service';
 import { DepartamentoService } from '@core/services/departamento.service';
-import { PublicacionService } from '@core/services/publicacion.service';
+import {
+  PublicacionService,
+  SharePointImportTarget,
+} from '@core/services/publicacion.service';
 import { SharePointAtlasImportDialogComponent } from '@features/public/public-atlas/sharepoint-atlas-import-dialog.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
@@ -586,6 +589,14 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   importSharePointAtlas(): void {
+    this.openSharePointImport('atlas');
+  }
+
+  importSharePointArticulos(): void {
+    this.openSharePointImport('articulos');
+  }
+
+  private openSharePointImport(target: SharePointImportTarget): void {
     const departamento = this.departamento();
     if (!departamento) return;
 
@@ -598,6 +609,7 @@ export class DepartamentoDetailComponent implements OnInit {
       restoreFocus: false,
       data: {
         departamentos: [departamento],
+        target,
       },
     });
 

@@ -5,7 +5,7 @@
 
 param(
     [Parameter(Position=0)]
-    [ValidateSet("start", "stop", "logs", "install", "migrate", "seed", "migrate-fresh", "migrate-fresh-seed", "cache-clear", "swagger", "routes", "tinker", "help")]
+    [ValidateSet("start", "stop", "logs", "install", "migrate", "seed", "seed-admin", "migrate-fresh", "migrate-fresh-seed", "cache-clear", "swagger", "routes", "tinker", "help")]
     [string]$Command = "help"
 )
 
@@ -152,6 +152,10 @@ try {
             Write-Host "Ejecutando seeders..." -ForegroundColor Green
             Run-Artisan db:seed --force
         }
+        "seed-admin" {
+            Write-Host "Asegurando cuenta administrativa inicial..." -ForegroundColor Green
+            Run-Artisan db:seed --class=AdminUserSeeder --force
+        }
         "migrate-fresh" {
             Write-Host "Reseteando base de datos y ejecutando migraciones..." -ForegroundColor Yellow
             Run-Artisan migrate:fresh --force
@@ -188,6 +192,7 @@ try {
             Write-Host "  install            - Construir imagen backend de desarrollo con codigo local"
             Write-Host "  migrate            - Ejecutar migraciones"
             Write-Host "  seed               - Ejecutar seeders"
+            Write-Host "  seed-admin         - Crear o actualizar solo la cuenta administrativa inicial"
             Write-Host "  migrate-fresh      - Resetear BD y migrar"
             Write-Host "  migrate-fresh-seed - Resetear BD, migrar y seed"
             Write-Host "  cache-clear        - Limpiar todas las caches"

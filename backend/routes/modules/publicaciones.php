@@ -14,6 +14,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/{departamento}/publicaciones/reportes/sharepoint/files', [ObservatorioPublicacionController::class, 'sharePointPowerBiLinks'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/reportes/sharepoint/import', [ObservatorioPublicacionController::class, 'importSharePointReporte'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/reportes/sharepoint/sync', [ObservatorioPublicacionController::class, 'syncSharePointReportes'])->middleware('role:ADMIN');
+    Route::get('/{departamento}/publicaciones/articulos/sharepoint/browse', [ObservatorioPublicacionController::class, 'browseSharePointArticulos'])->middleware('role:ADMIN');
+    Route::post('/{departamento}/publicaciones/articulos/sharepoint/import-many', [ObservatorioPublicacionController::class, 'importManySharePointArticulos'])->middleware('role:ADMIN');
     Route::get('/{departamento}/publicaciones/atlas/sharepoint/files', [ObservatorioPublicacionController::class, 'sharePointFiles'])->middleware('role:ADMIN');
     Route::get('/{departamento}/publicaciones/atlas/sharepoint/browse', [ObservatorioPublicacionController::class, 'browseSharePointAtlas'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/atlas/sharepoint/import', [ObservatorioPublicacionController::class, 'importSharePointAtlas'])->middleware('role:ADMIN');

@@ -5,7 +5,7 @@ import { RouterModule } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { DatasetListComponent } from './dataset-list.component';
 import { DatasetService } from '@core/services/dataset.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Dataset } from '@core/models';
 
 @Pipe({ name: 'translate', standalone: true })
@@ -40,7 +40,7 @@ describe('DatasetListComponent', () => {
     translateSpy = { instant: vi.fn().mockImplementation((k) => k) };
 
     TestBed.overrideComponent(DatasetListComponent, {
-      remove: { imports: [] },
+      remove: { imports: [TranslateModule] },
       add: { imports: [MockTranslatePipe] }
     });
     TestBed.overrideProvider(DatasetService, { useValue: datasetServiceSpy });

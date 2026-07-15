@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { RegisterComponent } from './register.component';
 import { AuthService } from '@core/services/auth.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Pipe({ name: 'translate', standalone: true })
 class MockTranslatePipe implements PipeTransform {
@@ -28,7 +28,7 @@ describe('RegisterComponent', () => {
     translateSpy = { instant: vi.fn().mockImplementation((k) => k) };
 
     TestBed.overrideComponent(RegisterComponent, {
-      remove: { imports: [] },
+      remove: { imports: [TranslateModule] },
       add: { imports: [MockTranslatePipe] }
     });
     TestBed.overrideProvider(AuthService, { useValue: authServiceSpy });

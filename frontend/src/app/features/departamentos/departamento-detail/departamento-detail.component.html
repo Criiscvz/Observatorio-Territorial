@@ -85,6 +85,22 @@
             </div>
           </div>
           <form [formGroup]="publicationForm" (ngSubmit)="savePublication()">
+            @if ((isArticulo || isAtlas) && isAdmin()) {
+              <div class="form-import-actions">
+                @if (isArticulo) {
+                  <button mat-raised-button color="primary" type="button" (click)="importSharePointArticulos()">
+                    <mat-icon>cloud_download</mat-icon>
+                    Importar desde SharePoint
+                  </button>
+                }
+                @if (isAtlas) {
+                  <button mat-raised-button color="primary" type="button" (click)="importSharePointAtlas()">
+                    <mat-icon>cloud_download</mat-icon>
+                    Importar desde SharePoint
+                  </button>
+                }
+              </div>
+            }
             <div class="type-row">
               <div class="selected-type-pill">
                 <mat-icon>{{ isArticulo ? 'article' : isReporte ? 'bar_chart' : 'picture_as_pdf' }}</mat-icon>
@@ -291,8 +307,8 @@
                 <div class="server-error"><mat-icon>error</mat-icon>{{ serverError() }}</div>
               }
               <div class="form-actions">
-                <button mat-button type="button" (click)="closePublicationForm()">Cancelar</button
-                ><button
+                <button mat-button type="button" (click)="closePublicationForm()">Cancelar</button>
+                <button
                   mat-raised-button
                   color="primary"
                   type="submit"
@@ -591,14 +607,6 @@
         <div>
           <span class="eyebrow">Biblioteca</span>
           <h2>Reportes Power BI</h2>
-        </div>
-        <div class="heading-actions">
-          @if (isAdmin()) {
-            <button mat-raised-button color="primary" type="button" (click)="importSharePointAtlas()">
-              <mat-icon>cloud_download</mat-icon>
-              Importar desde SharePoint
-            </button>
-          }
         </div>
       </div>
       @if (loadingPublicaciones()) {

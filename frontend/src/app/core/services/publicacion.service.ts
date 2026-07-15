@@ -15,6 +15,7 @@ interface ResourceResponse<T> {
 }
 
 type PdfSource = Pick<ObservatorioPublicacion, 'download_url' | 'sharepoint_url'>;
+export type SharePointImportTarget = 'atlas' | 'articulos';
 
 export interface CanUploadPublicacionResponse {
   can_upload: boolean;
@@ -84,9 +85,17 @@ export class PublicacionService {
     departamentoId: string,
     itemId?: string | null,
   ): Observable<SharePointBrowseResponse> {
+    return this.browseSharePointFolder(departamentoId, 'atlas', itemId);
+  }
+
+  browseSharePointFolder(
+    departamentoId: string,
+    target: SharePointImportTarget,
+    itemId?: string | null,
+  ): Observable<SharePointBrowseResponse> {
     return this.api
       .get<ResourceResponse<SharePointBrowseResponse>>(
-        `/departamentos/${departamentoId}/publicaciones/atlas/sharepoint/browse`,
+        `/departamentos/${departamentoId}/publicaciones/${target}/sharepoint/browse`,
         itemId ? { item_id: itemId } : undefined,
       )
       .pipe(map((response) => response.data));
@@ -116,8 +125,16 @@ export class PublicacionService {
     departamentoId: string,
     sharepointFileIds: string[],
   ): Observable<SharePointAtlasImportResponse> {
+    return this.importManySharePoint(departamentoId, 'atlas', sharepointFileIds);
+  }
+
+  importManySharePoint(
+    departamentoId: string,
+    target: SharePointImportTarget,
+    sharepointFileIds: string[],
+  ): Observable<SharePointAtlasImportResponse> {
     return this.api.post<SharePointAtlasImportResponse>(
-      `/departamentos/${departamentoId}/publicaciones/atlas/sharepoint/import-many`,
+      `/departamentos/${departamentoId}/publicaciones/${target}/sharepoint/import-many`,
       { sharepoint_file_ids: sharepointFileIds },
     );
   }

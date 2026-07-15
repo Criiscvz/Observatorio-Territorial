@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Eloquent\Repositories;
 use App\Domain\Dataset\Entities\Dataset;
 use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Models\DatasetModel;
+use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -58,8 +59,13 @@ class EloquentDatasetRepository implements DatasetRepositoryInterface
 
     public function findByUserDepartamentos(int $userId, ?string $departamentoId = null): LengthAwarePaginator
     {
-        $query = $this->model
-            ->whereHas('departamento.usuarios', fn($q) => $q->where('user_id', $userId));
+        $query = $this->model->newQuery();
+
+        // Un administrador global tiene acceso a todos los departamentos, igual
+        // que en las operaciones de consulta, carga, edición y eliminación.
+        if (!User::whereKey($userId)->where('rol', 'ADMIN')->exists()) {
+            $query->whereHas('departamento.usuarios', fn($q) => $q->where('user_id', $userId));
+        }
 
         if ($departamentoId) {
             $query->where('departamento_id', $departamentoId);

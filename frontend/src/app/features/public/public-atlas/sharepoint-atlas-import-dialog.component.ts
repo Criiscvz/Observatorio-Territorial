@@ -16,10 +16,14 @@ import {
   SharePointBrowserItem,
   SharePointBrowseResponse,
 } from '@core/models/publicacion/publicacion.interface';
-import { PublicacionService } from '@core/services/publicacion.service';
+import {
+  PublicacionService,
+  SharePointImportTarget,
+} from '@core/services/publicacion.service';
 
 interface DialogData {
   departamentos: Departamento[];
+  target?: SharePointImportTarget;
 }
 
 @Component({
@@ -44,6 +48,9 @@ export class SharePointAtlasImportDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<SharePointAtlasImportDialogComponent>);
   private readonly destroyRef = inject(DestroyRef);
   readonly data = inject<DialogData>(MAT_DIALOG_DATA);
+  readonly target: SharePointImportTarget = this.data.target ?? 'atlas';
+  readonly rootLabel = this.target === 'articulos' ? 'Barómetro' : 'Atlas';
+  readonly destinationLabel = this.target === 'articulos' ? 'Artículos' : 'Atlas PDF';
 
   selectedDepartamentoId = signal<string>(this.data.departamentos[0]?.id ?? '');
   browser = signal<SharePointBrowseResponse | null>(null);
@@ -88,7 +95,7 @@ export class SharePointAtlasImportDialogComponent {
     this.loading.set(true);
     this.error.set(null);
     this.publicacionService
-      .browseAtlasSharePointFolder(departamentoId, itemId)
+      .browseSharePointFolder(departamentoId, this.target, itemId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (browser) => {
@@ -143,7 +150,7 @@ export class SharePointAtlasImportDialogComponent {
     this.importing.set(true);
     this.error.set(null);
     this.publicacionService
-      .importManySharePointAtlas(departamentoId, ids)
+      .importManySharePoint(departamentoId, this.target, ids)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => this.dialogRef.close(result),
