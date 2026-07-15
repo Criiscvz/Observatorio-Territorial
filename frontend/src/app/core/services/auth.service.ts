@@ -117,7 +117,16 @@ export class AuthService {
    * Obtener token actual (para uso en interceptors).
    */
   getToken(): string | null {
-    return this.tokenSignal();
+    if (this.tokenSignal()) {
+      return this.tokenSignal();
+    }
+
+    const storedToken = this.getStoredToken();
+    if (storedToken) {
+      this.tokenSignal.set(storedToken);
+    }
+
+    return storedToken;
   }
 
   /**
@@ -206,10 +215,21 @@ export class AuthService {
     }
   }
 
-  private storeExpiration(expiresAt: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(EXPIRES_AT_KEY, expiresAt);
+  private storeExpiration(expiresAt?: string | null): void {
+    if (typeof window === 'undefined') return;
+
+    if (!expiresAt) {
+      localStorage.removeItem(EXPIRES_AT_KEY);
+      return;
     }
+
+    const expiresAtTime = new Date(expiresAt).getTime();
+    if (Number.isNaN(expiresAtTime)) {
+      localStorage.removeItem(EXPIRES_AT_KEY);
+      return;
+    }
+
+    localStorage.setItem(EXPIRES_AT_KEY, expiresAt);
   }
 
   private isSessionExpired(): boolean {
@@ -222,7 +242,7 @@ export class AuthService {
 
     const expiresAt = localStorage.getItem(EXPIRES_AT_KEY);
     if (!expiresAt) {
-      return !!localStorage.getItem(TOKEN_KEY);
+      return false;
     }
 
     const expiresAtTime = new Date(expiresAt).getTime();

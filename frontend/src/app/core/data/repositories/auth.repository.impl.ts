@@ -54,6 +54,10 @@ export class AuthRepositoryImpl extends AuthRepository {
 
   private setSession(response: AuthResponse): void {
     this.setToken(response.token);
-    this.storage.set(EXPIRES_AT_KEY, response.expires_at);
+    if (response.expires_at && !Number.isNaN(new Date(response.expires_at).getTime())) {
+      this.storage.set(EXPIRES_AT_KEY, response.expires_at);
+    } else {
+      this.storage.remove(EXPIRES_AT_KEY);
+    }
   }
 }

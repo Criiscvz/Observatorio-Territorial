@@ -325,6 +325,12 @@ class DatasetController extends Controller
     )]
     public function destroy(Request $request, string $id): JsonResponse
     {
+        if ($request->user()?->rol !== 'ADMIN') {
+            return response()->json([
+                'message' => 'No autorizado para eliminar datasets.',
+            ], 403);
+        }
+
         $this->deleteDatasetUseCase->execute($id, $request->user()->id);
 
         return response()->json(['message' => 'Dataset eliminado exitosamente']);

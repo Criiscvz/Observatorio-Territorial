@@ -42,7 +42,20 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
     public function findAll(): Collection
     {
         $models = $this->model
-            ->with(['datasets' => fn($q) => $q->select('id', 'departamento_id', 'nombre', 'estado', 'total_registros')])
+            ->with(['datasets' => fn($q) => $q
+                ->select(
+                    'id',
+                    'departamento_id',
+                    'nombre',
+                    'nombre_archivo',
+                    'descripcion',
+                    'estado',
+                    'total_registros',
+                    'fecha_carga',
+                    'created_at',
+                    'updated_at',
+                )
+                ->orderBy('created_at', 'desc')])
             ->get();
 
         return $models->map(fn($m) => $this->toDomain($m));
@@ -52,7 +65,20 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
     {
         $models = $this->model
             ->whereHas('usuarios', fn($q) => $q->where('user_id', $userId))
-            ->with(['datasets' => fn($q) => $q->select('id', 'departamento_id', 'nombre', 'estado', 'total_registros')])
+            ->with(['datasets' => fn($q) => $q
+                ->select(
+                    'id',
+                    'departamento_id',
+                    'nombre',
+                    'nombre_archivo',
+                    'descripcion',
+                    'estado',
+                    'total_registros',
+                    'fecha_carga',
+                    'created_at',
+                    'updated_at',
+                )
+                ->orderBy('created_at', 'desc')])
             ->get();
 
         return $models->map(fn($m) => $this->toDomain($m));
@@ -148,9 +174,15 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
         if ($model->relationLoaded('datasets')) {
             $datasets = $model->datasets->map(fn($d) => [
                 'id' => $d->id,
+                'departamento_id' => $d->departamento_id,
                 'nombre' => $d->nombre,
+                'nombre_archivo' => $d->nombre_archivo,
+                'descripcion' => $d->descripcion,
                 'estado' => $d->estado,
                 'total_registros' => $d->total_registros,
+                'fecha_carga' => $d->fecha_carga?->toISOString(),
+                'created_at' => $d->created_at?->toISOString(),
+                'updated_at' => $d->updated_at?->toISOString(),
             ])->toArray();
         }
 

@@ -4,6 +4,6 @@ export interface AuthResponse {
   message: string;
   user: User;
   token: string;
-  expires_at: string;
-  expires_in: number;
+  expires_at?: string | null;
+  expires_in?: number | null;
 }

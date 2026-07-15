@@ -1,22 +1,29 @@
-<div class="space-y-6">
-  <div class="flex justify-between items-center">
-    <h1 class="text-2xl font-bold text-[var(--text-primary)]">{{ 'datasets.list.title' | translate }}</h1>
+<section class="dataset-list-page">
+  <header class="dataset-list-header">
+    <div>
+      <p class="dataset-list-eyebrow">Gestion de datos</p>
+      <h1>{{ 'datasets.list.title' | translate }}</h1>
+      <p class="dataset-list-summary">
+        {{ totalDatasets() }} conjuntos organizados por observatorio.
+      </p>
+    </div>
+
     <a mat-raised-button color="primary" routerLink="/admin/datasets/nuevo">
       <mat-icon>add</mat-icon>
       {{ 'datasets.list.newDataset' | translate }}
     </a>
-  </div>
+  </header>
 
   @if (loading()) {
-    <div class="flex justify-center py-12">
+    <div class="dataset-loading">
       <mat-spinner></mat-spinner>
     </div>
-  } @else if (datasets().length === 0) {
-    <mat-card>
-      <mat-card-content class="text-center py-12">
-        <mat-icon class="text-6xl text-[var(--text-tertiary)]">table_chart</mat-icon>
-        <h3 class="text-xl text-[var(--text-secondary)] mt-4">{{ 'datasets.list.empty' | translate }}</h3>
-        <p class="text-[var(--text-secondary)] mb-4">{{ 'datasets.list.emptyDescription' | translate }}</p>
+  } @else if (datasetGroups().length === 0) {
+    <mat-card class="dataset-empty-card">
+      <mat-card-content>
+        <mat-icon>table_chart</mat-icon>
+        <h3>{{ 'datasets.list.empty' | translate }}</h3>
+        <p>{{ 'datasets.list.emptyDescription' | translate }}</p>
         <a mat-raised-button color="primary" routerLink="/admin/datasets/nuevo">
           <mat-icon>add</mat-icon>
           {{ 'datasets.list.importDataset' | translate }}
@@ -24,69 +31,103 @@
       </mat-card-content>
     </mat-card>
   } @else {
-    <mat-card>
-      <table mat-table [dataSource]="datasets()" class="w-full">
-        <ng-container matColumnDef="nombre">
-          <th mat-header-cell *matHeaderCellDef>{{ 'datasets.list.columns.name' | translate }}</th>
-          <td mat-cell *matCellDef="let ds">
-            <span class="font-medium">{{ ds.nombre }}</span>
-            <br />
-            <span class="text-xs text-[var(--text-secondary)]">{{ ds.nombre_archivo }}</span>
-          </td>
-        </ng-container>
+    <div class="dataset-groups">
+      @for (group of datasetGroups(); track group.departamento.id) {
+        <section class="dataset-group">
+          <div class="dataset-group__header">
+            <div class="dataset-group__title">
+              <div class="dataset-group__icon">
+                <mat-icon>{{ group.departamento.icono || 'hub' }}</mat-icon>
+              </div>
+              <div>
+                <span class="dataset-group__label">Observatorio</span>
+                <h2>{{ group.departamento.nombre }}</h2>
+                @if (group.departamento.descripcion) {
+                  <p>{{ group.departamento.descripcion }}</p>
+                }
+              </div>
+            </div>
 
-        <ng-container matColumnDef="departamento">
-          <th mat-header-cell *matHeaderCellDef>{{ 'datasets.list.columns.department' | translate }}</th>
-          <td mat-cell *matCellDef="let ds">{{ ds.departamento?.nombre }}</td>
-        </ng-container>
+            <span class="dataset-group__count">
+              <mat-icon>storage</mat-icon>
+              {{ group.datasets.length }} {{ 'common.units.datasets' | translate }}
+            </span>
+          </div>
 
-        <ng-container matColumnDef="estado">
-          <th mat-header-cell *matHeaderCellDef>{{ 'datasets.list.columns.status' | translate }}</th>
-          <td mat-cell *matCellDef="let ds">
-            <mat-chip [color]="getEstadoColor(ds.estado)">
-              {{ 'datasets.status.' + ds.estado.toLowerCase() | translate }}
-            </mat-chip>
-          </td>
-        </ng-container>
+          <div class="dataset-group__grid">
+            @for (ds of group.datasets; track ds.id) {
+              <article class="dataset-card">
+                <div class="dataset-card__top">
+                  <div class="dataset-card__icon">
+                    <mat-icon>table_chart</mat-icon>
+                  </div>
+                  <span class="dataset-status-badge" [ngClass]="getDatasetStatusClass(ds.estado)">
+                    <mat-icon>{{ getDatasetStatusIcon(ds.estado) }}</mat-icon>
+                    {{ getDatasetStatusLabel(ds.estado) }}
+                  </span>
+                </div>
 
-        <ng-container matColumnDef="registros">
-          <th mat-header-cell *matHeaderCellDef>{{ 'datasets.list.columns.records' | translate }}</th>
-          <td mat-cell *matCellDef="let ds">{{ ds.total_registros | number }}</td>
-        </ng-container>
+                <div class="dataset-card__body">
+                  <h3>{{ ds.nombre }}</h3>
+                  @if (ds.descripcion) {
+                    <p>{{ ds.descripcion }}</p>
+                  } @else if (ds.nombre_archivo) {
+                    <p>{{ ds.nombre_archivo }}</p>
+                  } @else {
+                    <p>Dataset asociado a {{ group.departamento.nombre }}.</p>
+                  }
+                </div>
 
-        <ng-container matColumnDef="fecha">
-          <th mat-header-cell *matHeaderCellDef>{{ 'datasets.list.columns.date' | translate }}</th>
-          <td mat-cell *matCellDef="let ds">{{ ds.fecha_carga | date: 'short' }}</td>
-        </ng-container>
+                <dl class="dataset-card__meta">
+                  <div>
+                    <dt>{{ 'datasets.list.columns.records' | translate }}</dt>
+                    <dd>{{ (ds.total_registros || 0) | number }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ 'datasets.list.columns.date' | translate }}</dt>
+                    <dd>
+                      @if (getDatasetDate(ds)) {
+                        {{ getDatasetDate(ds) | date: 'shortDate' }}
+                      } @else {
+                        Sin fecha
+                      }
+                    </dd>
+                  </div>
+                </dl>
 
-        <ng-container matColumnDef="acciones">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let ds">
-            <button mat-icon-button [matMenuTriggerFor]="menu">
-              <mat-icon>more_vert</mat-icon>
-            </button>
-            <mat-menu #menu="matMenu">
-              <button mat-menu-item [routerLink]="['/admin/departamentos', ds.departamento_id]">
-                <mat-icon>dashboard</mat-icon>
-                <span>{{ 'datasets.list.actions.viewDashboard' | translate }}</span>
-              </button>
-              @if (ds.estado === 'PENDIENTE') {
-                <button mat-menu-item [routerLink]="['/admin/datasets', ds.id, 'importar']">
-                  <mat-icon>upload</mat-icon>
-                  <span>{{ 'datasets.list.actions.continueImport' | translate }}</span>
-                </button>
-              }
-              <button mat-menu-item (click)="deleteDataset(ds)">
-                <mat-icon color="warn">delete</mat-icon>
-                <span class="text-error">{{ 'datasets.list.actions.delete' | translate }}</span>
-              </button>
-            </mat-menu>
-          </td>
-        </ng-container>
+                <div class="dataset-card__actions">
+                  <a class="dataset-view-button" mat-stroked-button [routerLink]="['/admin/datasets', ds.id]">
+                    <mat-icon>visibility</mat-icon>
+                    Ver
+                  </a>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-      </table>
-    </mat-card>
+                  <button class="dataset-more-button" mat-icon-button [matMenuTriggerFor]="menu">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #menu="matMenu">
+                    <button mat-menu-item [routerLink]="['/admin/departamentos', group.departamento.id]">
+                      <mat-icon>dashboard</mat-icon>
+                      <span>{{ 'datasets.list.actions.viewDashboard' | translate }}</span>
+                    </button>
+                    @if (ds.estado === 'PENDIENTE') {
+                      <button mat-menu-item [routerLink]="['/admin/datasets', ds.id, 'importar']">
+                        <mat-icon>upload</mat-icon>
+                        <span>{{ 'datasets.list.actions.continueImport' | translate }}</span>
+                      </button>
+                    }
+                    @if (canDeleteDataset()) {
+                      <button mat-menu-item (click)="deleteDataset(ds)">
+                        <mat-icon color="warn">delete</mat-icon>
+                        <span class="text-error">{{ 'datasets.list.actions.delete' | translate }}</span>
+                      </button>
+                    }
+                  </mat-menu>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      }
+    </div>
   }
-</div>
+</section>
