@@ -85,7 +85,7 @@
             </div>
           </div>
           <form [formGroup]="publicationForm" (ngSubmit)="savePublication()">
-            @if ((isArticulo || isAtlas) && isAdmin()) {
+            @if ((isArticulo || isReporte || isAtlas) && isAdmin()) {
               <div class="form-import-actions">
                 @if (isArticulo) {
                   <button mat-raised-button color="primary" type="button" (click)="importSharePointArticulos()">
@@ -95,6 +95,12 @@
                 }
                 @if (isAtlas) {
                   <button mat-raised-button color="primary" type="button" (click)="importSharePointAtlas()">
+                    <mat-icon>cloud_download</mat-icon>
+                    Importar desde SharePoint
+                  </button>
+                }
+                @if (isReporte) {
+                  <button mat-raised-button color="primary" type="button" (click)="importSharePointReportes()">
                     <mat-icon>cloud_download</mat-icon>
                     Importar desde SharePoint
                   </button>

@@ -28,6 +28,7 @@ describe('PublicacionService SharePoint imports', () => {
   it.each([
     ['atlas', '/departamentos/dep-1/publicaciones/atlas/sharepoint/browse'],
     ['articulos', '/departamentos/dep-1/publicaciones/articulos/sharepoint/browse'],
+    ['reportes', '/departamentos/dep-1/publicaciones/reportes/sharepoint/browse'],
   ] as const)('uses the %s browse endpoint', (target, endpoint) => {
     service.browseSharePointFolder('dep-1', target, 'folder-1').subscribe();
 
@@ -41,6 +42,7 @@ describe('PublicacionService SharePoint imports', () => {
   it.each([
     ['atlas', '/departamentos/dep-1/publicaciones/atlas/sharepoint/import-many'],
     ['articulos', '/departamentos/dep-1/publicaciones/articulos/sharepoint/import-many'],
+    ['reportes', '/departamentos/dep-1/publicaciones/reportes/sharepoint/import-many'],
   ] as const)('uses the %s multiple import endpoint', (target, endpoint) => {
     service.importManySharePoint('dep-1', target, ['pdf-1', 'pdf-2']).subscribe();
 

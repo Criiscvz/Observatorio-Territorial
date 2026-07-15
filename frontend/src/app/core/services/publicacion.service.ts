@@ -15,7 +15,7 @@ interface ResourceResponse<T> {
 }
 
 type PdfSource = Pick<ObservatorioPublicacion, 'download_url' | 'sharepoint_url'>;
-export type SharePointImportTarget = 'atlas' | 'articulos';
+export type SharePointImportTarget = 'atlas' | 'articulos' | 'reportes';
 
 export interface CanUploadPublicacionResponse {
   can_upload: boolean;

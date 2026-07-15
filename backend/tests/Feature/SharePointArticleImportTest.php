@@ -15,7 +15,7 @@ class SharePointArticleImportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_barometer_files_are_imported_as_articles_without_affecting_atlas(): void
+    public function test_barometer_files_are_imported_as_articles_and_reports_without_affecting_atlas(): void
     {
         $admin = User::factory()->create([
             'rol' => 'ADMIN',
@@ -28,11 +28,12 @@ class SharePointArticleImportTest extends TestCase
         ]);
 
         $barometerFile = $this->sharePointFile('barometer-pdf', 'Indicadores Barómetro.pdf');
+        $reportFile = $this->sharePointFile('report-pdf', 'Reporte Barómetro.pdf');
         $atlasFile = $this->sharePointFile('atlas-pdf', 'Atlas Territorial.pdf');
 
-        $this->mock(SharePointService::class, function (MockInterface $mock) use ($barometerFile, $atlasFile) {
+        $this->mock(SharePointService::class, function (MockInterface $mock) use ($barometerFile, $reportFile, $atlasFile) {
             $mock->shouldReceive('browseBarometerFolder')
-                ->once()
+                ->twice()
                 ->with(null)
                 ->andReturn([
                     'current' => ['id' => 'barometer-root', 'name' => 'Barómetro'],
@@ -45,6 +46,10 @@ class SharePointArticleImportTest extends TestCase
                 ->twice()
                 ->with('barometer-pdf')
                 ->andReturn($barometerFile);
+            $mock->shouldReceive('getPdfFileInsideBarometerRoot')
+                ->twice()
+                ->with('report-pdf')
+                ->andReturn($reportFile);
             $mock->shouldReceive('getPdfFileInsideRoot')
                 ->once()
                 ->with('atlas-pdf')
@@ -75,6 +80,21 @@ class SharePointArticleImportTest extends TestCase
                 'sharepoint_url' => 'https://sharepoint.test/barometer-pdf',
             ]);
 
+        $this->getJson("/api/departamentos/{$departamento->id}/publicaciones/reportes/sharepoint/browse")
+            ->assertOk()
+            ->assertJsonPath('data.current.name', 'Barómetro');
+
+        $reportEndpoint = "/api/departamentos/{$departamento->id}/publicaciones/reportes/sharepoint/import-many";
+        $this->postJson($reportEndpoint, ['sharepoint_file_ids' => ['report-pdf']])
+            ->assertOk()
+            ->assertJsonPath('totals.imported', 1)
+            ->assertJsonPath('totals.errors', 0);
+
+        $this->postJson($reportEndpoint, ['sharepoint_file_ids' => ['report-pdf']])
+            ->assertOk()
+            ->assertJsonPath('totals.imported', 0)
+            ->assertJsonPath('totals.duplicates', 1);
+
         $this->postJson(
             "/api/departamentos/{$departamento->id}/publicaciones/atlas/sharepoint/import-many",
             ['sharepoint_file_ids' => ['atlas-pdf']],
@@ -89,6 +109,11 @@ class SharePointArticleImportTest extends TestCase
         ]);
         $this->assertDatabaseHas('observatorio_publicaciones', [
             'departamento_id' => $departamento->id,
+            'tipo' => 'REPORTE',
+            'sharepoint_file_id' => 'report-pdf',
+        ]);
+        $this->assertDatabaseHas('observatorio_publicaciones', [
+            'departamento_id' => $departamento->id,
             'tipo' => 'ATLAS',
             'sharepoint_file_id' => 'atlas-pdf',
         ]);
@@ -96,6 +121,11 @@ class SharePointArticleImportTest extends TestCase
         $this->assertStringStartsWith(
             'ART-',
             ObservatorioPublicacion::where('sharepoint_file_id', 'barometer-pdf')->value('codigo'),
+        );
+        $this->assertSame(1, ObservatorioPublicacion::where('sharepoint_file_id', 'report-pdf')->count());
+        $this->assertStringStartsWith(
+            'REP-',
+            ObservatorioPublicacion::where('sharepoint_file_id', 'report-pdf')->value('codigo'),
         );
     }
 

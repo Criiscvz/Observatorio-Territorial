@@ -596,6 +596,10 @@ export class DepartamentoDetailComponent implements OnInit {
     this.openSharePointImport('articulos');
   }
 
+  importSharePointReportes(): void {
+    this.openSharePointImport('reportes');
+  }
+
   private openSharePointImport(target: SharePointImportTarget): void {
     const departamento = this.departamento();
     if (!departamento) return;

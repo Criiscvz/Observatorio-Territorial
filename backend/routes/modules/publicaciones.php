@@ -12,7 +12,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/{departamento}/publicaciones/atlas', [ObservatorioPublicacionController::class, 'atlas']);
     Route::get('/{departamento}/publicaciones/can-upload', [ObservatorioPublicacionController::class, 'canUpload']);
     Route::get('/{departamento}/publicaciones/reportes/sharepoint/files', [ObservatorioPublicacionController::class, 'sharePointPowerBiLinks'])->middleware('role:ADMIN');
+    Route::get('/{departamento}/publicaciones/reportes/sharepoint/browse', [ObservatorioPublicacionController::class, 'browseSharePointReportes'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/reportes/sharepoint/import', [ObservatorioPublicacionController::class, 'importSharePointReporte'])->middleware('role:ADMIN');
+    Route::post('/{departamento}/publicaciones/reportes/sharepoint/import-many', [ObservatorioPublicacionController::class, 'importManySharePointReportes'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/reportes/sharepoint/sync', [ObservatorioPublicacionController::class, 'syncSharePointReportes'])->middleware('role:ADMIN');
     Route::get('/{departamento}/publicaciones/articulos/sharepoint/browse', [ObservatorioPublicacionController::class, 'browseSharePointArticulos'])->middleware('role:ADMIN');
     Route::post('/{departamento}/publicaciones/articulos/sharepoint/import-many', [ObservatorioPublicacionController::class, 'importManySharePointArticulos'])->middleware('role:ADMIN');

@@ -251,6 +251,18 @@ class ObservatorioPublicacionController extends Controller
         ]);
     }
 
+    public function browseSharePointReportes(Request $request, Departamento $departamento): JsonResponse
+    {
+        $this->ensureCanView($request, $departamento);
+        $data = $request->validate([
+            'item_id' => ['nullable', 'string', 'max:1024'],
+        ]);
+
+        return response()->json([
+            'data' => $this->sharePointService->browseBarometerFolder($data['item_id'] ?? null),
+        ]);
+    }
+
     public function sharePointPowerBiLinks(Request $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
@@ -403,6 +415,23 @@ class ObservatorioPublicacionController extends Controller
             departamento: $departamento,
             fileIds: $data['sharepoint_file_ids'],
             tipo: 'ARTICULO',
+            resolveFile: fn(string $fileId) => $this->sharePointService->getPdfFileInsideBarometerRoot($fileId),
+        );
+    }
+
+    public function importManySharePointReportes(Request $request, Departamento $departamento): JsonResponse
+    {
+        $this->ensureCanView($request, $departamento);
+        $data = $request->validate([
+            'sharepoint_file_ids' => ['required', 'array', 'min:1', 'max:50'],
+            'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
+        ]);
+
+        return $this->importManySharePointPdfs(
+            request: $request,
+            departamento: $departamento,
+            fileIds: $data['sharepoint_file_ids'],
+            tipo: 'REPORTE',
             resolveFile: fn(string $fileId) => $this->sharePointService->getPdfFileInsideBarometerRoot($fileId),
         );
     }
@@ -641,6 +670,11 @@ class ObservatorioPublicacionController extends Controller
         DB::table('publicacion_contadores')->where('tipo', $tipo)->update(['siguiente_numero' => $number + 1]);
         $lastModified = $file['last_modified_at'] ? Carbon::parse($file['last_modified_at']) : now();
         $isArticulo = $tipo === 'ARTICULO';
+        $codePrefix = match ($tipo) {
+            'ARTICULO' => 'ART-',
+            'REPORTE' => 'REP-',
+            default => 'ATL-',
+        };
 
         return ObservatorioPublicacion::create([
             'departamento_id' => $departamento->id,
@@ -648,13 +682,15 @@ class ObservatorioPublicacionController extends Controller
             'tipo' => $tipo,
             'estado' => self::ESTADO_PUBLICACION,
             'solo_suscriptores' => false,
-            'codigo' => ($isArticulo ? 'ART-' : 'ATL-').str_pad((string) $number, 4, '0', STR_PAD_LEFT),
+            'codigo' => $codePrefix.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
             'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
             'fecha_publicacion' => $lastModified->toDateString(),
             'link_url' => $file['web_url'],
-            'descripcion' => $isArticulo
-                ? 'Artículo PDF importado desde SharePoint.'
-                : 'Reporte PDF importado desde SharePoint.',
+            'descripcion' => match ($tipo) {
+                'ARTICULO' => 'Artículo PDF importado desde SharePoint.',
+                'REPORTE' => 'Reporte PDF importado desde SharePoint.',
+                default => 'Reporte PDF importado desde SharePoint.',
+            },
             'autores' => $file['created_by'] ?? ($isArticulo ? 'ULEAM' : null),
             'fuente' => 'SharePoint',
             'archivo_pdf' => null,

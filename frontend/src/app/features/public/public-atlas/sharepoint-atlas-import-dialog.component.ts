@@ -49,8 +49,9 @@ export class SharePointAtlasImportDialogComponent {
   private readonly destroyRef = inject(DestroyRef);
   readonly data = inject<DialogData>(MAT_DIALOG_DATA);
   readonly target: SharePointImportTarget = this.data.target ?? 'atlas';
-  readonly rootLabel = this.target === 'articulos' ? 'Barómetro' : 'Atlas';
-  readonly destinationLabel = this.target === 'articulos' ? 'Artículos' : 'Atlas PDF';
+  readonly rootLabel = this.target === 'atlas' ? 'Atlas' : 'Barómetro';
+  readonly destinationLabel =
+    this.target === 'articulos' ? 'Artículos' : this.target === 'reportes' ? 'Reportes' : 'Atlas PDF';
 
   selectedDepartamentoId = signal<string>(this.data.departamentos[0]?.id ?? '');
   browser = signal<SharePointBrowseResponse | null>(null);
