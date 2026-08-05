@@ -15,7 +15,7 @@ interface ResourceResponse<T> {
 }
 
 type PdfSource = Pick<ObservatorioPublicacion, 'download_url' | 'sharepoint_url'>;
-export type SharePointImportTarget = 'atlas' | 'articulos' | 'reportes';
+export type SharePointImportTarget = 'atlas' | 'libros' | 'articulos' | 'reportes';
 
 export interface CanUploadPublicacionResponse {
   can_upload: boolean;
@@ -59,6 +59,47 @@ export class PublicacionService {
       .pipe(map((response) => response.data));
   }
 
+  createGlobalAtlas(formData: FormData): Observable<ObservatorioPublicacion> {
+    return this.api
+      .upload<ResourceResponse<ObservatorioPublicacion>>(
+        '/departamentos/publicaciones/atlas-global',
+        formData,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  getGlobalAtlas(): Observable<ObservatorioPublicacion[]> {
+    return this.api
+      .get<ResourceResponse<ObservatorioPublicacion[]>>('/departamentos/publicaciones/atlas-global')
+      .pipe(map((response) => response.data));
+  }
+
+  getGlobalAtlasById(publicacionId: string): Observable<ObservatorioPublicacion> {
+    return this.api
+      .get<ResourceResponse<ObservatorioPublicacion>>(
+        `/departamentos/publicaciones/atlas-global/${publicacionId}`,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  browseGlobalAtlasSharePointFolder(itemId?: string | null): Observable<SharePointBrowseResponse> {
+    return this.api
+      .get<ResourceResponse<SharePointBrowseResponse>>(
+        '/departamentos/publicaciones/atlas-global/sharepoint/browse',
+        itemId ? { item_id: itemId } : undefined,
+      )
+      .pipe(map((response) => response.data));
+  }
+
+  importManyGlobalAtlasSharePoint(
+    sharepointFileIds: string[],
+  ): Observable<SharePointAtlasImportResponse> {
+    return this.api.post<SharePointAtlasImportResponse>(
+      '/departamentos/publicaciones/atlas-global/sharepoint/import-many',
+      { sharepoint_file_ids: sharepointFileIds },
+    );
+  }
+
   getPublicAtlasByDepartamento(departamentoId: string): Observable<ObservatorioPublicacion[]> {
     return this.api
       .get<ResourceResponse<ObservatorioPublicacion[]>>(
@@ -85,7 +126,7 @@ export class PublicacionService {
     departamentoId: string,
     itemId?: string | null,
   ): Observable<SharePointBrowseResponse> {
-    return this.browseSharePointFolder(departamentoId, 'atlas', itemId);
+    return this.browseSharePointFolder(departamentoId, 'libros', itemId);
   }
 
   browseSharePointFolder(
@@ -125,7 +166,7 @@ export class PublicacionService {
     departamentoId: string,
     sharepointFileIds: string[],
   ): Observable<SharePointAtlasImportResponse> {
-    return this.importManySharePoint(departamentoId, 'atlas', sharepointFileIds);
+    return this.importManySharePoint(departamentoId, 'libros', sharepointFileIds);
   }
 
   importManySharePoint(
@@ -154,7 +195,7 @@ export class PublicacionService {
   syncSharePointAtlas(departamentoId: string): Observable<ObservatorioPublicacion[]> {
     return this.api
       .post<ResourceResponse<ObservatorioPublicacion[]>>(
-        `/departamentos/${departamentoId}/publicaciones/atlas/sharepoint/sync`,
+        `/departamentos/${departamentoId}/publicaciones/libros/sharepoint/sync`,
         {},
       )
       .pipe(map((response) => response.data));

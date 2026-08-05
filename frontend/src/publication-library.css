@@ -1,0 +1,511 @@
+/* Compact publication library, scoped to the observatory management view. */
+app-departamento-detail .publication-table {
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+app-departamento-detail .publication-table-header,
+app-departamento-detail .publication-list-row {
+  display: grid;
+  grid-template-columns: minmax(240px, 2fr) 104px minmax(130px, 0.9fr) minmax(112px, 0.8fr) minmax(150px, 1fr) minmax(126px, 0.85fr) 64px;
+  gap: 16px;
+  align-items: center;
+}
+
+app-departamento-detail .publication-table-header {
+  min-height: 46px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+app-departamento-detail .publication-table-header .actions-column {
+  text-align: center;
+}
+
+app-departamento-detail .publication-list-item {
+  display: block;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  transition: background 0.18s ease, box-shadow 0.18s ease;
+}
+
+app-departamento-detail .publication-list-item:last-child {
+  border-bottom: 0;
+}
+
+app-departamento-detail .publication-list-item:hover,
+app-departamento-detail .publication-list-item.is-expanded {
+  background: var(--bg-secondary);
+}
+
+app-departamento-detail .publication-list-item.is-expanded {
+  box-shadow: inset 3px 0 0 var(--primary-color);
+}
+
+app-departamento-detail .publication-list-row {
+  min-height: 82px;
+  padding: 12px 18px;
+}
+
+app-departamento-detail .publication-primary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 12px;
+}
+
+app-departamento-detail .publication-list-icon {
+  display: inline-flex;
+  flex: 0 0 38px;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+app-departamento-detail .publication-list-icon mat-icon {
+  width: 19px;
+  height: 19px;
+  font-size: 19px;
+}
+
+app-departamento-detail .publication-list-icon.article {
+  border-color: var(--info-border);
+  background: var(--info-bg);
+  color: var(--info-color);
+}
+
+app-departamento-detail .publication-list-icon.report {
+  border-color: rgba(99, 102, 241, 0.24);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary-color);
+}
+
+app-departamento-detail .publication-list-icon.book {
+  border-color: var(--warning-border);
+  background: var(--warning-bg);
+  color: var(--warning-color);
+}
+
+app-departamento-detail .publication-title-block,
+app-departamento-detail .uploader-cell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+app-departamento-detail .publication-code {
+  color: var(--uleam-red);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+app-departamento-detail .publication-title {
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+app-departamento-detail .publication-cell {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+app-departamento-detail .uploader-cell small {
+  color: var(--text-tertiary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+app-departamento-detail .status-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+}
+
+app-departamento-detail .publication-state,
+app-departamento-detail .subscriber-badge {
+  justify-content: center;
+  min-width: 108px;
+  min-height: 27px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+app-departamento-detail .publication-state mat-icon,
+app-departamento-detail .subscriber-badge mat-icon,
+app-departamento-detail .dataset-status-badge mat-icon {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+app-departamento-detail .file-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+app-departamento-detail .file-cell mat-icon {
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  color: var(--text-tertiary);
+  font-size: 17px;
+}
+
+app-departamento-detail .publication-row-actions {
+  display: flex;
+  justify-content: center;
+}
+
+app-departamento-detail .publication-row-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+app-departamento-detail .publication-row-menu-button:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+app-departamento-detail .publication-row-menu-button mat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+app-departamento-detail .publication-expanded-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding: 16px 74px 18px 68px;
+  border-top: 1px dashed var(--border-color);
+  background: color-mix(in srgb, var(--bg-tertiary) 55%, transparent);
+}
+
+app-departamento-detail .publication-expanded-details span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-tertiary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+app-departamento-detail .publication-expanded-details p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+app-departamento-detail .section-heading-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+app-departamento-detail .section-search-field {
+  width: min(280px, 34vw);
+  font-size: 0.82rem;
+}
+
+app-departamento-detail .section-search-field .mat-mdc-form-field-infix {
+  min-height: 42px;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+app-departamento-detail .section-search-field .mat-mdc-text-field-wrapper {
+  background: var(--card-bg);
+}
+
+app-departamento-detail .section-search-field input,
+app-departamento-detail .section-search-field mat-icon {
+  color: var(--text-primary);
+}
+
+app-departamento-detail .dataset-table-header,
+app-departamento-detail .dataset-list-row {
+  grid-template-columns: minmax(260px, 2fr) 100px 110px 132px minmax(150px, 1fr) 150px;
+}
+
+app-departamento-detail .publication-list-icon.dataset {
+  border-color: var(--success-border);
+  background: var(--success-bg);
+  color: var(--success-color);
+}
+
+app-departamento-detail .dataset-description {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+app-departamento-detail .dataset-records {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+app-departamento-detail .dataset-records mat-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-tertiary);
+  font-size: 16px;
+}
+
+app-departamento-detail .dataset-status-cell {
+  display: flex;
+  justify-content: center;
+}
+
+app-departamento-detail .dataset-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 108px;
+  min-height: 28px;
+  padding: 4px 9px;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+app-departamento-detail .dataset-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+app-departamento-detail .dataset-view-button {
+  min-width: 82px;
+  height: 38px;
+  border-color: var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-weight: 750;
+}
+
+app-departamento-detail .dataset-view-button mat-icon {
+  width: 17px;
+  height: 17px;
+  margin-right: 5px;
+  font-size: 17px;
+}
+
+app-departamento-detail .compact-empty-state {
+  padding: 26px;
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+app-departamento-detail .management-content-tabs {
+  display: block;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--card-bg);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.07);
+}
+
+app-departamento-detail .management-content-tabs .mat-mdc-tab-header {
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+app-departamento-detail .management-content-tabs .mat-mdc-tab-label-container {
+  padding: 0 12px;
+}
+
+app-departamento-detail .management-content-tabs .mat-mdc-tab {
+  min-width: 154px;
+  height: 58px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 750;
+}
+
+app-departamento-detail .management-content-tabs .mdc-tab__text-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+}
+
+app-departamento-detail .management-content-tabs .mdc-tab__text-label > mat-icon {
+  width: 19px;
+  height: 19px;
+  font-size: 19px;
+}
+
+app-departamento-detail .management-content-tabs .mat-mdc-tab.mdc-tab--active {
+  color: var(--primary-color);
+}
+
+app-departamento-detail .management-content-tabs .mdc-tab-indicator__content--underline {
+  border-color: var(--primary-color);
+  border-top-width: 3px;
+}
+
+app-departamento-detail .tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  box-sizing: border-box;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+app-departamento-detail .mat-mdc-tab.mdc-tab--active .tab-count {
+  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--primary-color);
+}
+
+app-departamento-detail .management-tab-section {
+  padding: 24px;
+}
+
+.dark app-departamento-detail .management-content-tabs {
+  box-shadow: 0 18px 44px rgba(2, 6, 23, 0.26);
+}
+
+.dark app-departamento-detail .publication-table {
+  box-shadow: 0 16px 38px rgba(2, 6, 23, 0.22);
+}
+
+.dark app-departamento-detail .publication-list-icon.report {
+  color: #a5b4fc;
+}
+
+.dark app-departamento-detail .publication-row-menu-button {
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(15, 23, 42, 0.28);
+  color: #cbd5e1;
+}
+
+.dark app-departamento-detail .publication-row-menu-button:hover {
+  border-color: rgba(129, 140, 248, 0.46);
+  background: rgba(99, 102, 241, 0.16);
+  color: #fff;
+}
+
+@media (max-width: 960px) {
+  app-departamento-detail .section-heading {
+    align-items: flex-start;
+  }
+
+  app-departamento-detail .section-heading-tools {
+    width: min(100%, 340px);
+  }
+
+  app-departamento-detail .section-search-field {
+    flex: 1;
+    width: auto;
+  }
+
+  app-departamento-detail .dataset-list-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-right: 16px;
+  }
+
+  app-departamento-detail .dataset-row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  app-departamento-detail .section-heading,
+  app-departamento-detail .section-heading-tools {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  app-departamento-detail .section-search-field {
+    width: 100%;
+  }
+
+  app-departamento-detail .dataset-list-row {
+    grid-template-columns: 1fr;
+  }
+
+  app-departamento-detail .dataset-status-cell {
+    justify-content: flex-start;
+  }
+
+  app-departamento-detail .management-content-tabs .mat-mdc-tab-label-container {
+    padding: 0;
+  }
+
+  app-departamento-detail .management-content-tabs .mat-mdc-tab {
+    min-width: 132px;
+    height: 54px;
+  }
+
+  app-departamento-detail .management-tab-section {
+    padding: 16px;
+  }
+}

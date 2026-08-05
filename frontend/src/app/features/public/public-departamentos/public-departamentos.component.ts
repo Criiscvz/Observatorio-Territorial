@@ -47,7 +47,10 @@ export class PublicDepartamentosComponent implements OnInit {
   filteredDepartamentos = signal<Departamento[]>([]);
   loading = signal(true);
   searchTerm = '';
-  readonly showEditorPanelButton = computed(() => this.authService.isEditor());
+  readonly showAdminPanelButton = computed(() => this.authService.isAdmin());
+  readonly showEditorPanelButton = computed(
+    () => !this.authService.isAdmin() && this.authService.isEditor(),
+  );
 
   private readonly deptoGradients = [
     'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',

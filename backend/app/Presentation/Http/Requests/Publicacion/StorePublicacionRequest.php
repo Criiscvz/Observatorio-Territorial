@@ -26,7 +26,7 @@ class StorePublicacionRequest extends FormRequest
         $tipo = $this->input('tipo');
 
         return [
-            'tipo' => ['required', Rule::in(['ARTICULO', 'REPORTE', 'ATLAS'])],
+            'tipo' => ['required', Rule::in(['ARTICULO', 'REPORTE', 'LIBRO', 'ATLAS'])],
             'estado' => [
                 Rule::requiredIf($this->user()?->rol === 'ADMIN'),
                 'nullable',
@@ -36,7 +36,7 @@ class StorePublicacionRequest extends FormRequest
             'titulo' => ['required', 'string', 'max:255'],
             'fecha_publicacion' => ['required', 'date'],
             'link_url' => [
-                Rule::requiredIf(in_array($this->input('tipo'), ['ARTICULO', 'REPORTE'], true)),
+                Rule::requiredIf($tipo === 'REPORTE'),
                 'nullable',
                 'url:http,https',
                 'max:2048',
@@ -60,7 +60,7 @@ class StorePublicacionRequest extends FormRequest
                     'max:20480',
                 ],
                 default => [
-                    Rule::requiredIf($tipo === 'ATLAS'),
+                    Rule::requiredIf(in_array($tipo, ['LIBRO', 'ATLAS'], true)),
                     'file',
                     'mimetypes:application/pdf,application/x-pdf',
                     'mimes:pdf',

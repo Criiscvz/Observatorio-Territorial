@@ -82,7 +82,7 @@ class PublicController extends Controller
 
         $query = ObservatorioPublicacion::query()
             ->where('departamento_id', $id)
-            ->where('tipo', 'ATLAS')
+            ->where('tipo', 'LIBRO')
             ->where('estado', 'PUBLICACION')
             ->latest('fecha_publicacion');
 
@@ -94,7 +94,7 @@ class PublicController extends Controller
         $query = ObservatorioPublicacion::query()
             ->where('tipo', 'ATLAS')
             ->where('estado', 'PUBLICACION')
-            ->whereHas('departamento', fn($departamentoQuery) => $departamentoQuery->where('publico', true))
+            ->whereNull('departamento_id')
             ->latest('fecha_publicacion');
 
         return PublicacionResource::collection($query->get());

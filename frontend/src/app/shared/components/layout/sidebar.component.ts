@@ -66,6 +66,19 @@ interface NavItem {
           </a>
         }
 
+        <a
+          *isAdmin
+          class="nav-item"
+          routerLink="/admin/atlas/subir"
+          routerLinkActive="active"
+          (click)="navigate.emit()"
+        >
+          <div class="nav-icon-wrapper">
+            <mat-icon class="nav-icon">map</mat-icon>
+          </div>
+          <span class="nav-text">Subir Atlas</span>
+        </a>
+
         <!-- Gestión de Usuarios - solo admin -->
         <a
           *isAdmin

@@ -27,6 +27,11 @@
         {{ 'public.home.nav.dimensions' | translate }}
       </a>
 
+      <a routerLink="/publico/atlas" routerLinkActive="active" class="nav-link">
+        <mat-icon>map</mat-icon>
+        {{ 'public.home.nav.atlas' | translate }}
+      </a>
+
       <!-- Menú Barómetro -->
       <button class="nav-link" [matMenuTriggerFor]="barometerMenu">
         <mat-icon>speed</mat-icon>
@@ -204,6 +209,11 @@
         {{ 'public.home.nav.dimensions' | translate }}
       </a>
 
+      <a routerLink="/publico/atlas" class="nav-link" (click)="mobileMenuOpen.set(false)">
+        <mat-icon>map</mat-icon>
+        {{ 'public.home.nav.atlas' | translate }}
+      </a>
+
       <!-- Menu Barometro -->
       <button class="nav-link" (click)="showBarometer.set(!showBarometer())">
         <mat-icon>speed</mat-icon>
@@ -229,4 +239,3 @@
     </nav>
   </div>
 }
-

@@ -126,6 +126,7 @@ export class PublicAtlasComponent implements OnInit {
       data: {
         departamentos: this.departamentos(),
         target: 'atlas',
+        context: 'global-atlas',
       },
     });
 

@@ -24,6 +24,7 @@ import {
 interface DialogData {
   departamentos: Departamento[];
   target?: SharePointImportTarget;
+  context?: 'global-atlas' | 'observatorio';
 }
 
 @Component({
@@ -49,9 +50,22 @@ export class SharePointAtlasImportDialogComponent {
   private readonly destroyRef = inject(DestroyRef);
   readonly data = inject<DialogData>(MAT_DIALOG_DATA);
   readonly target: SharePointImportTarget = this.data.target ?? 'atlas';
-  readonly rootLabel = this.target === 'atlas' ? 'Atlas' : 'Barómetro';
+  readonly isObservatorioContext = this.data.context === 'observatorio';
+  readonly isGlobalAtlasContext = this.target === 'atlas' && !this.isObservatorioContext;
+  readonly rootLabel =
+    this.target === 'atlas' && this.isObservatorioContext
+      ? 'Libros'
+      : this.target === 'atlas'
+        ? 'Atlas'
+        : 'Barómetro';
   readonly destinationLabel =
-    this.target === 'articulos' ? 'Artículos' : this.target === 'reportes' ? 'Reportes' : 'Atlas PDF';
+    this.target === 'articulos'
+      ? 'Artículos'
+      : this.target === 'reportes'
+        ? 'Reportes'
+        : this.isObservatorioContext
+          ? 'Libros PDF'
+          : 'Atlas PDF';
 
   selectedDepartamentoId = signal<string>(this.data.departamentos[0]?.id ?? '');
   browser = signal<SharePointBrowseResponse | null>(null);
@@ -69,7 +83,7 @@ export class SharePointAtlasImportDialogComponent {
   });
 
   constructor() {
-    if (this.selectedDepartamentoId()) {
+    if (this.isGlobalAtlasContext || this.selectedDepartamentoId()) {
       this.loadFolder(null);
     }
   }
@@ -83,8 +97,8 @@ export class SharePointAtlasImportDialogComponent {
 
   loadFolder(itemId: string | null): void {
     const departamentoId = this.selectedDepartamentoId();
-    if (!departamentoId) return;
-    const cacheKey = `${departamentoId}:${itemId ?? 'root'}`;
+    if (!this.isGlobalAtlasContext && !departamentoId) return;
+    const cacheKey = `${this.isGlobalAtlasContext ? 'global-atlas' : departamentoId}:${itemId ?? 'root'}`;
     const cachedFolder = this.folderCache.get(cacheKey);
     if (cachedFolder) {
       this.browser.set(cachedFolder);
@@ -95,8 +109,11 @@ export class SharePointAtlasImportDialogComponent {
 
     this.loading.set(true);
     this.error.set(null);
-    this.publicacionService
-      .browseSharePointFolder(departamentoId, this.target, itemId)
+    const request = this.isGlobalAtlasContext
+      ? this.publicacionService.browseGlobalAtlasSharePointFolder(itemId)
+      : this.publicacionService.browseSharePointFolder(departamentoId, this.target, itemId);
+
+    request
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (browser) => {
@@ -146,12 +163,15 @@ export class SharePointAtlasImportDialogComponent {
   importSelected(): void {
     const departamentoId = this.selectedDepartamentoId();
     const ids = Array.from(this.selectedFiles().keys());
-    if (!departamentoId || ids.length === 0 || this.importing()) return;
+    if ((!this.isGlobalAtlasContext && !departamentoId) || ids.length === 0 || this.importing()) return;
 
     this.importing.set(true);
     this.error.set(null);
-    this.publicacionService
-      .importManySharePoint(departamentoId, this.target, ids)
+    const request = this.isGlobalAtlasContext
+      ? this.publicacionService.importManyGlobalAtlasSharePoint(ids)
+      : this.publicacionService.importManySharePoint(departamentoId, this.target, ids);
+
+    request
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => this.dialogRef.close(result),

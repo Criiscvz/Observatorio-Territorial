@@ -42,8 +42,8 @@
             {{ articulos().length }} Artículos
           </span>
           <span class="stat">
-            <mat-icon>map</mat-icon>
-            {{ atlas().length }} Atlas
+            <mat-icon>menu_book</mat-icon>
+            {{ atlas().length }} {{ atlas().length === 1 ? 'Libro' : 'Libros' }}
           </span>
         </div>
       </div>
@@ -315,8 +315,8 @@
 
       <mat-tab>
         <ng-template mat-tab-label>
-          <mat-icon>map</mat-icon>
-          <span>Atlas</span>
+          <mat-icon>menu_book</mat-icon>
+          <span>Libros</span>
         </ng-template>
 
         <section class="tab-section atlas-section">
@@ -334,8 +334,8 @@
                       <div class="articulo-cover" [style.background]="'linear-gradient(135deg, ' + grupo.color + ' 0%, #1e1b4b 100%)'">
                         <div class="cover-pattern"></div>
                         <span class="articulo-categoria-badge">
-                          <mat-icon>map</mat-icon>
-                          Atlas ULEAM
+                          <mat-icon>menu_book</mat-icon>
+                          Libros ULEAM
                         </span>
                         @if (isSubscriberContent(item)) {
                           <span class="subscription-badge">
@@ -392,9 +392,9 @@
             }
           } @else {
             <div class="empty-state">
-              <mat-icon>map</mat-icon>
-              <h3>No hay Atlas publicados para este Observatorio.</h3>
-              <p>Aún no se han publicado Atlas para este observatorio.</p>
+              <mat-icon>menu_book</mat-icon>
+              <h3>No hay Libros publicados para este Observatorio.</h3>
+              <p>Aún no se han publicado Libros para este observatorio.</p>
             </div>
           }
         </section>

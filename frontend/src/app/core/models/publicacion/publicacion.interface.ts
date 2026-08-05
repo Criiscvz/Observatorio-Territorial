@@ -1,4 +1,4 @@
-export type TipoPublicacion = 'ARTICULO' | 'REPORTE' | 'ATLAS';
+export type TipoPublicacion = 'ARTICULO' | 'REPORTE' | 'LIBRO' | 'ATLAS';
 export type EstadoPublicacion =
   | 'PUBLICACION'
   | 'EN_REVISION'
@@ -7,7 +7,7 @@ export type EstadoPublicacion =
 
 export interface ObservatorioPublicacion {
   id: string;
-  departamento_id: string;
+  departamento_id?: string | null;
   creado_por?: number | null;
   creador?: {
     id: number;

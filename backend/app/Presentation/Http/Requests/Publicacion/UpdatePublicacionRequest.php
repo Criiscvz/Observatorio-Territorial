@@ -36,7 +36,7 @@ class UpdatePublicacionRequest extends FormRequest
             'titulo' => ['required', 'string', 'max:255'],
             'fecha_publicacion' => ['required', 'date'],
             'link_url' => [
-                Rule::requiredIf(in_array($publicacion?->tipo, ['ARTICULO', 'REPORTE'], true)),
+                Rule::requiredIf($tipo === 'REPORTE'),
                 'nullable',
                 'url:http,https',
                 'max:2048',

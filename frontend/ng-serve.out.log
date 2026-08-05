@@ -1,0 +1,70 @@
+
+> frontend@0.0.0 start
+> ng serve
+
+[33m>[39m Building...
+[32m√[39m Building...
+[35mBrowser bundles[39m     
+[1mInitial chunk files[22m [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m          [2m | [22m[2mstyles[22m                              [2m | [22m[36m172.88 kB[39m[2m | [22m
+[32mmain.js[39m             [2m | [22m[2mmain[22m                                [2m | [22m [36m31.27 kB[39m[2m | [22m
+[32mchunk-OD4YICNA.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m  [36m8.69 kB[39m[2m | [22m
+[32mchunk-AXI4IKM6.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m  [36m1.79 kB[39m[2m | [22m
+[32mchunk-VUJOFXKG.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m[36m938 bytes[39m[2m | [22m
+
+[1m [22m                   [2m | [22m[1mInitial total[22m                       [2m | [22m[1m215.56 kB[22m
+
+[1mLazy chunk files[22m    [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m
+[32mchunk-DVLIQOWD.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m[36m222.56 kB[39m[2m | [22m
+[32mchunk-MHXSPND3.js[39m   [2m | [22m[2mdepartamento-detail-component[22m       [2m | [22m[36m208.35 kB[39m[2m | [22m
+[32mchunk-PMDJOIIN.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m[36m174.78 kB[39m[2m | [22m
+[32mchunk-DPNIXAFF.js[39m   [2m | [22m[2mdataset-view-component[22m              [2m | [22m[36m129.27 kB[39m[2m | [22m
+[32mchunk-HAROHSGC.js[39m   [2m | [22m[2mpublic-departamento-detail-component[22m[2m | [22m[36m122.04 kB[39m[2m | [22m
+[32mchunk-IFAG55IJ.js[39m   [2m | [22m[2mbarometer-view-component[22m            [2m | [22m[36m112.28 kB[39m[2m | [22m
+[32mchunk-JVY2EDMH.js[39m   [2m | [22m[2mdashboard-component[22m                 [2m | [22m[36m104.20 kB[39m[2m | [22m
+[32mchunk-QJ5CU6ZV.js[39m   [2m | [22m[2mpublic-home-component[22m               [2m | [22m[36m103.16 kB[39m[2m | [22m
+[32mchunk-OO3YDYJT.js[39m   [2m | [22m[2mdataset-upload-component[22m            [2m | [22m [36m83.67 kB[39m[2m | [22m
+[32mchunk-M44TDGAR.js[39m   [2m | [22m[2mmain-layout-component[22m               [2m | [22m [36m73.72 kB[39m[2m | [22m
+[32mchunk-PWPEGPOG.js[39m   [2m | [22m[2mpublic-atlas-component[22m              [2m | [22m [36m73.64 kB[39m[2m | [22m
+[32mchunk-4J7B7YXS.js[39m   [2m | [22m[2mprofile-component[22m                   [2m | [22m [36m65.38 kB[39m[2m | [22m
+[32mchunk-MK7GV5YH.js[39m   [2m | [22m[2musuario-list-component[22m              [2m | [22m [36m60.95 kB[39m[2m | [22m
+[32mchunk-X3ZU7B37.js[39m   [2m | [22m[2m-[22m                                   [2m | [22m [36m57.18 kB[39m[2m | [22m
+[32mchunk-ZGORJZ62.js[39m   [2m | [22m[2mpublic-departamentos-component[22m      [2m | [22m [36m52.91 kB[39m[2m | [22m
+[2m...and 28 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+
+[35mServer bundles[39m      
+[1mInitial chunk files[22m [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m
+[32mmain.server.mjs[39m     [2m | [22m[2mmain.server[22m                         [2m | [22m [36m32.86 kB[39m[2m | [22m
+[32mchunk-EHEGUCBX.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m  [36m8.72 kB[39m[2m | [22m
+[32mchunk-Z7ZHNCMP.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m  [36m1.82 kB[39m[2m | [22m
+[32mserver.mjs[39m          [2m | [22m[2mserver[22m                              [2m | [22m  [36m1.81 kB[39m[2m | [22m
+[32mchunk-54EZUNS5.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m[36m972 bytes[39m[2m | [22m
+[32mpolyfills.server.mjs[39m[2m | [22m[2mpolyfills.server[22m                    [2m | [22m[36m243 bytes[39m[2m | [22m
+
+[1mLazy chunk files[22m    [2m | [22m[1mNames[22m                               [2m | [22m [1mRaw size[22m
+[32mchunk-ZLCGGTME.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m[36m222.60 kB[39m[2m | [22m
+[32mchunk-M53L7IDK.mjs[39m  [2m | [22m[2mdepartamento-detail-component[22m       [2m | [22m[36m208.39 kB[39m[2m | [22m
+[32mchunk-VYEZI55C.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m[36m174.82 kB[39m[2m | [22m
+[32mchunk-4KJ4NL4Q.mjs[39m  [2m | [22m[2mdataset-view-component[22m              [2m | [22m[36m129.31 kB[39m[2m | [22m
+[32mchunk-QC6EOD6A.mjs[39m  [2m | [22m[2mpublic-departamento-detail-component[22m[2m | [22m[36m122.08 kB[39m[2m | [22m
+[32mchunk-VHY3UVZQ.mjs[39m  [2m | [22m[2mbarometer-view-component[22m            [2m | [22m[36m112.32 kB[39m[2m | [22m
+[32mchunk-XPR73OOC.mjs[39m  [2m | [22m[2mdashboard-component[22m                 [2m | [22m[36m104.24 kB[39m[2m | [22m
+[32mchunk-CBOYSAPT.mjs[39m  [2m | [22m[2mpublic-home-component[22m               [2m | [22m[36m103.20 kB[39m[2m | [22m
+[32mchunk-KOURUVA3.mjs[39m  [2m | [22m[2mdataset-upload-component[22m            [2m | [22m [36m83.70 kB[39m[2m | [22m
+[32mchunk-E3LB2SVS.mjs[39m  [2m | [22m[2mmain-layout-component[22m               [2m | [22m [36m73.76 kB[39m[2m | [22m
+[32mchunk-NTR5DHY3.mjs[39m  [2m | [22m[2mpublic-atlas-component[22m              [2m | [22m [36m73.68 kB[39m[2m | [22m
+[32mchunk-RIHL67NO.mjs[39m  [2m | [22m[2mprofile-component[22m                   [2m | [22m [36m65.42 kB[39m[2m | [22m
+[32mchunk-NYXJM6QY.mjs[39m  [2m | [22m[2musuario-list-component[22m              [2m | [22m [36m60.99 kB[39m[2m | [22m
+[32mchunk-T7VE76H7.mjs[39m  [2m | [22m[2m-[22m                                   [2m | [22m [36m57.21 kB[39m[2m | [22m
+[32mchunk-7FJYQPZK.mjs[39m  [2m | [22m[2mpublic-departamentos-component[22m      [2m | [22m [36m52.95 kB[39m[2m | [22m
+[2m...and 28 more lazy chunks files. Use "--verbose" to show all the files.[22m
+
+Application bundle generation complete. [17.753 seconds] - 2026-07-19T21:32:44.166Z
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+[2m4:32:45 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m Re-optimizing dependencies because lockfile has changed
+[2m4:32:45 p. m.[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m Re-optimizing dependencies because lockfile has changed
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4200[22m/[39m
+[2m[32m  ➜[39m[22m[2m  press [22m[1mh + enter[22m[2m to show help[22m

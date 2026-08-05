@@ -84,7 +84,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
 
   atlasAgrupados = computed(() => [
     {
-      categoria: 'Atlas ULEAM',
+      categoria: 'Libros ULEAM',
       color: '#6366F1',
       items: this.atlas(),
     },
@@ -223,7 +223,7 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   openAtlasPdf(atlas: ObservatorioPublicacion): void {
     this.publicacionService.openPdf(atlas).subscribe((opened) => {
       if (!opened) {
-        this.snackBar.open('No hay PDF disponible para este Atlas.', 'Cerrar', {
+        this.snackBar.open('No hay PDF disponible para este libro.', 'Cerrar', {
           duration: 3500,
         });
       }

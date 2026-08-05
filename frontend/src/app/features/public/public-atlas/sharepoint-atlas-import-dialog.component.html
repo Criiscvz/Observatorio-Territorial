@@ -19,18 +19,28 @@
 
   <mat-dialog-content class="sharepoint-dialog__body">
     <section class="sharepoint-config">
-      <mat-form-field appearance="outline" class="department-field">
-        <mat-label>Observatorio destino</mat-label>
-        <mat-select
-          [ngModel]="selectedDepartamentoId()"
-          (ngModelChange)="changeDepartamento($event)"
-          [disabled]="loading() || importing()"
-        >
-          @for (departamento of data.departamentos; track departamento.id) {
-            <mat-option [value]="departamento.id">{{ departamento.nombre }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      @if (!isGlobalAtlasContext) {
+        <mat-form-field appearance="outline" class="department-field">
+          <mat-label>Observatorio destino</mat-label>
+          <mat-select
+            [ngModel]="selectedDepartamentoId()"
+            (ngModelChange)="changeDepartamento($event)"
+            [disabled]="loading() || importing()"
+          >
+            @for (departamento of data.departamentos; track departamento.id) {
+              <mat-option [value]="departamento.id">{{ departamento.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      } @else {
+        <div class="department-field global-target">
+          <mat-icon>map</mat-icon>
+          <div>
+            <strong>Destino global</strong>
+            <span>Atlas</span>
+          </div>
+        </div>
+      }
 
       <div class="selected-counter" aria-live="polite">
         <span class="selected-counter__icon"><mat-icon>checklist</mat-icon></span>

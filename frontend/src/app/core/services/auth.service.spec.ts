@@ -96,7 +96,7 @@ describe('AuthService', () => {
         expect(localStorage.getItem('auth_token')).toBeNull();
         expect(localStorage.getItem('auth_user')).toBeNull();
         expect(localStorage.getItem('auth_expires_at')).toBeNull();
-        expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
+        expect(routerSpy.navigate).toHaveBeenCalledWith(['/publico/departamentos']);
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/logout`);
@@ -109,7 +109,7 @@ describe('AuthService', () => {
 
       service.logout().subscribe(() => {
         expect(service.token()).toBeNull();
-        expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/login']);
+        expect(routerSpy.navigate).toHaveBeenCalledWith(['/publico/departamentos']);
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/logout`);

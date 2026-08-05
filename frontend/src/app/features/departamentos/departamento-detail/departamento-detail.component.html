@@ -44,9 +44,9 @@
           <mat-icon>bar_chart</mat-icon>
           Agregar reporte Power BI
         </button>
-        <button mat-raised-button color="primary" type="button" (click)="openPublicationForm('ATLAS')">
+        <button mat-raised-button color="primary" type="button" (click)="openPublicationForm('LIBRO')">
           <mat-icon>picture_as_pdf</mat-icon>
-          Agregar Atlas PDF
+          Agregar Libro PDF
         </button>
         <span class="publication-action-spacer"></span>
         <button
@@ -77,7 +77,7 @@
               }}</span>
               <h2 id="publication-form-title">
                 @if (editingPublication()) {
-                  Editar {{ isArticulo ? 'artículo' : isAtlas ? 'Atlas' : 'reporte Power BI' }}
+                  Editar {{ isArticulo ? 'artículo' : isLibro ? 'Libro' : 'reporte Power BI' }}
                 } @else {
                   Agregar {{ getPublicacionTipoLabel(tipo) }}
                 }
@@ -85,7 +85,7 @@
             </div>
           </div>
           <form [formGroup]="publicationForm" (ngSubmit)="savePublication()">
-            @if ((isArticulo || isReporte || isAtlas) && isAdmin()) {
+            @if ((isArticulo || isReporte || isLibro) && isAdmin()) {
               <div class="form-import-actions">
                 @if (isArticulo) {
                   <button mat-raised-button color="primary" type="button" (click)="importSharePointArticulos()">
@@ -93,7 +93,7 @@
                     Importar desde SharePoint
                   </button>
                 }
-                @if (isAtlas) {
+                @if (isLibro) {
                   <button mat-raised-button color="primary" type="button" (click)="importSharePointAtlas()">
                     <mat-icon>cloud_download</mat-icon>
                     Importar desde SharePoint
@@ -169,7 +169,6 @@
                     <mat-error>Ingrese una fecha válida.</mat-error>
                   }
                 </mat-form-field>
-                @if (!isAtlas) {
                 <mat-form-field appearance="outline" class="url-field"
                   ><mat-label>{{ isReporte ? 'URL de Power BI' : 'Link URL' }}</mat-label
                   ><input matInput type="url" formControlName="link_url" autocomplete="url" />
@@ -182,10 +181,13 @@
                     publicationForm.controls.link_url.touched &&
                     publicationForm.controls.link_url.invalid
                   ) {
-                    <mat-error>Ingrese una URL válida con http o https.</mat-error>
+                    <mat-error>{{
+                      publicationForm.controls.link_url.hasError('required')
+                        ? 'La URL de Power BI es obligatoria.'
+                        : 'Ingrese una URL válida con http o https.'
+                    }}</mat-error>
                   }
                 </mat-form-field>
-                }
                 <mat-form-field appearance="outline"
                   ><mat-label>Fuente</mat-label><input matInput formControlName="fuente" />
                   @if (
@@ -274,8 +276,8 @@
                             {{
                               isReporte
                                 ? 'Subir PDF del reporte'
-                                : isAtlas
-                                  ? 'Subir PDF del atlas'
+                                : isLibro
+                                  ? 'Subir PDF del libro'
                                   : 'Subir PDF del artículo'
                             }}
                           </strong>
@@ -326,7 +328,7 @@
                     <mat-icon>save</mat-icon>
                   }
                   {{ editingPublication() ? 'Actualizar' : 'Guardar' }}
-                  {{ isArticulo ? 'artículo' : isAtlas ? 'Atlas' : 'reporte' }}
+                  {{ isArticulo ? 'artículo' : isLibro ? 'Libro' : 'reporte' }}
                 </button>
               </div>
           </form>
@@ -340,7 +342,7 @@
               <span class="eyebrow">Revisión</span>
               <h2 id="review-panel-title">Publicaciones en revisión</h2>
               <p class="section-subtitle">
-                Artículos, reportes y atlas pendientes de revisión
+                Artículos, reportes y libros pendientes de revisión
               </p>
             </div>
             <div class="heading-actions">
@@ -474,52 +476,114 @@
             <div class="empty-state review-empty">
               <mat-icon>fact_check</mat-icon>
               <h3>No hay publicaciones en revisión para este observatorio.</h3>
-              <p>Cuando un editor envíe artículos, reportes o atlas, aparecerán aquí.</p>
+              <p>Cuando un editor envíe artículos, reportes o libros, aparecerán aquí.</p>
             </div>
           }
         </section>
       }
     }
 
-    <section class="datasets-section">
+    <mat-tab-group class="management-content-tabs" animationDuration="200ms" mat-stretch-tabs="false">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>folder_open</mat-icon>
+          <span>Conjuntos de Datos</span>
+          <span class="tab-count">{{ datasets().length }}</span>
+        </ng-template>
+    <section class="datasets-section management-tab-section">
       <div class="section-heading">
-        <h2>{{ 'departamentos.detail.datasets' | translate }}</h2>
+        <div>
+          <span class="eyebrow">Datos</span>
+          <h2>{{ 'departamentos.detail.datasets' | translate }}</h2>
+        </div>
+        <div class="section-heading-tools">
+          <mat-form-field appearance="outline" class="section-search-field" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              type="search"
+              aria-label="Buscar conjunto de datos"
+              placeholder="Buscar conjunto de datos…"
+              [value]="datasetSearchTerm()"
+              (input)="datasetSearchTerm.set($any($event.target).value)"
+            />
+            @if (datasetSearchTerm()) {
+              <button matSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda" (click)="clearSearch('datasets')">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+          <span class="count">{{ filteredDatasets().length }}</span>
+        </div>
       </div>
-      @if (datasets().length > 0) {
-        <div class="resource-grid">
-          @for (dataset of datasets(); track dataset.id) {
-            <mat-card
-              ><mat-card-header
-                ><mat-icon mat-card-avatar>table_chart</mat-icon
-                ><mat-card-title>{{ dataset.nombre }}</mat-card-title
-                ><mat-card-subtitle
-                  >{{ dataset.total_registros | number }}
-                  {{ 'departamentos.detail.records' | translate }}</mat-card-subtitle
-                ></mat-card-header
-              ><mat-card-content
-                ><p>
-                  {{ dataset.descripcion || ('departamentos.detail.noDescription' | translate) }}
-                </p>
-                <span class="status" [class]="getEstadoClass(dataset.estado)">{{
-                  dataset.estado
-                }}</span></mat-card-content
-              ><mat-card-actions align="end"
-                ><a mat-button color="primary" [routerLink]="['/admin/datasets', dataset.id]"
-                  ><mat-icon>analytics</mat-icon
-                  >{{ 'departamentos.detail.viewAnalysis' | translate }}</a
-                >
-                @if (canManagePublications) {
-                  <button mat-icon-button [matMenuTriggerFor]="datasetMenu">
-                    <mat-icon>more_vert</mat-icon></button
-                  ><mat-menu #datasetMenu="matMenu"
-                    ><button mat-menu-item (click)="deleteDataset(dataset)">
-                      <mat-icon color="warn">delete</mat-icon>Eliminar
-                    </button></mat-menu
+      @if (filteredDatasets().length > 0) {
+        <div class="publication-table dataset-list-table" role="table" aria-label="Conjuntos de datos del Observatorio">
+          <div class="publication-table-header dataset-table-header" role="row">
+            <span>Conjunto de datos</span>
+            <span>Registros</span>
+            <span>Fecha</span>
+            <span>Estado</span>
+            <span>Archivo</span>
+            <span class="actions-column">Acciones</span>
+          </div>
+          @for (dataset of filteredDatasets(); track dataset.id) {
+            <article class="publication-list-item">
+              <div class="publication-list-row dataset-list-row" role="row">
+                <div class="publication-primary" role="cell">
+                  <span class="publication-list-icon dataset"><mat-icon>table_chart</mat-icon></span>
+                  <span class="publication-title-block">
+                    <strong class="publication-title">{{ dataset.nombre }}</strong>
+                    <span class="dataset-description">{{ dataset.descripcion || 'Sin descripción' }}</span>
+                  </span>
+                </div>
+                <span class="publication-cell dataset-records" data-label="Registros" role="cell">
+                  <mat-icon>grid_on</mat-icon>{{ dataset.total_registros | number }}
+                </span>
+                <span class="publication-cell" data-label="Fecha" role="cell">
+                  {{ dataset.fecha_carga ? (dataset.fecha_carga | date: 'dd/MM/yyyy') : 'Sin fecha' }}
+                </span>
+                <span class="publication-cell dataset-status-cell" data-label="Estado" role="cell">
+                  <span [class]="'dataset-status-badge ' + getEstadoClass(dataset.estado)">
+                    <mat-icon>{{ getDatasetStatusIcon(dataset.estado) }}</mat-icon>
+                    {{ getDatasetStatusLabel(dataset.estado) }}
+                  </span>
+                </span>
+                <span class="publication-cell file-cell" data-label="Archivo" role="cell">
+                  <mat-icon>description</mat-icon>{{ dataset.nombre_archivo || 'No disponible' }}
+                </span>
+                <div class="dataset-row-actions" role="cell">
+                  <a
+                    mat-stroked-button
+                    class="dataset-view-button"
+                    [routerLink]="['/admin/datasets', dataset.id]"
+                    ><mat-icon>visibility</mat-icon>Ver</a
                   >
-                }
-              </mat-card-actions></mat-card
-            >
+                  @if (isAdmin()) {
+                    <button
+                      mat-icon-button
+                      type="button"
+                      class="publication-row-menu-button"
+                      [matMenuTriggerFor]="datasetMenu"
+                      [attr.aria-label]="'Más opciones para ' + dataset.nombre"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #datasetMenu="matMenu" xPosition="before">
+                      <button mat-menu-item class="danger-menu-item" (click)="deleteDataset(dataset)">
+                        <mat-icon>delete</mat-icon><span>Eliminar</span>
+                      </button>
+                    </mat-menu>
+                  }
+                </div>
+              </div>
+            </article>
           }
+        </div>
+      } @else if (datasets().length > 0) {
+        <div class="empty-state compact-empty-state">
+          <mat-icon>search_off</mat-icon>
+          <h3>No se encontraron conjuntos de datos</h3>
+          <p>Prueba con otro nombre, archivo o estado.</p>
         </div>
       } @else {
         <div class="empty-state">
@@ -529,32 +593,106 @@
         </div>
       }
     </section>
+      </mat-tab>
 
-    <section class="publications-section">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>article</mat-icon>
+          <span>Artículos</span>
+          <span class="tab-count">{{ articulos.length }}</span>
+        </ng-template>
+    <section class="publications-section management-tab-section">
       <div class="section-heading">
         <div>
           <span class="eyebrow">Biblioteca</span>
           <h2>Artículos subidos</h2>
         </div>
-        <span class="count">{{ articulos.length }}</span>
+        <div class="section-heading-tools">
+          <mat-form-field appearance="outline" class="section-search-field" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              type="search"
+              aria-label="Buscar artículo"
+              placeholder="Buscar artículo…"
+              [value]="articleSearchTerm()"
+              (input)="articleSearchTerm.set($any($event.target).value)"
+            />
+            @if (articleSearchTerm()) {
+              <button matSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda" (click)="clearSearch('articles')">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+          <span class="count">{{ filteredArticulos().length }}</span>
+        </div>
       </div>
       @if (loadingPublicaciones()) {
         <mat-spinner diameter="32"></mat-spinner>
-      } @else if (articulos.length) {
-        <div class="powerbi-grid">
-          @for (item of articulos; track item.id) {
-            <article class="powerbi-card">
-              @if (canEditPublication(item) || canDeletePublication(item)) {
+      } @else if (filteredArticulos().length) {
+        <div class="publication-table" role="table" aria-label="Artículos subidos">
+          <div class="publication-table-header" role="row">
+            <span>Publicación</span>
+            <span>Fecha</span>
+            <span>Estado</span>
+            <span>Fuente</span>
+            <span>Subido por</span>
+            <span>Archivo</span>
+            <span class="actions-column">Acciones</span>
+          </div>
+          @for (item of filteredArticulos(); track item.id) {
+            <article class="publication-list-item" [class.is-expanded]="isPublicationExpanded(item)">
+              <div class="publication-list-row" role="row">
+                <div class="publication-primary" role="cell">
+                  <span class="publication-list-icon article"><mat-icon>article</mat-icon></span>
+                  <span class="publication-title-block">
+                    <strong class="publication-code">{{ item.codigo }}</strong>
+                    <span class="publication-title">{{ item.titulo }}</span>
+                  </span>
+                </div>
+                <span class="publication-cell date-cell" data-label="Fecha" role="cell">
+                  {{ item.fecha_publicacion ? (item.fecha_publicacion | date: 'dd/MM/yyyy') : 'Sin fecha' }}
+                </span>
+                <div class="publication-cell status-cell" data-label="Estado" role="cell">
+                  <span [class]="getEstadoPublicacionClass(item.estado)">
+                    <mat-icon>{{ getEstadoPublicacionIcon(item.estado) }}</mat-icon>{{
+                    getEstadoPublicacionLabel(item.estado)
+                  }}</span>
+                  @if (item.solo_suscriptores) {
+                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Suscriptor</span>
+                  }
+                </div>
+                <span class="publication-cell" data-label="Fuente" role="cell">{{
+                  item.fuente || 'Sin fuente'
+                }}</span>
+                <span class="publication-cell uploader-cell" data-label="Subido por" role="cell">
+                  {{ item.creador?.name || 'No disponible' }}
+                  @if (item.creador?.rol) { <small>{{ item.creador?.rol }}</small> }
+                </span>
+                <span class="publication-cell file-cell" data-label="Archivo" role="cell">
+                  <mat-icon>{{ hasPublicationPdf(item) ? 'picture_as_pdf' : 'block' }}</mat-icon>
+                  {{ hasPublicationPdf(item) ? 'PDF disponible' : 'No disponible' }}
+                </span>
+                <div class="publication-row-actions" role="cell">
                 <button
                   mat-icon-button
                   type="button"
-                  class="publication-more-button"
+                  class="publication-row-menu-button"
                   [matMenuTriggerFor]="articleActionsMenu"
-                  aria-label="Más opciones"
+                  [attr.aria-label]="'Más opciones para ' + item.titulo"
                 >
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #articleActionsMenu="matMenu" xPosition="before" yPosition="below" class="publication-actions-menu">
+                  @if (hasPublicationPdf(item)) {
+                    <button mat-menu-item class="menu-item-action" (click)="openPdf(item)">
+                      <mat-icon>picture_as_pdf</mat-icon><span>Abrir PDF</span>
+                    </button>
+                  }
+                  <button mat-menu-item class="menu-item-action" (click)="togglePublicationDetails(item)">
+                    <mat-icon>{{ isPublicationExpanded(item) ? 'expand_less' : 'info' }}</mat-icon>
+                    <span>{{ isPublicationExpanded(item) ? 'Ocultar detalles' : 'Ver detalles' }}</span>
+                  </button>
                   @if (canEditPublication(item)) {
                     <button mat-menu-item class="menu-item-action" (click)="editPublication(item)">
                       <mat-icon>edit</mat-icon>
@@ -568,70 +706,133 @@
                     </button>
                   }
                 </mat-menu>
+              </div>
+              </div>
+              @if (isPublicationExpanded(item)) {
+                <div class="publication-expanded-details">
+                  <div><span>Descripción</span><p>{{ item.descripcion || 'Sin descripción' }}</p></div>
+                  <div><span>Autores</span><p>{{ item.autores || 'No especificados' }}</p></div>
+                  <div><span>Archivo</span><p>{{ item.nombre_archivo_original || item.sharepoint_file_name || 'No disponible' }}</p></div>
+                </div>
               }
-              <div class="powerbi-card-icon"><mat-icon>article</mat-icon></div>
-              <div class="powerbi-card-copy">
-                <div class="publication-meta">
-                  <strong>{{ item.codigo }}</strong
-                  ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
-                </div>
-                <h3>{{ item.titulo }}</h3>
-                <p>{{ item.descripcion }}</p>
-                <div class="details">
-                  <span><b>Autores:</b> {{ item.autores }}</span
-                  ><span><b>Fuente:</b> {{ item.fuente }}</span>
-                  @if (item.creador) {
-                    <span><b>Subido por:</b> {{ item.creador.name }} ({{ item.creador.rol }})</span>
-                  }
-                </div>
-                <div class="publication-badges">
-                  <span [class]="getEstadoPublicacionClass(item.estado)">{{
-                    getEstadoPublicacionLabel(item.estado)
-                  }}</span>
-                  @if (item.solo_suscriptores) {
-                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Solo suscriptores</span>
-                  }
-                </div>
-              </div>
-              <div class="publication-links powerbi-actions">
-                @if (hasPublicationPdf(item)) {
-                <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
-                  <mat-icon>open_in_new</mat-icon>Abrir PDF
-                </button>
-                }
-              </div>
             </article>
           }
+        </div>
+      } @else if (articulos.length) {
+        <div class="empty-state compact-empty-state">
+          <mat-icon>search_off</mat-icon>
+          <h3>No se encontraron artículos</h3>
+          <p>Prueba con otro título, código, autor o fuente.</p>
         </div>
       } @else {
         <p class="empty-copy">Todavía no hay artículos asociados a este Observatorio.</p>
       }
     </section>
+      </mat-tab>
 
-    <section class="publications-section">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>bar_chart</mat-icon>
+          <span>Reportes</span>
+          <span class="tab-count">{{ reportes.length }}</span>
+        </ng-template>
+    <section class="publications-section management-tab-section">
       <div class="section-heading">
         <div>
           <span class="eyebrow">Biblioteca</span>
           <h2>Reportes Power BI</h2>
         </div>
+        <div class="section-heading-tools">
+          <mat-form-field appearance="outline" class="section-search-field" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              type="search"
+              aria-label="Buscar reporte"
+              placeholder="Buscar reporte…"
+              [value]="reportSearchTerm()"
+              (input)="reportSearchTerm.set($any($event.target).value)"
+            />
+            @if (reportSearchTerm()) {
+              <button matSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda" (click)="clearSearch('reports')">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+          <span class="count">{{ filteredReportes().length }}</span>
+        </div>
       </div>
       @if (loadingPublicaciones()) {
         <mat-spinner diameter="32"></mat-spinner>
-      } @else if (reportes.length) {
-        <div class="powerbi-grid">
-          @for (item of reportes; track item.id) {
-            <article class="powerbi-card">
-              @if (canEditPublication(item) || canDeletePublication(item)) {
+      } @else if (filteredReportes().length) {
+        <div class="publication-table" role="table" aria-label="Reportes Power BI">
+          <div class="publication-table-header" role="row">
+            <span>Publicación</span>
+            <span>Fecha</span>
+            <span>Estado</span>
+            <span>Fuente</span>
+            <span>Subido por</span>
+            <span>Archivo</span>
+            <span class="actions-column">Acciones</span>
+          </div>
+          @for (item of filteredReportes(); track item.id) {
+            <article class="publication-list-item" [class.is-expanded]="isPublicationExpanded(item)">
+              <div class="publication-list-row" role="row">
+                <div class="publication-primary" role="cell">
+                  <span class="publication-list-icon report"><mat-icon>bar_chart</mat-icon></span>
+                  <span class="publication-title-block">
+                    <strong class="publication-code">{{ item.codigo }}</strong>
+                    <span class="publication-title">{{ item.titulo }}</span>
+                  </span>
+                </div>
+                <span class="publication-cell date-cell" data-label="Fecha" role="cell">
+                  {{ item.fecha_publicacion ? (item.fecha_publicacion | date: 'dd/MM/yyyy') : 'Sin fecha' }}
+                </span>
+                <div class="publication-cell status-cell" data-label="Estado" role="cell">
+                  <span [class]="getEstadoPublicacionClass(item.estado)">
+                    <mat-icon>{{ getEstadoPublicacionIcon(item.estado) }}</mat-icon>{{
+                    getEstadoPublicacionLabel(item.estado)
+                  }}</span>
+                  @if (item.solo_suscriptores) {
+                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Suscriptor</span>
+                  }
+                </div>
+                <span class="publication-cell" data-label="Fuente" role="cell">{{
+                  item.fuente || 'Sin fuente'
+                }}</span>
+                <span class="publication-cell uploader-cell" data-label="Subido por" role="cell">
+                  {{ item.creador?.name || 'No disponible' }}
+                  @if (item.creador?.rol) { <small>{{ item.creador?.rol }}</small> }
+                </span>
+                <span class="publication-cell file-cell" data-label="Archivo" role="cell">
+                  <mat-icon>{{ hasPublicationPdf(item) ? 'picture_as_pdf' : 'link' }}</mat-icon>
+                  {{ hasPublicationPdf(item) ? 'PDF disponible' : item.link_url ? 'Enlace disponible' : 'No disponible' }}
+                </span>
+                <div class="publication-row-actions" role="cell">
                 <button
                   mat-icon-button
                   type="button"
-                  class="publication-more-button"
+                  class="publication-row-menu-button"
                   [matMenuTriggerFor]="reportActionsMenu"
-                  aria-label="Más opciones"
+                  [attr.aria-label]="'Más opciones para ' + item.titulo"
                 >
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #reportActionsMenu="matMenu" xPosition="before" yPosition="below" class="publication-actions-menu">
+                  @if (item.link_url) {
+                    <button mat-menu-item class="menu-item-action" (click)="openReport(item)">
+                      <mat-icon>open_in_new</mat-icon><span>{{ isPowerBiReport(item) ? 'Abrir Power BI' : 'Ver fuente' }}</span>
+                    </button>
+                  }
+                  @if (hasPublicationPdf(item)) {
+                    <button mat-menu-item class="menu-item-action" (click)="openPdf(item)">
+                      <mat-icon>picture_as_pdf</mat-icon><span>Abrir PDF</span>
+                    </button>
+                  }
+                  <button mat-menu-item class="menu-item-action" (click)="togglePublicationDetails(item)">
+                    <mat-icon>{{ isPublicationExpanded(item) ? 'expand_less' : 'info' }}</mat-icon>
+                    <span>{{ isPublicationExpanded(item) ? 'Ocultar detalles' : 'Ver detalles' }}</span>
+                  </button>
                   @if (canEditPublication(item)) {
                     <button mat-menu-item class="menu-item-action" (click)="editPublication(item)">
                       <mat-icon>edit</mat-icon>
@@ -645,80 +846,128 @@
                     </button>
                   }
                 </mat-menu>
+              </div>
+              </div>
+              @if (isPublicationExpanded(item)) {
+                <div class="publication-expanded-details">
+                  <div><span>Descripción</span><p>{{ item.descripcion || 'Sin descripción' }}</p></div>
+                  <div><span>Enlace</span><p>{{ item.link_url || 'No disponible' }}</p></div>
+                  <div><span>Archivo</span><p>{{ item.nombre_archivo_original || item.sharepoint_file_name || 'No disponible' }}</p></div>
+                </div>
               }
-              <div class="powerbi-card-icon"><mat-icon>bar_chart</mat-icon></div>
-              <div class="powerbi-card-copy">
-                <div class="publication-meta">
-                  <strong>{{ item.codigo }}</strong
-                  ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
-                </div>
-                <h3>{{ item.titulo }}</h3>
-                <p>{{ item.descripcion }}</p>
-                <div class="details">
-                  <span><b>Fuente:</b> {{ item.fuente }}</span>
-                  @if (item.creador) {
-                    <span><b>Subido por:</b> {{ item.creador.name }} ({{ item.creador.rol }})</span>
-                  }
-                </div>
-                <div class="publication-badges">
-                  <span [class]="getEstadoPublicacionClass(item.estado)">{{
-                    getEstadoPublicacionLabel(item.estado)
-                  }}</span>
-                  @if (item.solo_suscriptores) {
-                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Solo suscriptores</span>
-                  }
-                </div>
-              </div>
-              <div class="publication-links powerbi-actions">
-                @if (isPowerBiReport(item)) {
-                  <button mat-stroked-button class="publication-card-action" type="button" (click)="openReport(item)">
-                    <mat-icon>open_in_new</mat-icon>Abrir Power BI
-                  </button>
-                } @else {
-                  @if (item.link_url) {
-                    <button mat-stroked-button class="publication-card-action" type="button" (click)="openSource(item)">
-                      <mat-icon>open_in_new</mat-icon>Ver fuente
-                    </button>
-                  }
-                }
-                @if (hasPublicationPdf(item)) {
-                  <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
-                    <mat-icon>open_in_new</mat-icon>Abrir PDF
-                  </button>
-                }
-              </div>
             </article>
           }
+        </div>
+      } @else if (reportes.length) {
+        <div class="empty-state compact-empty-state">
+          <mat-icon>search_off</mat-icon>
+          <h3>No se encontraron reportes</h3>
+          <p>Prueba con otro título, código o fuente.</p>
         </div>
       } @else {
         <p class="empty-copy">Todavía no hay reportes asociados a este Observatorio.</p>
       }
     </section>
+      </mat-tab>
 
-    <section class="publications-section">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <mat-icon>menu_book</mat-icon>
+          <span>Libros</span>
+          <span class="tab-count">{{ libros.length }}</span>
+        </ng-template>
+    <section class="publications-section management-tab-section">
       <div class="section-heading">
         <div>
           <span class="eyebrow">Biblioteca</span>
-          <h2>Atlas PDF</h2>
+          <h2>Libros PDF</h2>
+        </div>
+        <div class="section-heading-tools">
+          <mat-form-field appearance="outline" class="section-search-field" subscriptSizing="dynamic">
+            <mat-icon matPrefix>search</mat-icon>
+            <input
+              matInput
+              type="search"
+              aria-label="Buscar libro"
+              placeholder="Buscar libro…"
+              [value]="bookSearchTerm()"
+              (input)="bookSearchTerm.set($any($event.target).value)"
+            />
+            @if (bookSearchTerm()) {
+              <button matSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda" (click)="clearSearch('books')">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
+          <span class="count">{{ filteredLibros().length }}</span>
         </div>
       </div>
       @if (loadingPublicaciones()) {
         <mat-spinner diameter="32"></mat-spinner>
-      } @else if (atlas.length) {
-        <div class="powerbi-grid">
-          @for (item of atlas; track item.id) {
-            <article class="powerbi-card">
-              @if (canEditPublication(item) || canDeletePublication(item)) {
+      } @else if (filteredLibros().length) {
+        <div class="publication-table" role="table" aria-label="Libros PDF">
+          <div class="publication-table-header" role="row">
+            <span>Publicación</span>
+            <span>Fecha</span>
+            <span>Estado</span>
+            <span>Fuente</span>
+            <span>Subido por</span>
+            <span>Archivo</span>
+            <span class="actions-column">Acciones</span>
+          </div>
+          @for (item of filteredLibros(); track item.id) {
+            <article class="publication-list-item" [class.is-expanded]="isPublicationExpanded(item)">
+              <div class="publication-list-row" role="row">
+                <div class="publication-primary" role="cell">
+                  <span class="publication-list-icon book"><mat-icon>menu_book</mat-icon></span>
+                  <span class="publication-title-block">
+                    <strong class="publication-code">{{ item.codigo }}</strong>
+                    <span class="publication-title">{{ item.titulo }}</span>
+                  </span>
+                </div>
+                <span class="publication-cell date-cell" data-label="Fecha" role="cell">
+                  {{ item.fecha_publicacion ? (item.fecha_publicacion | date: 'dd/MM/yyyy') : 'Sin fecha' }}
+                </span>
+                <div class="publication-cell status-cell" data-label="Estado" role="cell">
+                  <span [class]="getEstadoPublicacionClass(item.estado)">
+                    <mat-icon>{{ getEstadoPublicacionIcon(item.estado) }}</mat-icon>{{
+                    getEstadoPublicacionLabel(item.estado)
+                  }}</span>
+                  @if (item.solo_suscriptores) {
+                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Suscriptor</span>
+                  }
+                </div>
+                <span class="publication-cell" data-label="Fuente" role="cell">{{
+                  item.fuente || 'Sin fuente'
+                }}</span>
+                <span class="publication-cell uploader-cell" data-label="Subido por" role="cell">
+                  {{ item.creador?.name || 'No disponible' }}
+                  @if (item.creador?.rol) { <small>{{ item.creador?.rol }}</small> }
+                </span>
+                <span class="publication-cell file-cell" data-label="Archivo" role="cell">
+                  <mat-icon>{{ hasPublicationPdf(item) ? 'picture_as_pdf' : 'block' }}</mat-icon>
+                  {{ hasPublicationPdf(item) ? 'PDF disponible' : 'No disponible' }}
+                </span>
+                <div class="publication-row-actions" role="cell">
                 <button
                   mat-icon-button
                   type="button"
-                  class="publication-more-button"
+                  class="publication-row-menu-button"
                   [matMenuTriggerFor]="atlasActionsMenu"
-                  aria-label="Más opciones"
+                  [attr.aria-label]="'Más opciones para ' + item.titulo"
                 >
                   <mat-icon>more_vert</mat-icon>
                 </button>
                 <mat-menu #atlasActionsMenu="matMenu" xPosition="before" yPosition="below" class="publication-actions-menu">
+                  @if (hasPublicationPdf(item)) {
+                    <button mat-menu-item class="menu-item-action" (click)="openPdf(item)">
+                      <mat-icon>picture_as_pdf</mat-icon><span>Abrir PDF</span>
+                    </button>
+                  }
+                  <button mat-menu-item class="menu-item-action" (click)="togglePublicationDetails(item)">
+                    <mat-icon>{{ isPublicationExpanded(item) ? 'expand_less' : 'info' }}</mat-icon>
+                    <span>{{ isPublicationExpanded(item) ? 'Ocultar detalles' : 'Ver detalles' }}</span>
+                  </button>
                   @if (canEditPublication(item)) {
                     <button mat-menu-item class="menu-item-action" (click)="editPublication(item)">
                       <mat-icon>edit</mat-icon>
@@ -732,44 +981,29 @@
                     </button>
                   }
                 </mat-menu>
+              </div>
+              </div>
+              @if (isPublicationExpanded(item)) {
+                <div class="publication-expanded-details">
+                  <div><span>Descripción</span><p>{{ item.descripcion || 'Sin descripción' }}</p></div>
+                  <div><span>Archivo</span><p>{{ item.nombre_archivo_original || item.sharepoint_file_name || 'No disponible' }}</p></div>
+                  <div><span>Origen</span><p>{{ item.sharepoint_file_id ? 'SharePoint' : 'Carga manual' }}</p></div>
+                </div>
               }
-              <div class="powerbi-card-icon"><mat-icon>picture_as_pdf</mat-icon></div>
-              <div class="powerbi-card-copy">
-                <div class="publication-meta">
-                  <strong>{{ item.codigo }}</strong
-                  ><span>{{ item.fecha_publicacion | date: 'longDate' }}</span>
-                </div>
-                <h3>{{ item.titulo }}</h3>
-                <p>{{ item.descripcion }}</p>
-                <div class="details">
-                  <span><b>Fuente:</b> {{ item.fuente }}</span>
-                  @if (item.nombre_archivo_original || item.sharepoint_file_name) {
-                    <span><b>Archivo:</b> {{ item.nombre_archivo_original || item.sharepoint_file_name }}</span>
-                  }
-                  @if (item.creador) {
-                    <span><b>Subido por:</b> {{ item.creador.name }} ({{ item.creador.rol }})</span>
-                  }
-                </div>
-                <div class="publication-badges">
-                  <span [class]="getEstadoPublicacionClass(item.estado)">{{
-                    getEstadoPublicacionLabel(item.estado)
-                  }}</span>
-                  @if (item.solo_suscriptores) {
-                    <span class="subscriber-badge"><mat-icon>lock</mat-icon>Solo suscriptores</span>
-                  }
-                </div>
-              </div>
-              <div class="publication-links powerbi-actions">
-                <button mat-stroked-button class="publication-card-action" type="button" (click)="openPdf(item)">
-                  <mat-icon>open_in_new</mat-icon>Abrir PDF
-                </button>
-              </div>
             </article>
           }
         </div>
+      } @else if (libros.length) {
+        <div class="empty-state compact-empty-state">
+          <mat-icon>search_off</mat-icon>
+          <h3>No se encontraron libros</h3>
+          <p>Prueba con otro título, código o fuente.</p>
+        </div>
       } @else {
-        <p class="empty-copy">Todavía no hay reportes PDF de Atlas asociados a este Observatorio.</p>
+        <p class="empty-copy">Todavía no hay libros PDF asociados a este Observatorio.</p>
       }
     </section>
+      </mat-tab>
+    </mat-tab-group>
   </div>
 }

@@ -42,7 +42,8 @@
             ],
             "styles": [
               "src/material-theme.scss",
-              "src/styles.css"
+              "src/styles.css",
+              "src/publication-library.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",

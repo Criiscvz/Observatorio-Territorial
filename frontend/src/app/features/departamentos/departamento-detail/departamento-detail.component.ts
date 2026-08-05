@@ -1,5 +1,5 @@
 ﻿import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, ViewChild, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, ViewChild, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,7 +14,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { MatTabsModule } from '@angular/material/tabs';
+import { ActivatedRoute, NavigationStart, Router, RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
 import {
   ObservatorioPublicacion,
@@ -51,6 +52,7 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
     MatProgressSpinnerModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatTabsModule,
     TranslateModule,
   ],
   templateUrl: './departamento-detail.component.html',
@@ -92,6 +94,26 @@ export class DepartamentoDetailComponent implements OnInit {
   fileError = signal('');
   serverError = signal('');
   highlightPublicationForm = signal(false);
+  expandedPublicationId = signal<string | null>(null);
+  datasetSearchTerm = signal('');
+  articleSearchTerm = signal('');
+  reportSearchTerm = signal('');
+  bookSearchTerm = signal('');
+
+  filteredDatasets = computed(() => {
+    const term = this.normalizeSearch(this.datasetSearchTerm());
+    if (!term) return this.datasets();
+
+    return this.datasets().filter((dataset) =>
+      [dataset.nombre, dataset.descripcion, dataset.nombre_archivo, dataset.estado].some((value) =>
+        this.normalizeSearch(value).includes(term),
+      ),
+    );
+  });
+
+  filteredArticulos = computed(() => this.filterPublications(this.articulos, this.articleSearchTerm()));
+  filteredReportes = computed(() => this.filterPublications(this.reportes, this.reportSearchTerm()));
+  filteredLibros = computed(() => this.filterPublications(this.libros, this.bookSearchTerm()));
 
   readonly publicationForm = this.fb.nonNullable.group({
     tipo: ['ARTICULO' as TipoPublicacion, Validators.required],
@@ -99,7 +121,7 @@ export class DepartamentoDetailComponent implements OnInit {
     solo_suscriptores: [false],
     titulo: ['', [Validators.required, Validators.maxLength(255)]],
     fecha_publicacion: ['', Validators.required],
-    link_url: ['', [Validators.required, Validators.pattern(/^https?:\/\/.+/i)]],
+    link_url: ['', Validators.pattern(/^https?:\/\/.+/i)],
     descripcion: ['', Validators.maxLength(3000)],
     autores: ['', Validators.maxLength(1000)],
     fuente: ['', [Validators.required, Validators.maxLength(255)]],
@@ -113,8 +135,8 @@ export class DepartamentoDetailComponent implements OnInit {
     return this.publicaciones().filter((item) => item.tipo === 'REPORTE');
   }
 
-  get atlas(): ObservatorioPublicacion[] {
-    return this.publicaciones().filter((item) => item.tipo === 'ATLAS');
+  get libros(): ObservatorioPublicacion[] {
+    return this.publicaciones().filter((item) => item.tipo === 'LIBRO');
   }
 
   get reviewCount(): number {
@@ -133,12 +155,12 @@ export class DepartamentoDetailComponent implements OnInit {
     return this.tipo === 'REPORTE';
   }
 
-  get isAtlas(): boolean {
-    return this.tipo === 'ATLAS';
+  get isLibro(): boolean {
+    return this.tipo === 'LIBRO';
   }
 
   get shouldShowPdfUpload(): boolean {
-    return this.isArticulo || this.isReporte || this.isAtlas;
+    return this.isArticulo || this.isReporte || this.isLibro || this.tipo === 'ATLAS';
   }
 
   get canManagePublications(): boolean {
@@ -178,8 +200,38 @@ export class DepartamentoDetailComponent implements OnInit {
     return this.canEditPublication(publicacion);
   }
 
+  isPublicationExpanded(publicacion: ObservatorioPublicacion): boolean {
+    return this.expandedPublicationId() === publicacion.id;
+  }
+
+  togglePublicationDetails(publicacion: ObservatorioPublicacion): void {
+    this.expandedPublicationId.update((currentId) =>
+      currentId === publicacion.id ? null : publicacion.id,
+    );
+  }
+
+  clearSearch(section: 'datasets' | 'articles' | 'reports' | 'books'): void {
+    const searches = {
+      datasets: this.datasetSearchTerm,
+      articles: this.articleSearchTerm,
+      reports: this.reportSearchTerm,
+      books: this.bookSearchTerm,
+    };
+    searches[section].set('');
+  }
+
   ngOnInit(): void {
+    this.resetReviewPanel();
+    this.closeAllObservationForms();
+    this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        this.resetReviewPanel();
+        this.closeAllObservationForms();
+      }
+    });
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.resetReviewPanel(true);
+      this.closeAllObservationForms();
       if (params['id']) this.loadDepartamento(params['id']);
     });
     this.publicationForm.controls.tipo.valueChanges
@@ -235,7 +287,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   openPublicationForm(tipo: TipoPublicacion): void {
-    this.resetPublicationForm(tipo);
+    this.closeAllObservationForms(tipo);
     this.configurePublicationValidators(tipo);
     this.showPublicationForm.set(true);
     this.scrollToPublicationForm();
@@ -250,32 +302,52 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   closeReviewPanel(): void {
+    this.resetReviewPanel();
+  }
+
+  private resetReviewPanel(clearItems = false): void {
     this.showReviewPanel.set(false);
+    this.loadingReviewPublicaciones.set(false);
+    this.changingReviewStatus.set(null);
+    if (clearItems) {
+      this.reviewPublicaciones.set([]);
+    }
   }
 
   loadReviewPublicaciones(id: string): void {
     this.loadingReviewPublicaciones.set(true);
-    this.publicacionService.getInReview(id).subscribe({
+    this.publicacionService
+      .getInReview(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (items) => {
+        if (!this.showReviewPanel() || this.departamento()?.id !== id) return;
         this.reviewPublicaciones.set(items);
         this.loadingReviewPublicaciones.set(false);
       },
       error: () => {
+        if (!this.showReviewPanel() || this.departamento()?.id !== id) return;
         this.reviewPublicaciones.set([]);
         this.loadingReviewPublicaciones.set(false);
         this.snackBar.open('No se pudieron cargar las publicaciones en revisión.', 'Cerrar', {
           duration: 4000,
         });
       },
-    });
+      });
   }
 
   closePublicationForm(): void {
+    this.closeAllObservationForms();
+  }
+
+  closeAllObservationForms(tipo: TipoPublicacion = 'ARTICULO'): void {
     this.showPublicationForm.set(false);
-    this.resetPublicationForm();
+    this.highlightPublicationForm.set(false);
+    this.resetPublicationForm(tipo);
   }
 
   editPublication(publicacion: ObservatorioPublicacion): void {
+    this.closeAllObservationForms(publicacion.tipo);
     this.editingPublication.set(publicacion);
     this.publicationForm.reset({
       tipo: publicacion.tipo,
@@ -389,8 +461,7 @@ export class DepartamentoDetailComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.savingPublication.set(false);
-        this.resetPublicationForm();
-        this.showPublicationForm.set(false);
+        this.closeAllObservationForms();
         this.loadPublicaciones(departamento.id);
         if (this.showReviewPanel()) {
           this.loadReviewPublicaciones(departamento.id);
@@ -570,18 +641,18 @@ export class DepartamentoDetailComponent implements OnInit {
   syncSharePointAtlas(): void {
     const departamento = this.departamento();
     if (!departamento || this.syncingSharePoint()) return;
-    this.syncingSharePoint.set('ATLAS');
+    this.syncingSharePoint.set('LIBRO');
     this.publicacionService.syncSharePointAtlas(departamento.id).subscribe({
       next: (items) => {
         this.syncingSharePoint.set(null);
         this.loadPublicaciones(departamento.id);
-        this.snackBar.open(`PDF de Atlas sincronizados: ${items.length}.`, 'Cerrar', {
+        this.snackBar.open(`PDF de Libros sincronizados: ${items.length}.`, 'Cerrar', {
           duration: 4000,
         });
       },
       error: (error) => {
         this.syncingSharePoint.set(null);
-        this.snackBar.open(error?.error?.message || 'No se pudo sincronizar Atlas.', 'Cerrar', {
+        this.snackBar.open(error?.error?.message || 'No se pudo sincronizar Libros.', 'Cerrar', {
           duration: 5000,
         });
       },
@@ -589,7 +660,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   importSharePointAtlas(): void {
-    this.openSharePointImport('atlas');
+    this.openSharePointImport('libros');
   }
 
   importSharePointArticulos(): void {
@@ -614,6 +685,7 @@ export class DepartamentoDetailComponent implements OnInit {
       data: {
         departamentos: [departamento],
         target,
+        context: 'observatorio',
       },
     });
 
@@ -643,7 +715,13 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   getPublicacionTipoLabel(tipo: TipoPublicacion): string {
-    return tipo === 'ARTICULO' ? 'Artículo' : tipo === 'REPORTE' ? 'Reporte' : 'Atlas';
+    return tipo === 'ARTICULO'
+      ? 'Artículo'
+      : tipo === 'REPORTE'
+        ? 'Reporte'
+        : tipo === 'LIBRO'
+          ? 'Libro PDF'
+          : 'Atlas';
   }
 
   getPublicacionTipoBadge(tipo: TipoPublicacion): string {
@@ -651,18 +729,26 @@ export class DepartamentoDetailComponent implements OnInit {
       ? 'Artículos ULEAM'
       : tipo === 'REPORTE'
         ? 'Reportes ULEAM'
-        : 'Atlas ULEAM';
+        : tipo === 'LIBRO'
+          ? 'Libros ULEAM'
+          : 'Atlas ULEAM';
   }
 
   getPublicacionIcon(tipo: TipoPublicacion): string {
-    return tipo === 'ARTICULO' ? 'article' : tipo === 'REPORTE' ? 'bar_chart' : 'picture_as_pdf';
+    return tipo === 'ARTICULO'
+      ? 'article'
+      : tipo === 'REPORTE'
+        ? 'bar_chart'
+        : tipo === 'LIBRO'
+          ? 'picture_as_pdf'
+          : 'map';
   }
 
   getCodeHint(): string {
     const editing = this.editingPublication();
     if (editing) return `Código: ${editing.codigo}`;
     return `Se generará automáticamente: ${
-      this.isArticulo ? 'ART-####' : this.isReporte ? 'REP-####' : 'ATL-####'
+      this.isArticulo ? 'ART-####' : this.isReporte ? 'REP-####' : this.isLibro ? 'LIB-####' : 'ATL-####'
     }`;
   }
 
@@ -683,6 +769,45 @@ export class DepartamentoDetailComponent implements OnInit {
     return `publication-state state-${(estado || 'PUBLICACION').toString().toLowerCase()}`;
   }
 
+  getEstadoPublicacionIcon(estado?: EstadoPublicacion | string | null): string {
+    switch (estado) {
+      case 'SUSPENDIDO':
+        return 'pause_circle';
+      case 'EN_REVISION':
+        return 'schedule';
+      case 'ARCHIVADO':
+        return 'archive';
+      default:
+        return 'visibility';
+    }
+  }
+
+  getDatasetStatusLabel(estado?: string | null): string {
+    switch ((estado || '').toUpperCase()) {
+      case 'COMPLETADO':
+        return 'Completado';
+      case 'PROCESANDO':
+        return 'Procesando';
+      case 'ERROR':
+        return 'Error';
+      default:
+        return 'Pendiente';
+    }
+  }
+
+  getDatasetStatusIcon(estado?: string | null): string {
+    switch ((estado || '').toUpperCase()) {
+      case 'COMPLETADO':
+        return 'check_circle';
+      case 'PROCESANDO':
+        return 'sync';
+      case 'ERROR':
+        return 'error';
+      default:
+        return 'schedule';
+    }
+  }
+
   deleteDepartamento(): void {
     const depto = this.departamento();
     if (!depto) return;
@@ -696,16 +821,86 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   deleteDataset(dataset: Dataset): void {
-    const message = this.translate.instant('datasets.list.confirmDelete', { name: dataset.nombre });
-    if (confirm(message))
-      this.datasetService
-        .delete(dataset.id)
-        .subscribe({ next: () => this.loadDepartamento(this.departamento()!.id) });
+    if (!this.isAdmin()) {
+      this.snackBar.open('No tienes permiso para eliminar datasets.', 'Cerrar', {
+        duration: 3500,
+      });
+      return;
+    }
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: 'min(92vw, 520px)',
+      maxWidth: '92vw',
+      panelClass: 'app-confirm-dialog-panel',
+      backdropClass: 'app-confirm-dialog-backdrop',
+      autoFocus: false,
+      restoreFocus: false,
+      data: {
+        title: 'Eliminar conjunto de datos',
+        message: `Esta acción eliminará permanentemente el conjunto de datos y sus registros asociados. No se puede deshacer. Dataset: ${dataset.nombre}`,
+        confirmText: 'Eliminar definitivamente',
+        cancelText: 'Cancelar',
+        confirmColor: 'warn',
+        icon: 'delete_forever',
+      },
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.datasetService
+          .delete(dataset.id)
+          .pipe(takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: () => {
+              this.snackBar.open('Conjunto de datos eliminado correctamente.', 'Cerrar', {
+                duration: 3500,
+              });
+              const departamento = this.departamento();
+              if (departamento) this.loadDepartamento(departamento.id);
+            },
+            error: () => {
+              this.snackBar.open('No se pudo eliminar el conjunto de datos.', 'Cerrar', {
+                duration: 4000,
+              });
+            },
+          });
+      });
+  }
+
+  private filterPublications(
+    publications: ObservatorioPublicacion[],
+    rawTerm: string,
+  ): ObservatorioPublicacion[] {
+    const term = this.normalizeSearch(rawTerm);
+    if (!term) return publications;
+
+    return publications.filter((publication) =>
+      [
+        publication.codigo,
+        publication.titulo,
+        publication.descripcion,
+        publication.fuente,
+        publication.autores,
+        publication.creador?.name,
+      ].some((value) => this.normalizeSearch(value).includes(term)),
+    );
+  }
+
+  private normalizeSearch(value?: string | null): string {
+    return (value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
   }
 
   private configurePublicationValidators(tipo: TipoPublicacion): void {
     this.publicationForm.controls.link_url.setValidators([
-      ...(tipo === 'ARTICULO' || tipo === 'REPORTE' ? [Validators.required] : []),
+      ...(tipo === 'REPORTE' ? [Validators.required] : []),
       Validators.pattern(/^https?:\/\/.+/i),
     ]);
     this.publicationForm.controls.descripcion.setValidators([

@@ -54,9 +54,9 @@ export class AuthService {
 
   logout(): Observable<any> {
     return this.api.post('/logout', {}).pipe(
-      tap(() => this.clearAuth()),
+      tap(() => this.completeLogout()),
       catchError(() => {
-        this.clearAuth();
+        this.completeLogout();
         return of(null);
       })
     );
@@ -165,6 +165,11 @@ export class AuthService {
   private clearAuth(): void {
     this.clearAuthSilent();
     this.router.navigate(['/auth/login']);
+  }
+
+  private completeLogout(): void {
+    this.clearAuthSilent();
+    this.router.navigate(['/publico/departamentos']);
   }
 
   /**
