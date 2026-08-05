@@ -30,7 +30,7 @@ return [
     ]),
 
     'allowed_origins_patterns' => [
-        '#^https://observatirio.*\.vercel\.app$#',
+        '#^https://observatorio-territorial(?:-[a-z0-9-]+)?\.vercel\.app$#',
     ],
 
     'allowed_headers' => ['*'],
