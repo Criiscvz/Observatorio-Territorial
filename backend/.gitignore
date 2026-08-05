@@ -22,3 +22,7 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# Archivos temporales generados por Codex para Docker
+.docker-codex/
+# Logs generados por Codex
+storage/codex-logs/
