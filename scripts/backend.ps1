@@ -142,7 +142,7 @@ try {
         }
         "install" {
             Write-Host "Construyendo imagen backend de desarrollo con codigo local..." -ForegroundColor Green
-            docker build -t $DevImageName -f Dockerfile.devpatch .
+            docker build -t $DevImageName -f Dockerfile.dev .
         }
         "migrate" {
             Write-Host "Ejecutando migraciones..." -ForegroundColor Green

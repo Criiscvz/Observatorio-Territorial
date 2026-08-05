@@ -71,6 +71,12 @@
                                     "fuente": {
                                         "type": "string"
                                     },
+                                    "estado": {
+                                        "type": "string"
+                                    },
+                                    "enlace": {
+                                        "type": "string"
+                                    },
                                     "fecha_publicacion": {
                                         "type": "string",
                                         "format": "date"
@@ -80,6 +86,10 @@
                                         "format": "date"
                                     },
                                     "categoria_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "departamento_id": {
                                         "type": "string",
                                         "format": "uuid"
                                     }
@@ -166,6 +176,12 @@
                                     "fuente": {
                                         "type": "string"
                                     },
+                                    "estado": {
+                                        "type": "string"
+                                    },
+                                    "enlace": {
+                                        "type": "string"
+                                    },
                                     "fecha_publicacion": {
                                         "type": "string",
                                         "format": "date"
@@ -175,6 +191,10 @@
                                         "format": "date"
                                     },
                                     "categoria_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "departamento_id": {
                                         "type": "string",
                                         "format": "uuid"
                                     }
@@ -2062,6 +2082,10 @@
                                         "type": "string",
                                         "format": "uuid"
                                     },
+                                    "departamento_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
                                     "ficha": {
                                         "type": "string",
                                         "format": "binary"
@@ -2155,6 +2179,10 @@
                                         "type": "string"
                                     },
                                     "categoria_id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                    },
+                                    "departamento_id": {
                                         "type": "string",
                                         "format": "uuid"
                                     },

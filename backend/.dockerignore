@@ -24,9 +24,7 @@ package-lock.json
 .env.local
 .env.*.local
 
-# Testing
-/tests
-phpunit.xml
+# Testing artifacts
 .phpunit.result.cache
 
 # Storage (se crea en el contenedor)
