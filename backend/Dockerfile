@@ -44,6 +44,8 @@ RUN apk add --no-cache \
     libxml2-dev \
     # Para intl
     icu-dev \
+    # Certificados para Neon, Atlas y Supabase Storage
+    ca-certificates \
     # Nginx
     nginx \
     # Supervisor para manejar procesos
@@ -127,7 +129,7 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Exponer puerto
-EXPOSE 8000
+EXPOSE 10000
 
 # Comando de entrada
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

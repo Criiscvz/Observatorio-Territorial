@@ -8,6 +8,7 @@ use App\Application\Dataset\DTOs\AnalysisResultDTO;
 use App\Domain\Departamento\Repositories\DepartamentoRepositoryInterface;
 use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
 use App\Infrastructure\Services\ExcelReaderService;
+use App\Infrastructure\Services\TemporaryStorageFileService;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -17,6 +18,7 @@ class AnalyzeDatasetUseCase
         private readonly DatasetRepositoryInterface $datasetRepository,
         private readonly DepartamentoRepositoryInterface $departamentoRepository,
         private readonly ExcelReaderService $excelReader,
+        private readonly TemporaryStorageFileService $temporaryStorageFile,
     ) {}
 
     public function execute(string $datasetId, int $userId): AnalysisResultDTO
@@ -33,8 +35,13 @@ class AnalyzeDatasetUseCase
         }
 
         // Analizar archivo
-        $filePath = storage_path('app/datasets/' . $dataset->nombreArchivo);
-        $analysis = $this->excelReader->analyze($filePath);
+        $filePath = $this->temporaryStorageFile->download('datasets/'.$dataset->nombreArchivo);
+
+        try {
+            $analysis = $this->excelReader->analyze($filePath);
+        } finally {
+            @unlink($filePath);
+        }
 
         return new AnalysisResultDTO(
             datasetId: $dataset->id,

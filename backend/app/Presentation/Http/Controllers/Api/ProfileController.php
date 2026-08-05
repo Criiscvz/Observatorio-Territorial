@@ -147,7 +147,7 @@ class ProfileController extends Controller
         
         if ($user->perfil && $user->perfil->avatar) {
             // Eliminar archivo
-            $oldPath = str_replace('/storage/', 'public/', $user->perfil->avatar);
+            $oldPath = 'public/avatars/' . basename($user->perfil->avatar);
             \Illuminate\Support\Facades\Storage::delete($oldPath);
             
             // Actualizar perfil

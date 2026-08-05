@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ObservatorioPublicacionController extends Controller
 {
@@ -113,7 +113,7 @@ class ObservatorioPublicacionController extends Controller
         $estado = $request->user()->rol === 'ADMIN' ? $data['estado'] : self::ESTADO_EN_REVISION;
         $file = $request->file('archivo');
         $path = $file
-            ? $file->storeAs('publicaciones/'.$departamento->id, Str::uuid().'.pdf', 'local')
+            ? $file->storeAs('publicaciones/'.$departamento->id, Str::uuid().'.pdf', config('filesystems.default'))
             : null;
 
         try {
@@ -142,7 +142,7 @@ class ObservatorioPublicacionController extends Controller
             });
         } catch (\Throwable $exception) {
             if ($path) {
-                Storage::disk('local')->delete($path);
+                Storage::disk(config('filesystems.default'))->delete($path);
             }
             throw $exception;
         }
@@ -158,7 +158,7 @@ class ObservatorioPublicacionController extends Controller
 
         $file = $request->file('archivo');
         $path = $file
-            ? $file->storeAs('publicaciones/atlas-global', Str::uuid().'.pdf', 'local')
+            ? $file->storeAs('publicaciones/atlas-global', Str::uuid().'.pdf', config('filesystems.default'))
             : null;
 
         try {
@@ -187,7 +187,7 @@ class ObservatorioPublicacionController extends Controller
             });
         } catch (\Throwable $exception) {
             if ($path) {
-                Storage::disk('local')->delete($path);
+                Storage::disk(config('filesystems.default'))->delete($path);
             }
             throw $exception;
         }
@@ -195,7 +195,7 @@ class ObservatorioPublicacionController extends Controller
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response()->setStatusCode(201);
     }
 
-    public function download(Request $request, ObservatorioPublicacion $publicacion): BinaryFileResponse|\Illuminate\Http\RedirectResponse
+    public function download(Request $request, ObservatorioPublicacion $publicacion): StreamedResponse|\Illuminate\Http\RedirectResponse
     {
         if ($publicacion->departamento) {
             $this->ensureCanView($request, $publicacion->departamento);
@@ -204,12 +204,20 @@ class ObservatorioPublicacionController extends Controller
         if (! $publicacion->archivo_pdf && $publicacion->sharepoint_url) {
             return redirect()->away($publicacion->sharepoint_url);
         }
-        abort_unless(Storage::disk('local')->exists($publicacion->archivo_pdf), 404, 'El PDF no está disponible.');
+
+        $disk = Storage::disk(config('filesystems.default'));
+        abort_unless($disk->exists($publicacion->archivo_pdf), 404, 'Archivo no disponible.');
 
         $filename = $publicacion->nombre_archivo_original ?? $publicacion->titulo.'.pdf';
         $safeFilename = str_replace('"', '\"', $filename);
 
-        return response()->file(Storage::disk('local')->path($publicacion->archivo_pdf), [
+        $stream = $disk->readStream($publicacion->archivo_pdf);
+        abort_unless($stream !== false, 404, 'Archivo no disponible.');
+
+        return response()->stream(function () use ($stream): void {
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="'.$safeFilename.'"',
         ]);
@@ -240,7 +248,7 @@ class ObservatorioPublicacionController extends Controller
             $newPath = $newFile->storeAs(
                 $storageFolder,
                 Str::uuid().'.pdf',
-                'local'
+                config('filesystems.default')
             );
         }
 
@@ -263,13 +271,13 @@ class ObservatorioPublicacionController extends Controller
             });
         } catch (\Throwable $exception) {
             if ($newPath) {
-                Storage::disk('local')->delete($newPath);
+                Storage::disk(config('filesystems.default'))->delete($newPath);
             }
             throw $exception;
         }
 
         if ($newPath && $oldPath && $oldPath !== $newPath) {
-            Storage::disk('local')->delete($oldPath);
+            Storage::disk(config('filesystems.default'))->delete($oldPath);
         }
 
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response();
@@ -296,8 +304,8 @@ class ObservatorioPublicacionController extends Controller
             $publicacion->delete();
         });
 
-        if ($filePath && Storage::disk('local')->exists($filePath)) {
-            Storage::disk('local')->delete($filePath);
+        if ($filePath && Storage::disk(config('filesystems.default'))->exists($filePath)) {
+            Storage::disk(config('filesystems.default'))->delete($filePath);
         }
 
         return response()->json([

@@ -30,7 +30,7 @@ class UploadDatasetUseCase
         $nombreArchivo = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $dto->archivo->getClientOriginalName());
 
         // Guardar archivo
-        $dto->archivo->storeAs('', $nombreArchivo, 'datasets');
+        $dto->archivo->storeAs('datasets', $nombreArchivo, config('filesystems.default'));
 
         // Crear entidad de dominio
         $dataset = Dataset::create(
