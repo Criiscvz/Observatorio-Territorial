@@ -197,7 +197,8 @@ class SharePointService
         $clientId = $this->requiredConfig('client_id');
         $cacheKey = 'sharepoint:graph-token:'.sha1($tenantId.'|'.$clientId);
 
-        $cachedToken = Cache::get($cacheKey);
+        $cache = Cache::store('array');
+        $cachedToken = $cache->get($cacheKey);
         if (is_string($cachedToken) && $cachedToken !== '') {
             return $cachedToken;
         }
@@ -222,7 +223,7 @@ class SharePointService
         }
 
         $expiresIn = (int) $response->json('expires_in', 3600);
-        Cache::put($cacheKey, $token, now()->addSeconds(max(60, $expiresIn - 300)));
+        $cache->put($cacheKey, $token, now()->addSeconds(max(60, $expiresIn - 300)));
 
         return $token;
     }
@@ -247,7 +248,7 @@ class SharePointService
             ? "/drives/{$this->driveId()}/root"
             : "/drives/{$this->driveId()}/root:/{$path}:";
 
-        $item = Cache::remember(
+        $item = Cache::store('array')->remember(
             'sharepoint:root:'.sha1($this->driveId().'|'.$path),
             self::CACHE_TTL_SECONDS,
             function () use ($endpoint) {
@@ -270,7 +271,7 @@ class SharePointService
 
     private function getDriveItem(string $itemId): array
     {
-        return Cache::remember(
+        return Cache::store('array')->remember(
             'sharepoint:item:'.sha1($this->driveId().'|'.$itemId),
             self::CACHE_TTL_SECONDS,
             function () use ($itemId) {
@@ -288,7 +289,7 @@ class SharePointService
 
     private function listChildren(string $folderId): array
     {
-        return Cache::remember(
+        return Cache::store('array')->remember(
             'sharepoint:children:'.sha1($this->driveId().'|'.$folderId),
             self::CHILDREN_CACHE_TTL_SECONDS,
             fn() => $this->fetchChildren($folderId),
@@ -319,7 +320,7 @@ class SharePointService
 
     private function ensureFileContentIsReadable(string $fileId): void
     {
-        Cache::remember(
+        Cache::store('array')->remember(
             'sharepoint:readable:'.sha1($this->driveId().'|'.$fileId),
             self::CACHE_TTL_SECONDS,
             function () use ($fileId) {
