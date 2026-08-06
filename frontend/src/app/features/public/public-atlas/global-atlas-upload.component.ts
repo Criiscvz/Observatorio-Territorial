@@ -17,7 +17,7 @@ import {
   ObservatorioPublicacion,
 } from '@core/models/publicacion/publicacion.interface';
 import { PublicacionService } from '@core/services/publicacion.service';
-import { SHAREPOINT_ATLAS_GLOBAL_URL } from '@core/config/sharepoint-links';
+import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-dialog.component';
 
 @Component({
   selector: 'app-global-atlas-upload',
@@ -61,8 +61,8 @@ import { SHAREPOINT_ATLAS_GLOBAL_URL } from '@core/config/sharepoint-links';
 
         <div class="form-import-actions">
           <button mat-raised-button color="primary" type="button" (click)="importFromSharePoint()">
-            <mat-icon>open_in_new</mat-icon>
-            Abrir carpeta Atlas en SharePoint
+            <mat-icon>cloud_download</mat-icon>
+            Importar desde SharePoint
           </button>
         </div>
 
@@ -428,7 +428,32 @@ export class GlobalAtlasUploadComponent implements OnInit {
   }
 
   importFromSharePoint(): void {
-    window.open(SHAREPOINT_ATLAS_GLOBAL_URL, '_blank', 'noopener,noreferrer');
+    const dialogRef = this.dialog.open(SharePointAtlasImportDialogComponent, {
+      width: 'min(96vw, 980px)',
+      maxWidth: '96vw',
+      panelClass: 'sharepoint-import-dialog-panel',
+      backdropClass: 'sharepoint-import-dialog-backdrop',
+      autoFocus: false,
+      restoreFocus: false,
+      data: {
+        departamentos: [],
+        target: 'atlas',
+        context: 'global-atlas',
+      },
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (!result) return;
+        const totals = result.totals;
+        this.snackBar.open(
+          `${totals.imported} importados, ${totals.duplicates} duplicados, ${totals.rejected} rechazados, ${totals.errors} errores`,
+          'Cerrar',
+          { duration: 7000 },
+        );
+      });
   }
 
   formatFileSize(bytes: number): string {

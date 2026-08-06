@@ -35,6 +35,14 @@ DB_SSLMODE=require
 MONGODB_URI=URI_DE_MONGODB_ATLAS
 MONGODB_DATABASE=observatorio_nosql
 
+MICROSOFT_TENANT_ID=TENANT_ID_DE_MICROSOFT_ENTRA
+MICROSOFT_CLIENT_ID=APPLICATION_CLIENT_ID_DE_MICROSOFT_ENTRA
+MICROSOFT_CLIENT_SECRET=CLIENT_SECRET_DE_MICROSOFT_ENTRA
+SHAREPOINT_SITE_ID=SITE_ID_DE_SHAREPOINT
+SHAREPOINT_DRIVE_ID=DRIVE_ID_DE_LA_BIBLIOTECA
+SHAREPOINT_FOLDER_PATH=RUTA_RAIZ_DE_ATLAS
+SHAREPOINT_BAROMETER_FOLDER_PATH=RUTA_RAIZ_DE_ARTICULOS_Y_REPORTES
+
 FILESYSTEM_DISK=s3
 AWS_ACCESS_KEY_ID=SUPABASE_S3_ACCESS_KEY
 AWS_SECRET_ACCESS_KEY=SUPABASE_S3_SECRET_KEY
@@ -52,6 +60,8 @@ L5_SWAGGER_GENERATE_ALWAYS=false
 ```
 
 Configura en Atlas el acceso de red que permita a Render y usa una URI TLS. No guardes ninguna de estas credenciales en `.env` versionado.
+
+La importación desde SharePoint utiliza Microsoft Graph con permisos de aplicación. Copia los valores existentes de tu `.env` local a las variables equivalentes de Render, sin incluirlos en Git. La aplicación de Microsoft Entra debe tener permisos de aplicación aprobados por un administrador para leer la biblioteca configurada.
 
 ## Vercel: frontend
 
