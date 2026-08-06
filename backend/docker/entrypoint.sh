@@ -27,6 +27,13 @@ if [ -z "${APP_KEY:-}" ] || [ "$APP_KEY" = "base64:" ]; then
 fi
 
 php artisan optimize:clear
+
+# `optimize:clear` removes the file-cache hierarchy. SharePoint caches its
+# Microsoft Graph token, so recreate the cache root before serving requests.
+mkdir -p /var/www/html/storage/framework/cache/data
+chown -R www:www /var/www/html/storage/framework/cache
+chmod -R 775 /var/www/html/storage/framework/cache
+
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
