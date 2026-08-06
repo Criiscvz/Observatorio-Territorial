@@ -27,9 +27,8 @@ import { DatasetService } from '@core/services/dataset.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import {
   PublicacionService,
-  SharePointImportTarget,
 } from '@core/services/publicacion.service';
-import { SharePointAtlasImportDialogComponent } from '@features/public/public-atlas/sharepoint-atlas-import-dialog.component';
+import { SHAREPOINT_TERRITORIOS_VIVOS_URL } from '@core/config/sharepoint-links';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 
@@ -660,48 +659,19 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   importSharePointAtlas(): void {
-    this.openSharePointImport('libros');
+    this.openSharePointFolder(SHAREPOINT_TERRITORIOS_VIVOS_URL);
   }
 
   importSharePointArticulos(): void {
-    this.openSharePointImport('articulos');
+    this.openSharePointFolder(SHAREPOINT_TERRITORIOS_VIVOS_URL);
   }
 
   importSharePointReportes(): void {
-    this.openSharePointImport('reportes');
+    this.openSharePointFolder(SHAREPOINT_TERRITORIOS_VIVOS_URL);
   }
 
-  private openSharePointImport(target: SharePointImportTarget): void {
-    const departamento = this.departamento();
-    if (!departamento) return;
-
-    const dialogRef = this.dialog.open(SharePointAtlasImportDialogComponent, {
-      width: 'min(96vw, 980px)',
-      maxWidth: '96vw',
-      panelClass: 'sharepoint-import-dialog-panel',
-      backdropClass: 'sharepoint-import-dialog-backdrop',
-      autoFocus: false,
-      restoreFocus: false,
-      data: {
-        departamentos: [departamento],
-        target,
-        context: 'observatorio',
-      },
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
-        if (!result) return;
-        const totals = result.totals;
-        this.loadPublicaciones(departamento.id);
-        this.snackBar.open(
-          `${totals.imported} importados, ${totals.duplicates} duplicados, ${totals.rejected} rechazados, ${totals.errors} errores`,
-          'Cerrar',
-          { duration: 7000 },
-        );
-      });
+  private openSharePointFolder(url: string): void {
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
   getEstadoClass(estado: string): string {
