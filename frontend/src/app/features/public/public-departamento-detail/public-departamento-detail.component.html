@@ -292,7 +292,12 @@
                               Ver reporte
                             </a>
                           }
-                          <button mat-stroked-button type="button" class="publication-action-button" (click)="openReportPdf(rep)"><mat-icon>picture_as_pdf</mat-icon>Abrir PDF</button>
+                          @if (hasReportPdf(rep)) {
+                            <button mat-stroked-button type="button" class="publication-action-button" (click)="openReportPdf(rep)">
+                              <mat-icon>picture_as_pdf</mat-icon>
+                              Abrir PDF
+                            </button>
+                          }
                         }
                       </div>
                     </div>
