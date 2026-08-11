@@ -11,6 +11,12 @@ const SSR_TRANSLATIONS: Record<string, Translation> = {
     public: {
       home: {
         hero: { title: 'Observatorio Territorial', titleHighlight: 'Multidisciplinario ULEAM' },
+        stats: {
+          observatories: 'Observatorios',
+          articles: 'Artículos',
+          reports: 'Reportes',
+          books: 'Libros',
+        },
       },
     },
   },
@@ -19,6 +25,12 @@ const SSR_TRANSLATIONS: Record<string, Translation> = {
     public: {
       home: {
         hero: { title: 'Territorial', titleHighlight: 'Observatory ULEAM' },
+        stats: {
+          observatories: 'Observatories',
+          articles: 'Articles',
+          reports: 'Reports',
+          books: 'Books',
+        },
       },
     },
   },
