@@ -5,7 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build:vercel": "node scripts/set-api-url.mjs && ng build --configuration production",
+    "build:vercel": "node scripts/set-api-url.mjs && ng build --configuration production && node scripts/create-vercel-spa-entry.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
