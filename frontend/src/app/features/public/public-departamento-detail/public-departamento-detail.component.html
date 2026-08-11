@@ -29,17 +29,12 @@
         </p>
         <div class="header-stats">
           <span class="stat">
-            <mat-icon>table_chart</mat-icon>
-            {{ departamento()!.datasets?.length || 0 }}
-            {{ 'public.departmentDetail.stats.datasets' | translate }}
-          </span>
-          <span class="stat">
-            <mat-icon>storage</mat-icon>
-            {{ totalRegistros | number }} {{ 'public.departmentDetail.stats.records' | translate }}
-          </span>
-          <span class="stat">
             <mat-icon>article</mat-icon>
             {{ articulos().length }} Artículos
+          </span>
+          <span class="stat">
+            <mat-icon>bar_chart</mat-icon>
+            {{ reportes().length }} {{ reportes().length === 1 ? 'Reporte' : 'Reportes' }}
           </span>
           <span class="stat">
             <mat-icon>menu_book</mat-icon>
@@ -49,9 +44,10 @@
       </div>
     </div>
     <!-- Tabs -->
-    <mat-tab-group class="content-tabs" animationDuration="200ms">
+    <mat-tab-group class="content-tabs" animationDuration="200ms" [selectedIndex]="0">
 
       <!-- â”€â”€ Tab: Datasets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      @if (showDatasetsTab) {
       <mat-tab>
         <ng-template mat-tab-label>
           <mat-icon>folder_open</mat-icon>
@@ -129,6 +125,7 @@
           }
         </section>
       </mat-tab>
+      }
 
       <!-- â”€â”€ Tab: Artículos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
       <mat-tab>

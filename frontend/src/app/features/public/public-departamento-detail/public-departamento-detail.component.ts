@@ -46,6 +46,8 @@ import { TranslateModule } from '@ngx-translate/core';
   styleUrl: './public-departamento-detail.component.scss',
 })
 export class PublicDepartamentoDetailComponent implements OnInit {
+  /** Dataset support remains available elsewhere; it is intentionally hidden in this public detail. */
+  readonly showDatasetsTab = false;
   private readonly platformId = inject(PLATFORM_ID);
   private readonly route = inject(ActivatedRoute);
   private readonly deptoService = inject(DepartamentoService);
