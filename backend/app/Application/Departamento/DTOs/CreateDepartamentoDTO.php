@@ -10,6 +10,7 @@ final readonly class CreateDepartamentoDTO
         public string $nombre,
         public string $codigoInterno,
         public ?string $descripcion,
+        public ?string $icono,
         public bool $publico,
         public int $userId,
     ) {}
@@ -20,6 +21,7 @@ final readonly class CreateDepartamentoDTO
             nombre: $data['nombre'],
             codigoInterno: $data['codigo_interno'],
             descripcion: $data['descripcion'] ?? null,
+            icono: $data['icono'] ?? null,
             publico: $data['publico'] ?? false,
             userId: $userId,
         );
