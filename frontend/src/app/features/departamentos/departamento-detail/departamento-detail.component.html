@@ -189,36 +189,36 @@
                   }
                 </mat-form-field>
                 <mat-form-field appearance="outline"
-                  ><mat-label>Fuente</mat-label><input matInput formControlName="fuente" />
+                  ><mat-label>Fuente (opcional)</mat-label><input matInput formControlName="fuente" />
                   @if (
                     publicationForm.controls.fuente.touched &&
                     publicationForm.controls.fuente.invalid
                   ) {
-                    <mat-error>La fuente es obligatoria.</mat-error>
+                    <mat-error>La fuente no puede superar los 255 caracteres.</mat-error>
                   }
                 </mat-form-field>
                 @if (isArticulo) {
                   <mat-form-field appearance="outline" class="full-width"
-                    ><mat-label>Autor o autores</mat-label
+                    ><mat-label>Autor o autores (opcional)</mat-label
                     ><input matInput formControlName="autores" />
                     @if (
                       publicationForm.controls.autores.touched &&
                       publicationForm.controls.autores.invalid
                     ) {
-                      <mat-error>El autor o autores son obligatorios.</mat-error>
+                      <mat-error>Los autores no pueden superar los 1000 caracteres.</mat-error>
                     }
                   </mat-form-field>
                 }
                 <mat-form-field appearance="outline" class="full-width"
                   ><mat-label>{{
-                    isArticulo ? 'Breve descripción' : 'Descripción'
+                    isArticulo ? 'Breve descripción (opcional)' : 'Descripción (opcional)'
                   }}</mat-label
                   ><textarea matInput formControlName="descripcion" rows="3"></textarea>
                   @if (
                     publicationForm.controls.descripcion.touched &&
                     publicationForm.controls.descripcion.invalid
                   ) {
-                    <mat-error>La descripción es obligatoria.</mat-error>
+                    <mat-error>La descripción no puede superar los 3000 caracteres.</mat-error>
                   }
                 </mat-form-field>
                 @if (shouldShowPdfUpload) {

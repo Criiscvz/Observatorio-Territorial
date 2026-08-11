@@ -124,7 +124,7 @@ export class DepartamentoDetailComponent implements OnInit {
     link_url: ['', Validators.pattern(/^https?:\/\/.+/i)],
     descripcion: ['', Validators.maxLength(3000)],
     autores: ['', Validators.maxLength(1000)],
-    fuente: ['', [Validators.required, Validators.maxLength(255)]],
+    fuente: ['', Validators.maxLength(255)],
   });
 
   get articulos(): ObservatorioPublicacion[] {
@@ -160,7 +160,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   get shouldShowPdfUpload(): boolean {
-    return this.isArticulo || this.isReporte || this.isLibro || this.tipo === 'ATLAS';
+    return this.isReporte || this.tipo === 'ATLAS';
   }
 
   get canManagePublications(): boolean {
@@ -903,14 +903,8 @@ export class DepartamentoDetailComponent implements OnInit {
       ...(tipo === 'REPORTE' ? [Validators.required] : []),
       Validators.pattern(/^https?:\/\/.+/i),
     ]);
-    this.publicationForm.controls.descripcion.setValidators([
-      Validators.required,
-      Validators.maxLength(3000),
-    ]);
-    this.publicationForm.controls.autores.setValidators([
-      ...(tipo === 'ARTICULO' ? [Validators.required] : []),
-      Validators.maxLength(1000),
-    ]);
+    this.publicationForm.controls.descripcion.setValidators([Validators.maxLength(3000)]);
+    this.publicationForm.controls.autores.setValidators([Validators.maxLength(1000)]);
     this.publicationForm.controls.link_url.updateValueAndValidity();
     this.publicationForm.controls.descripcion.updateValueAndValidity();
     this.publicationForm.controls.autores.updateValueAndValidity();

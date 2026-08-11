@@ -135,7 +135,7 @@ class ObservatorioPublicacionController extends Controller
                     'link_url' => $data['link_url'] ?? null,
                     'descripcion' => $data['descripcion'] ?? null,
                     'autores' => $data['autores'] ?? null,
-                    'fuente' => $data['fuente'],
+                    'fuente' => $data['fuente'] ?? null,
                     'archivo_pdf' => $path,
                     'nombre_archivo_original' => $file?->getClientOriginalName(),
                 ]);
@@ -180,7 +180,7 @@ class ObservatorioPublicacionController extends Controller
                     'link_url' => $data['link_url'] ?? null,
                     'descripcion' => $data['descripcion'] ?? null,
                     'autores' => $data['autores'] ?? null,
-                    'fuente' => $data['fuente'],
+                    'fuente' => $data['fuente'] ?? null,
                     'archivo_pdf' => $path,
                     'nombre_archivo_original' => $file?->getClientOriginalName(),
                 ]);
@@ -260,9 +260,9 @@ class ObservatorioPublicacionController extends Controller
                     'titulo' => $data['titulo'],
                     'fecha_publicacion' => $data['fecha_publicacion'],
                     'link_url' => $data['link_url'] ?? null,
-                    'descripcion' => $data['descripcion'],
-                    'autores' => $publicacion->tipo === 'ARTICULO' ? $data['autores'] : ($data['autores'] ?? null),
-                    'fuente' => $data['fuente'],
+                    'descripcion' => $data['descripcion'] ?? null,
+                    'autores' => $data['autores'] ?? null,
+                    'fuente' => $data['fuente'] ?? null,
                     ...($newFile ? [
                         'archivo_pdf' => $newPath,
                         'nombre_archivo_original' => $newFile->getClientOriginalName(),

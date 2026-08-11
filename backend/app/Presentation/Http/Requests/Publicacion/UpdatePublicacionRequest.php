@@ -41,20 +41,19 @@ class UpdatePublicacionRequest extends FormRequest
                 'url:http,https',
                 'max:2048',
             ],
-            'descripcion' => ['required', 'string', 'max:3000'],
-            'autores' => [
-                $tipo === 'ARTICULO' ? 'required' : 'nullable',
-                'string',
-                'max:1000',
-            ],
-            'fuente' => ['required', 'string', 'max:255'],
-            'archivo' => [
-                'nullable',
-                'file',
-                'mimetypes:application/pdf,application/x-pdf',
-                'mimes:pdf',
-                'max:20480',
-            ],
+            'descripcion' => ['nullable', 'string', 'max:3000'],
+            'autores' => ['nullable', 'string', 'max:1000'],
+            'fuente' => ['nullable', 'string', 'max:255'],
+            'archivo' => match ($tipo) {
+                'ARTICULO', 'LIBRO' => ['prohibited'],
+                default => [
+                    'nullable',
+                    'file',
+                    'mimetypes:application/pdf,application/x-pdf',
+                    'mimes:pdf',
+                    'max:20480',
+                ],
+            },
         ];
     }
 
