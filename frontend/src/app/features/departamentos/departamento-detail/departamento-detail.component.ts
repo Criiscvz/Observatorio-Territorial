@@ -160,7 +160,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   get shouldShowPdfUpload(): boolean {
-    return this.isReporte || this.tipo === 'ATLAS';
+    return this.isArticulo || this.isReporte || this.isLibro || this.tipo === 'ATLAS';
   }
 
   get canManagePublications(): boolean {
@@ -436,7 +436,7 @@ export class DepartamentoDetailComponent implements OnInit {
   savePublication(): void {
     this.publicationForm.markAllAsTouched();
     const editing = this.editingPublication();
-    const requiresPdf = this.shouldShowPdfUpload;
+    const requiresPdf = this.isArticulo || this.isLibro || this.tipo === 'ATLAS';
     if (!editing && requiresPdf && !this.selectedFile()) {
       this.fileError.set('Debe seleccionar un archivo PDF.');
     }
@@ -447,6 +447,9 @@ export class DepartamentoDetailComponent implements OnInit {
     const formData = new FormData();
     const values = this.publicationForm.getRawValue();
     Object.entries(values).forEach(([key, value]) => {
+      if (['descripcion', 'autores', 'fuente'].includes(key) && !String(value).trim()) {
+        return;
+      }
       formData.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value));
     });
     if (this.selectedFile()) {
@@ -954,10 +957,16 @@ export class DepartamentoDetailComponent implements OnInit {
     formData.append('titulo', publicacion.titulo);
     formData.append('fecha_publicacion', publicacion.fecha_publicacion);
     formData.append('link_url', publicacion.link_url ?? '');
-    formData.append('descripcion', publicacion.descripcion ?? '');
-    formData.append('autores', publicacion.autores ?? '');
-    formData.append('fuente', publicacion.fuente);
+    this.appendOptionalFormValue(formData, 'descripcion', publicacion.descripcion);
+    this.appendOptionalFormValue(formData, 'autores', publicacion.autores);
+    this.appendOptionalFormValue(formData, 'fuente', publicacion.fuente);
 
     return formData;
+  }
+
+  private appendOptionalFormValue(formData: FormData, key: string, value: string | null | undefined): void {
+    if (value?.trim()) {
+      formData.append(key, value);
+    }
   }
 }

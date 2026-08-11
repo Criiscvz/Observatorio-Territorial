@@ -44,16 +44,13 @@ class UpdatePublicacionRequest extends FormRequest
             'descripcion' => ['nullable', 'string', 'max:3000'],
             'autores' => ['nullable', 'string', 'max:1000'],
             'fuente' => ['nullable', 'string', 'max:255'],
-            'archivo' => match ($tipo) {
-                'ARTICULO', 'LIBRO' => ['prohibited'],
-                default => [
-                    'nullable',
-                    'file',
-                    'mimetypes:application/pdf,application/x-pdf',
-                    'mimes:pdf',
-                    'max:20480',
-                ],
-            },
+            'archivo' => [
+                'nullable',
+                'file',
+                'mimetypes:application/pdf,application/x-pdf',
+                'mimes:pdf',
+                'max:20480',
+            ],
         ];
     }
 
@@ -68,10 +65,6 @@ class UpdatePublicacionRequest extends FormRequest
             'fecha_publicacion.date' => 'La fecha de publicación no es válida.',
             'link_url.required' => 'El enlace URL es obligatorio.',
             'link_url.url' => 'El enlace debe ser una URL válida con http o https.',
-            'descripcion.required' => 'La descripción es obligatoria.',
-            'autores.required' => 'El autor o autores son obligatorios para un artículo.',
-            'fuente.required' => 'La fuente es obligatoria.',
-            'archivo.prohibited' => 'No debe subir PDF para este tipo de publicacion.',
             'archivo.mimetypes' => 'El documento debe ser un archivo PDF válido.',
             'archivo.mimes' => 'Solo se permiten archivos PDF.',
             'archivo.max' => 'El PDF no debe superar los 20 MB.',

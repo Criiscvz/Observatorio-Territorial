@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Presentation\Http\Requests\Publicacion\StorePublicacionRequest;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
 use Tests\TestCase;
 
@@ -41,16 +42,41 @@ class PublicacionRequestValidationTest extends TestCase
         $this->assertArrayNotHasKey('archivo', $validator->errors()->toArray());
     }
 
-    public function test_reporte_con_pdf_falla_por_archivo_prohibido(): void
+    public function test_reporte_con_pdf_es_valido(): void
     {
         $payload = [
             'tipo' => 'REPORTE',
             'titulo' => 'Reporte Power BI prueba',
             'fecha_publicacion' => '2026-07-09',
             'link_url' => 'https://app.powerbi.com/view?r=test',
-            'descripcion' => 'Reporte de prueba',
-            'fuente' => 'Power BI',
-            'archivo' => 'fake.pdf',
+            'archivo' => UploadedFile::fake()->create('reporte.pdf', 100, 'application/pdf'),
+        ];
+
+        $validator = $this->validatorFor($payload);
+
+        $this->assertTrue($validator->passes(), json_encode($validator->errors()->toArray()));
+    }
+
+    public function test_articulo_con_pdf_y_metadatos_opcionales_es_valido(): void
+    {
+        $payload = [
+            'tipo' => 'ARTICULO',
+            'titulo' => 'Articulo de prueba',
+            'fecha_publicacion' => '2026-07-09',
+            'archivo' => UploadedFile::fake()->create('articulo.pdf', 100, 'application/pdf'),
+        ];
+
+        $validator = $this->validatorFor($payload);
+
+        $this->assertTrue($validator->passes(), json_encode($validator->errors()->toArray()));
+    }
+
+    public function test_articulo_sin_pdf_falla_por_archivo(): void
+    {
+        $payload = [
+            'tipo' => 'ARTICULO',
+            'titulo' => 'Articulo sin PDF',
+            'fecha_publicacion' => '2026-07-09',
         ];
 
         $validator = $this->validatorFor($payload);
@@ -59,16 +85,13 @@ class PublicacionRequestValidationTest extends TestCase
         $this->assertArrayHasKey('archivo', $validator->errors()->toArray());
     }
 
-    public function test_articulo_sin_pdf_no_falla_por_archivo(): void
+    public function test_libro_con_pdf_y_metadatos_opcionales_es_valido(): void
     {
         $payload = [
-            'tipo' => 'ARTICULO',
-            'titulo' => 'Articulo de prueba',
+            'tipo' => 'LIBRO',
+            'titulo' => 'Libro de prueba',
             'fecha_publicacion' => '2026-07-09',
-            'link_url' => 'https://www.uleam.edu.ec/articulo',
-            'descripcion' => 'Articulo de prueba',
-            'autores' => 'Equipo ULEAM',
-            'fuente' => 'ULEAM',
+            'archivo' => UploadedFile::fake()->create('libro.pdf', 100, 'application/pdf'),
         ];
 
         $validator = $this->validatorFor($payload);
