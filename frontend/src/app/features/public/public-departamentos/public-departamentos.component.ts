@@ -15,7 +15,6 @@ import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { AuthService } from '@core/services/auth.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { PublicDocumentListComponent } from '../public-document-list/public-document-list.component';
 
 @Component({
   selector: 'app-public-departamentos',
@@ -32,7 +31,6 @@ import { PublicDocumentListComponent } from '../public-document-list/public-docu
     MatProgressSpinnerModule,
     MatChipsModule,
     TranslateModule,
-    PublicDocumentListComponent,
   ],
   templateUrl: './public-departamentos.component.html',
   styleUrl: './public-departamentos.component.scss',
