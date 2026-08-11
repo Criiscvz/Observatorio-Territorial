@@ -162,6 +162,24 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px 18px;
 }
+.author-list {
+  display: grid;
+  gap: 4px;
+}
+.author-list-label {
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+.author-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.author-row mat-form-field {
+  flex: 1;
+}
 .visibility-field {
   min-height: 56px;
   padding: 7px 2px 0;

@@ -24,7 +24,7 @@ export interface ObservatorioPublicacion {
   fecha_publicacion: string;
   link_url?: string | null;
   descripcion?: string | null;
-  autores?: string | null;
+  autores?: string[] | string | null;
   fuente: string;
   nombre_archivo_original?: string | null;
   download_url?: string | null;

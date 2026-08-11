@@ -71,6 +71,28 @@ class PublicacionRequestValidationTest extends TestCase
         $this->assertTrue($validator->passes(), json_encode($validator->errors()->toArray()));
     }
 
+    public function test_autores_multiples_son_validos_para_todos_los_tipos(): void
+    {
+        foreach (['ARTICULO', 'LIBRO', 'REPORTE'] as $tipo) {
+            $payload = [
+                'tipo' => $tipo,
+                'titulo' => "{$tipo} con varios autores",
+                'fecha_publicacion' => '2026-07-09',
+                'autores' => ['Juan Pérez', '', 'María López', 'Carlos Zambrano'],
+            ];
+
+            if ($tipo === 'REPORTE') {
+                $payload['link_url'] = 'https://app.powerbi.com/view?r=test';
+            } else {
+                $payload['archivo'] = UploadedFile::fake()->create(strtolower($tipo).'.pdf', 100, 'application/pdf');
+            }
+
+            $validator = $this->validatorFor($payload);
+
+            $this->assertTrue($validator->passes(), json_encode($validator->errors()->toArray()));
+        }
+    }
+
     public function test_articulo_sin_pdf_falla_por_archivo(): void
     {
         $payload = [

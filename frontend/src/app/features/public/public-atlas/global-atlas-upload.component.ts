@@ -347,7 +347,7 @@ export class GlobalAtlasUploadComponent implements OnInit {
             fecha_publicacion: atlas.fecha_publicacion,
             link_url: atlas.link_url ?? '',
             descripcion: atlas.descripcion ?? '',
-            autores: atlas.autores ?? '',
+            autores: Array.isArray(atlas.autores) ? atlas.autores.join(', ') : atlas.autores ?? '',
             fuente: atlas.fuente,
           });
           this.loadingAtlas.set(false);

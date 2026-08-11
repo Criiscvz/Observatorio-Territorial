@@ -12,7 +12,20 @@ class ObservatorioPublicacion extends Model
 
     protected $table = 'observatorio_publicaciones';
     protected $fillable = ['departamento_id', 'creado_por', 'tipo', 'estado', 'solo_suscriptores', 'codigo', 'titulo', 'fecha_publicacion', 'link_url', 'descripcion', 'autores', 'fuente', 'archivo_pdf', 'nombre_archivo_original', 'sharepoint_url', 'sharepoint_file_id', 'sharepoint_file_name', 'sharepoint_file_type', 'sharepoint_file_size', 'sharepoint_last_modified_at', 'sharepoint_sync_status', 'sharepoint_synced_at', 'sharepoint_error'];
-    protected $casts = ['fecha_publicacion' => 'date:Y-m-d', 'solo_suscriptores' => 'boolean', 'sharepoint_last_modified_at' => 'datetime', 'sharepoint_synced_at' => 'datetime'];
+    protected $casts = ['fecha_publicacion' => 'date:Y-m-d', 'solo_suscriptores' => 'boolean', 'autores' => 'array', 'sharepoint_last_modified_at' => 'datetime', 'sharepoint_synced_at' => 'datetime'];
+
+    public function setAutoresAttribute(mixed $value): void
+    {
+        $autores = is_array($value) ? $value : [$value];
+        $autores = array_values(array_filter(array_map(
+            fn (mixed $autor): string => is_string($autor) ? trim($autor) : '',
+            $autores,
+        )));
+
+        $this->attributes['autores'] = $autores
+            ? json_encode($autores, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)
+            : null;
+    }
 
     public function departamento(): BelongsTo
     {

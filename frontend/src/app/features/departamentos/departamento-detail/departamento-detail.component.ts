@@ -1,7 +1,7 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, computed, DestroyRef, ElementRef, ViewChild, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -123,7 +123,7 @@ export class DepartamentoDetailComponent implements OnInit {
     fecha_publicacion: ['', Validators.required],
     link_url: ['', Validators.pattern(/^https?:\/\/.+/i)],
     descripcion: ['', Validators.maxLength(3000)],
-    autores: ['', Validators.maxLength(1000)],
+    autores: this.fb.nonNullable.array([this.createAutorControl()]),
     fuente: ['', Validators.maxLength(255)],
   });
 
@@ -157,6 +157,10 @@ export class DepartamentoDetailComponent implements OnInit {
 
   get isLibro(): boolean {
     return this.tipo === 'LIBRO';
+  }
+
+  get autores(): FormArray<FormControl<string>> {
+    return this.publicationForm.controls.autores;
   }
 
   get shouldShowPdfUpload(): boolean {
@@ -357,9 +361,9 @@ export class DepartamentoDetailComponent implements OnInit {
       fecha_publicacion: publicacion.fecha_publicacion,
       link_url: publicacion.link_url ?? '',
       descripcion: publicacion.descripcion ?? '',
-      autores: publicacion.autores ?? '',
       fuente: publicacion.fuente ?? '',
     });
+    this.setAutores(publicacion.autores);
     this.configurePublicationValidators(publicacion.tipo);
     this.selectedFile.set(null);
     this.isDraggingFile.set(false);
@@ -410,6 +414,19 @@ export class DepartamentoDetailComponent implements OnInit {
     this.fileError.set('');
   }
 
+  agregarAutor(): void {
+    this.autores.push(this.createAutorControl());
+  }
+
+  eliminarAutor(index: number): void {
+    if (this.autores.length === 1) {
+      this.autores.at(0).setValue('');
+      return;
+    }
+
+    this.autores.removeAt(index);
+  }
+
   formatFileSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -447,7 +464,14 @@ export class DepartamentoDetailComponent implements OnInit {
     const formData = new FormData();
     const values = this.publicationForm.getRawValue();
     Object.entries(values).forEach(([key, value]) => {
-      if (['descripcion', 'autores', 'fuente'].includes(key) && !String(value).trim()) {
+      if (key === 'autores') {
+        (value as string[])
+          .map((autor) => autor.trim())
+          .filter(Boolean)
+          .forEach((autor) => formData.append('autores[]', autor));
+        return;
+      }
+      if (['descripcion', 'fuente'].includes(key) && !String(value).trim()) {
         return;
       }
       formData.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value));
@@ -893,8 +917,8 @@ export class DepartamentoDetailComponent implements OnInit {
     );
   }
 
-  private normalizeSearch(value?: string | null): string {
-    return (value || '')
+  private normalizeSearch(value?: string | string[] | null): string {
+    return (Array.isArray(value) ? value.join(' ') : value || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
@@ -907,10 +931,8 @@ export class DepartamentoDetailComponent implements OnInit {
       Validators.pattern(/^https?:\/\/.+/i),
     ]);
     this.publicationForm.controls.descripcion.setValidators([Validators.maxLength(3000)]);
-    this.publicationForm.controls.autores.setValidators([Validators.maxLength(1000)]);
     this.publicationForm.controls.link_url.updateValueAndValidity();
     this.publicationForm.controls.descripcion.updateValueAndValidity();
-    this.publicationForm.controls.autores.updateValueAndValidity();
   }
 
   private resetPublicationForm(tipo: TipoPublicacion = 'ARTICULO'): void {
@@ -923,9 +945,9 @@ export class DepartamentoDetailComponent implements OnInit {
       fecha_publicacion: '',
       link_url: '',
       descripcion: '',
-      autores: '',
       fuente: '',
     });
+    this.setAutores([]);
     this.selectedFile.set(null);
     this.isDraggingFile.set(false);
     this.fileError.set('');
@@ -958,7 +980,7 @@ export class DepartamentoDetailComponent implements OnInit {
     formData.append('fecha_publicacion', publicacion.fecha_publicacion);
     formData.append('link_url', publicacion.link_url ?? '');
     this.appendOptionalFormValue(formData, 'descripcion', publicacion.descripcion);
-    this.appendOptionalFormValue(formData, 'autores', publicacion.autores);
+    this.normalizeAutores(publicacion.autores).forEach((autor) => formData.append('autores[]', autor));
     this.appendOptionalFormValue(formData, 'fuente', publicacion.fuente);
 
     return formData;
@@ -968,5 +990,21 @@ export class DepartamentoDetailComponent implements OnInit {
     if (value?.trim()) {
       formData.append(key, value);
     }
+  }
+
+  private createAutorControl(value = ''): FormControl<string> {
+    return this.fb.nonNullable.control(value, Validators.maxLength(255));
+  }
+
+  private setAutores(value: string[] | string | null | undefined): void {
+    this.autores.clear();
+    const autores = this.normalizeAutores(value);
+    (autores.length ? autores : ['']).forEach((autor) => this.autores.push(this.createAutorControl(autor)));
+  }
+
+  private normalizeAutores(value: string[] | string | null | undefined): string[] {
+    const autores = Array.isArray(value) ? value : value ? [value] : [];
+
+    return autores.map((autor) => autor.trim()).filter(Boolean);
   }
 }

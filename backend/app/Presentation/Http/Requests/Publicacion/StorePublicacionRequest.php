@@ -19,6 +19,16 @@ class StorePublicacionRequest extends FormRequest
         if (! $this->filled('titulo') && $this->filled('nombre')) {
             $this->merge(['titulo' => $this->input('nombre')]);
         }
+
+        if ($this->has('autores')) {
+            $autores = is_array($this->input('autores')) ? $this->input('autores') : [$this->input('autores')];
+            $autores = array_values(array_filter(array_map(
+                fn (mixed $autor): string => is_string($autor) ? trim($autor) : '',
+                $autores,
+            )));
+
+            $this->merge(['autores' => $autores ?: null]);
+        }
     }
 
     public function rules(): array
@@ -42,7 +52,8 @@ class StorePublicacionRequest extends FormRequest
                 'max:2048',
             ],
             'descripcion' => ['nullable', 'string', 'max:3000'],
-            'autores' => ['nullable', 'string', 'max:1000'],
+            'autores' => ['nullable', 'array'],
+            'autores.*' => ['nullable', 'string', 'max:255'],
             'fuente' => ['nullable', 'string', 'max:255'],
             'archivo' => match ($tipo) {
                 'REPORTE' => [

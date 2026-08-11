@@ -197,18 +197,40 @@
                     <mat-error>La fuente no puede superar los 255 caracteres.</mat-error>
                   }
                 </mat-form-field>
-                @if (isArticulo) {
-                  <mat-form-field appearance="outline" class="full-width"
-                    ><mat-label>Autor o autores (opcional)</mat-label
-                    ><input matInput formControlName="autores" />
-                    @if (
-                      publicationForm.controls.autores.touched &&
-                      publicationForm.controls.autores.invalid
-                    ) {
-                      <mat-error>Los autores no pueden superar los 1000 caracteres.</mat-error>
-                    }
-                  </mat-form-field>
-                }
+                <div class="author-list full-width" formArrayName="autores">
+                  <span class="author-list-label">Autores (opcionales)</span>
+                  @for (autor of autores.controls; track $index) {
+                    <div class="author-row">
+                      <mat-form-field appearance="outline">
+                        <mat-label>Autor {{ $index + 1 }}</mat-label>
+                        <input matInput [formControlName]="$index" maxlength="255" />
+                        @if (autor.touched && autor.invalid) {
+                          <mat-error>El autor no puede superar los 255 caracteres.</mat-error>
+                        }
+                      </mat-form-field>
+                      <button
+                        mat-icon-button
+                        type="button"
+                        color="primary"
+                        aria-label="Agregar autor"
+                        (click)="agregarAutor()"
+                      >
+                        <mat-icon>add</mat-icon>
+                      </button>
+                      @if (autores.length > 1) {
+                        <button
+                          mat-icon-button
+                          type="button"
+                          color="warn"
+                          [attr.aria-label]="'Eliminar autor ' + ($index + 1)"
+                          (click)="eliminarAutor($index)"
+                        >
+                          <mat-icon>remove</mat-icon>
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
                 <mat-form-field appearance="outline" class="full-width"
                   ><mat-label>{{
                     isArticulo ? 'Breve descripción (opcional)' : 'Descripción (opcional)'

@@ -81,7 +81,7 @@ export class PublicAtlasComponent implements OnInit {
             id: item.id,
             titulo: item.titulo,
             descripcion: item.descripcion,
-            autor: item.autores,
+            autor: Array.isArray(item.autores) ? item.autores.join(', ') : item.autores,
             fuente: item.fuente,
             enlace: this.buildDownloadUrl(item.download_url),
             download_url: item.download_url,
