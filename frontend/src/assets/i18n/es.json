@@ -547,9 +547,10 @@
         "correlations": "Correlaciones"
       },
       "stats": {
-        "publicDepartments": "Departamentos Públicos",
-        "availableDatasets": "Conjuntos de Datos Disponibles",
-        "analyzedRecords": "Registros Analizados"
+        "observatories": "Observatorios",
+        "articles": "Artículos",
+        "reports": "Reportes",
+        "books": "Libros"
       },
       "features": {
         "title": "Potentes Herramientas de Análisis",

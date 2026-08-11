@@ -155,7 +155,7 @@
   max-width: 1280px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 2rem;
   text-align: center;
 }
@@ -579,6 +579,7 @@
 }
 
 @media (max-width: 1024px) {
+  .stats-container,
   .features-grid,
   .departments-grid {
     grid-template-columns: repeat(2, 1fr);

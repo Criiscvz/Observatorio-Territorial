@@ -16,6 +16,14 @@ import { LanguageService } from '@core/services/language.service';
 import { ThemeService } from '@core/services/theme.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { catchError, forkJoin, of } from 'rxjs';
+
+const EMPTY_PUBLIC_STATS = {
+  observatorios: 0,
+  articulos: 0,
+  reportes: 0,
+  libros: 0,
+};
 
 @Component({
   selector: 'app-public-home',
@@ -46,6 +54,7 @@ export class PublicHomeComponent implements OnInit {
   readonly appConfig = APP_CONFIG;
 
   departamentos = signal<Departamento[]>([]);
+  publicStats = signal(EMPTY_PUBLIC_STATS);
   loading = signal(true);
   mobileMenuOpen = signal(false);
   showObservatories = signal(false);
@@ -65,17 +74,6 @@ export class PublicHomeComponent implements OnInit {
     '#3B82F6',
   ];
 
-  get totalDatasets(): number {
-    return this.departamentos().reduce((sum, d) => sum + (d.datasets?.length || 0), 0);
-  }
-
-  get totalRegistros(): number {
-    return this.departamentos().reduce((sum, d) => {
-      const datasets = d.datasets || [];
-      return sum + datasets.reduce((s, ds) => s + (ds.total_registros || 0), 0);
-    }, 0);
-  }
-
   ngOnInit(): void {
     // Solo cargar datos en el navegador, no durante SSR
     if (isPlatformBrowser(this.platformId)) {
@@ -87,13 +85,18 @@ export class PublicHomeComponent implements OnInit {
   }
 
   loadDepartamentos(): void {
-    this.deptoService.getPublicos().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (deptos) => {
-        this.departamentos.set(deptos || []);
+    forkJoin({
+      departamentos: this.deptoService.getPublicos().pipe(catchError(() => of([]))),
+      stats: this.deptoService.getPublicStats().pipe(catchError(() => of(EMPTY_PUBLIC_STATS))),
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ departamentos, stats }) => {
+        this.departamentos.set(departamentos || []);
+        this.publicStats.set(stats);
         this.loading.set(false);
       },
       error: () => {
         this.departamentos.set([]);
+        this.publicStats.set(EMPTY_PUBLIC_STATS);
         this.loading.set(false);
       },
     });
@@ -103,10 +106,5 @@ export class PublicHomeComponent implements OnInit {
     return this.deptoColors[index % this.deptoColors.length];
   }
 
-  formatNumber(num: number): string {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
-  }
 }
 

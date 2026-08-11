@@ -3,6 +3,13 @@ import { Observable, Subject, tap } from 'rxjs';
 import { Departamento } from '../models';
 import { ApiService } from './api.service';
 
+export interface PublicHomeStats {
+  observatorios: number;
+  articulos: number;
+  reportes: number;
+  libros: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -47,6 +54,10 @@ export class DepartamentoService {
   // Público (sin auth)
   getPublicos(): Observable<Departamento[]> {
     return this.api.get<Departamento[]>('/publico/departamentos');
+  }
+
+  getPublicStats(): Observable<PublicHomeStats> {
+    return this.api.get<PublicHomeStats>('/publico/estadisticas');
   }
 
   getPublicById(id: string): Observable<Departamento> {

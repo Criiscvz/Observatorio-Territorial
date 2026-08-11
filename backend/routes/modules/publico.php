@@ -14,6 +14,7 @@ Route::get('/departamentos', [PublicController::class, 'departamentos']);
 Route::get('/departamentos/{id}', [PublicController::class, 'departamento']);
 Route::get('/departamentos/{id}/atlas', [PublicController::class, 'departamentoAtlas']);
 Route::get('/atlas', [PublicController::class, 'atlas']);
+Route::get('/estadisticas', [PublicController::class, 'estadisticas']);
 
 // Datasets públicos
 Route::get('/datasets/{id}/data', [PublicController::class, 'datasetData']);

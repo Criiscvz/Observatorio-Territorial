@@ -14,6 +14,9 @@ use App\Application\Public\UseCases\GetPublicDepartamentosUseCase;
 use App\Application\Public\UseCases\GetTextAnalysisUseCase;
 use App\Application\Public\UseCases\GetUnivariableStatsUseCase;
 use App\Http\Controllers\Controller;
+use App\Infrastructure\Persistence\Eloquent\Models\ArticuloModel;
+use App\Infrastructure\Persistence\Eloquent\Models\ReporteModel;
+use App\Models\Departamento;
 use App\Models\ObservatorioPublicacion;
 use App\Presentation\Http\Requests\Public\BivariableStatsRequest;
 use App\Presentation\Http\Requests\Public\UnivariableStatsRequest;
@@ -47,6 +50,41 @@ class PublicController extends Controller
         return response()->json(
             $departamentos->map(fn($d) => $d->toArray())
         );
+    }
+
+    #[OA\Get(
+        path: '/publico/estadisticas',
+        summary: 'Obtener totales públicos del portal',
+        tags: ['Público'],
+        responses: [
+            new OA\Response(response: 200, description: 'Totales de observatorios y publicaciones públicas')
+        ]
+    )]
+    public function estadisticas(): JsonResponse
+    {
+        $publicDepartmentIds = Departamento::query()->publicos()->pluck('id');
+
+        $legacyArticles = ArticuloModel::query()
+            ->whereIn('departamento_id', $publicDepartmentIds)
+            ->where(fn ($query) => $query->whereNull('visibilidad')->orWhere('visibilidad', '!=', 'privado'))
+            ->where(fn ($query) => $query->whereNull('estado')->orWhereIn('estado', ['PUBLICADO', 'PUBLICACION']))
+            ->count();
+
+        $legacyReports = ReporteModel::query()
+            ->whereIn('departamento_id', $publicDepartmentIds)
+            ->where(fn ($query) => $query->whereNull('visibilidad')->orWhere('visibilidad', '!=', 'privado'))
+            ->count();
+
+        $publishedPublications = ObservatorioPublicacion::query()
+            ->whereIn('departamento_id', $publicDepartmentIds)
+            ->where('estado', 'PUBLICACION');
+
+        return response()->json([
+            'observatorios' => $publicDepartmentIds->count(),
+            'articulos' => $legacyArticles + (clone $publishedPublications)->where('tipo', 'ARTICULO')->count(),
+            'reportes' => $legacyReports + (clone $publishedPublications)->where('tipo', 'REPORTE')->count(),
+            'libros' => (clone $publishedPublications)->where('tipo', 'LIBRO')->count(),
+        ]);
     }
 
     #[OA\Get(

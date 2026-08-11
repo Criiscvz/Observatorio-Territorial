@@ -233,16 +233,20 @@
 <section class="stats-section">
   <div class="stats-container">
     <div class="stat-item">
-      <span class="stat-number">{{ departamentos().length }}</span>
-      <span class="stat-label">{{ 'public.home.stats.publicDepartments' | translate }}</span>
+      <span class="stat-number">{{ publicStats().observatorios }}</span>
+      <span class="stat-label">{{ 'public.home.stats.observatories' | translate }}</span>
     </div>
     <div class="stat-item">
-      <span class="stat-number">{{ totalDatasets }}</span>
-      <span class="stat-label">{{ 'public.home.stats.availableDatasets' | translate }}</span>
+      <span class="stat-number">{{ publicStats().articulos }}</span>
+      <span class="stat-label">{{ 'public.home.stats.articles' | translate }}</span>
     </div>
     <div class="stat-item">
-      <span class="stat-number">{{ formatNumber(totalRegistros) }}</span>
-      <span class="stat-label">{{ 'public.home.stats.analyzedRecords' | translate }}</span>
+      <span class="stat-number">{{ publicStats().reportes }}</span>
+      <span class="stat-label">{{ 'public.home.stats.reports' | translate }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ publicStats().libros }}</span>
+      <span class="stat-label">{{ 'public.home.stats.books' | translate }}</span>
     </div>
   </div>
 </section>
