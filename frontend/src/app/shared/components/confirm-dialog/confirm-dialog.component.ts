@@ -3,20 +3,25 @@ import { Component, ViewEncapsulation, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Observable } from 'rxjs';
 
 export interface ConfirmDialogData {
   title: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
+  processingText?: string;
   confirmColor?: 'primary' | 'accent' | 'warn';
   icon?: string;
+  confirmAction?: () => Observable<unknown>;
+  onError?: (error: unknown) => void;
 }
 
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatDialogModule, MatIconModule],
+  imports: [CommonModule, MatButtonModule, MatDialogModule, MatIconModule, MatProgressSpinnerModule],
   encapsulation: ViewEncapsulation.None,
   template: `
     <section class="confirm-dialog" [class.confirm-dialog--danger]="data.confirmColor === 'warn'">
@@ -30,16 +35,20 @@ export interface ConfirmDialogData {
       </mat-dialog-content>
 
       <mat-dialog-actions align="end">
-        <button mat-stroked-button class="confirm-dialog__cancel" (click)="onCancel()">
+        <button mat-stroked-button class="confirm-dialog__cancel" [disabled]="isProcessing" (click)="onCancel()">
           {{ data.cancelText || 'Cancelar' }}
         </button>
         <button
           mat-flat-button
           class="confirm-dialog__confirm"
           [color]="data.confirmColor || 'primary'"
+          [disabled]="isProcessing"
           (click)="onConfirm()"
         >
-          {{ data.confirmText || 'Confirmar' }}
+          @if (isProcessing) {
+            <mat-spinner diameter="18" strokeWidth="3" aria-label="Procesando"></mat-spinner>
+          }
+          {{ isProcessing ? data.processingText || 'Procesando...' : data.confirmText || 'Confirmar' }}
         </button>
       </mat-dialog-actions>
     </section>
@@ -160,6 +169,13 @@ export interface ConfirmDialogData {
         box-shadow: 0 16px 34px rgba(239, 68, 68, 0.24);
       }
 
+      .confirm-dialog__confirm mat-spinner {
+        display: inline-block;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+        --mdc-circular-progress-active-indicator-color: currentColor;
+      }
+
       html.dark .confirm-dialog,
       body.dark .confirm-dialog,
       .dark .confirm-dialog {
@@ -215,12 +231,30 @@ export interface ConfirmDialogData {
 export class ConfirmDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<ConfirmDialogComponent>);
   readonly data = inject<ConfirmDialogData>(MAT_DIALOG_DATA);
+  isProcessing = false;
 
   onCancel(): void {
     this.dialogRef.close(false);
   }
 
   onConfirm(): void {
+    if (this.isProcessing) return;
+
+    if (this.data.confirmAction) {
+      this.isProcessing = true;
+      this.dialogRef.disableClose = true;
+
+      this.data.confirmAction().subscribe({
+        next: () => this.dialogRef.close(true),
+        error: (error: unknown) => {
+          this.isProcessing = false;
+          this.dialogRef.disableClose = false;
+          this.data.onError?.(error);
+        },
+      });
+      return;
+    }
+
     this.dialogRef.close(true);
   }
 }

@@ -838,13 +838,40 @@ export class DepartamentoDetailComponent implements OnInit {
   deleteDepartamento(): void {
     const depto = this.departamento();
     if (!depto) return;
-    const message = this.translate.instant('departamentos.detail.confirmDelete', {
-      name: depto.nombre,
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: 'min(92vw, 520px)',
+      maxWidth: '92vw',
+      panelClass: 'app-confirm-dialog-panel',
+      backdropClass: 'app-confirm-dialog-backdrop',
+      autoFocus: 'first-tabbable',
+      restoreFocus: true,
+      data: {
+        title: 'Eliminar observatorio',
+        message: `¿Estás seguro de que deseas eliminar el observatorio “${depto.nombre}”? Esta acción eliminará permanentemente el observatorio y su información asociada. No se puede deshacer.`,
+        confirmText: 'Eliminar definitivamente',
+        cancelText: 'Cancelar',
+        processingText: 'Eliminando...',
+        confirmColor: 'warn',
+        icon: 'delete_forever',
+        confirmAction: () => this.deptoService.delete(depto.id),
+        onError: (error: unknown) => {
+          const apiError = error as { error?: { message?: string } };
+          this.snackBar.open(
+            apiError.error?.message || 'No se pudo eliminar el observatorio.',
+            'Cerrar',
+            { duration: 4500 },
+          );
+        },
+      },
     });
-    if (confirm(message))
-      this.deptoService
-        .delete(depto.id)
-        .subscribe({ next: () => this.router.navigate(['/admin/dashboard']) });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((deleted) => {
+        if (deleted) this.router.navigate(['/admin/dashboard']);
+      });
   }
 
   deleteDataset(dataset: Dataset): void {
