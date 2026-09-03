@@ -7,13 +7,13 @@ Arquitectura: Angular en Vercel Hobby, Laravel Docker en Render Free, PostgreSQL
 1. Crea un **Web Service** gratuito desde el repositorio, con `backend` como directorio raíz y `Dockerfile` como Dockerfile.
 2. No configures disco persistente, worker ni cron. Render inyecta `PORT`; la imagen lo usa automáticamente.
 3. Añade las variables indicadas abajo y despliega. El health check es `GET /api/health`.
-4. Cuando el servicio esté activo, abre la Shell de Render y ejecuta una sola vez por despliegue de migraciones:
+4. En Render Free, que no incluye Shell, configura temporalmente esta variable cuando el despliegue contenga migraciones nuevas:
 
-   ```sh
-   php artisan migrate --force
+   ```env
+   RUN_MIGRATIONS=true
    ```
 
-   No ejecutes `migrate:fresh` ni `db:seed` en producción. Swagger se genera al iniciar el contenedor y queda disponible en `/api/docs`.
+   El contenedor ejecutará `php artisan migrate --force` durante el arranque. Cuando el despliegue quede **Live**, cambia `RUN_MIGRATIONS=false`. No uses `migrate:fresh` ni `db:seed` en producción. Swagger se genera al iniciar el contenedor y queda disponible en `/api/docs`.
 
 Render Free suspende servicios inactivos. La primera petición después de una suspensión puede tardar; no se debe intentar evitarlo con tráfico artificial.
 
@@ -55,6 +55,7 @@ AWS_USE_PATH_STYLE_ENDPOINT=true
 CACHE_STORE=file
 SESSION_DRIVER=cookie
 QUEUE_CONNECTION=sync
+RUN_MIGRATIONS=false
 L5_SWAGGER_CONST_HOST=https://TU-SERVICIO.onrender.com/api
 L5_SWAGGER_GENERATE_ALWAYS=false
 ```

@@ -35,12 +35,19 @@ chown -R www:www /var/www/html/storage/framework/cache
 chmod -R 775 /var/www/html/storage/framework/cache
 
 php artisan config:cache
+
+# Render Free does not provide an interactive Shell. Enable this flag only for
+# a deployment that includes new migrations, then disable it again after the
+# deployment succeeds. `migrate --force` is incremental and never runs seeders.
+if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+    echo "Running pending database migrations"
+    php artisan migrate --force
+fi
+
 php artisan route:cache
 php artisan view:cache
 
-# Swagger is generated at boot/deploy time. Migrations are intentionally
-# manual (`php artisan migrate --force`) so an application restart never
-# changes production data or runs seeders.
+# Swagger is generated at boot/deploy time.
 php artisan l5-swagger:generate
 
 exec "$@"
