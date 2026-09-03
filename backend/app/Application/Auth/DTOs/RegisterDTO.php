@@ -16,7 +16,7 @@ final readonly class RegisterDTO
     {
         return new self(
             name: $data['name'],
-            email: $data['email'],
+            email: strtolower(trim($data['email'])),
             password: $data['password'],
         );
     }

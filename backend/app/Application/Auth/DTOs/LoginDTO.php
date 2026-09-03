@@ -14,7 +14,7 @@ final readonly class LoginDTO
     public static function fromArray(array $data): self
     {
         return new self(
-            email: $data['email'],
+            email: strtolower(trim($data['email'])),
             password: $data['password'],
         );
     }

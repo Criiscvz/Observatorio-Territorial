@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\Auth\UseCases;
 
-use App\Application\Auth\DTOs\AuthResponseDTO;
 use App\Application\Auth\DTOs\RegisterDTO;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -12,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class RegisterUseCase
 {
-    public function execute(RegisterDTO $dto): AuthResponseDTO
+    public function execute(RegisterDTO $dto): User
     {
         return DB::transaction(function () use ($dto) {
             // Crear usuario con rol USER por defecto
@@ -21,31 +20,13 @@ class RegisterUseCase
                 'email' => $dto->email,
                 'password' => Hash::make($dto->password),
                 'rol' => 'USER',
+                'email_verified_at' => null,
             ]);
 
             // Crear perfil vacío automáticamente
             $user->perfil()->create([]);
 
-            // Cargar relaciones
-            $user->load(['perfil', 'departamentos']);
-
-            // Crear token de autenticación
-            $durationMinutes = $this->getSessionDurationMinutes($user);
-            $expiresAt = now()->addMinutes($durationMinutes);
-            $token = $user->createToken('auth-token', ['*'], $expiresAt)->plainTextToken;
-
-            return AuthResponseDTO::fromUser($user, $token, $expiresAt, $durationMinutes * 60);
+            return $user;
         });
-    }
-
-    private function getSessionDurationMinutes(User $user): int
-    {
-        $role = strtoupper((string) ($user->rol ?? 'USER'));
-
-        return match ($role) {
-            'ADMIN', 'EDITOR' => 480,
-            'SUSCRIPTOR', 'SUBSCRIPTOR', 'SUBSCRIBER', 'USER' => 1440,
-            default => 1440,
-        };
     }
 }

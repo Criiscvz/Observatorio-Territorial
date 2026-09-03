@@ -46,3 +46,7 @@
 mat-card-header {
   margin-bottom: 1.5rem;
 }
+
+.auth-divider { display: flex; align-items: center; gap: .75rem; margin: 1.25rem 0; color: var(--text-secondary); }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-top: 1px solid var(--border-color, #d1d5db); }
+.google-button { display: flex; gap: .5rem; align-items: center; justify-content: center; }

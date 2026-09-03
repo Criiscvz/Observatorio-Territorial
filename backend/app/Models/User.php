@@ -66,6 +66,8 @@ class User extends Authenticatable
         'password',
         'rol',
         'is_active',
+        'email_verified_at',
+        'google_id',
     ];
 
     /**
@@ -76,6 +78,7 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'google_id',
     ];
 
     /**
@@ -124,6 +127,11 @@ class User extends Authenticatable
     public function permisos(): HasMany
     {
         return $this->hasMany(Permiso::class, 'user_id');
+    }
+
+    public function emailVerificationCodes(): HasMany
+    {
+        return $this->hasMany(EmailVerificationCode::class);
     }
 
     /**

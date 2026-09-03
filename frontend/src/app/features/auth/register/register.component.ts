@@ -60,13 +60,30 @@ export class RegisterComponent {
     this.error.set(null);
 
     this.authService.register(this.form.value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        // Los usuarios registrados son siempre USER, redirigir al área pública
-        this.router.navigate(['/publico/departamentos']);
+      next: (response) => {
+        this.router.navigate(['/auth/verificar-correo'], {
+          state: {
+            email: response.email,
+            emailSent: response.email_sent,
+            resendAfter: response.resend_after,
+          },
+        });
       },
       error: (err) => {
         this.loading.set(false);
         this.error.set(err.error?.message || this.translate.instant('auth.register.errors.registrationFailed'));
+      },
+    });
+  }
+
+  continueWithGoogle(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.authService.getGoogleAuthorizationUrl().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ url }) => window.location.assign(url),
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || 'Google no está disponible en este momento.');
       },
     });
   }

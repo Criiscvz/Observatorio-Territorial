@@ -11,6 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/services/auth.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -36,6 +37,7 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  private readonly route = inject(ActivatedRoute);
 
   form: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -45,6 +47,12 @@ export class LoginComponent {
   loading = signal(false);
   error = signal<string | null>(null);
   hidePassword = signal(true);
+
+  constructor() {
+    if (this.route.snapshot.queryParamMap.has('google_error')) {
+      this.error.set('No fue posible completar el acceso con Google. Inténtalo nuevamente.');
+    }
+  }
 
   onSubmit(): void {
     if (this.form.invalid) return;
@@ -63,7 +71,25 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading.set(false);
+        if (err.status === 403 && err.error?.code === 'EMAIL_VERIFICATION_REQUIRED') {
+          const email = err.error?.details?.email ?? this.form.value.email;
+          this.authService.setPendingVerificationEmail(email);
+          this.router.navigate(['/auth/verificar-correo'], { state: { email } });
+          return;
+        }
         this.error.set(err.error?.message || this.translate.instant('auth.login.errors.loginFailed'));
+      },
+    });
+  }
+
+  continueWithGoogle(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.authService.getGoogleAuthorizationUrl().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ url }) => window.location.assign(url),
+      error: (err) => {
+        this.loading.set(false);
+        this.error.set(err.error?.message || 'Google no está disponible en este momento.');
       },
     });
   }

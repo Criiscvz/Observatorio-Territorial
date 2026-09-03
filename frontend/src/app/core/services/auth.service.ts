@@ -10,6 +10,20 @@ import { ApiService } from './api.service';
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
 const EXPIRES_AT_KEY = 'auth_expires_at';
+const VERIFICATION_EMAIL_KEY = 'verification_email';
+
+export interface RegisterPendingResponse {
+  message: string;
+  verification_required: true;
+  email: string;
+  email_sent: boolean;
+  resend_after: number;
+}
+
+export interface VerificationMessageResponse {
+  message: string;
+  resend_after: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -36,12 +50,55 @@ export class AuthService {
   readonly isSubscriber = computed(() => this.userSignal()?.rol === 'SUBSCRIBER');
   readonly userRole = computed(() => this.userSignal()?.rol ?? null);
 
-  register(data: RegisterRequest): Observable<AuthResponse> {
+  register(data: RegisterRequest): Observable<RegisterPendingResponse> {
     this.loadingSignal.set(true);
-    return this.api.post<AuthResponse>('/register', data).pipe(
-      tap((response) => this.handleAuthSuccess(response)),
+    return this.api.post<RegisterPendingResponse>('/register', data).pipe(
+      tap((response) => this.setPendingVerificationEmail(response.email)),
       finalize(() => this.loadingSignal.set(false))
     );
+  }
+
+  verifyEmail(email: string, code: string): Observable<AuthResponse> {
+    this.loadingSignal.set(true);
+    return this.api.post<AuthResponse>('/verify-email-code', { email, code }).pipe(
+      tap((response) => {
+        this.clearPendingVerificationEmail();
+        this.handleAuthSuccess(response);
+      }),
+      finalize(() => this.loadingSignal.set(false)),
+    );
+  }
+
+  resendVerificationCode(email: string): Observable<VerificationMessageResponse> {
+    return this.api.post<VerificationMessageResponse>('/resend-verification-code', { email });
+  }
+
+  getGoogleAuthorizationUrl(): Observable<{ url: string }> {
+    return this.api.get<{ url: string }>('/auth/google/redirect');
+  }
+
+  exchangeGoogleCode(code: string): Observable<AuthResponse> {
+    this.loadingSignal.set(true);
+    return this.api.post<AuthResponse>('/auth/google/exchange', { code }).pipe(
+      tap((response) => this.handleAuthSuccess(response)),
+      finalize(() => this.loadingSignal.set(false)),
+    );
+  }
+
+  setPendingVerificationEmail(email: string): void {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(VERIFICATION_EMAIL_KEY, email);
+    }
+  }
+
+  getPendingVerificationEmail(): string {
+    return typeof window !== 'undefined' ? (sessionStorage.getItem(VERIFICATION_EMAIL_KEY) ?? '') : '';
+  }
+
+  clearPendingVerificationEmail(): void {
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(VERIFICATION_EMAIL_KEY);
+    }
   }
 
   login(data: LoginRequest): Observable<AuthResponse> {

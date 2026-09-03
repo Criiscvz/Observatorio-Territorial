@@ -64,6 +64,12 @@
           }
         </button>
       </form>
+
+      <div class="auth-divider"><span>o</span></div>
+      <button mat-stroked-button type="button" class="w-full google-button" [disabled]="loading()" (click)="continueWithGoogle()">
+        <mat-icon>account_circle</mat-icon>
+        Continuar con Google
+      </button>
     </mat-card-content>
 
     <mat-card-actions class="justify-center">
