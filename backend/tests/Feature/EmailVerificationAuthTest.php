@@ -41,10 +41,12 @@ class EmailVerificationAuthTest extends TestCase
 
         $this->postJson('/api/verify-email-code', ['email' => self::EMAIL, 'code' => $code])
             ->assertOk()
-            ->assertJsonStructure(['user', 'token']);
+            ->assertJsonStructure(['user'])
+            ->assertJsonMissing(['token']);
 
         $this->assertNotNull($user->fresh()->email_verified_at);
         $this->assertNotNull($stored->fresh()->used_at);
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_incorrect_expired_and_used_codes_are_rejected(): void
@@ -109,7 +111,9 @@ class EmailVerificationAuthTest extends TestCase
 
         $this->postJson('/api/login', ['email' => $user->email, 'password' => self::PASSWORD])
             ->assertOk()
-            ->assertJsonStructure(['token']);
+            ->assertJsonStructure(['user'])
+            ->assertJsonMissing(['token']);
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_email_provider_failure_leaves_no_valid_code(): void
@@ -181,7 +185,8 @@ class EmailVerificationAuthTest extends TestCase
         $this->postJson('/api/login', [
             'email' => 'existing.user@example.test',
             'password' => self::PASSWORD,
-        ])->assertOk()->assertJsonStructure(['token']);
+        ])->assertOk()->assertJsonStructure(['user'])->assertJsonMissing(['token']);
+        $this->assertAuthenticatedAs($user);
     }
 
     private function registerAndCaptureCode(): array

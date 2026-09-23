@@ -84,7 +84,7 @@ Route::get('/avatars/{filename}', function (string $filename) {
         ->header('Cache-Control', 'public, max-age=31536000')
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Cross-Origin-Resource-Policy', 'cross-origin');
-})->where('filename', '.*');
+})->where('filename', '(?i:[a-z0-9_-]+\\.(jpg|jpeg|png|webp))');
 
 // ============ AUTH ============
 require __DIR__ . '/modules/auth.php';
@@ -92,9 +92,6 @@ require __DIR__ . '/modules/atlas.php';
 
 // ============ PROFILE ============
 require __DIR__ . '/modules/profile.php';
-
-// ============ SEED (Inicialización) ============
-require __DIR__ . '/modules/seed.php';
 
 // ============ RUTAS PÚBLICAS ============
 Route::prefix('publico')->group(__DIR__ . '/modules/publico.php');

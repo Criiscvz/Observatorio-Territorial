@@ -56,8 +56,7 @@ Variantes:
 
 ## Acceso
 - URL: http://localhost:4200
-- Email: `admin@uleam.edu.ec`
-- Contraseña: `Admin12345`
+- Las cuentas iniciales se configuran con variables protegidas en `backend/.env` antes de ejecutar el seeder por CLI.
 
 ## Notas / configuración propia de esta máquina
 - Postgres de Docker está en el puerto **5433** (hay un PostgreSQL nativo en el 5432).

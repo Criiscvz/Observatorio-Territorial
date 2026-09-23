@@ -7,6 +7,7 @@ namespace App\Application\Auth\UseCases;
 use App\Application\Auth\DTOs\AuthResponseDTO;
 use App\Application\Auth\DTOs\LoginDTO;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use App\Domain\Shared\Exceptions\ApiException;
@@ -32,29 +33,11 @@ class LoginUseCase
             );
         }
 
-        // Revocar todos los tokens anteriores del usuario
-        $user->tokens()->delete();
-
         // Cargar relaciones necesarias
         $user->load(['perfil', 'departamentos']);
 
-        $durationMinutes = $this->getSessionDurationMinutes($user);
-        $expiresAt = now()->addMinutes($durationMinutes);
+        Auth::login($user);
 
-        // Crear nuevo token con expiracion por rol.
-        $token = $user->createToken('auth-token', ['*'], $expiresAt)->plainTextToken;
-
-        return AuthResponseDTO::fromUser($user, $token, $expiresAt, $durationMinutes * 60);
-    }
-
-    private function getSessionDurationMinutes(User $user): int
-    {
-        $role = strtoupper((string) ($user->rol ?? 'USER'));
-
-        return match ($role) {
-            'ADMIN', 'EDITOR' => 480,
-            'SUSCRIPTOR', 'SUBSCRIPTOR', 'SUBSCRIBER', 'USER' => 1440,
-            default => 1440,
-        };
+        return AuthResponseDTO::fromUser($user);
     }
 }
