@@ -1,15 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, map, of, tap } from 'rxjs';
+import { Observable, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { AuthResponse, LoginRequest, RegisterRequest, User, UserRole } from '../models';
 import { ApiService } from './api.service';
-
-/**
- * Claves usadas para restaurar la sesión después de recargar la página.
- */
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'auth_user';
-const EXPIRES_AT_KEY = 'auth_expires_at';
 
 @Injectable({
   providedIn: 'root',
@@ -19,14 +12,12 @@ export class AuthService {
   private readonly router = inject(Router);
 
   // State con signals
-  private readonly userSignal = signal<User | null>(this.getStoredUser());
-  private readonly tokenSignal = signal<string | null>(this.getStoredToken());
+  private readonly userSignal = signal<User | null>(null);
   private readonly loadingSignal = signal<boolean>(false);
 
   // Computed values
   readonly user = computed(() => this.userSignal());
-  readonly token = computed(() => this.tokenSignal());
-  readonly isAuthenticated = computed(() => !!this.tokenSignal());
+  readonly isAuthenticated = computed(() => !!this.userSignal());
   readonly isLoading = computed(() => this.loadingSignal());
 
   // Computed values para roles
@@ -38,7 +29,8 @@ export class AuthService {
 
   register(data: RegisterRequest): Observable<AuthResponse> {
     this.loadingSignal.set(true);
-    return this.api.post<AuthResponse>('/register', data).pipe(
+    return this.api.getCsrfCookie().pipe(
+      switchMap(() => this.api.post<AuthResponse>('/register', data)),
       tap((response) => this.handleAuthSuccess(response)),
       finalize(() => this.loadingSignal.set(false))
     );
@@ -46,7 +38,8 @@ export class AuthService {
 
   login(data: LoginRequest): Observable<AuthResponse> {
     this.loadingSignal.set(true);
-    return this.api.post<AuthResponse>('/login', data).pipe(
+    return this.api.getCsrfCookie().pipe(
+      switchMap(() => this.api.post<AuthResponse>('/login', data)),
       tap((response) => this.handleAuthSuccess(response)),
       finalize(() => this.loadingSignal.set(false))
     );
@@ -67,21 +60,17 @@ export class AuthService {
       tap((user) => {
         const normalizedUser = this.normalizeUser(user);
         this.userSignal.set(normalizedUser);
-        this.storeUser(normalizedUser);
       })
     );
   }
 
   checkAuth(): Observable<boolean> {
-    if (!this.tokenSignal() || this.isSessionExpired()) {
-      this.clearAuthSilent();
-      return of(false);
-    }
-
     return this.getCurrentUser().pipe(
       map(() => true),
       catchError(() => {
-        this.clearAuth();
+        // Esta comprobación también se ejecuta desde guestGuard. Navegar aquí
+        // cancela la navegación actual (por ejemplo, hacia /auth/login).
+        this.clearAuthSilent();
         return of(false);
       })
     );
@@ -114,153 +103,29 @@ export class AuthService {
   }
 
   /**
-   * Obtener token actual (para uso en interceptors).
-   */
-  getToken(): string | null {
-    if (this.tokenSignal()) {
-      return this.tokenSignal();
-    }
-
-    const storedToken = this.getStoredToken();
-    if (storedToken) {
-      this.tokenSignal.set(storedToken);
-    }
-
-    return storedToken;
-  }
-
-  /**
    * Actualizar datos del usuario en el estado local
    */
   updateUser(user: User): void {
     const normalizedUser = this.normalizeUser(user);
     this.userSignal.set(normalizedUser);
-    this.storeUser(normalizedUser);
   }
 
   /**
-   * Limpiar autenticación sin redireccionar
+   * Limpiar autenticación sin redireccionar. Los guards e interceptores
+   * deciden si corresponde una redirección.
    */
   clearAuthSilent(): void {
-    this.tokenSignal.set(null);
     this.userSignal.set(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-      localStorage.removeItem(EXPIRES_AT_KEY);
-      sessionStorage.removeItem(USER_KEY);
-    }
   }
 
   private handleAuthSuccess(response: AuthResponse): void {
-    // El token se mantiene SOLO en la señal en memoria para evitar exposición por XSS.
     const normalizedUser = this.normalizeUser(response.user);
-    this.tokenSignal.set(response.token);
     this.userSignal.set(normalizedUser);
-    this.storeToken(response.token);
-    this.storeUser(normalizedUser);
-    this.storeExpiration(response.expires_at);
-  }
-
-  private clearAuth(): void {
-    this.clearAuthSilent();
-    this.router.navigate(['/auth/login']);
   }
 
   private completeLogout(): void {
     this.clearAuthSilent();
     this.router.navigate(['/publico/departamentos']);
-  }
-
-  /**
-   * El usuario se recupera para restaurar roles y permisos despues de recargar.
-   */
-  private getStoredUser(): User | null {
-    if (typeof window === 'undefined') return null;
-    if (!localStorage.getItem(TOKEN_KEY)) {
-      localStorage.removeItem(USER_KEY);
-      sessionStorage.removeItem(USER_KEY);
-      return null;
-    }
-
-    if (this.isStoredSessionExpired()) return null;
-
-    const user = localStorage.getItem(USER_KEY) ?? sessionStorage.getItem(USER_KEY);
-    if (!user) return null;
-
-    try {
-      return this.normalizeUser(JSON.parse(user));
-    } catch {
-      localStorage.removeItem(USER_KEY);
-      sessionStorage.removeItem(USER_KEY);
-      return null;
-    }
-  }
-
-  private getStoredToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    if (this.isStoredSessionExpired()) {
-      this.clearStoredSession();
-      return null;
-    }
-
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
-  private storeToken(token: string): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(TOKEN_KEY, token);
-    }
-  }
-
-  private storeUser(user: User): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(USER_KEY, JSON.stringify(user));
-      sessionStorage.removeItem(USER_KEY);
-    }
-  }
-
-  private storeExpiration(expiresAt?: string | null): void {
-    if (typeof window === 'undefined') return;
-
-    if (!expiresAt) {
-      localStorage.removeItem(EXPIRES_AT_KEY);
-      return;
-    }
-
-    const expiresAtTime = new Date(expiresAt).getTime();
-    if (Number.isNaN(expiresAtTime)) {
-      localStorage.removeItem(EXPIRES_AT_KEY);
-      return;
-    }
-
-    localStorage.setItem(EXPIRES_AT_KEY, expiresAt);
-  }
-
-  private isSessionExpired(): boolean {
-    if (typeof window === 'undefined') return false;
-    return this.isStoredSessionExpired();
-  }
-
-  private isStoredSessionExpired(): boolean {
-    if (typeof window === 'undefined') return false;
-
-    const expiresAt = localStorage.getItem(EXPIRES_AT_KEY);
-    if (!expiresAt) {
-      return false;
-    }
-
-    const expiresAtTime = new Date(expiresAt).getTime();
-    return Number.isNaN(expiresAtTime) || expiresAtTime <= Date.now();
-  }
-
-  private clearStoredSession(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
-      localStorage.removeItem(EXPIRES_AT_KEY);
-      sessionStorage.removeItem(USER_KEY);
-    }
   }
 
   private normalizeUser(user: User | (Partial<User> & Record<string, any>)): User {

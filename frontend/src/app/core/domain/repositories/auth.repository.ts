@@ -7,7 +7,5 @@ export abstract class AuthRepository {
   abstract logout(): Observable<void>;
   abstract getCurrentUser(): Observable<UserEntity>;
   abstract isAuthenticated(): boolean;
-  abstract getToken(): string | null;
-  abstract setToken(token: string): void;
   abstract clearToken(): void;
 }

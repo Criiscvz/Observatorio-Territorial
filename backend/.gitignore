@@ -19,6 +19,9 @@
 /storage/*.key
 /storage/pail
 /vendor
+/composer.phar
+/_ide_helper.php
+/rol
 Homestead.json
 Homestead.yaml
 Thumbs.db

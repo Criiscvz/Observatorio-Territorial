@@ -7,6 +7,7 @@ namespace App\Application\Auth\UseCases;
 use App\Application\Auth\DTOs\AuthResponseDTO;
 use App\Application\Auth\DTOs\RegisterDTO;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
@@ -29,23 +30,9 @@ class RegisterUseCase
             // Cargar relaciones
             $user->load(['perfil', 'departamentos']);
 
-            // Crear token de autenticación
-            $durationMinutes = $this->getSessionDurationMinutes($user);
-            $expiresAt = now()->addMinutes($durationMinutes);
-            $token = $user->createToken('auth-token', ['*'], $expiresAt)->plainTextToken;
+            Auth::login($user);
 
-            return AuthResponseDTO::fromUser($user, $token, $expiresAt, $durationMinutes * 60);
+            return AuthResponseDTO::fromUser($user);
         });
-    }
-
-    private function getSessionDurationMinutes(User $user): int
-    {
-        $role = strtoupper((string) ($user->rol ?? 'USER'));
-
-        return match ($role) {
-            'ADMIN', 'EDITOR' => 480,
-            'SUSCRIPTOR', 'SUBSCRIPTOR', 'SUBSCRIBER', 'USER' => 1440,
-            default => 1440,
-        };
     }
 }

@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Agregar middleware ForceJsonResponse a TODAS las rutas API
         // Esto asegura que Laravel SIEMPRE responda JSON en rutas /api/*
         $middleware->prependToGroup('api', \App\Http\Middleware\ForceJsonResponse::class);
+        $middleware->statefulApi();
 
         // Para API: NO redirigir a login, sino devolver JSON 401
         $middleware->redirectGuestsTo(function (Request $request) {

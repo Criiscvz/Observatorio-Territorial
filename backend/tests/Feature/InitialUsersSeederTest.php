@@ -61,22 +61,22 @@ class InitialUsersSeederTest extends TestCase
         $this->assertTrue($normalUser->is_active);
         $this->assertTrue(Hash::check(self::PASSWORD, $normalUser->password));
 
-        $this->postJson('/api/login', [
+        $this->withHeader('Origin', 'http://localhost:4200')->postJson('/api/login', [
             'email' => self::ADMIN_EMAIL,
             'password' => self::PASSWORD,
         ])
             ->assertOk()
             ->assertJsonPath('user.email', self::ADMIN_EMAIL)
             ->assertJsonPath('user.rol', 'ADMIN')
-            ->assertJsonStructure(['token']);
+            ->assertJsonMissing(['token']);
 
-        $this->postJson('/api/login', [
+        $this->withHeader('Origin', 'http://localhost:4200')->postJson('/api/login', [
             'email' => self::USER_EMAIL,
             'password' => self::PASSWORD,
         ])
             ->assertOk()
             ->assertJsonPath('user.email', self::USER_EMAIL)
             ->assertJsonPath('user.rol', 'USER')
-            ->assertJsonStructure(['token']);
+            ->assertJsonMissing(['token']);
     }
 }

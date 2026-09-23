@@ -51,39 +51,41 @@ class DemoDataSeeder extends Seeder
 
     private function createUsers(): array
     {
+        $demoPassword = Hash::make(Str::password(32));
+
         $usersData = [
             [
                 'name' => 'María García López',
                 'email' => 'maria.garcia@uleam.edu.ec',
-                'password' => Hash::make('password123'),
+                'password' => $demoPassword,
                 'rol' => 'USER',
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Carlos Mendoza Reyes',
                 'email' => 'carlos.mendoza@uleam.edu.ec',
-                'password' => Hash::make('password123'),
+                'password' => $demoPassword,
                 'rol' => 'EDITOR',
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Ana Lucía Cevallos',
                 'email' => 'ana.cevallos@uleam.edu.ec',
-                'password' => Hash::make('password123'),
+                'password' => $demoPassword,
                 'rol' => 'USER',
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Roberto Zambrano Mera',
                 'email' => 'roberto.zambrano@uleam.edu.ec',
-                'password' => Hash::make('password123'),
+                'password' => $demoPassword,
                 'rol' => 'USER',
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Patricia Moreira Alcívar',
                 'email' => 'patricia.moreira@uleam.edu.ec',
-                'password' => Hash::make('password123'),
+                'password' => $demoPassword,
                 'rol' => 'USER',
                 'email_verified_at' => now(),
             ],

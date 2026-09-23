@@ -10,11 +10,6 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (!authService.isAuthenticated()) {
-    router.navigate(['/auth/login']);
-    return false;
-  }
-
   if (authService.user()) {
     return true;
   }
@@ -40,10 +35,6 @@ export const authGuard: CanActivateFn = () => {
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
-
-  if (!authService.isAuthenticated()) {
-    return true;
-  }
 
   const redirectAuthenticatedUser = (): false => {
     if (authService.isAdmin() || authService.isEditor()) {

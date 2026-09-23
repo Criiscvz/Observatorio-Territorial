@@ -26,12 +26,9 @@ return [
         'http://localhost:4000',
         'http://127.0.0.1:4200',
         'http://127.0.0.1:4300',
-        'https://observatirio.vercel.app',
     ]),
 
-    'allowed_origins_patterns' => [
-        '#^https://observatorio-territorial(?:-[a-z0-9-]+)?\.vercel\.app$#',
-    ],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 
@@ -39,7 +36,6 @@ return [
 
     'max_age' => 0,
 
-    // The SPA authenticates with Sanctum Bearer tokens, not cross-site cookies.
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 
 ];
