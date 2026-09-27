@@ -17,6 +17,7 @@ import {
   ObservatorioPublicacion,
 } from '@core/models/publicacion/publicacion.interface';
 import { PublicacionService } from '@core/services/publicacion.service';
+import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
 import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-dialog.component';
 
 @Component({
@@ -67,6 +68,15 @@ import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-
         </div>
 
         <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Categoría de Atlas</mat-label>
+            <mat-select formControlName="atlas_categoria_id">
+              <mat-option value="">Sin categoría</mat-option>
+              @for (categoria of categorias(); track categoria.id) {
+                <mat-option [value]="categoria.id">{{ categoria.nombre }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Título del Atlas</mat-label>
             <input matInput formControlName="titulo" />
@@ -301,6 +311,8 @@ import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-
   ],
 })
 export class GlobalAtlasUploadComponent implements OnInit {
+  private readonly categoriaService = inject(AtlasCategoriaService);
+  readonly categorias = signal<AtlasCategoria[]>([]);
   private readonly fb = inject(FormBuilder);
   private readonly publicacionService = inject(PublicacionService);
   private readonly dialog = inject(MatDialog);
@@ -318,6 +330,7 @@ export class GlobalAtlasUploadComponent implements OnInit {
   editingAtlas = signal<ObservatorioPublicacion | null>(null);
 
   readonly form = this.fb.nonNullable.group({
+    atlas_categoria_id: [''],
     tipo: ['ATLAS' as const],
     estado: ['PUBLICACION' as EstadoPublicacion, Validators.required],
     solo_suscriptores: [false],
@@ -330,6 +343,10 @@ export class GlobalAtlasUploadComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.categoriaService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: items => this.categorias.set(items),
+      error: () => this.snackBar.open('No se pudieron cargar las categorías. Recarga la página para seleccionarlas.', 'Cerrar', { duration: 6000 }),
+    });
     const atlasId = this.route.snapshot.queryParamMap.get('editar');
     if (!atlasId) return;
 
@@ -341,6 +358,7 @@ export class GlobalAtlasUploadComponent implements OnInit {
         next: (atlas) => {
           this.editingAtlas.set(atlas);
           this.form.patchValue({
+            atlas_categoria_id: atlas.atlas_categoria_id ?? '',
             estado: atlas.estado,
             solo_suscriptores: atlas.solo_suscriptores,
             titulo: atlas.titulo,
@@ -384,6 +402,7 @@ export class GlobalAtlasUploadComponent implements OnInit {
   }
 
   save(): void {
+    if (this.saving() || this.loadingAtlas()) return;
     this.form.markAllAsTouched();
     this.fileError.set('');
     this.serverError.set('');

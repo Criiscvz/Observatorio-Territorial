@@ -12,6 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { PublicacionService } from '@core/services/publicacion.service';
+import { AtlasCategoriasComponent } from './atlas-categorias.component';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -21,6 +22,7 @@ import {
   selector: 'app-global-atlas-management',
   standalone: true,
   imports: [
+    AtlasCategoriasComponent,
     CommonModule,
     RouterLink,
     MatButtonModule,

@@ -129,7 +129,10 @@ class PublicController extends Controller
 
     public function atlas(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
+        $filters = $request->validate(['categoria_id' => ['nullable', 'uuid']]);
         $query = ObservatorioPublicacion::query()
+            ->with('atlasCategoria')
+            ->when($filters['categoria_id'] ?? null, fn ($q, $id) => $q->where('atlas_categoria_id', $id))
             ->where('tipo', 'ATLAS')
             ->where('estado', 'PUBLICACION')
             ->whereNull('departamento_id')

@@ -6,6 +6,8 @@ export type EstadoPublicacion =
   | 'ARCHIVADO';
 
 export interface ObservatorioPublicacion {
+  atlas_categoria_id?: string | null;
+  atlas_categoria?: { id: string; nombre: string; descripcion: string | null } | null;
   id: string;
   departamento_id?: string | null;
   creado_por?: number | null;

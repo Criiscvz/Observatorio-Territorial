@@ -43,6 +43,7 @@ class StorePublicacionRequest extends FormRequest
                 Rule::in(['PUBLICACION', 'EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO']),
             ],
             'solo_suscriptores' => ['sometimes', 'boolean'],
+            'atlas_categoria_id' => ['sometimes', 'nullable', Rule::prohibitedIf($tipo !== 'ATLAS' || $this->user()?->rol !== 'ADMIN'), 'uuid', Rule::exists('atlas_categorias', 'id')->whereNull('deleted_at')],
             'titulo' => ['required', 'string', 'max:255'],
             'fecha_publicacion' => ['required', 'date'],
             'link_url' => [

@@ -88,6 +88,7 @@ Route::get('/avatars/{filename}', function (string $filename) {
 
 // ============ AUTH ============
 require __DIR__ . '/modules/auth.php';
+require __DIR__ . '/modules/atlas.php';
 
 // ============ PROFILE ============
 require __DIR__ . '/modules/profile.php';

@@ -12,6 +12,8 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
+import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
 
 import { Articulo } from '@core/services/articulos.service';
 import { PublicacionService } from '@core/services/publicacion.service';
@@ -44,6 +46,11 @@ import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-
   styleUrl: './public-atlas.component.scss',
 })
 export class PublicAtlasComponent implements OnInit {
+  private readonly categoriaService = inject(AtlasCategoriaService);
+  readonly categorias = signal<AtlasCategoria[]>([]);
+  readonly loading = signal(false);
+  readonly loadError = signal('');
+  readonly selectedDescription = computed(() => this.categorias().find(c => c.id === this.selectedCategory())?.descripcion);
   private readonly destroyRef = inject(DestroyRef);
   private readonly publicacionService = inject(PublicacionService);
   private readonly authService = inject(AuthService);
@@ -73,9 +80,17 @@ export class PublicAtlasComponent implements OnInit {
   }
 
   loadData(): void {
-    this.publicacionService.getPublicAtlas()
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.loadError.set('');
+    forkJoin([this.publicacionService.getPublicAtlas(), this.categoriaService.list(true)])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((data) =>
+      .subscribe({ next: ([data, categorias]) => {
+        this.categorias.set(categorias);
+        if (this.selectedCategory() !== 'TODAS' && !categorias.some(c => c.id === this.selectedCategory())) {
+          this.selectedCategory.set('TODAS');
+        }
+        this.loading.set(false);
         this.articulos.set(
           data.map((item) => ({
             id: item.id,
@@ -91,8 +106,8 @@ export class PublicAtlasComponent implements OnInit {
             visibilidad: item.solo_suscriptores ? 'suscriptor' : 'publico',
             bloqueado: item.bloqueado,
             categoria: {
-              id: 'atlas',
-              nombre: 'Atlas ULEAM',
+              id: item.atlas_categoria?.id ?? '',
+              nombre: item.atlas_categoria?.nombre ?? 'Sin categoría',
               codigo: 'ATLAS',
               color: '#6366F1',
               icono: 'picture_as_pdf',
@@ -100,8 +115,12 @@ export class PublicAtlasComponent implements OnInit {
             created_at: item.created_at,
             updated_at: item.updated_at,
           })),
-        ),
-      );
+        );
+      }, error: () => {
+        this.articulos.set([]);
+        this.loading.set(false);
+        this.loadError.set('No se pudo cargar Atlas. Intenta actualizar los datos.');
+      } });
 
   }
 
@@ -161,20 +180,13 @@ export class PublicAtlasComponent implements OnInit {
 
   // Artículos (publicaciones)
 
-  categoriasArticulos = computed<string[]>(() => {
-    const list = this.articulos()
-      .map((a) => a.categoria?.nombre)
-      .filter((n): n is string => !!n);
-    return ['TODAS', ...Array.from(new Set(list))];
-  });
-
   filteredArticulos = computed<Articulo[]>(() => {
     const term = this.searchTerm().toLowerCase().trim();
     const cat = this.selectedCategory();
     let list = this.articulos();
 
     if (cat !== 'TODAS') {
-      list = list.filter((a) => a.categoria?.nombre === cat);
+      list = list.filter((a) => a.categoria?.id === cat);
     }
 
     if (term) {

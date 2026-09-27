@@ -6,6 +6,8 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Departamento;
+use App\Models\AtlasCategoria;
+use Illuminate\Validation\ValidationException;
 use App\Models\ObservatorioPublicacion;
 use App\Infrastructure\Services\SharePointService;
 use App\Presentation\Http\Requests\Publicacion\StorePublicacionRequest;
@@ -47,7 +49,7 @@ class ObservatorioPublicacionController extends Controller
         abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para gestionar Atlas global.');
 
         $items = ObservatorioPublicacion::query()
-            ->with('creadoPor')
+            ->with(['creadoPor', 'atlasCategoria'])
             ->where('tipo', 'ATLAS')
             ->whereNull('departamento_id')
             ->orderByDesc('fecha_publicacion')
@@ -118,6 +120,7 @@ class ObservatorioPublicacionController extends Controller
 
         try {
             $publicacion = DB::transaction(function () use ($data, $request, $departamento, $file, $path, $estado) {
+                $this->lockAtlasCategory($data);
                 $counter = DB::table('publicacion_contadores')->where('tipo', $data['tipo'])->lockForUpdate()->first();
                 abort_unless($counter, 500, 'No se pudo generar el código de publicación.');
                 $number = (int) $counter->siguiente_numero;
@@ -130,6 +133,7 @@ class ObservatorioPublicacionController extends Controller
                     'estado' => $estado,
                     'solo_suscriptores' => $request->user()->rol === 'ADMIN' && $request->boolean('solo_suscriptores'),
                     'codigo' => $this->codePrefix($data['tipo']).str_pad((string) $number, 4, '0', STR_PAD_LEFT),
+                    ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
                     'fecha_publicacion' => $data['fecha_publicacion'],
                     'link_url' => $data['link_url'] ?? null,
@@ -163,6 +167,7 @@ class ObservatorioPublicacionController extends Controller
 
         try {
             $publicacion = DB::transaction(function () use ($data, $request, $file, $path) {
+                $this->lockAtlasCategory($data);
                 $counter = DB::table('publicacion_contadores')->where('tipo', 'ATLAS')->lockForUpdate()->first();
                 abort_unless($counter, 500, 'No se pudo generar el código de publicación.');
                 $number = (int) $counter->siguiente_numero;
@@ -175,6 +180,7 @@ class ObservatorioPublicacionController extends Controller
                     'estado' => $request->user()->rol === 'ADMIN' ? $data['estado'] : self::ESTADO_EN_REVISION,
                     'solo_suscriptores' => $request->boolean('solo_suscriptores'),
                     'codigo' => 'ATL-'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
+                    ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
                     'fecha_publicacion' => $data['fecha_publicacion'],
                     'link_url' => $data['link_url'] ?? null,
@@ -254,9 +260,11 @@ class ObservatorioPublicacionController extends Controller
 
         try {
             DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, $isAdmin) {
+                $this->lockAtlasCategory($data);
                 $publicacion->update([
                     'estado' => $isAdmin ? $data['estado'] : $publicacion->estado,
                     'solo_suscriptores' => $isAdmin ? $request->boolean('solo_suscriptores') : $publicacion->solo_suscriptores,
+                    ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
                     'fecha_publicacion' => $data['fecha_publicacion'],
                     'link_url' => $data['link_url'] ?? null,
@@ -281,6 +289,13 @@ class ObservatorioPublicacionController extends Controller
         }
 
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response();
+    }
+
+    private function lockAtlasCategory(array $data): void
+    {
+        if (! empty($data['atlas_categoria_id']) && ! AtlasCategoria::whereKey($data['atlas_categoria_id'])->lockForUpdate()->first()) {
+            throw ValidationException::withMessages(['atlas_categoria_id' => 'La categoría ya no está disponible. Selecciona otra categoría.']);
+        }
     }
 
     public function destroy(Request $request, ObservatorioPublicacion $publicacion): JsonResponse

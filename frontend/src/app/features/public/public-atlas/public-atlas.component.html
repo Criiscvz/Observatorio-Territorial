@@ -83,23 +83,29 @@
 
           <div class="categories-container">
             <span class="filter-label">Filtrar por:</span>
-            <mat-chip-listbox class="category-chips">
-              @for (cat of categoriasArticulos(); track cat) {
+            <mat-chip-listbox class="category-chips" aria-label="Categorías de Atlas" [value]="selectedCategory()" (change)="selectCategory($event.value || 'TODAS')">
+              <mat-chip-option value="TODAS">Todas</mat-chip-option>
+              @for (cat of categorias(); track cat.id) {
                 <mat-chip-option
-                  [selected]="selectedCategory() === cat"
-                  (selectableChange)="selectCategory(cat)"
+                  [value]="cat.id"
                 >
-                  <mat-icon matChipAvatar *ngIf="cat !== 'TODAS'">
-                    {{ getCategoryIcon(cat) }}
+                  <mat-icon matChipAvatar>
+                    {{ getCategoryIcon(cat.nombre) }}
                   </mat-icon>
-                  {{ cat }}
+                  {{ cat.nombre }}
                 </mat-chip-option>
               }
             </mat-chip-listbox>
           </div>
+          @if (selectedDescription()) { <p>{{ selectedDescription() }}</p> }
+          <button mat-stroked-button type="button" (click)="loadData()" [disabled]="loading()">Actualizar datos</button>
         </div>
 
-        @if (filteredArticulos().length > 0) {
+        @if (loading()) {
+          <p role="status">Cargando Atlas…</p>
+        } @else if (loadError()) {
+          <p role="alert">{{ loadError() }}</p>
+        } @else if (filteredArticulos().length > 0) {
           <div class="publications-grid">
             @for (art of filteredArticulos(); track art.id) {
               <div class="publication-card" [class.locked]="!tieneAcceso(art)">
@@ -182,7 +188,7 @@
           <div class="empty-state">
             <mat-icon>picture_as_pdf</mat-icon>
             <h3>No se encontraron reportes PDF</h3>
-            <p>Prueba buscando con otros terminos o sincroniza archivos desde SharePoint.</p>
+            <p>{{ searchTerm() ? 'No hay publicaciones que coincidan con tu búsqueda.' : 'No hay contenido publicado disponible para esta selección.' }}</p>
           </div>
         }
       </div>
