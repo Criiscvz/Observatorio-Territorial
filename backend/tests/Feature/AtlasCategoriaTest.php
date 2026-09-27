@@ -85,6 +85,7 @@ class AtlasCategoriaTest extends TestCase
     public function test_uploaded_pdf_can_be_opened_replaced_and_deleted(): void
     {
         $this->signIn();
+        config(['filesystems.default' => 's3']);
         Storage::fake(config('filesystems.default'));
         $payload = ['tipo' => 'ATLAS', 'titulo' => 'Documento', 'estado' => 'PUBLICACION',
             'fecha_publicacion' => '2026-09-26', 'fuente' => 'ULEAM'];
@@ -134,6 +135,33 @@ class AtlasCategoriaTest extends TestCase
         Storage::shouldReceive('disk')->andReturn($disk);
         $this->deleteJson("/api/departamentos/publicaciones/{$publication->id}")->assertStatus(503);
         $this->assertNotNull($publication->fresh());
+    }
+
+    public function test_s3_upload_logs_only_safe_diagnostic_fields(): void
+    {
+        $this->signIn();
+        config(['filesystems.default' => 's3']);
+        $aws = new \Aws\S3\Exception\S3Exception('SECRET_DO_NOT_LOG', new \Aws\Command('PutObject'), [
+            'code' => 'AccessDenied', 'response' => new \GuzzleHttp\Psr7\Response(403),
+        ]);
+        $driver = \Mockery::mock(\League\Flysystem\FilesystemOperator::class);
+        $driver->shouldReceive('writeStream')->once()->andThrow(
+            \League\Flysystem\UnableToWriteFile::atLocation('sensitive-path', 'SECRET_DO_NOT_LOG', $aws)
+        );
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('getDriver')->andReturn($driver);
+        Storage::shouldReceive('disk')->with('s3')->andReturn($disk);
+        \Illuminate\Support\Facades\Log::spy();
+        $this->postJson('/api/departamentos/publicaciones/atlas-global', [
+            'tipo' => 'ATLAS', 'titulo' => 'Documento', 'estado' => 'PUBLICACION',
+            'fecha_publicacion' => '2026-09-26', 'fuente' => 'ULEAM',
+            'archivo' => UploadedFile::fake()->create('atlas.pdf', 10, 'application/pdf'),
+        ])->assertStatus(503)->assertDontSee('SECRET_DO_NOT_LOG');
+        \Illuminate\Support\Facades\Log::shouldHaveReceived('error')->with('ATLAS_STORAGE_WRITE_FAILED', [
+            'disk' => 's3', 'exception' => \League\Flysystem\UnableToWriteFile::class,
+            's3_code' => 'AccessDenied', 's3_status' => 403,
+        ])->once();
+        $this->assertSame(0, ObservatorioPublicacion::count());
     }
 
     public function test_sharepoint_import_assigns_category_and_preserves_existing_file_category(): void

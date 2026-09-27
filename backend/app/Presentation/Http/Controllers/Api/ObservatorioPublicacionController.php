@@ -300,11 +300,41 @@ class ObservatorioPublicacionController extends Controller
 
     private function storePdf(\Illuminate\Http\UploadedFile $file, string $folder): string
     {
+        $diskName = (string) config('filesystems.default');
+        $stream = null;
         try {
-            $path = $file->storeAs($folder, Str::uuid().'.pdf', config('filesystems.default'));
+            if (config("filesystems.disks.{$diskName}.driver") === 's3') {
+                // Use Flysystem directly here: Laravel's throw=false adapter discards
+                // the S3 exception before this upload handler can diagnose it.
+                $path = $folder.'/'.Str::uuid().'.pdf';
+                $stream = fopen($file->getRealPath(), 'rb');
+                if (! is_resource($stream)) {
+                    throw new RuntimeException('No se pudo leer el archivo temporal.');
+                }
+                Storage::disk($diskName)->getDriver()->writeStream($path, $stream, ['mimetype' => 'application/pdf']);
+            } else {
+                $path = $file->storeAs($folder, Str::uuid().'.pdf', $diskName);
+            }
         } catch (\Throwable $exception) {
-            Log::error('No se pudo almacenar el PDF de la publicación.', ['exception' => get_class($exception)]);
+            $context = ['disk' => $diskName, 'exception' => get_class($exception)];
+            for ($cause = $exception; $cause !== null; $cause = $cause->getPrevious()) {
+                if ($cause instanceof \Aws\Exception\AwsException) {
+                    $code = $cause->getAwsErrorCode();
+                    $context['s3_code'] = is_string($code) && preg_match('/^[a-zA-Z0-9_]{1,100}$/D', $code) ? $code : 'Unknown';
+                    $context['s3_status'] = $cause->getStatusCode();
+                    break;
+                }
+            }
+            // Never log raw exception messages, URLs, request bodies or credentials.
+            Log::error('ATLAS_STORAGE_WRITE_FAILED', $context);
             $path = false;
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
+        if (! is_string($path) || $path === '') {
+            Log::error('ATLAS_STORAGE_WRITE_UNCONFIRMED', ['disk' => $diskName]);
         }
         abort_unless(is_string($path) && $path !== '', 503,
             'No se pudo guardar el PDF en el almacenamiento. Revisa la configuración del servidor e intenta nuevamente. La publicación no se ha guardado.');
