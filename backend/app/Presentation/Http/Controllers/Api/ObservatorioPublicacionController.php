@@ -528,6 +528,7 @@ class ObservatorioPublicacionController extends Controller
     {
         abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para importar Atlas global.');
         $data = $request->validate([
+            'atlas_categoria_id' => ['nullable', 'uuid', \Illuminate\Validation\Rule::exists('atlas_categorias', 'id')->whereNull('deleted_at')],
             'sharepoint_file_ids' => ['required', 'array', 'min:1', 'max:50'],
             'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
         ]);
@@ -538,6 +539,7 @@ class ObservatorioPublicacionController extends Controller
             fileIds: $data['sharepoint_file_ids'],
             tipo: 'ATLAS',
             resolveFile: fn(string $fileId) => $this->sharePointService->getPdfFileInsideRoot($fileId),
+            categoriaId: $data['atlas_categoria_id'] ?? null,
         );
     }
 
@@ -581,6 +583,7 @@ class ObservatorioPublicacionController extends Controller
         array $fileIds,
         string $tipo,
         callable $resolveFile,
+        ?string $categoriaId = null,
     ): JsonResponse {
 
         $summary = [
@@ -609,9 +612,15 @@ class ObservatorioPublicacionController extends Controller
                     departamento: $departamento,
                     file: $file,
                     tipo: $tipo,
+                    categoriaId: $categoriaId,
                 ));
 
                 $summary['imported'][] = (new PublicacionResource($publicacion->refresh()))->resolve($request);
+            } catch (ValidationException $exception) {
+                $summary['errors'][] = [
+                    'sharepoint_file_id' => $fileId,
+                    'message' => 'La categoría ya no está disponible. Selecciona otra categoría.',
+                ];
             } catch (RuntimeException $exception) {
                 $message = $exception->getMessage();
                 $bucket = str_contains(strtolower($message), 'pdf') ? 'rejected' : 'errors';
@@ -804,7 +813,9 @@ class ObservatorioPublicacionController extends Controller
         ?Departamento $departamento,
         array $file,
         string $tipo,
+        ?string $categoriaId = null,
     ): ObservatorioPublicacion {
+        $this->lockAtlasCategory(['atlas_categoria_id' => $categoriaId]);
         $counter = DB::table('publicacion_contadores')->where('tipo', $tipo)->lockForUpdate()->first();
         abort_unless($counter, 500, 'No se pudo generar el codigo de publicacion.');
         $number = (int) $counter->siguiente_numero;
@@ -815,6 +826,7 @@ class ObservatorioPublicacionController extends Controller
 
         return ObservatorioPublicacion::create([
             'departamento_id' => $departamento?->id,
+            ...($tipo === 'ATLAS' ? ['atlas_categoria_id' => $categoriaId] : []),
             'creado_por' => $request->user()->id,
             'tipo' => $tipo,
             'estado' => self::ESTADO_PUBLICACION,

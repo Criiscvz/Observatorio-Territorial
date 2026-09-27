@@ -2,23 +2,34 @@
   <header class="management-header">
     <div>
       <span class="eyebrow">Biblioteca global</span>
-      <h1>Gestión de Atlas</h1>
+      <h1>{{ selectedCategoryName() || 'Gestión de Atlas' }}</h1>
       <p>Administra los documentos Atlas independientes de los observatorios.</p>
     </div>
-    <button mat-flat-button color="primary" routerLink="/admin/atlas/subir">
+    <button mat-flat-button color="primary" routerLink="/admin/atlas/subir" [queryParams]="{ categoria: selectedCategoryName() ? selectedCategory() : null }">
       <mat-icon>upload_file</mat-icon>
       Subir Atlas
     </button>
   </header>
 
-  <app-atlas-categorias />
+  <a mat-stroked-button routerLink="/admin/atlas/categorias">Gestionar categorías de Atlas</a>
 
   <section class="atlas-library" aria-labelledby="atlas-library-title">
     <div class="library-toolbar">
       <div>
-        <h2 id="atlas-library-title">Atlas globales</h2>
-        <span class="atlas-count">{{ atlas().length }} {{ atlas().length === 1 ? 'Atlas' : 'Atlas' }}</span>
+        <h2 id="atlas-library-title">{{ selectedCategoryName() ? 'Archivos de esta categoría' : 'Archivos de Atlas' }}</h2>
+        <span class="atlas-count">{{ filteredAtlas().length }} archivos</span>
       </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Categoría</mat-label>
+        <mat-select [value]="selectedCategory()" (selectionChange)="selectCategory($event.value)">
+          <mat-option value="">Todas las categorías</mat-option>
+          <mat-option value="sin-categoria">Sin categoría</mat-option>
+          @for (categoria of categorias(); track categoria.id) {
+            <mat-option [value]="categoria.id">{{ categoria.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
 
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="atlas-search">
         <mat-icon matPrefix>search</mat-icon>
@@ -43,10 +54,12 @@
         <mat-spinner diameter="38"></mat-spinner>
         <span>Cargando Atlas...</span>
       </div>
+    } @else if (loadError()) {
+      <div class="library-state" role="alert"><span>{{ loadError() }}</span><button mat-button (click)="loadAtlas()">Reintentar</button></div>
     } @else if (!filteredAtlas().length) {
       <div class="library-state empty">
         <mat-icon>{{ searchTerm() ? 'search_off' : 'map' }}</mat-icon>
-        <strong>{{ searchTerm() ? 'No se encontraron Atlas' : 'No hay Atlas globales' }}</strong>
+        <strong>{{ searchTerm() ? 'No se encontraron Atlas' : 'No hay archivos en esta selección' }}</strong>
         <span>{{ searchTerm() ? 'Prueba con otro término de búsqueda.' : 'Sube el primer documento desde el formulario de Atlas.' }}</span>
       </div>
     } @else {
@@ -68,6 +81,7 @@
               <div>
                 <strong>{{ item.titulo }}</strong>
                 <span>{{ item.codigo }}</span>
+                <span>{{ item.atlas_categoria?.nombre || 'Sin categoría' }}</span>
               </div>
             </div>
 

@@ -25,6 +25,13 @@ describe('PublicacionService SharePoint imports', () => {
 
   afterEach(() => httpMock.verify());
 
+  it('persists the selected category when importing global Atlas files', () => {
+    service.importManyGlobalAtlasSharePoint(['pdf-1'], 'category-1').subscribe();
+    const request = httpMock.expectOne(`${environment.apiUrl}/departamentos/publicaciones/atlas-global/sharepoint/import-many`);
+    expect(request.request.body).toEqual({ sharepoint_file_ids: ['pdf-1'], atlas_categoria_id: 'category-1' });
+    request.flush({ data: { imported: [], duplicates: [], rejected: [], errors: [] }, totals: { imported: 0, duplicates: 0, rejected: 0, errors: 0 } });
+  });
+
   it.each([
     ['atlas', '/departamentos/dep-1/publicaciones/atlas/sharepoint/browse'],
     ['articulos', '/departamentos/dep-1/publicaciones/articulos/sharepoint/browse'],

@@ -344,7 +344,13 @@ export class GlobalAtlasUploadComponent implements OnInit {
 
   ngOnInit(): void {
     this.categoriaService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: items => this.categorias.set(items),
+      next: items => {
+        this.categorias.set(items);
+        const category = this.route.snapshot.queryParamMap.get('categoria');
+        if (!this.route.snapshot.queryParamMap.has('editar') && category && items.some(item => item.id === category)) {
+          this.form.controls.atlas_categoria_id.setValue(category);
+        }
+      },
       error: () => this.snackBar.open('No se pudieron cargar las categorías. Recarga la página para seleccionarlas.', 'Cerrar', { duration: 6000 }),
     });
     const atlasId = this.route.snapshot.queryParamMap.get('editar');
@@ -426,14 +432,14 @@ export class GlobalAtlasUploadComponent implements OnInit {
     request
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => {
+        next: (atlas) => {
           this.saving.set(false);
           this.snackBar.open(
             this.editingAtlas() ? 'Atlas actualizado correctamente.' : 'Atlas guardado correctamente.',
             'Cerrar',
             { duration: 4000 },
           );
-          this.router.navigate(['/admin/atlas']);
+          this.router.navigate(['/admin/atlas'], { queryParams: { categoria: atlas.atlas_categoria_id || null } });
         },
         error: (error) => {
           this.saving.set(false);
@@ -458,6 +464,7 @@ export class GlobalAtlasUploadComponent implements OnInit {
         departamentos: [],
         target: 'atlas',
         context: 'global-atlas',
+        categoriaId: this.form.controls.atlas_categoria_id.value || null,
       },
     });
 

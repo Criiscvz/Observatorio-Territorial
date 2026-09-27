@@ -10,8 +10,9 @@ Atlas tiene un flujo propio más directo: `PublicacionService` → `Observatorio
 
 ## Funcionamiento
 
-- Gestión integrada en `/admin/atlas`: listar, crear, editar nombre/descripción y eliminar con el modal Material existente.
-- Selector opcional en el formulario de creación/edición de Atlas global. Los documentos existentes y las importaciones SharePoint permanecen sin categoría hasta que un administrador los clasifique desde la edición.
+- Entrada “Categorías de Atlas” en el menú administrativo, visible solo para ADMIN, con página propia en `/admin/atlas/categorias`: listar, crear, editar nombre/descripción y eliminar con el modal Material existente.
+- Cada categoría ofrece “Ver archivos” y “Subir archivo”. La biblioteca `/admin/atlas?categoria=UUID` filtra sus documentos, permite abrirlos y editarlos, y distingue los archivos sin categoría. El formulario conserva la categoría de origen y vuelve a ella después de guardar.
+- Selector opcional en el formulario de creación/edición y en la importación de Atlas global desde SharePoint. La categoría se persiste en la publicación que contiene la referencia al PDF. Una importación duplicada no mueve un documento existente de categoría. Los documentos anteriores permanecen sin categoría hasta que un administrador los clasifique.
 - API: `GET /api/publico/atlas/categorias`; `GET/POST /api/atlas/categorias`; `PUT/DELETE /api/atlas/categorias/{id}`. Todas las rutas administrativas exigen Sanctum y ADMIN.
 - La consulta pública `/api/publico/atlas` admite `categoria_id` y sigue mostrando únicamente publicaciones globales en estado `PUBLICACION`. Conserva los bloqueos de suscriptores y las comprobaciones de descarga. No expone diagnósticos internos ni metadatos de sincronización SharePoint de Atlas.
 - La pantalla pública carga categorías desde la API, permite filtrarlas por identificador, muestra categorías vacías y diferencia carga, error y ausencia de resultados. “Actualizar datos” vuelve a consultar la API.
@@ -62,7 +63,7 @@ Integraciones modificadas:
 
 ## Comprobaciones reproducibles
 
-Resultado de esta implementación: compilación Angular de desarrollo correcta; 16 pruebas Laravel con 101 aserciones y 8 pruebas Angular aprobadas; `git diff --check` sin errores de espacios.
+Resultado tras añadir la navegación administrativa por categorías: compilación Angular de desarrollo correcta; 17 pruebas Laravel con 114 aserciones y 16 pruebas Angular aprobadas (incluido el servicio de publicaciones); `git diff --check` sin errores de espacios.
 
 Desde `backend`:
 

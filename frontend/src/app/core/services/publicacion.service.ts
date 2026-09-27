@@ -93,10 +93,11 @@ export class PublicacionService {
 
   importManyGlobalAtlasSharePoint(
     sharepointFileIds: string[],
+    categoriaId: string | null = null,
   ): Observable<SharePointAtlasImportResponse> {
     return this.api.post<SharePointAtlasImportResponse>(
       '/departamentos/publicaciones/atlas-global/sharepoint/import-many',
-      { sharepoint_file_ids: sharepointFileIds },
+      { sharepoint_file_ids: sharepointFileIds, atlas_categoria_id: categoriaId },
     );
   }
 

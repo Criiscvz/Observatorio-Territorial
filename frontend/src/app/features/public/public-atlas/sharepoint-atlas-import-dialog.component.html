@@ -33,13 +33,17 @@
           </mat-select>
         </mat-form-field>
       } @else {
-        <div class="department-field global-target">
-          <mat-icon>map</mat-icon>
-          <div>
-            <strong>Destino global</strong>
-            <span>Atlas</span>
-          </div>
-        </div>
+        <mat-form-field appearance="outline" class="department-field">
+          <mat-label>Categoría de Atlas</mat-label>
+          <mat-select [ngModel]="selectedCategoryId()" (ngModelChange)="selectedCategoryId.set($event)" [disabled]="importing() || categoriesLoading() || categoriesError()">
+            <mat-option value="">Sin categoría</mat-option>
+            @for (categoria of categorias(); track categoria.id) {
+              <mat-option [value]="categoria.id">{{ categoria.nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (categoriesLoading()) { <p role="status">Cargando categorías…</p> }
+        @if (categoriesError()) { <p role="alert">No se pudieron cargar las categorías. Cierra y vuelve a abrir la importación.</p> }
       }
 
       <div class="selected-counter" aria-live="polite">
@@ -178,7 +182,7 @@
       color="primary"
       type="button"
       class="sharepoint-primary-button"
-      [disabled]="selectedCount() === 0 || importing()"
+      [disabled]="selectedCount() === 0 || importing() || (isGlobalAtlasContext && (categoriesLoading() || categoriesError()))"
       (click)="importSelected()"
     >
       @if (importing()) {

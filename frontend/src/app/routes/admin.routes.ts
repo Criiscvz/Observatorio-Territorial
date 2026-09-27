@@ -62,6 +62,15 @@ export const ADMIN_ROUTES: Routes = [
     title: 'Subir Dataset - Observatorio',
   },
   {
+    path: 'atlas/categorias',
+    loadComponent: () =>
+      import('../features/public/public-atlas/atlas-categorias-page.component').then(
+        (m) => m.AtlasCategoriasPageComponent,
+      ),
+    canActivate: [adminGuard],
+    title: 'Categorías de Atlas - Observatorio',
+  },
+  {
     path: 'atlas',
     loadComponent: () =>
       import('../features/public/public-atlas/global-atlas-management.component').then(

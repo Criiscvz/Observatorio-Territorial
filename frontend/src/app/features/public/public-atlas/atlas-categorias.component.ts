@@ -7,13 +7,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { tap } from 'rxjs';
+import { RouterLink } from '@angular/router';
 import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-atlas-categorias',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
+  imports: [RouterLink, ReactiveFormsModule, MatButtonModule, MatDialogModule, MatFormFieldModule, MatInputModule],
   template: `
     <section aria-labelledby="atlas-categorias-title">
       <header><h2 id="atlas-categorias-title">Categorías de Atlas</h2>
@@ -41,6 +42,8 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/components/co
             <article>
               <div><h3>{{ item.nombre }}</h3><p>{{ item.descripcion || 'Sin descripción' }}</p></div>
               <div class="actions">
+                <a mat-stroked-button routerLink="/admin/atlas" [queryParams]="{ categoria: item.id }">Ver archivos</a>
+                <a mat-flat-button routerLink="/admin/atlas/subir" [queryParams]="{ categoria: item.id }">Subir archivo</a>
                 <button mat-button type="button" [disabled]="saving() || deleting()" (click)="edit(item)">Editar</button>
                 <button mat-button color="warn" type="button" [disabled]="saving() || deleting()" (click)="remove(item)">Eliminar categoría</button>
               </div>

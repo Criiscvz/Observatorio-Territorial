@@ -79,6 +79,19 @@ interface NavItem {
           <span class="nav-text">Subir Atlas</span>
         </a>
 
+        <a
+          *isAdmin
+          class="nav-item"
+          routerLink="/admin/atlas/categorias"
+          routerLinkActive="active"
+          (click)="navigate.emit()"
+        >
+          <div class="nav-icon-wrapper">
+            <mat-icon class="nav-icon">create_new_folder</mat-icon>
+          </div>
+          <span class="nav-text">Categorías de Atlas</span>
+        </a>
+
         <!-- Gestión de Usuarios - solo admin -->
         <a
           *isAdmin

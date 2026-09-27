@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AtlasCategoria;
 use App\Models\ObservatorioPublicacion;
 use App\Models\User;
+use App\Infrastructure\Services\SharePointService;
 use Database\Seeders\AtlasCategoriaSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
@@ -44,9 +45,11 @@ class AtlasCategoriaTest extends TestCase
             $table->string('estado');
             $table->boolean('solo_suscriptores')->default(false);
             foreach (['codigo', 'titulo', 'link_url', 'descripcion', 'autores', 'fuente', 'archivo_pdf',
-                'nombre_archivo_original', 'sharepoint_url', 'sharepoint_file_id', 'sharepoint_file_name', 'sharepoint_error'] as $field) {
+                'nombre_archivo_original', 'sharepoint_url', 'sharepoint_file_id', 'sharepoint_file_name', 'sharepoint_error',
+                'sharepoint_file_type', 'sharepoint_sync_status', 'sharepoint_last_modified_at', 'sharepoint_synced_at'] as $field) {
                 $table->text($field)->nullable();
             }
+            $table->unsignedBigInteger('sharepoint_file_size')->nullable();
             $table->date('fecha_publicacion')->nullable();
             $table->timestamps();
         });
@@ -56,6 +59,30 @@ class AtlasCategoriaTest extends TestCase
     private function signIn(string $role = 'ADMIN'): void
     {
         Sanctum::actingAs((new User())->forceFill(['id' => 1, 'rol' => $role, 'is_active' => true]));
+    }
+
+    public function test_sharepoint_import_assigns_category_and_preserves_existing_file_category(): void
+    {
+        $this->signIn();
+        $first = AtlasCategoria::create(['nombre' => 'Salud']);
+        $second = AtlasCategoria::create(['nombre' => 'Ambiente']);
+        $this->mock(SharePointService::class, function ($mock) {
+            $mock->shouldReceive('getPdfFileInsideRoot')->twice()->with('pdf-1')->andReturn([
+                'id' => 'pdf-1', 'name' => 'Documento.pdf', 'web_url' => 'https://example.test/file',
+                'mime_type' => 'application/pdf', 'size' => 100, 'last_modified_at' => '2026-09-26T12:00:00Z',
+            ]);
+        });
+        $endpoint = '/api/departamentos/publicaciones/atlas-global/sharepoint/import-many';
+        $this->postJson($endpoint, ['sharepoint_file_ids' => ['pdf-1'], 'atlas_categoria_id' => $first->id])
+            ->assertOk()->assertJsonPath('totals.imported', 1)
+            ->assertJsonPath('data.imported.0.atlas_categoria_id', $first->id);
+        $this->postJson($endpoint, ['sharepoint_file_ids' => ['pdf-1'], 'atlas_categoria_id' => $second->id])
+            ->assertOk()->assertJsonPath('totals.duplicates', 1);
+        $this->assertSame($first->id, ObservatorioPublicacion::firstOrFail()->atlas_categoria_id);
+        $this->deleteJson("/api/atlas/categorias/{$first->id}")->assertConflict();
+        $second->delete();
+        $this->postJson($endpoint, ['sharepoint_file_ids' => ['pdf-2'], 'atlas_categoria_id' => $second->id])
+            ->assertUnprocessable()->assertJsonValidationErrors('atlas_categoria_id');
     }
 
     private function publication(array $attributes = []): ObservatorioPublicacion
