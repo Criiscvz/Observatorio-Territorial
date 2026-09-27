@@ -57,7 +57,19 @@
           </section>
         }
 
-        <div class="filters-section">
+        <div class="atlas-navigation">
+          @if (selectedCategory() !== 'TODAS') {
+            <button mat-stroked-button type="button" (click)="selectCategory('TODAS')">
+              <mat-icon>arrow_back</mat-icon>Volver a categorías
+            </button>
+          }
+          <button mat-stroked-button type="button" (click)="loadData()" [disabled]="loading()">Actualizar datos</button>
+        </div>
+
+        @if (selectedCategory() !== 'TODAS') {
+        <section class="filters-section" aria-labelledby="atlas-category-heading">
+          <h2 id="atlas-category-heading">{{ selectedCategoryName() }}</h2>
+          @if (selectedDescription()) { <p>{{ selectedDescription() }}</p> }
           <div class="search-container">
             <mat-form-field appearance="outline" class="search-field">
               <mat-icon matPrefix>search</mat-icon>
@@ -81,30 +93,41 @@
             }
           </div>
 
-          <div class="categories-container">
-            <span class="filter-label">Filtrar por:</span>
-            <mat-chip-listbox class="category-chips" aria-label="Categorías de Atlas" [value]="selectedCategory()" (change)="selectCategory($event.value || 'TODAS')">
-              <mat-chip-option value="TODAS">Todas</mat-chip-option>
-              @for (cat of categorias(); track cat.id) {
-                <mat-chip-option
-                  [value]="cat.id"
-                >
-                  <mat-icon matChipAvatar>
-                    {{ getCategoryIcon(cat.nombre) }}
-                  </mat-icon>
-                  {{ cat.nombre }}
-                </mat-chip-option>
-              }
-            </mat-chip-listbox>
-          </div>
-          @if (selectedDescription()) { <p>{{ selectedDescription() }}</p> }
-          <button mat-stroked-button type="button" (click)="loadData()" [disabled]="loading()">Actualizar datos</button>
-        </div>
+        </section>
+        }
 
         @if (loading()) {
           <p role="status">Cargando Atlas…</p>
         } @else if (loadError()) {
           <p role="alert">{{ loadError() }}</p>
+        } @else if (selectedCategory() === 'TODAS') {
+          <section aria-labelledby="atlas-categories-heading">
+            <div class="atlas-directory-heading">
+              <h2 id="atlas-categories-heading">Explora las categorías de Atlas</h2>
+              <p>Selecciona una categoría para consultar sus publicaciones.</p>
+            </div>
+            <div class="atlas-category-grid">
+              @for (cat of categoryCards(); track cat.id) {
+                <button type="button" class="atlas-category-card" (click)="selectCategory(cat.id)" [attr.aria-label]="'Ver publicaciones de ' + cat.nombre">
+                  <span class="atlas-category-card__icon"><mat-icon>{{ getCategoryIcon(cat.nombre) }}</mat-icon></span>
+                  <span class="atlas-category-card__name">{{ cat.nombre }}</span>
+                  <span class="atlas-category-card__description">{{ cat.descripcion || 'Consulta las publicaciones de esta categoría.' }}</span>
+                  <span class="atlas-category-card__footer">
+                    <span>{{ cat.total }} {{ cat.total === 1 ? 'publicación' : 'publicaciones' }}</span>
+                    <mat-icon>arrow_forward</mat-icon>
+                  </span>
+                </button>
+              } @empty { <p>No hay categorías disponibles por el momento.</p> }
+              @if (uncategorizedCount() > 0) {
+                <button type="button" class="atlas-category-card" (click)="selectCategory('SIN_CATEGORIA')" aria-label="Ver publicaciones sin categoría">
+                  <span class="atlas-category-card__icon"><mat-icon>folder_open</mat-icon></span>
+                  <span class="atlas-category-card__name">Sin categoría</span>
+                  <span class="atlas-category-card__description">Publicaciones que todavía no tienen una categoría asignada.</span>
+                  <span class="atlas-category-card__footer"><span>{{ uncategorizedCount() }} publicaciones</span><mat-icon>arrow_forward</mat-icon></span>
+                </button>
+              }
+            </div>
+          </section>
         } @else if (filteredArticulos().length > 0) {
           <div class="publications-grid">
             @for (art of filteredArticulos(); track art.id) {

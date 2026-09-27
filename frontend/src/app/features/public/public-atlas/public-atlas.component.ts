@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -35,7 +34,6 @@ import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
-    MatChipsModule,
     MatTabsModule,
     MatDialogModule,
     MatSnackBarModule,
@@ -51,6 +49,13 @@ export class PublicAtlasComponent implements OnInit {
   readonly loading = signal(false);
   readonly loadError = signal('');
   readonly selectedDescription = computed(() => this.categorias().find(c => c.id === this.selectedCategory())?.descripcion);
+  readonly selectedCategoryName = computed(() => this.selectedCategory() === 'SIN_CATEGORIA'
+    ? 'Sin categoría' : this.categorias().find(c => c.id === this.selectedCategory())?.nombre ?? 'Atlas');
+  readonly categoryCards = computed(() => this.categorias().map(categoria => ({
+    ...categoria,
+    total: this.articulos().filter(item => item.categoria?.id === categoria.id).length,
+  })));
+  readonly uncategorizedCount = computed(() => this.articulos().filter(item => !item.categoria?.id).length);
   private readonly destroyRef = inject(DestroyRef);
   private readonly publicacionService = inject(PublicacionService);
   private readonly authService = inject(AuthService);
@@ -87,7 +92,7 @@ export class PublicAtlasComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: ([data, categorias]) => {
         this.categorias.set(categorias);
-        if (this.selectedCategory() !== 'TODAS' && !categorias.some(c => c.id === this.selectedCategory())) {
+        if (!['TODAS', 'SIN_CATEGORIA'].includes(this.selectedCategory()) && !categorias.some(c => c.id === this.selectedCategory())) {
           this.selectedCategory.set('TODAS');
         }
         this.loading.set(false);
@@ -146,6 +151,7 @@ export class PublicAtlasComponent implements OnInit {
         departamentos: this.departamentos(),
         target: 'atlas',
         context: 'global-atlas',
+        categoriaId: this.categorias().some(c => c.id === this.selectedCategory()) ? this.selectedCategory() : null,
       },
     });
 
@@ -185,7 +191,9 @@ export class PublicAtlasComponent implements OnInit {
     const cat = this.selectedCategory();
     let list = this.articulos();
 
-    if (cat !== 'TODAS') {
+    if (cat === 'SIN_CATEGORIA') {
+      list = list.filter((a) => !a.categoria?.id);
+    } else if (cat !== 'TODAS') {
       list = list.filter((a) => a.categoria?.id === cat);
     }
 
@@ -215,6 +223,7 @@ export class PublicAtlasComponent implements OnInit {
   }
 
   selectCategory(cat: string): void {
+    this.searchTerm.set('');
     this.selectedCategory.set(cat);
   }
 

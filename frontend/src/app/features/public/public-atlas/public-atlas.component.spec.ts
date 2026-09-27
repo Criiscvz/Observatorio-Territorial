@@ -51,6 +51,17 @@ describe('Public Atlas categories', () => {
     expect(component.selectedCategory()).toBe('TODAS');
     expect(categories.list).toHaveBeenLastCalledWith(true);
   });
+  it('shows counts including empty categories and opens uncategorized content without losing it', () => {
+    expect(component.categoryCards().map(card => [card.nombre, card.total])).toEqual([['Salud', 1], ['Ambiente', 0]]);
+    expect(component.uncategorizedCount()).toBe(1);
+    component.selectCategory('SIN_CATEGORIA');
+    expect(component.selectedCategoryName()).toBe('Sin categoría');
+    expect(component.filteredArticulos().map(item => item.id)).toEqual(['old']);
+    component.searchTerm.set('no coincide');
+    component.selectCategory('TODAS');
+    expect(component.searchTerm()).toBe('');
+    expect(component.selectedCategory()).toBe('TODAS');
+  });
   it('distinguishes API failure from an empty category', () => {
     publications.getPublicAtlas.mockReturnValue(throwError(() => new Error('offline')));
     component.loadData();

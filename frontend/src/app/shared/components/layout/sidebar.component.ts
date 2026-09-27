@@ -7,6 +7,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
+import { catchError, of, startWith, switchMap } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { IsAdminDirective } from '../../directives/is-admin.directive';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
@@ -65,32 +67,6 @@ interface NavItem {
             <span class="nav-text">{{ 'layout.sidebar.uploadDataset' | translate }}</span>
           </a>
         }
-
-        <a
-          *isAdmin
-          class="nav-item"
-          routerLink="/admin/atlas/subir"
-          routerLinkActive="active"
-          (click)="navigate.emit()"
-        >
-          <div class="nav-icon-wrapper">
-            <mat-icon class="nav-icon">map</mat-icon>
-          </div>
-          <span class="nav-text">Subir Atlas</span>
-        </a>
-
-        <a
-          *isAdmin
-          class="nav-item"
-          routerLink="/admin/atlas/categorias"
-          routerLinkActive="active"
-          (click)="navigate.emit()"
-        >
-          <div class="nav-icon-wrapper">
-            <mat-icon class="nav-icon">create_new_folder</mat-icon>
-          </div>
-          <span class="nav-text">Categorías de Atlas</span>
-        </a>
 
         <!-- Gestión de Usuarios - solo admin -->
         <a
@@ -181,6 +157,42 @@ interface NavItem {
           }
         </div>
       </div>
+
+      @if (isAdmin()) {
+        <section class="nav-section" aria-labelledby="atlas-nav-title">
+          <div class="nav-label-row">
+            <span class="nav-label" id="atlas-nav-title">Atlas</span>
+            <a class="add-btn" routerLink="/admin/atlas/categorias" matTooltip="Crear categoría de Atlas"
+              aria-label="Crear categoría de Atlas" (click)="navigate.emit()">
+              <mat-icon>add</mat-icon>
+            </a>
+          </div>
+          <div class="deptos-list">
+            @if (atlasLoading()) { <p class="empty-state" role="status">Cargando categorías…</p> }
+            @else if (atlasError()) {
+              <div class="empty-state" role="alert"><span>No se pudieron cargar las categorías.</span>
+                <button type="button" class="empty-action" (click)="loadAtlasCategorias()">Reintentar</button>
+              </div>
+            } @else {
+              @for (categoria of atlasCategorias(); track categoria.id) {
+                <a class="nav-item depto-item" routerLink="/admin/atlas" [queryParams]="{ categoria: categoria.id }"
+                  routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navigate.emit()">
+                  <div class="depto-icon atlas-category-icon"><mat-icon>folder</mat-icon></div>
+                  <div class="depto-info"><span class="depto-name" [title]="categoria.nombre">{{ categoria.nombre }}</span></div>
+                </a>
+              } @empty { <div class="empty-state"><span>No hay categorías de Atlas.</span></div> }
+            }
+          </div>
+          <a class="nav-item" routerLink="/admin/atlas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navigate.emit()">
+            <div class="nav-icon-wrapper"><mat-icon class="nav-icon">library_books</mat-icon></div>
+            <span class="nav-text">Todos los archivos</span>
+          </a>
+          <a class="nav-item" routerLink="/admin/atlas/subir" routerLinkActive="active" (click)="navigate.emit()">
+            <div class="nav-icon-wrapper"><mat-icon class="nav-icon">upload_file</mat-icon></div>
+            <span class="nav-text">Subir Atlas</span>
+          </a>
+        </section>
+      }
 
       <!-- Footer -->
       <div class="sidebar-footer">
@@ -436,6 +448,7 @@ interface NavItem {
         padding-top: 1rem;
         border-top: 1px solid var(--border-color);
       }
+      .atlas-category-icon { background: var(--primary-600, #6366f1); }
     `,
   ],
 })
@@ -443,6 +456,10 @@ export class SidebarComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
   private readonly deptoService = inject(DepartamentoService);
   private readonly authService = inject(AuthService);
+  private readonly atlasCategoriaService = inject(AtlasCategoriaService);
+  readonly atlasCategorias = signal<AtlasCategoria[]>([]);
+  readonly atlasLoading = signal(false);
+  readonly atlasError = signal(false);
 
   departamentos = signal<Departamento[]>([]);
   navigate = output<void>();
@@ -467,6 +484,20 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartamentos();
+    if (this.isAdmin()) {
+      this.atlasCategoriaService.onCategoriasChanged$.pipe(
+        startWith(undefined),
+        switchMap(() => {
+          this.atlasLoading.set(true);
+          this.atlasError.set(false);
+          return this.atlasCategoriaService.list().pipe(catchError(() => {
+            this.atlasError.set(true);
+            return of([]);
+          }));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe(items => { this.atlasCategorias.set(items); this.atlasLoading.set(false); });
+    }
 
     // Suscribirse a cambios en departamentos para actualizar automáticamente
     this.deptoService.onDepartamentosChanged$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
@@ -478,6 +509,16 @@ export class SidebarComponent implements OnInit {
     this.deptoService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (departamentos) => this.departamentos.set(departamentos || []),
       error: () => this.departamentos.set([]),
+    });
+  }
+
+  loadAtlasCategorias(): void {
+    if (!this.isAdmin() || this.atlasLoading()) return;
+    this.atlasLoading.set(true);
+    this.atlasError.set(false);
+    this.atlasCategoriaService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: items => { this.atlasCategorias.set(items); this.atlasLoading.set(false); },
+      error: () => { this.atlasError.set(true); this.atlasLoading.set(false); },
     });
   }
 
