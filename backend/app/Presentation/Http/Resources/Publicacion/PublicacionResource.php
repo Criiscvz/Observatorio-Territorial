@@ -56,7 +56,7 @@ class PublicacionResource extends JsonResource
             'download_url' => (! $isLocked && ($this->archivo_pdf || $this->sharepoint_url))
                 ? $downloadUrl
                 : null,
-            'sharepoint_url' => $isLocked ? null : $this->sharepoint_url,
+            'sharepoint_url' => ($isLocked || $this->archivo_pdf) ? null : $this->sharepoint_url,
             'sharepoint_file_id' => $hideAtlasInternals ? null : $this->sharepoint_file_id,
             'sharepoint_file_name' => $hideAtlasInternals ? null : $this->sharepoint_file_name,
             'sharepoint_file_type' => $hideAtlasInternals ? null : $this->sharepoint_file_type,

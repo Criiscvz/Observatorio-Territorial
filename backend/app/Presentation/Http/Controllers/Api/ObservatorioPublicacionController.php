@@ -115,7 +115,7 @@ class ObservatorioPublicacionController extends Controller
         $estado = $request->user()->rol === 'ADMIN' ? $data['estado'] : self::ESTADO_EN_REVISION;
         $file = $request->file('archivo');
         $path = $file
-            ? $file->storeAs('publicaciones/'.$departamento->id, Str::uuid().'.pdf', config('filesystems.default'))
+            ? $this->storePdf($file, 'publicaciones/'.$departamento->id)
             : null;
 
         try {
@@ -162,7 +162,7 @@ class ObservatorioPublicacionController extends Controller
 
         $file = $request->file('archivo');
         $path = $file
-            ? $file->storeAs('publicaciones/atlas-global', Str::uuid().'.pdf', config('filesystems.default'))
+            ? $this->storePdf($file, 'publicaciones/atlas-global')
             : null;
 
         try {
@@ -212,19 +212,21 @@ class ObservatorioPublicacionController extends Controller
         }
 
         $disk = Storage::disk(config('filesystems.default'));
-        abort_unless($disk->exists($publicacion->archivo_pdf), 404, 'Archivo no disponible.');
+        abort_unless($publicacion->archivo_pdf, 404, 'Esta publicación no tiene un PDF guardado. Un administrador debe volver a subirlo.');
 
         $filename = $publicacion->nombre_archivo_original ?? $publicacion->titulo.'.pdf';
         $safeFilename = str_replace('"', '\"', $filename);
 
         $stream = $disk->readStream($publicacion->archivo_pdf);
-        abort_unless($stream !== false, 404, 'Archivo no disponible.');
+        abort_unless(is_resource($stream), 404, 'Archivo no disponible. Un administrador debe volver a subir el PDF.');
 
         return response()->stream(function () use ($stream): void {
             fpassthru($stream);
             fclose($stream);
         }, 200, [
             'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
             'Content-Disposition' => 'inline; filename="'.$safeFilename.'"',
         ]);
     }
@@ -251,11 +253,7 @@ class ObservatorioPublicacionController extends Controller
             $storageFolder = $publicacion->departamento_id
                 ? 'publicaciones/'.$publicacion->departamento_id
                 : 'publicaciones/atlas-global';
-            $newPath = $newFile->storeAs(
-                $storageFolder,
-                Str::uuid().'.pdf',
-                config('filesystems.default')
-            );
+            $newPath = $this->storePdf($newFile, $storageFolder);
         }
 
         try {
@@ -274,6 +272,15 @@ class ObservatorioPublicacionController extends Controller
                     ...($newFile ? [
                         'archivo_pdf' => $newPath,
                         'nombre_archivo_original' => $newFile->getClientOriginalName(),
+                        'sharepoint_url' => null,
+                        'sharepoint_file_id' => null,
+                        'sharepoint_file_name' => null,
+                        'sharepoint_file_type' => null,
+                        'sharepoint_file_size' => null,
+                        'sharepoint_last_modified_at' => null,
+                        'sharepoint_sync_status' => null,
+                        'sharepoint_synced_at' => null,
+                        'sharepoint_error' => null,
                     ] : []),
                 ]);
             });
@@ -289,6 +296,20 @@ class ObservatorioPublicacionController extends Controller
         }
 
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response();
+    }
+
+    private function storePdf(\Illuminate\Http\UploadedFile $file, string $folder): string
+    {
+        try {
+            $path = $file->storeAs($folder, Str::uuid().'.pdf', config('filesystems.default'));
+        } catch (\Throwable $exception) {
+            Log::error('No se pudo almacenar el PDF de la publicación.', ['exception' => get_class($exception)]);
+            $path = false;
+        }
+        abort_unless(is_string($path) && $path !== '', 503,
+            'No se pudo guardar el PDF en el almacenamiento. Revisa la configuración del servidor e intenta nuevamente. La publicación no se ha guardado.');
+
+        return $path;
     }
 
     private function lockAtlasCategory(array $data): void
@@ -315,13 +336,14 @@ class ObservatorioPublicacionController extends Controller
 
         $filePath = $publicacion->archivo_pdf;
 
-        DB::transaction(function () use ($publicacion) {
+        DB::transaction(function () use ($publicacion, $filePath) {
+            if ($filePath) {
+                $disk = Storage::disk(config('filesystems.default'));
+                abort_if($disk->exists($filePath) && ! $disk->delete($filePath), 503,
+                    'No se pudo eliminar el PDF del almacenamiento. El registro se conserva para volver a intentarlo.');
+            }
             $publicacion->delete();
         });
-
-        if ($filePath && Storage::disk(config('filesystems.default'))->exists($filePath)) {
-            Storage::disk(config('filesystems.default'))->delete($filePath);
-        }
 
         return response()->json([
             'message' => 'Publicación eliminada correctamente.',

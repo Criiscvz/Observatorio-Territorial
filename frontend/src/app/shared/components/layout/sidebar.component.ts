@@ -174,13 +174,14 @@ interface NavItem {
                 <button type="button" class="empty-action" (click)="loadAtlasCategorias()">Reintentar</button>
               </div>
             } @else {
-              @for (categoria of atlasCategorias(); track categoria.id) {
+              <input class="atlas-category-search" type="search" aria-label="Buscar categorías de Atlas" placeholder="Buscar categoría…" [value]="atlasCategorySearch()" (input)="atlasCategorySearch.set($any($event.target).value)" />
+              @for (categoria of filteredAtlasCategorias(); track categoria.id) {
                 <a class="nav-item depto-item" routerLink="/admin/atlas" [queryParams]="{ categoria: categoria.id }"
                   routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navigate.emit()">
                   <div class="depto-icon atlas-category-icon"><mat-icon>folder</mat-icon></div>
                   <div class="depto-info"><span class="depto-name" [title]="categoria.nombre">{{ categoria.nombre }}</span></div>
                 </a>
-              } @empty { <div class="empty-state"><span>No hay categorías de Atlas.</span></div> }
+              } @empty { <div class="empty-state"><span>No se encontraron categorías.</span></div> }
             }
           </div>
           <a class="nav-item" routerLink="/admin/atlas" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="navigate.emit()">
@@ -449,6 +450,7 @@ interface NavItem {
         border-top: 1px solid var(--border-color);
       }
       .atlas-category-icon { background: var(--primary-600, #6366f1); }
+      .atlas-category-search { box-sizing: border-box; width: 100%; padding: .65rem; margin-bottom: .5rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); color: var(--text-primary); }
     `,
   ],
 })
@@ -458,6 +460,11 @@ export class SidebarComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly atlasCategoriaService = inject(AtlasCategoriaService);
   readonly atlasCategorias = signal<AtlasCategoria[]>([]);
+  readonly atlasCategorySearch = signal('');
+  readonly filteredAtlasCategorias = computed(() => {
+    const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
+    return this.atlasCategorias().filter(item => normalize(item.nombre).includes(normalize(this.atlasCategorySearch())));
+  });
   readonly atlasLoading = signal(false);
   readonly atlasError = signal(false);
 

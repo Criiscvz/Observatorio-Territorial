@@ -56,6 +56,16 @@ export class PublicAtlasComponent implements OnInit {
     total: this.articulos().filter(item => item.categoria?.id === categoria.id).length,
   })));
   readonly uncategorizedCount = computed(() => this.articulos().filter(item => !item.categoria?.id).length);
+  readonly categorySearch = signal('');
+  readonly onlyWithPublications = signal(false);
+  readonly filteredCategoryCards = computed(() => this.categoryCards().filter(cat =>
+    this.matchesCategory(`${cat.nombre} ${cat.descripcion ?? ''}`) && (!this.onlyWithPublications() || cat.total > 0)));
+  readonly showUncategorized = computed(() => this.uncategorizedCount() > 0 && this.matchesCategory('Sin categoría Publicaciones pendientes de clasificación'));
+
+  private matchesCategory(text: string): boolean {
+    const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
+    return normalize(text).includes(normalize(this.categorySearch()));
+  }
   private readonly destroyRef = inject(DestroyRef);
   private readonly publicacionService = inject(PublicacionService);
   private readonly authService = inject(AuthService);

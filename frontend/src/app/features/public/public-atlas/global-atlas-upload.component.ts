@@ -43,7 +43,7 @@ import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-
         <div>
           <span class="eyebrow">Biblioteca global</span>
           <h1>{{ editingAtlas() ? 'Editar Atlas' : 'Subir Atlas' }}</h1>
-          <p>{{ editingAtlas() ? 'Actualiza la información del Atlas global.' : 'Publica documentos Atlas independientes de los observatorios.' }}</p>
+          <p>{{ editingAtlas() ? 'Actualiza los datos, cambia la categoría o reemplaza el PDF de este Atlas.' : 'Publica documentos Atlas independientes de los observatorios.' }}</p>
         </div>
         <button mat-stroked-button type="button" routerLink="/admin/atlas">
           <mat-icon>library_books</mat-icon>
@@ -60,12 +60,19 @@ import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-
           </div>
         </div>
 
+        @if (!editingAtlas() && !loadingAtlas()) {
         <div class="form-import-actions">
           <button mat-raised-button color="primary" type="button" (click)="importFromSharePoint()">
             <mat-icon>cloud_download</mat-icon>
             Importar desde SharePoint
           </button>
         </div>
+        }
+
+        @if (loadingAtlas()) { <p role="status">Cargando el archivo para editar…</p> }
+        @if (editingAtlas()) {
+          <p>Archivo actual: {{ editingAtlas()?.nombre_archivo_original || 'Sin PDF guardado' }}. Selecciona un nuevo PDF para reemplazarlo y pulsa Guardar cambios.</p>
+        }
 
         <div class="form-grid">
           <mat-form-field appearance="outline">
@@ -153,7 +160,7 @@ import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-
 
         <footer class="form-actions">
           <button mat-button type="button" routerLink="/admin/atlas">Cancelar</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="saving()">
+          <button mat-raised-button color="primary" type="submit" [disabled]="saving() || loadingAtlas()">
             @if (saving()) {
               <mat-spinner diameter="20"></mat-spinner>
             } @else {

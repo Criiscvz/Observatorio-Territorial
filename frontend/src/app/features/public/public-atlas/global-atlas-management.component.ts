@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { tap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -117,14 +118,22 @@ export class GlobalAtlasManagementComponent implements OnInit {
   }
 
   confirmDelete(item: ObservatorioPublicacion): void {
+    if (this.deletingId()) return;
+    this.deletingId.set(item.id);
     const data: ConfirmDialogData = {
       title: 'Eliminar Atlas',
       message:
-        'Esta acción eliminará permanentemente el Atlas y su archivo asociado. No se puede deshacer.',
+        `¿Eliminar «${item.titulo}» (${item.codigo || 'Atlas'})? Se eliminará permanentemente su registro y el PDF almacenado en la plataforma. Esta acción no se puede deshacer.` +
+        (item.sharepoint_url ? ' El archivo original de SharePoint no se eliminará.' : ''),
       cancelText: 'Cancelar',
       confirmText: 'Eliminar definitivamente',
       confirmColor: 'warn',
       icon: 'delete_forever',
+      confirmAction: () => this.publicacionService.delete(item.id).pipe(tap(() => {
+        this.atlas.update(items => items.filter(candidate => candidate.id !== item.id));
+        this.snackBar.open('Atlas eliminado correctamente.', 'Cerrar', { duration: 4000 });
+      })),
+      onError: (error: any) => this.snackBar.open(error?.error?.message || 'No se pudo eliminar el Atlas. Inténtalo de nuevo.', 'Cerrar', { duration: 5000 }),
     };
 
     this.dialog
@@ -139,9 +148,7 @@ export class GlobalAtlasManagementComponent implements OnInit {
       })
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((confirmed) => {
-        if (confirmed) this.deleteAtlas(item);
-      });
+      .subscribe(() => this.deletingId.set(null));
   }
 
   statusLabel(status: string): string {
@@ -164,26 +171,6 @@ export class GlobalAtlasManagementComponent implements OnInit {
         ARCHIVADO: 'inventory_2',
       }[status] ?? 'info'
     );
-  }
-
-  private deleteAtlas(item: ObservatorioPublicacion): void {
-    this.deletingId.set(item.id);
-    this.publicacionService
-      .delete(item.id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: () => {
-          this.atlas.update((items) => items.filter((candidate) => candidate.id !== item.id));
-          this.deletingId.set(null);
-          this.snackBar.open('Atlas eliminado correctamente.', 'Cerrar', { duration: 4000 });
-        },
-        error: (error) => {
-          this.deletingId.set(null);
-          this.snackBar.open(error?.error?.message || 'No se pudo eliminar el Atlas.', 'Cerrar', {
-            duration: 4500,
-          });
-        },
-      });
   }
 
   private normalize(value: string): string {

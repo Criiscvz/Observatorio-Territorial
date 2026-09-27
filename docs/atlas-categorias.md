@@ -63,6 +63,20 @@ Integraciones modificadas:
 
 ## Comprobaciones reproducibles
 
+### Corrección de archivos y organización de categorías
+
+- La subida y el reemplazo del PDF comprueban el resultado del almacenamiento antes de escribir los metadatos. Si falla, se devuelve 503 y se conserva el documento anterior.
+- Abrir PDF lee el archivo mediante la API con los permisos existentes. Las respuestas PDF usan `Cache-Control: private, no-store`. Reemplazar un archivo importado desvincula el enlace anterior de SharePoint para abrir el PDF nuevo.
+- Gestión de Atlas muestra Editar y Eliminar directamente. Editar permite actualizar datos, categoría y PDF. Eliminar identifica el documento, exige confirmación y bloquea envíos repetidos; si falla la eliminación física se conserva el registro. Los originales de SharePoint no se eliminan.
+- El directorio público busca categorías por nombre y descripción sin distinguir tildes o mayúsculas, y permite mostrar solo categorías con publicaciones. El menú administrativo también permite buscarlas. El formulario de categorías queda separado de las tarjetas bajo «Categorías disponibles».
+- No hay migraciones nuevas para esta corrección. Hay que desplegar **backend y frontend**.
+
+Se detectaron registros reales sin ruta de PDF mediante una consulta de solo lectura. Esos registros deben repararse desde **Editar**, seleccionando nuevamente el PDF original; el código no puede recuperar bytes que no llegaron al almacenamiento. No se modificaron ni eliminaron documentos reales durante la verificación.
+
+En el servidor, verificar el almacenamiento persistente configurado en `docs/DEPLOY_GRATIS.md` (`FILESYSTEM_DISK=s3`, bucket y credenciales S3 correctos). El bucket de documentos sensibles debe ser privado; los PDF se sirven por la API y no necesitan una URL pública. La configuración remota de Render no se verificó desde esta sesión.
+
+Validación de esta corrección: 21 pruebas Laravel (149 aserciones), 22 pruebas Angular y compilación Angular de producción completadas. La compilación conserva advertencias de presupuesto CSS. Se comprobó en navegador la búsqueda pública de categorías sin tildes.
+
 Resultado tras añadir la navegación administrativa por categorías: compilación Angular de desarrollo correcta; 17 pruebas Laravel con 114 aserciones y 16 pruebas Angular aprobadas (incluido el servicio de publicaciones); `git diff --check` sin errores de espacios.
 
 Desde `backend`:

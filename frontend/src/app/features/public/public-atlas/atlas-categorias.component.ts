@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -34,11 +34,20 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/components/co
           @if (editing()) { <button mat-button type="button" [disabled]="saving()" (click)="reset()">Cancelar edición</button> }
         </div>
       </form>
+      <div class="available-heading">
+        <h2>Categorías disponibles</h2>
+        <p>Busca una categoría para gestionar sus archivos o actualizar sus datos.</p>
+        <mat-form-field appearance="outline">
+          <mat-label>Buscar categorías</mat-label>
+          <input matInput type="search" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Nombre o descripción" />
+        </mat-form-field>
+        <p role="status">{{ filteredCategorias().length }} de {{ categorias().length }} categorías</p>
+      </div>
       @if (error()) { <p role="alert">{{ error() }}</p> }
       @if (loading()) { <p role="status">Cargando categorías…</p> }
       @else {
         <div class="categories">
-          @for (item of categorias(); track item.id) {
+          @for (item of filteredCategorias(); track item.id) {
             <article>
               <div><h3>{{ item.nombre }}</h3><p>{{ item.descripcion || 'Sin descripción' }}</p></div>
               <div class="actions">
@@ -48,7 +57,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/components/co
                 <button mat-button color="warn" type="button" [disabled]="saving() || deleting()" (click)="remove(item)">Eliminar categoría</button>
               </div>
             </article>
-          } @empty { @if (!error()) { <p>No hay categorías de Atlas. Puedes crear la primera.</p> } }
+          } @empty { @if (!error()) { <p>{{ search() ? 'No se encontraron categorías. Prueba con otro nombre.' : 'No hay categorías de Atlas. Puedes crear la primera.' }}</p> } }
         </div>
       }
     </section>
@@ -56,10 +65,12 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/components/co
   styles: [`
     section { padding: 1.5rem; margin-bottom: 1.5rem; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 18px; }
     header, article, .actions { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
-    form { display: grid; gap: .5rem; max-width: 640px; margin: 1rem 0; }
+    form { display: grid; gap: .5rem; max-width: 640px; margin: 1rem 0 2rem; padding: 1.25rem; border: 1px solid var(--border-color); border-radius: 14px; }
+    .available-heading { border-top: 1px solid var(--border-color); padding-top: 1rem; }
+    .available-heading mat-form-field { width: min(100%, 480px); }
     .actions { justify-content: flex-start; }
-    .categories { display: grid; gap: .75rem; }
-    article { border-top: 1px solid var(--border-color); padding-top: .75rem; }
+    .categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 1rem; }
+    article { border: 1px solid var(--border-color); border-radius: 14px; padding: 1.25rem; background: var(--bg-primary); align-items: stretch; flex-direction: column; }
     article > div { min-width: 0; }
     h3, p { overflow-wrap: anywhere; }
     p { color: var(--text-secondary); white-space: pre-wrap; }
@@ -73,6 +84,12 @@ export class AtlasCategoriasComponent implements OnInit {
   private readonly snackbar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
   readonly categorias = signal<AtlasCategoria[]>([]);
+  readonly search = signal('');
+  readonly filteredCategorias = computed(() => {
+    const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
+    const query = normalize(this.search());
+    return this.categorias().filter(item => normalize(`${item.nombre} ${item.descripcion ?? ''}`).includes(query));
+  });
   readonly editing = signal<string | undefined>(undefined);
   readonly loading = signal(false);
   readonly saving = signal(false);

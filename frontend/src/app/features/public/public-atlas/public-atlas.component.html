@@ -105,9 +105,19 @@
             <div class="atlas-directory-heading">
               <h2 id="atlas-categories-heading">Explora las categorías de Atlas</h2>
               <p>Selecciona una categoría para consultar sus publicaciones.</p>
+              <mat-form-field appearance="outline" class="search-field">
+                <mat-label>Buscar categorías</mat-label>
+                <mat-icon matPrefix>search</mat-icon>
+                <input matInput type="search" placeholder="Nombre o descripción" [value]="categorySearch()" (input)="categorySearch.set($any($event.target).value)" />
+                @if (categorySearch()) {
+                  <button matSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda de categorías" (click)="categorySearch.set('')"><mat-icon>close</mat-icon></button>
+                }
+              </mat-form-field>
+              <label><input type="checkbox" [checked]="onlyWithPublications()" (change)="onlyWithPublications.set($any($event.target).checked)" /> Solo categorías con publicaciones</label>
+              <p role="status">{{ filteredCategoryCards().length + (showUncategorized() ? 1 : 0) }} categorías encontradas</p>
             </div>
             <div class="atlas-category-grid">
-              @for (cat of categoryCards(); track cat.id) {
+              @for (cat of filteredCategoryCards(); track cat.id) {
                 <button type="button" class="atlas-category-card" (click)="selectCategory(cat.id)" [attr.aria-label]="'Ver publicaciones de ' + cat.nombre">
                   <span class="atlas-category-card__icon"><mat-icon>{{ getCategoryIcon(cat.nombre) }}</mat-icon></span>
                   <span class="atlas-category-card__name">{{ cat.nombre }}</span>
@@ -117,8 +127,9 @@
                     <mat-icon>arrow_forward</mat-icon>
                   </span>
                 </button>
-              } @empty { <p>No hay categorías disponibles por el momento.</p> }
-              @if (uncategorizedCount() > 0) {
+              }
+              @if (!filteredCategoryCards().length && !showUncategorized()) { <p>No hay categorías que coincidan con la búsqueda.</p> }
+              @if (showUncategorized()) {
                 <button type="button" class="atlas-category-card" (click)="selectCategory('SIN_CATEGORIA')" aria-label="Ver publicaciones sin categoría">
                   <span class="atlas-category-card__icon"><mat-icon>folder_open</mat-icon></span>
                   <span class="atlas-category-card__name">Sin categoría</span>

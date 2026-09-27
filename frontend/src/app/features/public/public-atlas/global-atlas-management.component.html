@@ -115,30 +115,19 @@
                   Abrir PDF
                 </button>
               } @else {
-                <span class="unavailable">No disponible</span>
+                <span class="unavailable">PDF pendiente. Usa Editar para volver a subirlo.</span>
               }
             </div>
 
             <div class="atlas-actions" role="cell">
-              <button mat-icon-button type="button" [matMenuTriggerFor]="atlasMenu" aria-label="Más opciones">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-              <mat-menu #atlasMenu="matMenu" xPosition="before">
-                @if (item.download_url || item.sharepoint_url) {
-                  <button mat-menu-item type="button" (click)="openPdf(item)">
-                    <mat-icon>picture_as_pdf</mat-icon>
-                    <span>Abrir PDF</span>
-                  </button>
-                }
-                <a mat-menu-item [routerLink]="['/admin/atlas/subir']" [queryParams]="{ editar: item.id }">
+                <a mat-stroked-button [routerLink]="['/admin/atlas/subir']" [queryParams]="{ editar: item.id }" [attr.aria-label]="'Editar o reemplazar PDF de ' + item.titulo">
                   <mat-icon>edit</mat-icon>
                   <span>Editar</span>
                 </a>
-                <button mat-menu-item type="button" class="danger-action" [disabled]="deletingId() === item.id" (click)="confirmDelete(item)">
+                <button mat-button color="warn" type="button" class="danger-action" [disabled]="!!deletingId()" (click)="confirmDelete(item)" [attr.aria-label]="'Eliminar ' + item.titulo">
                   <mat-icon>delete</mat-icon>
                   <span>Eliminar</span>
                 </button>
-              </mat-menu>
             </div>
           </article>
         }

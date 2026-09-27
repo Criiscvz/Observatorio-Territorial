@@ -69,4 +69,18 @@ describe('Public Atlas categories', () => {
     expect(component.loadError()).toContain('No se pudo cargar');
     expect(component.articulos()).toEqual([]);
   });
+  it('searches names and descriptions without accents and combines the publication filter', () => {
+    component.categorySearch.set('DESCRIPCION');
+    expect(component.filteredCategoryCards().map(item => item.id)).toEqual(['salud']);
+    expect(component.showUncategorized()).toBe(false);
+    component.categorySearch.set('');
+    component.onlyWithPublications.set(true);
+    expect(component.filteredCategoryCards().map(item => item.id)).toEqual(['salud']);
+    expect(component.showUncategorized()).toBe(true);
+    component.categorySearch.set('sin categoria');
+    expect(component.filteredCategoryCards()).toEqual([]);
+    expect(component.showUncategorized()).toBe(true);
+    component.categorySearch.set('inexistente');
+    expect(component.showUncategorized()).toBe(false);
+  });
 });

@@ -61,6 +61,81 @@ class AtlasCategoriaTest extends TestCase
         Sanctum::actingAs((new User())->forceFill(['id' => 1, 'rol' => $role, 'is_active' => true]));
     }
 
+    public function test_failed_upload_does_not_create_a_publication_or_replace_existing_pdf(): void
+    {
+        $this->signIn();
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('putFileAs')->twice()->andReturn(false);
+        Storage::shouldReceive('disk')->andReturn($disk);
+        $payload = ['tipo' => 'ATLAS', 'titulo' => 'Documento', 'estado' => 'PUBLICACION',
+            'fecha_publicacion' => '2026-09-26', 'fuente' => 'ULEAM'];
+        $this->postJson('/api/departamentos/publicaciones/atlas-global', $payload + [
+            'archivo' => UploadedFile::fake()->create('atlas.pdf', 10, 'application/pdf'),
+        ])->assertStatus(503);
+        $this->assertSame(0, ObservatorioPublicacion::count());
+        $this->assertSame(1, DB::table('publicacion_contadores')->value('siguiente_numero'));
+        $existing = $this->publication(['archivo_pdf' => 'original.pdf']);
+        $this->patchJson("/api/departamentos/publicaciones/{$existing->id}", $payload + [
+            'archivo' => UploadedFile::fake()->create('nuevo.pdf', 10, 'application/pdf'),
+        ])->assertStatus(503);
+        $this->assertSame('original.pdf', $existing->fresh()->archivo_pdf);
+        $this->assertSame('Atlas de prueba', $existing->fresh()->titulo);
+    }
+
+    public function test_uploaded_pdf_can_be_opened_replaced_and_deleted(): void
+    {
+        $this->signIn();
+        Storage::fake(config('filesystems.default'));
+        $payload = ['tipo' => 'ATLAS', 'titulo' => 'Documento', 'estado' => 'PUBLICACION',
+            'fecha_publicacion' => '2026-09-26', 'fuente' => 'ULEAM'];
+        $response = $this->postJson('/api/departamentos/publicaciones/atlas-global', $payload + [
+            'archivo' => UploadedFile::fake()->createWithContent('atlas.pdf', "%PDF-1.4\nOriginal"),
+        ])->assertCreated();
+        $id = $response->json('data.id');
+        $url = $response->json('data.download_url');
+        $old = ObservatorioPublicacion::findOrFail($id)->archivo_pdf;
+        $this->get($url)->assertOk()->assertHeader('Content-Type', 'application/pdf')
+            ->assertStreamedContent("%PDF-1.4\nOriginal");
+        ObservatorioPublicacion::findOrFail($id)->update(['sharepoint_url' => 'https://example.test/old.pdf']);
+        $this->patchJson("/api/departamentos/publicaciones/$id", $payload + [
+            'archivo' => UploadedFile::fake()->createWithContent('nuevo.pdf', "%PDF-1.4\nNuevo"),
+        ])->assertOk()->assertJsonPath('data.sharepoint_url', null);
+        Storage::disk(config('filesystems.default'))->assertMissing($old);
+        $this->get($url)->assertOk()->assertStreamedContent("%PDF-1.4\nNuevo");
+        $new = ObservatorioPublicacion::findOrFail($id)->archivo_pdf;
+        $this->deleteJson("/api/departamentos/publicaciones/$id")->assertOk();
+        Storage::disk(config('filesystems.default'))->assertMissing($new);
+        $this->getJson($url)->assertNotFound();
+    }
+
+    public function test_missing_files_and_restricted_downloads_are_not_exposed(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        $missing = $this->publication();
+        $this->getJson("/api/departamentos/publicaciones/{$missing->id}/download")->assertNotFound();
+        $missing->update(['archivo_pdf' => 'missing.pdf']);
+        $this->getJson("/api/departamentos/publicaciones/{$missing->id}/download")->assertNotFound();
+        Storage::disk(config('filesystems.default'))->put('private.pdf', '%PDF-1.4 secret');
+        $private = $this->publication(['archivo_pdf' => 'private.pdf', 'solo_suscriptores' => true]);
+        $this->getJson("/api/departamentos/publicaciones/{$private->id}/download")->assertForbidden();
+        $private->update(['solo_suscriptores' => false, 'estado' => 'EN_REVISION']);
+        $this->getJson("/api/departamentos/publicaciones/{$private->id}/download")->assertNotFound();
+        $this->signIn();
+        $this->get("/api/departamentos/publicaciones/{$private->id}/download")->assertOk();
+    }
+
+    public function test_failed_file_deletion_preserves_publication(): void
+    {
+        $this->signIn();
+        $publication = $this->publication(['archivo_pdf' => 'private.pdf']);
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('exists')->with('private.pdf')->andReturn(true);
+        $disk->shouldReceive('delete')->with('private.pdf')->andReturn(false);
+        Storage::shouldReceive('disk')->andReturn($disk);
+        $this->deleteJson("/api/departamentos/publicaciones/{$publication->id}")->assertStatus(503);
+        $this->assertNotNull($publication->fresh());
+    }
+
     public function test_sharepoint_import_assigns_category_and_preserves_existing_file_category(): void
     {
         $this->signIn();
