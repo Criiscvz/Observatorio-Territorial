@@ -67,7 +67,9 @@ class AuthController extends Controller
     {
         $dto = LoginDTO::fromArray($request->validated());
         $result = $this->loginUseCase->execute($dto);
-        $request->session()->regenerate();
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
         return response()->json(new AuthResource($result));
     }
@@ -137,7 +139,9 @@ class AuthController extends Controller
         );
 
         $authResponse = $this->createAuthResponse($verifiedUser);
-        $request->session()->regenerate();
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
         return response()->json(new AuthResource($authResponse));
     }
@@ -204,7 +208,9 @@ class AuthController extends Controller
         }
 
         $authResponse = $this->createAuthResponse($user);
-        $request->session()->regenerate();
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
         return response()->json(new AuthResource($authResponse));
     }
