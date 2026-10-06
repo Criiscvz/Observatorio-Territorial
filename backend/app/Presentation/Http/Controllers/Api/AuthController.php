@@ -26,6 +26,7 @@ use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -52,7 +53,7 @@ class AuthController extends Controller
                 required: ['email', 'password'],
                 properties: [
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'admin@example.com'),
-                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123')
+                    new OA\Property(property: 'password', type: 'string', format: 'password')
                 ]
             )
         ),
@@ -66,6 +67,9 @@ class AuthController extends Controller
     {
         $dto = LoginDTO::fromArray($request->validated());
         $result = $this->loginUseCase->execute($dto);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
         return response()->json(new AuthResource($result));
     }
@@ -80,8 +84,8 @@ class AuthController extends Controller
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com'),
-                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
-                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'password123')
+                    new OA\Property(property: 'password', type: 'string', format: 'password'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password')
                 ]
             )
         ),
@@ -134,7 +138,12 @@ class AuthController extends Controller
             (string) $request->validated('code'),
         );
 
-        return response()->json(new AuthResource($this->createAuthResponse($verifiedUser)));
+        $authResponse = $this->createAuthResponse($verifiedUser);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        return response()->json(new AuthResource($authResponse));
     }
 
     public function resendVerificationCode(ResendVerificationCodeRequest $request): JsonResponse
@@ -198,7 +207,12 @@ class AuthController extends Controller
             return response()->json(['message' => 'El acceso de Google expiró o no es válido.'], 422);
         }
 
-        return response()->json(new AuthResource($this->createAuthResponse($user)));
+        $authResponse = $this->createAuthResponse($user);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        return response()->json(new AuthResource($authResponse));
     }
 
     #[OA\Post(
@@ -212,7 +226,9 @@ class AuthController extends Controller
     )]
     public function logout(Request $request): JsonResponse
     {
-        $this->logoutUseCase->execute($request->user());
+        $this->logoutUseCase->execute();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Sesión cerrada exitosamente']);
     }
@@ -235,13 +251,9 @@ class AuthController extends Controller
 
     private function createAuthResponse(User $user): AuthResponseDTO
     {
-        $user->tokens()->delete();
         $user->load(['perfil', 'departamentos']);
-        $role = strtoupper((string) ($user->rol ?? 'USER'));
-        $durationMinutes = in_array($role, ['ADMIN', 'EDITOR'], true) ? 480 : 1440;
-        $expiresAt = now()->addMinutes($durationMinutes);
-        $token = $user->createToken('auth-token', ['*'], $expiresAt)->plainTextToken;
+        Auth::login($user);
 
-        return AuthResponseDTO::fromUser($user, $token, $expiresAt, $durationMinutes * 60);
+        return AuthResponseDTO::fromUser($user);
     }
 }

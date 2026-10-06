@@ -57,7 +57,7 @@ All of these have `.ps1` twins for Windows PowerShell — VS Code tasks auto-dis
 | API | http://localhost:8000/api |
 | Swagger JSON | http://localhost:8000/api/documentation |
 | Swagger UI | http://localhost:8000/api/docs |
-| Postgres | localhost:5432 (`postgres` / `secret123` / `observatorio_uleam`) |
+| Postgres | localhost:5432 (`postgres` / contraseña configurada en variables de entorno / `observatorio_uleam`) |
 
 ### Tests
 
@@ -108,7 +108,7 @@ When writing queries against registros, expect JSONB operators (`->>`, `->`, `@>
 
 `backend/routes/api.php` is a thin manifest — real routes live in `backend/routes/modules/*.php` (`auth.php`, `datasets.php`, `stats.php`, `publico.php`, `users.php`, `variables.php`, `departamentos.php`, `categorias.php`, `fuentes.php`, `graficos.php`, `seed.php`, `profile.php`). Each module file typically wraps its routes in `Route::middleware('auth:sanctum')` (and often a nested `Route::middleware('role:ADMIN')` for mutations) — public endpoints live under the `publico` prefix.
 
-The `/api/publico/*` routes are the **unauthenticated** portal — keep that in mind when adding middleware. The seeder endpoint (`/api/seed/*`) is gated by an `X-Seed-Token` header matching `SEED_TOKEN` in `.env`.
+The `/api/publico/*` routes are the **unauthenticated** portal — keep that in mind when adding middleware. Seeders are executed only through the Laravel CLI with protected environment variables.
 
 Authentication is Laravel Sanctum (token-based for the SPA). `SANCTUM_STATEFUL_DOMAINS` must include the frontend origin.
 

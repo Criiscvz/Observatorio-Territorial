@@ -57,6 +57,8 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getCategoricalFrequencies(string $datasetId, string $columna, int $limit = 20): array
     {
+        $columna = $this->sanitizeColumn($columna);
+
         return DB::table('registros_datos')
             ->select(DB::raw("data->>'$columna' as categoria, COUNT(*) as frecuencia"))
             ->where('dataset_id', $datasetId)
@@ -70,6 +72,8 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getNumericStats(string $datasetId, string $columna): array
     {
+        $columna = $this->sanitizeColumn($columna);
+
         $result = DB::table('registros_datos')
             ->select(DB::raw("
                 COUNT(*) as count,
@@ -89,6 +93,7 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getHistogram(string $datasetId, string $columna, int $bins = 10): array
     {
+        $columna = $this->sanitizeColumn($columna);
         $stats = $this->getNumericStats($datasetId, $columna);
         
         if (empty($stats['min']) || empty($stats['max']) || $stats['min'] == $stats['max']) {
@@ -124,6 +129,9 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getScatterData(string $datasetId, string $columnaX, string $columnaY, int $limit = 1000): array
     {
+        $columnaX = $this->sanitizeColumn($columnaX);
+        $columnaY = $this->sanitizeColumn($columnaY);
+
         return DB::table('registros_datos')
             ->select(DB::raw("
                 (data->>'$columnaX')::numeric as x,
@@ -140,6 +148,9 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getGroupedAverages(string $datasetId, string $columnaCategoria, string $columnaNumerico, int $limit = 20): array
     {
+        $columnaCategoria = $this->sanitizeColumn($columnaCategoria);
+        $columnaNumerico = $this->sanitizeColumn($columnaNumerico);
+
         return DB::table('registros_datos')
             ->select(DB::raw("
                 data->>'$columnaCategoria' as categoria,
@@ -158,6 +169,9 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getContingencyTable(string $datasetId, string $columnaX, string $columnaY, int $limit = 15): array
     {
+        $columnaX = $this->sanitizeColumn($columnaX);
+        $columnaY = $this->sanitizeColumn($columnaY);
+
         $result = DB::table('registros_datos')
             ->select(DB::raw("
                 data->>'$columnaX' as x,
@@ -193,6 +207,9 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getTimeSeriesAverage(string $datasetId, string $columnaFecha, string $columnaNumerico, int $limit = 50): array
     {
+        $columnaFecha = $this->sanitizeColumn($columnaFecha);
+        $columnaNumerico = $this->sanitizeColumn($columnaNumerico);
+
         return DB::table('registros_datos')
             ->select(DB::raw("
                 DATE(data->>'$columnaFecha') as fecha,
@@ -211,6 +228,9 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getStackedTimeData(string $datasetId, string $columnaFecha, string $columnaCategoria, int $limit = 50): array
     {
+        $columnaFecha = $this->sanitizeColumn($columnaFecha);
+        $columnaCategoria = $this->sanitizeColumn($columnaCategoria);
+
         // Obtener categorías únicas
         $categories = DB::table('registros_datos')
             ->select(DB::raw("DISTINCT data->>'$columnaCategoria' as cat"))
@@ -263,5 +283,19 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
             'categories' => $categories,
             'series' => $series,
         ];
+    }
+
+    /**
+     * Imported column names are normalized by ExcelReaderService to this exact
+     * character set. Enforce the same invariant before a name reaches a raw
+     * PostgreSQL JSONB expression.
+     */
+    private function sanitizeColumn(string $columna): string
+    {
+        if (!preg_match('/^[a-zA-Z0-9_]+$/D', $columna)) {
+            throw new \InvalidArgumentException("Nombre de columna inválido: {$columna}");
+        }
+
+        return $columna;
     }
 }

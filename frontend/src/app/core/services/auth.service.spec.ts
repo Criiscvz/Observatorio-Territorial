@@ -21,10 +21,7 @@ describe('AuthService', () => {
   } as any;
 
   const mockAuthResponse = {
-    token: 'fake-jwt-token',
     user: mockUser,
-    expires_at: '2026-07-16T00:00:00+00:00',
-    expires_in: 86400,
   };
 
   beforeEach(() => {
@@ -43,7 +40,7 @@ describe('AuthService', () => {
     service = TestBed.inject(AuthService);
     httpMock = TestBed.inject(HttpTestingController);
     
-    // Clear browser storage before each test
+    // A cookie-backed session must never leave auth data in browser storage.
     localStorage.clear();
     sessionStorage.clear();
   });
@@ -57,20 +54,20 @@ describe('AuthService', () => {
   });
 
   describe('login()', () => {
-    it('should authenticate user, store token and user in localStorage', () => {
+    it('should authenticate through a CSRF-protected cookie session without local storage', () => {
       const loginData = { email: 'test@test.com', password: 'password' };
 
       service.login(loginData).subscribe(response => {
         expect(response).toEqual(mockAuthResponse);
-        expect(service.token()).toBe('fake-jwt-token');
         expect(service.user()).toEqual(mockUser);
         expect(service.isAuthenticated()).toBe(true);
-
-        expect(localStorage.getItem('auth_token')).toBe('fake-jwt-token');
-        expect(localStorage.getItem('auth_expires_at')).toBe('2026-07-16T00:00:00+00:00');
-        const storedUser = JSON.parse(localStorage.getItem('auth_user') || '{}');
-        expect(storedUser).toEqual(mockUser);
+        expect(localStorage.getItem('auth_token')).toBeNull();
+        expect(localStorage.getItem('auth_user')).toBeNull();
       });
+
+      const csrf = httpMock.expectOne('http://localhost:8000/sanctum/csrf-cookie');
+      expect(csrf.request.withCredentials).toBe(true);
+      csrf.flush({});
 
       const req = httpMock.expectOne(`${environment.apiUrl}/login`);
       expect(req.request.method).toBe('POST');
@@ -83,14 +80,9 @@ describe('AuthService', () => {
   describe('logout()', () => {
     it('should call logout API and clear auth data', () => {
       // Setup initial state
-      service['tokenSignal'].set('fake-token');
       service['userSignal'].set(mockUser);
-      localStorage.setItem('auth_token', 'fake-token');
-      localStorage.setItem('auth_user', JSON.stringify(mockUser));
-      localStorage.setItem('auth_expires_at', '2026-07-16T00:00:00+00:00');
 
       service.logout().subscribe(() => {
-        expect(service.token()).toBeNull();
         expect(service.user()).toBeNull();
         expect(service.isAuthenticated()).toBe(false);
         expect(localStorage.getItem('auth_token')).toBeNull();
@@ -105,15 +97,31 @@ describe('AuthService', () => {
     });
 
     it('should clear auth data even if API fails', () => {
-      service['tokenSignal'].set('fake-token');
+      service['userSignal'].set(mockUser);
 
       service.logout().subscribe(() => {
-        expect(service.token()).toBeNull();
+        expect(service.user()).toBeNull();
         expect(routerSpy.navigate).toHaveBeenCalledWith(['/publico/departamentos']);
       });
 
       const req = httpMock.expectOne(`${environment.apiUrl}/logout`);
       req.error(new ProgressEvent('Network error'));
+    });
+  });
+
+  describe('checkAuth()', () => {
+    it('should clear a stale session without redirecting the active navigation', () => {
+      service['userSignal'].set(mockUser);
+      let authenticated: boolean | undefined;
+
+      service.checkAuth().subscribe((result) => (authenticated = result));
+
+      const req = httpMock.expectOne(`${environment.apiUrl}/user`);
+      req.flush({ message: 'Unauthenticated.' }, { status: 401, statusText: 'Unauthorized' });
+
+      expect(authenticated).toBe(false);
+      expect(service.user()).toBeNull();
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
     });
   });
 

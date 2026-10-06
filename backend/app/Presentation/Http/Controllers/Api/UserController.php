@@ -139,7 +139,7 @@ class UserController extends Controller
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Juan Pérez'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'juan@example.com'),
-                    new OA\Property(property: 'password', type: 'string', example: 'password123'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password'),
                     new OA\Property(property: 'rol', type: 'string', enum: ['ADMIN', 'USER'], example: 'USER'),
                     new OA\Property(property: 'is_active', type: 'boolean', example: true),
                     new OA\Property(property: 'telefono', type: 'string', example: '+593999999999'),
@@ -181,7 +181,7 @@ class UserController extends Controller
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Juan Pérez'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'juan@example.com'),
-                    new OA\Property(property: 'password', type: 'string', example: 'newpassword123'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password'),
                     new OA\Property(property: 'rol', type: 'string', enum: ['ADMIN', 'USER'], example: 'USER'),
                     new OA\Property(property: 'is_active', type: 'boolean', example: true),
                     new OA\Property(property: 'telefono', type: 'string', example: '+593999999999'),
