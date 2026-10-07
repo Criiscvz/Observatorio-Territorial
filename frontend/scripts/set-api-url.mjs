@@ -2,8 +2,10 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 const apiUrl = process.env.API_URL?.replace(/\/$/, '');
 
-if (!apiUrl || !/^https:\/\//.test(apiUrl)) {
-  throw new Error('API_URL must be the public HTTPS Render API URL, for example https://service.onrender.com/api');
+if (!apiUrl || (!/^https:\/\//.test(apiUrl) && !/^\//.test(apiUrl))) {
+  throw new Error(
+    'API_URL must be an HTTPS API URL or a same-origin path such as /api.',
+  );
 }
 
 const file = new URL('../src/environments/environment.prod.ts', import.meta.url);

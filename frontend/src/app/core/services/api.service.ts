@@ -27,7 +27,9 @@ export class ApiService {
   }
 
   getCsrfCookie(): Observable<void> {
-    const csrfUrl = new URL('/sanctum/csrf-cookie', this.apiUrl).toString();
+    const csrfUrl = this.apiUrl.startsWith('/')
+      ? '/sanctum/csrf-cookie'
+      : new URL('/sanctum/csrf-cookie', this.apiUrl).toString();
     return this.http.get<void>(csrfUrl, { withCredentials: true });
   }
 
