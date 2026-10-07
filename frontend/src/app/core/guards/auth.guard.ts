@@ -49,8 +49,9 @@ export const guestGuard: CanActivateFn = () => {
     return redirectAuthenticatedUser();
   }
 
-  return authService.checkAuth().pipe(
-    map((isValid) => (isValid ? redirectAuthenticatedUser() : true)),
-    catchError(() => of(true)),
-  );
+  // Las rutas de acceso deben seguir disponibles aunque el backend se esté
+  // iniciando o no responda. La validación de la cookie se realiza en las
+  // rutas protegidas mediante authGuard; bloquear aquí deja el router sin
+  // componente y muestra una pantalla en blanco.
+  return true;
 };
