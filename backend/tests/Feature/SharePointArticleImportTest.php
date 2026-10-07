@@ -15,7 +15,7 @@ class SharePointArticleImportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_barometer_files_are_imported_as_articles_and_reports_without_affecting_atlas(): void
+    public function test_barometer_files_are_imported_as_articles_reports_and_department_books(): void
     {
         $admin = User::factory()->create([
             'rol' => 'ADMIN',
@@ -114,7 +114,7 @@ class SharePointArticleImportTest extends TestCase
         ]);
         $this->assertDatabaseHas('observatorio_publicaciones', [
             'departamento_id' => $departamento->id,
-            'tipo' => 'ATLAS',
+            'tipo' => 'LIBRO',
             'sharepoint_file_id' => 'atlas-pdf',
         ]);
         $this->assertSame(1, ObservatorioPublicacion::where('sharepoint_file_id', 'barometer-pdf')->count());
@@ -126,6 +126,10 @@ class SharePointArticleImportTest extends TestCase
         $this->assertStringStartsWith(
             'REP-',
             ObservatorioPublicacion::where('sharepoint_file_id', 'report-pdf')->value('codigo'),
+        );
+        $this->assertStringStartsWith(
+            'LIB-',
+            ObservatorioPublicacion::where('sharepoint_file_id', 'atlas-pdf')->value('codigo'),
         );
     }
 
