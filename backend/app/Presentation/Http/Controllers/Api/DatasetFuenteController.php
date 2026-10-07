@@ -6,6 +6,7 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\DatasetFuenteModel;
+use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -14,6 +15,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Fuentes', description: 'Fuentes de datos de datasets')]
 class DatasetFuenteController extends Controller
 {
+    public function __construct(
+        private readonly DepartamentoResourceAuthorizer $resourceAuthorizer,
+    ) {}
+
     #[OA\Get(
         path: '/datasets/{datasetId}/fuentes',
         summary: 'Listar fuentes de un dataset',
@@ -82,7 +87,8 @@ class DatasetFuenteController extends Controller
         }
 
         $data = $validator->validated();
-        $data['dataset_id'] = $datasetId;
+        $dataset = $this->resourceAuthorizer->findManagedDataset($request->user(), $datasetId);
+        $data['dataset_id'] = $dataset->id;
 
         $fuente = DatasetFuenteModel::create($data);
 
@@ -109,6 +115,8 @@ class DatasetFuenteController extends Controller
         if (!$fuente) {
             return response()->json(['message' => 'Fuente no encontrada'], 404);
         }
+
+        $this->resourceAuthorizer->findManagedDataset($request->user(), $fuente->dataset_id);
 
         // Normalize URL: add https:// if no protocol specified
         $input = $request->all();
@@ -148,13 +156,15 @@ class DatasetFuenteController extends Controller
             new OA\Response(response: 404, description: 'No encontrada')
         ]
     )]
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $fuente = DatasetFuenteModel::find($id);
 
         if (!$fuente) {
             return response()->json(['message' => 'Fuente no encontrada'], 404);
         }
+
+        $this->resourceAuthorizer->findManagedDataset($request->user(), $fuente->dataset_id);
 
         $fuente->delete();
 

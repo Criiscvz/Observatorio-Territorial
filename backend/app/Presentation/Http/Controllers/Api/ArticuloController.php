@@ -7,6 +7,7 @@ namespace App\Presentation\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\ArticuloModel;
 use App\Models\ObservatorioPublicacion;
+use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,6 +16,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Artículos', description: 'Artículos de contenido del observatorio')]
 class ArticuloController extends Controller
 {
+    public function __construct(
+        private readonly DepartamentoResourceAuthorizer $resourceAuthorizer,
+    ) {}
+
     #[OA\Get(
         path: '/articulos',
         summary: 'Listar artículos',
@@ -86,6 +91,8 @@ class ArticuloController extends Controller
             return response()->json(['message' => 'Artículo no encontrado'], 404);
         }
 
+        abort_unless($this->canViewLegacyContent($request, $articulo), 404, 'Artículo no encontrado');
+
         if ($articulo->visibilidad === 'suscriptor') {
             $user = $request->user('sanctum');
             if (!$this->isSubscriber($user)) {
@@ -149,7 +156,13 @@ class ArticuloController extends Controller
             ], 422);
         }
 
-        $articulo = ArticuloModel::create($validator->validated());
+        $data = $validator->validated();
+        $this->resourceAuthorizer->ensureCanManageDepartamento(
+            $request->user(),
+            $data['departamento_id'] ?? null,
+        );
+
+        $articulo = ArticuloModel::create($data);
         $articulo->load(['categoria', 'departamento']);
 
         return response()->json($articulo, 201);
@@ -194,6 +207,8 @@ class ArticuloController extends Controller
             return response()->json(['message' => 'Artículo no encontrado'], 404);
         }
 
+        $this->resourceAuthorizer->ensureCanManageDepartamento($request->user(), $articulo->departamento_id);
+
         $input = $request->all();
 
         $validator = Validator::make($input, [
@@ -217,7 +232,13 @@ class ArticuloController extends Controller
             ], 422);
         }
 
-        $articulo->update($validator->validated());
+        $data = $validator->validated();
+        $this->resourceAuthorizer->ensureCanManageDepartamento(
+            $request->user(),
+            $data['departamento_id'] ?? $articulo->departamento_id,
+        );
+
+        $articulo->update($data);
 
         return response()->json($articulo->fresh(['categoria', 'departamento']));
     }
@@ -235,13 +256,15 @@ class ArticuloController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $articulo = ArticuloModel::find($id);
 
         if (!$articulo) {
             return response()->json(['message' => 'Artículo no encontrado'], 404);
         }
+
+        $this->resourceAuthorizer->ensureCanManageDepartamento($request->user(), $articulo->departamento_id);
 
         $articulo->delete();
 

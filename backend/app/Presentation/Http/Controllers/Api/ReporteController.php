@@ -7,6 +7,7 @@ namespace App\Presentation\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\ReporteModel;
 use App\Models\ObservatorioPublicacion;
+use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +17,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Reportes', description: 'Reportes e indicadores del observatorio')]
 class ReporteController extends Controller
 {
+    public function __construct(
+        private readonly DepartamentoResourceAuthorizer $resourceAuthorizer,
+    ) {}
+
     #[OA\Get(
         path: '/reportes',
         summary: 'Listar reportes',
@@ -86,6 +91,8 @@ class ReporteController extends Controller
         if (!$reporte) {
             return response()->json(['message' => 'Reporte no encontrado'], 404);
         }
+
+        abort_unless($this->canViewLegacyContent($request, $reporte), 404, 'Reporte no encontrado');
 
         if ($reporte->visibilidad === 'suscriptor') {
             $user = $request->user('sanctum');
@@ -161,6 +168,11 @@ class ReporteController extends Controller
 
         unset($data['ficha']);
 
+        $this->resourceAuthorizer->ensureCanManageDepartamento(
+            $request->user(),
+            $data['departamento_id'] ?? null,
+        );
+
         $reporte = ReporteModel::create($data);
         $reporte->load(['categoria', 'departamento']);
 
@@ -207,6 +219,8 @@ class ReporteController extends Controller
             return response()->json(['message' => 'Reporte no encontrado'], 404);
         }
 
+        $this->resourceAuthorizer->ensureCanManageDepartamento($request->user(), $reporte->departamento_id);
+
         // Normalizar URL: agregar https:// si no especifica protocolo
         $input = $request->all();
         if (!empty($input['link_url']) && !preg_match('#^https?://#i', $input['link_url'])) {
@@ -249,6 +263,11 @@ class ReporteController extends Controller
 
         unset($data['ficha']);
 
+        $this->resourceAuthorizer->ensureCanManageDepartamento(
+            $request->user(),
+            $data['departamento_id'] ?? $reporte->departamento_id,
+        );
+
         $reporte->update($data);
 
         return response()->json($reporte->fresh(['categoria', 'departamento']));
@@ -267,13 +286,15 @@ class ReporteController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $reporte = ReporteModel::find($id);
 
         if (!$reporte) {
             return response()->json(['message' => 'Reporte no encontrado'], 404);
         }
+
+        $this->resourceAuthorizer->ensureCanManageDepartamento($request->user(), $reporte->departamento_id);
 
         $reporte->delete();
 
@@ -292,7 +313,7 @@ class ReporteController extends Controller
             new OA\Response(response: 404, description: 'No encontrada')
         ]
     )]
-    public function ficha(string $filename)
+    public function ficha(Request $request, string $filename)
     {
         if (!preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
             return response()->json(['message' => 'Ficha no encontrada'], 404)
@@ -310,8 +331,14 @@ class ReporteController extends Controller
 
         // Validación de paywall para descargas/fichas de suscriptor
         $reporte = ReporteModel::where('ficha_indicador', 'like', '%' . $filename)->first();
+        if ($reporte && ! $this->canViewLegacyContent($request, $reporte)) {
+            return response()->json(['message' => 'Ficha no encontrada'], 404)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Cross-Origin-Resource-Policy', 'cross-origin');
+        }
+
         if ($reporte && $reporte->visibilidad === 'suscriptor') {
-            $user = request()->user('sanctum');
+            $user = $request->user('sanctum');
             if (!$this->isSubscriber($user)) {
                 return response()->json(['message' => 'Acceso exclusivo para suscriptores.'], 403)
                     ->header('Access-Control-Allow-Origin', '*')
