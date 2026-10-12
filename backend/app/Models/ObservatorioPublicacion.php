@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -30,6 +31,12 @@ class ObservatorioPublicacion extends Model
     public function atlasCategoria(): BelongsTo
     {
         return $this->belongsTo(AtlasCategoria::class, 'atlas_categoria_id');
+    }
+
+    public function scopeInPublicAtlasCategories(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $q) => $q->whereNull('atlas_categoria_id')
+            ->orWhereHas('atlasCategoria', fn (Builder $category) => $category->where('publico', true)));
     }
 
     public function departamento(): BelongsTo

@@ -7,6 +7,7 @@ use App\Models\AtlasCategoria;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AtlasCategoriaController extends Controller
@@ -14,6 +15,11 @@ class AtlasCategoriaController extends Controller
     public function index()
     {
         return response()->json(['data' => AtlasCategoria::orderBy('nombre')->get()]);
+    }
+
+    public function indexPublico()
+    {
+        return response()->json(['data' => AtlasCategoria::where('publico', true)->orderBy('nombre')->get()]);
     }
 
     public function store(Request $request)
@@ -34,6 +40,8 @@ class AtlasCategoriaController extends Controller
         $data = $request->validate([
             'nombre' => ['required', 'string', 'max:150'],
             'descripcion' => ['nullable', 'string', 'max:3000'],
+            'publico' => ['sometimes', 'boolean'],
+            'icono' => ['sometimes', 'nullable', 'string', 'max:50', Rule::in(config('atlas.category_icons'))],
         ], ['nombre.required' => 'El nombre de la categoría es obligatorio.']);
         $key = AtlasCategoria::key($data['nombre']);
         if (AtlasCategoria::withTrashed()->where('nombre_clave', $key)

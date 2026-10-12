@@ -12,8 +12,10 @@ class AtlasCategoria extends Model
     use HasUuids, SoftDeletes;
 
     protected $table = 'atlas_categorias';
-    protected $fillable = ['nombre', 'descripcion'];
-    protected $visible = ['id', 'nombre', 'descripcion'];
+    protected $fillable = ['nombre', 'descripcion', 'publico', 'icono'];
+    protected $visible = ['id', 'nombre', 'descripcion', 'publico', 'icono'];
+    protected $attributes = ['publico' => false, 'icono' => null];
+    protected $casts = ['publico' => 'boolean'];
 
     public static function normalize(string $nombre): string
     {

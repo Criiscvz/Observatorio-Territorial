@@ -21,6 +21,7 @@ class AtlasCategoriaSeeder extends Seeder
                 DB::table('atlas_categorias')->insertOrIgnore([
                     'id' => (string) Str::uuid(), 'nombre' => $nombre, 'nombre_clave' => $key,
                     'clave_inicial' => $key, 'created_at' => now(), 'updated_at' => now(),
+                    'publico' => true,
                 ]);
                 // Adopt an existing category without changing its name, description or deletion state.
                 AtlasCategoria::withTrashed()->where('nombre_clave', $key)->whereNull('clave_inicial')

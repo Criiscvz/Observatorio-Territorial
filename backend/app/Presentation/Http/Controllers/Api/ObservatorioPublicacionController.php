@@ -278,7 +278,7 @@ class ObservatorioPublicacionController extends Controller
                         'sharepoint_file_type' => null,
                         'sharepoint_file_size' => null,
                         'sharepoint_last_modified_at' => null,
-                        'sharepoint_sync_status' => null,
+                        'sharepoint_sync_status' => 'pendiente',
                         'sharepoint_synced_at' => null,
                         'sharepoint_error' => null,
                     ] : []),
@@ -785,7 +785,7 @@ class ObservatorioPublicacionController extends Controller
             ->limit(6);
 
         if ($request->user()->rol !== 'ADMIN') {
-            $query->where('estado', self::ESTADO_PUBLICACION);
+            $query->where('estado', self::ESTADO_PUBLICACION)->inPublicAtlasCategories();
         }
 
         return PublicacionResource::collection($query->get());
@@ -976,11 +976,16 @@ class ObservatorioPublicacionController extends Controller
         if ($user->rol === 'EDITOR') {
             $query->where(function ($visibilityQuery) use ($user) {
                 $visibilityQuery
-                    ->where('estado', self::ESTADO_PUBLICACION)
+                    ->where(fn ($publishedQuery) => $publishedQuery
+                        ->where('estado', self::ESTADO_PUBLICACION)
+                        ->where(fn ($categoryQuery) => $categoryQuery->where('tipo', '!=', 'ATLAS')
+                            ->orWhere(fn ($atlasQuery) => $atlasQuery->inPublicAtlasCategories())))
                     ->orWhere('creado_por', $user->id);
             });
         } else {
-            $query->where('estado', self::ESTADO_PUBLICACION);
+            $query->where('estado', self::ESTADO_PUBLICACION)
+                ->where(fn ($categoryQuery) => $categoryQuery->where('tipo', '!=', 'ATLAS')
+                    ->orWhere(fn ($atlasQuery) => $atlasQuery->inPublicAtlasCategories()));
         }
 
     }
@@ -1001,6 +1006,10 @@ class ObservatorioPublicacionController extends Controller
         }
 
         abort_unless($publicacion->estado === self::ESTADO_PUBLICACION, 404, 'La publicación no está disponible.');
+
+        if ($publicacion->tipo === 'ATLAS' && $publicacion->atlas_categoria_id) {
+            abort_unless($publicacion->atlasCategoria?->publico === true, 404, 'La publicación no está disponible.');
+        }
 
         if ($publicacion->solo_suscriptores) {
             abort_unless($this->isSubscriber($user), 403, 'Esta publicación es solo para suscriptores.');
