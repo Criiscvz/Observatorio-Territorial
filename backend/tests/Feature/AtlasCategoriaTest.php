@@ -46,14 +46,16 @@ class AtlasCategoriaTest extends TestCase
             $table->boolean('solo_suscriptores')->default(false);
             foreach (['codigo', 'titulo', 'link_url', 'descripcion', 'autores', 'fuente', 'archivo_pdf',
                 'nombre_archivo_original', 'sharepoint_url', 'sharepoint_file_id', 'sharepoint_file_name', 'sharepoint_error',
-                'sharepoint_file_type', 'sharepoint_sync_status', 'sharepoint_last_modified_at', 'sharepoint_synced_at'] as $field) {
+                'sharepoint_file_type', 'sharepoint_last_modified_at', 'sharepoint_synced_at'] as $field) {
                 $table->text($field)->nullable();
             }
+            $table->string('sharepoint_sync_status', 20)->default('pendiente');
             $table->unsignedBigInteger('sharepoint_file_size')->nullable();
             $table->date('fecha_publicacion')->nullable();
             $table->timestamps();
         });
         (require database_path('migrations/2026_09_27_000001_create_atlas_categorias.php'))->up();
+        (require database_path('migrations/2026_10_07_000001_add_visibility_and_icon_to_atlas_categorias.php'))->up();
     }
 
     private function signIn(string $role = 'ADMIN'): void
@@ -97,10 +99,17 @@ class AtlasCategoriaTest extends TestCase
         $old = ObservatorioPublicacion::findOrFail($id)->archivo_pdf;
         $this->get($url)->assertOk()->assertHeader('Content-Type', 'application/pdf')
             ->assertStreamedContent("%PDF-1.4\nOriginal");
-        ObservatorioPublicacion::findOrFail($id)->update(['sharepoint_url' => 'https://example.test/old.pdf']);
+        ObservatorioPublicacion::findOrFail($id)->update([
+            'sharepoint_url' => 'https://example.test/old.pdf',
+            'sharepoint_file_id' => 'old-sharepoint-file',
+            'sharepoint_sync_status' => 'sincronizado',
+        ]);
         $this->patchJson("/api/departamentos/publicaciones/$id", $payload + [
             'archivo' => UploadedFile::fake()->createWithContent('nuevo.pdf', "%PDF-1.4\nNuevo"),
         ])->assertOk()->assertJsonPath('data.sharepoint_url', null);
+        $replaced = ObservatorioPublicacion::findOrFail($id);
+        $this->assertSame('pendiente', $replaced->sharepoint_sync_status);
+        $this->assertNull($replaced->sharepoint_file_id);
         Storage::disk(config('filesystems.default'))->assertMissing($old);
         $this->get($url)->assertOk()->assertStreamedContent("%PDF-1.4\nNuevo");
         $new = ObservatorioPublicacion::findOrFail($id)->archivo_pdf;
@@ -220,12 +229,14 @@ class AtlasCategoriaTest extends TestCase
 
     public function test_seed_preserves_renames_descriptions_and_deletions(): void
     {
-        $existing = AtlasCategoria::create(['nombre' => 'SALUD', 'descripcion' => 'Personalizada']);
+        $existing = AtlasCategoria::create(['nombre' => 'SALUD', 'descripcion' => 'Personalizada', 'icono' => 'home', 'publico' => false]);
         $seed = new AtlasCategoriaSeeder();
         $seed->run();
         $seed->run();
         $this->assertSame(10, AtlasCategoria::count());
         $this->assertSame('Personalizada', $existing->fresh()->descripcion);
+        $this->assertFalse($existing->fresh()->publico);
+        $this->assertSame('home', $existing->fresh()->icono);
         $existing->update(['nombre' => 'Salud comunitaria']);
         AtlasCategoria::where('nombre', 'Economía')->firstOrFail()->delete();
         $seed->run();
@@ -262,8 +273,8 @@ class AtlasCategoriaTest extends TestCase
 
     public function test_public_filters_preserve_publication_rules_and_sensitive_fields(): void
     {
-        $category = AtlasCategoria::create(['nombre' => 'Salud']);
-        $empty = AtlasCategoria::create(['nombre' => 'Ambiente']);
+        $category = AtlasCategoria::create(['nombre' => 'Salud', 'publico' => true]);
+        $empty = AtlasCategoria::create(['nombre' => 'Ambiente', 'publico' => true]);
         $legacy = $this->publication();
         $draft = $this->publication(['atlas_categoria_id' => $category->id, 'estado' => 'EN_REVISION']);
         $restricted = $this->publication(['atlas_categoria_id' => $category->id, 'solo_suscriptores' => true,
@@ -289,6 +300,104 @@ class AtlasCategoriaTest extends TestCase
         AtlasCategoria::create(['nombre' => 'Educación']);
         $this->expectException(QueryException::class);
         AtlasCategoria::create(['nombre' => ' EDUCACIÓN ']);
+    }
+
+    public function test_migration_preserves_existing_public_categories_but_new_categories_default_to_private(): void
+    {
+        $migration = require database_path('migrations/2026_10_07_000001_add_visibility_and_icon_to_atlas_categorias.php');
+        $migration->down();
+        $id = (string) \Illuminate\Support\Str::uuid();
+        DB::table('atlas_categorias')->insert([
+            'id' => $id, 'nombre' => 'Categoría existente', 'nombre_clave' => 'categoría existente',
+        ]);
+        $migration->up();
+        $this->assertTrue(AtlasCategoria::findOrFail($id)->publico);
+        $this->assertNull(AtlasCategoria::findOrFail($id)->icono);
+        $new = AtlasCategoria::create(['nombre' => 'Nueva categoría']);
+        $this->assertFalse($new->fresh()->publico);
+    }
+
+    public function test_admin_can_save_visibility_and_icon_without_resetting_omitted_settings(): void
+    {
+        $this->signIn();
+        $id = $this->postJson('/api/atlas/categorias', ['nombre' => 'Categoría privada', 'icono' => 'science'])
+            ->assertCreated()->assertJsonPath('data.publico', false)->assertJsonPath('data.icono', 'science')->json('data.id');
+        $this->putJson("/api/atlas/categorias/$id", [
+            'nombre' => 'Categoría pública', 'publico' => true, 'icono' => 'home',
+        ])->assertOk()->assertJsonPath('data.publico', true)->assertJsonPath('data.icono', 'home');
+        $this->putJson("/api/atlas/categorias/$id", ['nombre' => 'Categoría renombrada'])
+            ->assertOk()->assertJsonPath('data.publico', true)->assertJsonPath('data.icono', 'home');
+        $this->putJson("/api/atlas/categorias/$id", ['nombre' => 'Categoría renombrada', 'publico' => false, 'icono' => null])
+            ->assertOk()->assertJsonPath('data.publico', false)->assertJsonPath('data.icono', null);
+        $this->getJson('/api/atlas/categorias')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson('/api/publico/atlas/categorias')->assertOk()->assertJsonCount(0, 'data');
+    }
+
+    public function test_category_visibility_and_icon_values_are_validated(): void
+    {
+        $this->signIn();
+        $this->postJson('/api/atlas/categorias', ['nombre' => 'Incorrecta', 'publico' => 'yes', 'icono' => '<svg>'])
+            ->assertUnprocessable()->assertJsonValidationErrors(['publico', 'icono']);
+        $category = AtlasCategoria::create(['nombre' => 'Original', 'icono' => 'map']);
+        $this->putJson("/api/atlas/categorias/{$category->id}", ['nombre' => 'Original', 'icono' => 'unknown_icon'])
+            ->assertUnprocessable()->assertJsonValidationErrors('icono');
+        $this->assertSame('map', $category->fresh()->icono);
+    }
+
+    public function test_private_categories_hide_documents_and_direct_downloads_from_non_admins(): void
+    {
+        Storage::fake(config('filesystems.default'));
+        Storage::disk(config('filesystems.default'))->put('private-category.pdf', '%PDF-1.4 category');
+        $category = AtlasCategoria::create(['nombre' => 'Atlas interno', 'icono' => 'security']);
+        $publication = $this->publication([
+            'atlas_categoria_id' => $category->id, 'archivo_pdf' => 'private-category.pdf', 'creado_por' => 2,
+        ]);
+        $download = "/api/departamentos/publicaciones/{$publication->id}/download";
+        $this->getJson('/api/publico/atlas/categorias')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson("/api/publico/atlas?categoria_id={$category->id}")->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson($download)->assertNotFound();
+        foreach (['USER', 'SUBSCRIBER', 'EDITOR'] as $role) {
+            $this->signIn($role);
+            $this->getJson($download)->assertNotFound();
+            $this->getJson($download.'?context=management')->assertNotFound();
+            $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(0, 'data');
+            $this->getJson('/api/departamentos/publicaciones/atlas/recientes')->assertOk()->assertJsonCount(0, 'data');
+        }
+        $this->signIn();
+        $this->get($download)->assertOk()->assertStreamedContent('%PDF-1.4 category');
+        $this->getJson('/api/departamentos/publicaciones/atlas-global')->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson('/api/departamentos/publicaciones/atlas/recientes')->assertOk()->assertJsonCount(1, 'data');
+        $category->update(['publico' => true]);
+        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.atlas_categoria.icono', 'security');
+        $category->delete();
+        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(0, 'data');
+        $this->signIn('USER');
+        $this->getJson($download)->assertNotFound();
+    }
+
+    public function test_department_lists_respect_private_atlas_categories_and_keep_editor_ownership_access(): void
+    {
+        Schema::create('departamentos', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('nombre');
+            $table->boolean('publico');
+            $table->timestamps();
+            $table->softDeletes();
+        });
+        $department = (string) \Illuminate\Support\Str::uuid();
+        DB::table('departamentos')->insert(['id' => $department, 'nombre' => 'Observatorio', 'publico' => true]);
+        $category = AtlasCategoria::create(['nombre' => 'Categoría interna']);
+        $publication = $this->publication(['departamento_id' => $department, 'atlas_categoria_id' => $category->id, 'creado_por' => 2]);
+        foreach (['USER', 'EDITOR'] as $role) {
+            $this->signIn($role);
+            $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(0, 'data');
+        }
+        $publication->update(['creado_por' => 1]);
+        $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(1, 'data');
+        $this->signIn();
+        $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(1, 'data');
     }
 
     public function test_publication_category_can_be_saved_reassigned_and_cleared(): void
