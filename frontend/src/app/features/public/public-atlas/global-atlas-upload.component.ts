@@ -18,6 +18,7 @@ import {
 } from '@core/models/publicacion/publicacion.interface';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
+import { atlasCategoryPresentation } from '@core/utils/atlas-category-presentation';
 import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-dialog.component';
 
 @Component({
@@ -37,285 +38,8 @@ import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-
     MatSelectModule,
     MatSnackBarModule,
   ],
-  template: `
-    <section class="atlas-upload-page">
-      <header class="atlas-upload-header">
-        <div>
-          <span class="eyebrow">Biblioteca global</span>
-          <h1>{{ editingAtlas() ? 'Editar Atlas' : 'Subir Atlas' }}</h1>
-          <p>{{ editingAtlas() ? 'Actualiza los datos, cambia la categoría o reemplaza el PDF de este Atlas.' : 'Publica documentos Atlas independientes de los observatorios.' }}</p>
-        </div>
-        <button mat-stroked-button type="button" routerLink="/admin/atlas">
-          <mat-icon>library_books</mat-icon>
-          Gestionar Atlas
-        </button>
-      </header>
-
-      <form class="atlas-upload-card" [formGroup]="form" (ngSubmit)="save()">
-        <div class="form-head">
-          <div class="form-icon"><mat-icon>map</mat-icon></div>
-          <div>
-            <h2>{{ editingAtlas() ? 'Editar Atlas' : 'Formulario de Atlas' }}</h2>
-            <p>{{ editingAtlas() ? editingAtlas()?.codigo : 'Se generará automáticamente: ATL-####' }}</p>
-          </div>
-        </div>
-
-        @if (!editingAtlas() && !loadingAtlas()) {
-        <div class="form-import-actions">
-          <button mat-raised-button color="primary" type="button" (click)="importFromSharePoint()">
-            <mat-icon>cloud_download</mat-icon>
-            Importar desde SharePoint
-          </button>
-        </div>
-        }
-
-        @if (loadingAtlas()) { <p role="status">Cargando el archivo para editar…</p> }
-        @if (editingAtlas()) {
-          <p>Archivo actual: {{ editingAtlas()?.nombre_archivo_original || 'Sin PDF guardado' }}. Selecciona un nuevo PDF para reemplazarlo y pulsa Guardar cambios.</p>
-        }
-
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Categoría de Atlas</mat-label>
-            <mat-select formControlName="atlas_categoria_id">
-              <mat-option value="">Sin categoría</mat-option>
-              @for (categoria of categorias(); track categoria.id) {
-                <mat-option [value]="categoria.id">{{ categoria.nombre }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Título del Atlas</mat-label>
-            <input matInput formControlName="titulo" />
-            <mat-error>El título es obligatorio.</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Fecha de publicación</mat-label>
-            <input matInput type="date" formControlName="fecha_publicacion" />
-            <mat-error>La fecha es obligatoria.</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Fuente</mat-label>
-            <input matInput formControlName="fuente" placeholder="ULEAM" />
-            <mat-error>La fuente es obligatoria.</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>URL externa</mat-label>
-            <input matInput formControlName="link_url" placeholder="https://..." />
-            @if (form.controls.link_url.touched && form.controls.link_url.invalid) {
-              <mat-error>Ingrese una URL válida con http o https.</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="full">
-            <mat-label>Descripción</mat-label>
-            <textarea matInput rows="4" formControlName="descripcion"></textarea>
-            <mat-error>La descripción es obligatoria.</mat-error>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Estado</mat-label>
-            <mat-select formControlName="estado">
-              <mat-option value="PUBLICACION">Publicación</mat-option>
-              <mat-option value="EN_REVISION">En revisión</mat-option>
-              <mat-option value="SUSPENDIDO">Suspendido</mat-option>
-              <mat-option value="ARCHIVADO">Archivado</mat-option>
-            </mat-select>
-          </mat-form-field>
-
-          <mat-checkbox formControlName="solo_suscriptores" class="subscriber-check">
-            Solo para suscriptores
-          </mat-checkbox>
-        </div>
-
-        <div
-          class="upload-zone"
-          [class.dragging]="isDraggingFile()"
-          [class.has-file]="selectedFile()"
-          (click)="pdfInput.click()"
-          (dragover)="onFileDragOver($event)"
-          (dragleave)="onFileDragLeave($event)"
-          (drop)="onFileDropped($event)"
-        >
-          <input #pdfInput type="file" accept="application/pdf,.pdf" hidden (change)="onFileSelected($event)" />
-          @if (selectedFile()) {
-            <mat-icon>picture_as_pdf</mat-icon>
-            <strong>{{ selectedFile()?.name }}</strong>
-            <span>{{ formatFileSize(selectedFile()!.size) }} · PDF</span>
-          } @else {
-            <mat-icon>cloud_upload</mat-icon>
-            <strong>{{ editingAtlas() ? 'Arrastra o haz click para reemplazar el PDF' : 'Arrastra o haz click para subir el PDF del Atlas' }}</strong>
-            <span>{{ editingAtlas() ? 'Puedes conservar el archivo actual. PDF de máximo 20 MB.' : 'Formato permitido: PDF. Máximo 20 MB.' }}</span>
-          }
-        </div>
-        @if (fileError()) {
-          <div class="file-error"><mat-icon>error</mat-icon>{{ fileError() }}</div>
-        }
-        @if (serverError()) {
-          <div class="file-error"><mat-icon>error</mat-icon>{{ serverError() }}</div>
-        }
-
-        <footer class="form-actions">
-          <button mat-button type="button" routerLink="/admin/atlas">Cancelar</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="saving() || loadingAtlas()">
-            @if (saving()) {
-              <mat-spinner diameter="20"></mat-spinner>
-            } @else {
-              <mat-icon>save</mat-icon>
-            }
-            {{ editingAtlas() ? 'Guardar cambios' : 'Guardar Atlas' }}
-          </button>
-        </footer>
-      </form>
-    </section>
-  `,
-  styles: [
-    `
-      .atlas-upload-page {
-        padding: 1.5rem;
-        display: grid;
-        gap: 1.25rem;
-      }
-
-      .atlas-upload-header,
-      .atlas-upload-card {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        border-radius: 18px;
-        box-shadow: var(--shadow-sm);
-      }
-
-      .atlas-upload-header {
-        display: flex;
-        justify-content: space-between;
-        gap: 1rem;
-        align-items: center;
-        padding: 1.5rem;
-      }
-
-      .eyebrow {
-        color: var(--primary-500);
-        font-size: 0.75rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      h1,
-      h2,
-      p {
-        margin: 0;
-      }
-
-      .atlas-upload-header h1 {
-        font-size: clamp(1.8rem, 3vw, 2.5rem);
-        font-weight: 900;
-      }
-
-      .atlas-upload-header p,
-      .form-head p {
-        color: var(--text-secondary);
-      }
-
-      .atlas-upload-card {
-        padding: 1.5rem;
-        display: grid;
-        gap: 1.25rem;
-      }
-
-      .form-head {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-      }
-
-      .form-icon {
-        width: 54px;
-        height: 54px;
-        display: grid;
-        place-items: center;
-        border-radius: 14px;
-        background: rgba(99, 102, 241, 0.14);
-        color: var(--primary-500);
-      }
-
-      .form-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 1rem;
-      }
-
-      .full {
-        grid-column: 1 / -1;
-      }
-
-      .subscriber-check {
-        align-self: center;
-      }
-
-      .upload-zone {
-        min-height: 180px;
-        display: grid;
-        place-items: center;
-        text-align: center;
-        gap: 0.4rem;
-        padding: 1.5rem;
-        border: 1.5px dashed rgba(99, 102, 241, 0.42);
-        border-radius: 18px;
-        background: rgba(99, 102, 241, 0.08);
-        cursor: pointer;
-        transition: border-color 0.18s ease, background 0.18s ease;
-      }
-
-      .upload-zone:hover,
-      .upload-zone.dragging {
-        border-color: var(--primary-500);
-        background: rgba(99, 102, 241, 0.14);
-      }
-
-      .upload-zone mat-icon {
-        color: var(--primary-500);
-        font-size: 38px;
-        width: 38px;
-        height: 38px;
-      }
-
-      .upload-zone span,
-      .file-error {
-        color: var(--text-secondary);
-      }
-
-      .file-error {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--error-500, #ef4444);
-        font-weight: 700;
-      }
-
-      .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-      }
-
-      @media (max-width: 760px) {
-        .atlas-upload-header {
-          align-items: flex-start;
-          flex-direction: column;
-        }
-
-        .form-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    `,
-  ],
+  templateUrl: './global-atlas-upload.component.html',
+  styleUrl: './global-atlas-upload.component.scss',
 })
 export class GlobalAtlasUploadComponent implements OnInit {
   private readonly categoriaService = inject(AtlasCategoriaService);
@@ -327,6 +51,8 @@ export class GlobalAtlasUploadComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly categoryVisual = atlasCategoryPresentation;
 
   selectedFile = signal<File | null>(null);
   isDraggingFile = signal(false);
@@ -350,16 +76,28 @@ export class GlobalAtlasUploadComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.categoriaService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: items => {
-        this.categorias.set(items);
-        const category = this.route.snapshot.queryParamMap.get('categoria');
-        if (!this.route.snapshot.queryParamMap.has('editar') && category && items.some(item => item.id === category)) {
-          this.form.controls.atlas_categoria_id.setValue(category);
-        }
-      },
-      error: () => this.snackBar.open('No se pudieron cargar las categorías. Recarga la página para seleccionarlas.', 'Cerrar', { duration: 6000 }),
-    });
+    this.categoriaService
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => {
+          this.categorias.set(items);
+          const category = this.route.snapshot.queryParamMap.get('categoria');
+          if (
+            !this.route.snapshot.queryParamMap.has('editar') &&
+            category &&
+            items.some((item) => item.id === category)
+          ) {
+            this.form.controls.atlas_categoria_id.setValue(category);
+          }
+        },
+        error: () =>
+          this.snackBar.open(
+            'No se pudieron cargar las categorías. Recarga la página para seleccionarlas.',
+            'Cerrar',
+            { duration: 6000 },
+          ),
+      });
     const atlasId = this.route.snapshot.queryParamMap.get('editar');
     if (!atlasId) return;
 
@@ -378,23 +116,46 @@ export class GlobalAtlasUploadComponent implements OnInit {
             fecha_publicacion: atlas.fecha_publicacion,
             link_url: atlas.link_url ?? '',
             descripcion: atlas.descripcion ?? '',
-            autores: Array.isArray(atlas.autores) ? atlas.autores.join(', ') : atlas.autores ?? '',
+            autores: Array.isArray(atlas.autores)
+              ? atlas.autores.join(', ')
+              : (atlas.autores ?? ''),
             fuente: atlas.fuente,
           });
           this.loadingAtlas.set(false);
         },
         error: () => {
           this.loadingAtlas.set(false);
-          this.snackBar.open('No se pudo cargar el Atlas para editar.', 'Cerrar', { duration: 4500 });
+          this.snackBar.open('No se pudo cargar el Atlas para editar.', 'Cerrar', {
+            duration: 4500,
+          });
           this.router.navigate(['/admin/atlas']);
         },
+      });
+  }
+
+  clearSelectedFile(input: HTMLInputElement): void {
+    if (this.saving()) return;
+    this.selectedFile.set(null);
+    this.fileError.set('');
+    input.value = '';
+  }
+
+  openCurrentPdf(): void {
+    const atlas = this.editingAtlas();
+    if (!atlas) return;
+    this.publicacionService
+      .openPdf(atlas)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((opened) => {
+        if (!opened)
+          this.snackBar.open('El PDF actual no está disponible.', 'Cerrar', { duration: 4000 });
       });
   }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
-    if (file) this.validateAndSetFile(file, input);
+    if (file && !this.saving() && !this.loadingAtlas()) this.validateAndSetFile(file, input);
   }
 
   onFileDragOver(event: DragEvent): void {
@@ -411,7 +172,7 @@ export class GlobalAtlasUploadComponent implements OnInit {
     event.preventDefault();
     this.isDraggingFile.set(false);
     const file = event.dataTransfer?.files?.[0];
-    if (file) this.validateAndSetFile(file);
+    if (file && !this.saving() && !this.loadingAtlas()) this.validateAndSetFile(file);
   }
 
   save(): void {
@@ -436,27 +197,31 @@ export class GlobalAtlasUploadComponent implements OnInit {
     const request = this.editingAtlas()
       ? this.publicacionService.update(this.editingAtlas()!.id, formData)
       : this.publicacionService.createGlobalAtlas(formData);
-    request
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (atlas) => {
-          this.saving.set(false);
-          this.snackBar.open(
-            this.editingAtlas() ? 'Atlas actualizado correctamente.' : 'Atlas guardado correctamente.',
-            'Cerrar',
-            { duration: 4000 },
-          );
-          this.router.navigate(['/admin/atlas'], { queryParams: { categoria: atlas.atlas_categoria_id || null } });
-        },
-        error: (error) => {
-          this.saving.set(false);
-          const errors = error?.error?.errors;
-          const first = errors ? Object.values(errors).flat()[0] : null;
-          this.serverError.set(
-            typeof first === 'string' ? first : error?.error?.message || 'No se pudo guardar el Atlas.',
-          );
-        },
-      });
+    request.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (atlas) => {
+        this.saving.set(false);
+        this.snackBar.open(
+          this.editingAtlas()
+            ? 'Atlas actualizado correctamente.'
+            : 'Atlas guardado correctamente.',
+          'Cerrar',
+          { duration: 4000 },
+        );
+        this.router.navigate(['/admin/atlas'], {
+          queryParams: { categoria: atlas.atlas_categoria_id || null },
+        });
+      },
+      error: (error) => {
+        this.saving.set(false);
+        const errors = error?.error?.errors;
+        const first = errors ? Object.values(errors).flat()[0] : null;
+        this.serverError.set(
+          typeof first === 'string'
+            ? first
+            : error?.error?.message || 'No se pudo guardar el Atlas.',
+        );
+      },
+    });
   }
 
   importFromSharePoint(): void {

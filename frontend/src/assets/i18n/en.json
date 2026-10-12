@@ -196,6 +196,9 @@
       "permissions": "Role Permissions",
       "departments": "Observatories",
       "newDepartment": "New observatory",
+      "manageDepartments": "Manage observatories",
+      "searchDepartments": "Search observatory…",
+      "clearSearch": "Clear search",
       "allDatasets": "All Datasets",
       "publicView": "Public View",
       "noDepartments": "No observatories",
@@ -449,6 +452,21 @@
   },
   "departamentos": {
     "title": "Observatories",
+    "management": {
+      "subtitle": "Organize your observatories and access their data and publications in one place.",
+      "available": "Available observatories",
+      "count": "{{shown}} of {{total}} observatories",
+      "searchPlaceholder": "Name, code or description",
+      "refresh": "Refresh",
+      "backDashboard": "Back to dashboard",
+      "view": "View observatory",
+      "noResultsDescription": "Try another name or clear the search.",
+      "deleteTitle": "Delete observatory",
+      "deleteMessage": "Delete the observatory «{{name}}»? The observatory and its associated information will no longer be available. This action cannot be undone from this screen.",
+      "deleteConfirm": "Delete observatory",
+      "deleted": "Observatory deleted successfully.",
+      "operationError": "The operation could not be completed. Try refreshing or check your connection."
+    },
     "list": {
       "title": "Observatories",
       "newDepartment": "New Observatory",

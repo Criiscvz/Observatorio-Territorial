@@ -1,6 +1,23 @@
 :host {
   display: block;
 }
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+.back-link:hover {
+  color: var(--primary-600);
+}
+.back-link mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
 
 .alert {
   padding: 0.75rem 1rem;

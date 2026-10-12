@@ -17,6 +17,15 @@ export const ADMIN_ROUTES: Routes = [
 
   // Departamentos
   {
+    path: 'departamentos',
+    loadComponent: () =>
+      import('../features/departamentos/departamento-list/departamento-list.component').then(
+        (m) => m.DepartamentoListComponent,
+      ),
+    canActivate: [adminGuard],
+    title: 'Gestión de Observatorios - Observatorio',
+  },
+  {
     path: 'departamentos/nuevo',
     loadComponent: () =>
       import('../features/departamentos/departamento-form/departamento-form.component').then(
@@ -137,7 +146,7 @@ export const ADMIN_ROUTES: Routes = [
     path: 'permisos',
     loadComponent: () =>
       import('../features/permisos/admin-permissions.component').then(
-        (m) => m.AdminPermissionsComponent
+        (m) => m.AdminPermissionsComponent,
       ),
     canActivate: [adminGuard],
     title: 'Permisos de Roles - Observatorio',

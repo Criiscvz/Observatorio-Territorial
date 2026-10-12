@@ -1,13 +1,15 @@
 export type TipoPublicacion = 'ARTICULO' | 'REPORTE' | 'LIBRO' | 'ATLAS';
-export type EstadoPublicacion =
-  | 'PUBLICACION'
-  | 'EN_REVISION'
-  | 'SUSPENDIDO'
-  | 'ARCHIVADO';
+export type EstadoPublicacion = 'PUBLICACION' | 'EN_REVISION' | 'SUSPENDIDO' | 'ARCHIVADO';
 
 export interface ObservatorioPublicacion {
   atlas_categoria_id?: string | null;
-  atlas_categoria?: { id: string; nombre: string; descripcion: string | null } | null;
+  atlas_categoria?: {
+    id: string;
+    nombre: string;
+    descripcion: string | null;
+    icono?: string | null;
+    publico?: boolean;
+  } | null;
   id: string;
   departamento_id?: string | null;
   creado_por?: number | null;

@@ -14,23 +14,33 @@ describe('Public Atlas categories', () => {
   let categories: any;
   let publications: any;
   beforeEach(() => {
-    categories = { list: vi.fn(() => of([
-      { id: 'salud', nombre: 'Salud', descripcion: 'Descripción' },
-      { id: 'ambiente', nombre: 'Ambiente', descripcion: null },
-    ])) };
-    publications = { getPublicAtlas: vi.fn(() => of([
-      { id: 'one', titulo: 'Atlas', atlas_categoria: { id: 'salud', nombre: 'Salud' } },
-      { id: 'old', titulo: 'Atlas existente', atlas_categoria: null },
-    ])) };
-    TestBed.configureTestingModule({ providers: [
-      { provide: AtlasCategoriaService, useValue: categories },
-      { provide: PublicacionService, useValue: publications },
-      { provide: AuthService, useValue: { isAdmin: () => false, isEditor: () => false } },
-      { provide: PermisosService, useValue: {} },
-      { provide: DepartamentoService, useValue: { getPublicos: () => of([]) } },
-      { provide: MatDialog, useValue: {} },
-      { provide: MatSnackBar, useValue: {} },
-    ] });
+    categories = {
+      list: vi.fn(() =>
+        of([
+          { id: 'salud', nombre: 'Salud', descripcion: 'Descripción' },
+          { id: 'ambiente', nombre: 'Ambiente', descripcion: null },
+        ]),
+      ),
+    };
+    publications = {
+      getPublicAtlas: vi.fn(() =>
+        of([
+          { id: 'one', titulo: 'Atlas', atlas_categoria: { id: 'salud', nombre: 'Salud' } },
+          { id: 'old', titulo: 'Atlas existente', atlas_categoria: null },
+        ]),
+      ),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AtlasCategoriaService, useValue: categories },
+        { provide: PublicacionService, useValue: publications },
+        { provide: AuthService, useValue: { isAdmin: () => false, isEditor: () => false } },
+        { provide: PermisosService, useValue: {} },
+        { provide: DepartamentoService, useValue: { getPublicos: () => of([]) } },
+        { provide: MatDialog, useValue: {} },
+        { provide: MatSnackBar, useValue: {} },
+      ],
+    });
     component = TestBed.runInInjectionContext(() => new PublicAtlasComponent());
     component.ngOnInit();
   });
@@ -38,7 +48,7 @@ describe('Public Atlas categories', () => {
     expect(component.categorias()).toHaveLength(2);
     expect(component.filteredArticulos()).toHaveLength(2);
     component.selectCategory('salud');
-    expect(component.filteredArticulos().map(item => item.id)).toEqual(['one']);
+    expect(component.filteredArticulos().map((item) => item.id)).toEqual(['one']);
     expect(component.selectedDescription()).toBe('Descripción');
     component.selectCategory('ambiente');
     expect(component.filteredArticulos()).toEqual([]);
@@ -51,12 +61,22 @@ describe('Public Atlas categories', () => {
     expect(component.selectedCategory()).toBe('TODAS');
     expect(categories.list).toHaveBeenLastCalledWith(true);
   });
+  it('uses the saved category icon instead of the name-based default', () => {
+    categories.list.mockReturnValue(
+      of([{ id: 'salud', nombre: 'Salud', descripcion: null, icono: 'home', publico: true }]),
+    );
+    component.loadData();
+    expect(component.getCategoryIcon('Salud')).toBe('home');
+  });
   it('shows counts including empty categories and opens uncategorized content without losing it', () => {
-    expect(component.categoryCards().map(card => [card.nombre, card.total])).toEqual([['Salud', 1], ['Ambiente', 0]]);
+    expect(component.categoryCards().map((card) => [card.nombre, card.total])).toEqual([
+      ['Salud', 1],
+      ['Ambiente', 0],
+    ]);
     expect(component.uncategorizedCount()).toBe(1);
     component.selectCategory('SIN_CATEGORIA');
     expect(component.selectedCategoryName()).toBe('Sin categoría');
-    expect(component.filteredArticulos().map(item => item.id)).toEqual(['old']);
+    expect(component.filteredArticulos().map((item) => item.id)).toEqual(['old']);
     component.searchTerm.set('no coincide');
     component.selectCategory('TODAS');
     expect(component.searchTerm()).toBe('');
@@ -71,11 +91,11 @@ describe('Public Atlas categories', () => {
   });
   it('searches names and descriptions without accents and combines the publication filter', () => {
     component.categorySearch.set('DESCRIPCION');
-    expect(component.filteredCategoryCards().map(item => item.id)).toEqual(['salud']);
+    expect(component.filteredCategoryCards().map((item) => item.id)).toEqual(['salud']);
     expect(component.showUncategorized()).toBe(false);
     component.categorySearch.set('');
     component.onlyWithPublications.set(true);
-    expect(component.filteredCategoryCards().map(item => item.id)).toEqual(['salud']);
+    expect(component.filteredCategoryCards().map((item) => item.id)).toEqual(['salud']);
     expect(component.showUncategorized()).toBe(true);
     component.categorySearch.set('sin categoria');
     expect(component.filteredCategoryCards()).toEqual([]);

@@ -41,6 +41,31 @@ describe('isTrustedApiUrl', () => {
     expect(isTrustedApiUrl(`${environment.apiUrl}-private/profile`)).toBe(false);
   });
 
+  it('trusts only the exact Sanctum cookie endpoint on the configured server', () => {
+    const csrfUrl = new URL('/sanctum/csrf-cookie', environment.apiUrl).toString();
+    expect(isTrustedApiUrl(csrfUrl)).toBe(true);
+    expect(isTrustedApiUrl(`${csrfUrl}-private`)).toBe(false);
+    expect(isTrustedApiUrl('https://cdn.example.org/sanctum/csrf-cookie')).toBe(false);
+  });
+
+  it('preserves credentials when preparing the cross-port local session', () => {
+    const csrfUrl = new URL('/sanctum/csrf-cookie', environment.apiUrl).toString();
+    http.get(csrfUrl, { withCredentials: true }).subscribe();
+    const csrfRequest = httpMock.expectOne(csrfUrl);
+    expect(csrfRequest.request.withCredentials).toBe(true);
+    expect(csrfRequest.request.headers.has('X-XSRF-TOKEN')).toBe(false);
+    csrfRequest.flush(null);
+  });
+
+  it('does not forward cookies to an external endpoint even if credentials are requested', () => {
+    const externalUrl = 'https://cdn.example.org/sanctum/csrf-cookie';
+    http.get(externalUrl, { withCredentials: true }).subscribe();
+    const externalRequest = httpMock.expectOne(externalUrl);
+    expect(externalRequest.request.withCredentials).toBe(false);
+    expect(externalRequest.request.headers.has('X-XSRF-TOKEN')).toBe(false);
+    externalRequest.flush(null);
+  });
+
   it('sends cookies and the CSRF header only to the configured API', () => {
     http.post(`${environment.apiUrl}/profile`, {}).subscribe();
 

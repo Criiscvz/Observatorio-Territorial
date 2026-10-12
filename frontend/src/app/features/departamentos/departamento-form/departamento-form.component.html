@@ -1,4 +1,7 @@
 <div class="max-w-2xl mx-auto">
+  <a class="back-link" routerLink="/admin/departamentos">
+    <mat-icon>arrow_back</mat-icon>{{ 'layout.sidebar.manageDepartments' | translate }}
+  </a>
   <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">
     {{
       isEdit()
@@ -107,7 +110,7 @@
     </mat-card-content>
 
     <mat-card-actions align="end" class="px-4 pb-4">
-      <button mat-button type="button" routerLink="/admin/dashboard" [disabled]="loading()">
+      <button mat-button type="button" routerLink="/admin/departamentos" [disabled]="loading()">
         {{ 'common.buttons.cancel' | translate }}
       </button>
       <button
