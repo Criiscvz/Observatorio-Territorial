@@ -83,6 +83,12 @@
           <mat-label>{{ 'departamentos.form.icon' | translate }}</mat-label>
           <mat-select formControlName="icono">
             <mat-option [value]="''">{{ 'departamentos.form.noIcon' | translate }}</mat-option>
+            @if (unlistedIcon; as icon) {
+              <mat-option [value]="icon">
+                <mat-icon class="mr-2">{{ icon }}</mat-icon>
+                {{ icon }}
+              </mat-option>
+            }
             @for (icon of availableIcons; track icon.value) {
               <mat-option [value]="icon.value">
                 <mat-icon class="mr-2">{{ icon.value }}</mat-icon>

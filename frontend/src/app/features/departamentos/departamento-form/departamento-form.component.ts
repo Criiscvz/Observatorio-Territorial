@@ -62,6 +62,9 @@ export class DepartamentoFormComponent implements OnInit {
     { value: 'engineering', labelKey: 'departamentos.icons.infrastructure' },
     { value: 'account_balance', labelKey: 'departamentos.icons.finance' },
     { value: 'eco', labelKey: 'departamentos.icons.environment' },
+    { value: 'favorite', labelKey: 'departamentos.icons.care' },
+    { value: 'auto_stories', labelKey: 'departamentos.icons.culture' },
+    { value: 'shield', labelKey: 'departamentos.icons.resilience' },
     { value: 'local_hospital', labelKey: 'departamentos.icons.health' },
     { value: 'science', labelKey: 'departamentos.icons.research' },
     { value: 'sports', labelKey: 'departamentos.icons.sports' },
@@ -106,6 +109,11 @@ export class DepartamentoFormComponent implements OnInit {
   getIconLabel(value: string): string {
     const icon = this.availableIcons.find((i) => i.value === value);
     return icon ? this.translate.instant(icon.labelKey) : value;
+  }
+
+  get unlistedIcon(): string | null {
+    const icon = this.form.get('icono')?.value;
+    return icon && !this.availableIcons.some((option) => option.value === icon) ? icon : null;
   }
 
   onSubmit(): void {
