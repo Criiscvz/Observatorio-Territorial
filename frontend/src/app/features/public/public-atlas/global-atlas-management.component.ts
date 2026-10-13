@@ -8,13 +8,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
+import { atlasCategoryPresentation } from '@core/utils/atlas-category-presentation';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -32,7 +32,6 @@ import {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatMenuModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
   ],
@@ -43,9 +42,12 @@ export class GlobalAtlasManagementComponent implements OnInit {
   private readonly categoriaService = inject(AtlasCategoriaService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly categoryVisual = atlasCategoryPresentation;
   readonly categorias = signal<AtlasCategoria[]>([]);
   readonly selectedCategory = signal('');
-  readonly selectedCategoryName = computed(() => this.categorias().find(c => c.id === this.selectedCategory())?.nombre);
+  readonly selectedCategoryName = computed(
+    () => this.categorias().find((c) => c.id === this.selectedCategory())?.nombre,
+  );
   readonly loadError = signal('');
   private readonly publicacionService = inject(PublicacionService);
   private readonly dialog = inject(MatDialog);
@@ -60,7 +62,13 @@ export class GlobalAtlasManagementComponent implements OnInit {
   readonly filteredAtlas = computed(() => {
     const query = this.normalize(this.searchTerm());
     const category = this.selectedCategory();
-    const items = this.atlas().filter(item => !category || (category === 'sin-categoria' ? !item.atlas_categoria_id : item.atlas_categoria_id === category));
+    const items = this.atlas().filter(
+      (item) =>
+        !category ||
+        (category === 'sin-categoria'
+          ? !item.atlas_categoria_id
+          : item.atlas_categoria_id === category),
+    );
     if (!query) return items;
 
     return items.filter((item) =>
@@ -71,16 +79,28 @@ export class GlobalAtlasManagementComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => this.selectedCategory.set(params.get('categoria') ?? ''));
-    this.categoriaService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: items => this.categorias.set(items),
-      error: () => this.snackBar.open('No se pudieron cargar las categorías. Recarga la página.', 'Cerrar', { duration: 5000 }),
-    });
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => this.selectedCategory.set(params.get('categoria') ?? ''));
+    this.categoriaService
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => this.categorias.set(items),
+        error: () =>
+          this.snackBar.open('No se pudieron cargar las categorías. Recarga la página.', 'Cerrar', {
+            duration: 5000,
+          }),
+      });
     this.loadAtlas();
   }
 
   selectCategory(id: string): void {
-    this.router.navigate([], { relativeTo: this.route, queryParams: { categoria: id || null }, queryParamsHandling: 'merge' });
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { categoria: id || null },
+      queryParamsHandling: 'merge',
+    });
   }
 
   loadAtlas(): void {
@@ -97,7 +117,9 @@ export class GlobalAtlasManagementComponent implements OnInit {
         error: () => {
           this.loading.set(false);
           this.loadError.set('No se pudieron cargar los archivos de Atlas.');
-          this.snackBar.open('No se pudo cargar la gestión de Atlas.', 'Cerrar', { duration: 4500 });
+          this.snackBar.open('No se pudo cargar la gestión de Atlas.', 'Cerrar', {
+            duration: 4500,
+          });
         },
       });
   }
@@ -112,7 +134,9 @@ export class GlobalAtlasManagementComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((opened) => {
         if (!opened) {
-          this.snackBar.open('El PDF de este Atlas no está disponible.', 'Cerrar', { duration: 4000 });
+          this.snackBar.open('El PDF de este Atlas no está disponible.', 'Cerrar', {
+            duration: 4000,
+          });
         }
       });
   }
@@ -129,11 +153,19 @@ export class GlobalAtlasManagementComponent implements OnInit {
       confirmText: 'Eliminar definitivamente',
       confirmColor: 'warn',
       icon: 'delete_forever',
-      confirmAction: () => this.publicacionService.delete(item.id).pipe(tap(() => {
-        this.atlas.update(items => items.filter(candidate => candidate.id !== item.id));
-        this.snackBar.open('Atlas eliminado correctamente.', 'Cerrar', { duration: 4000 });
-      })),
-      onError: (error: any) => this.snackBar.open(error?.error?.message || 'No se pudo eliminar el Atlas. Inténtalo de nuevo.', 'Cerrar', { duration: 5000 }),
+      confirmAction: () =>
+        this.publicacionService.delete(item.id).pipe(
+          tap(() => {
+            this.atlas.update((items) => items.filter((candidate) => candidate.id !== item.id));
+            this.snackBar.open('Atlas eliminado correctamente.', 'Cerrar', { duration: 4000 });
+          }),
+        ),
+      onError: (error: any) =>
+        this.snackBar.open(
+          error?.error?.message || 'No se pudo eliminar el Atlas. Inténtalo de nuevo.',
+          'Cerrar',
+          { duration: 5000 },
+        ),
     };
 
     this.dialog

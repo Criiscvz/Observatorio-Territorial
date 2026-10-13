@@ -1,0 +1,177 @@
+@use './atlas-admin.shared';
+
+.atlas-form {
+  display: grid;
+  gap: 1rem;
+}
+.form-fields {
+  display: grid;
+  gap: 1rem;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.form-fields:disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+.form-section {
+  padding: 1.5rem;
+}
+.form-section .card-heading {
+  margin-bottom: 1.5rem;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+@media (max-width: 480px) {
+  .form-actions > div {
+    flex-direction: column-reverse;
+  }
+  .form-actions > div > button {
+    min-height: 44px;
+  }
+}
+.form-grid mat-form-field {
+  width: 100%;
+  min-width: 0;
+}
+.full {
+  grid-column: 1 / -1;
+}
+.subscriber-option {
+  margin-top: 0.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+}
+.subscriber-option p {
+  margin: 0.3rem 0 0 2.75rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+.current-file {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+.current-file > mat-icon {
+  color: var(--primary-500);
+  flex-shrink: 0;
+}
+.current-file > div {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  flex: 1;
+}
+.current-file strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.current-file span {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+.upload-zone {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 175px;
+  gap: 0.6rem;
+  padding: 1.5rem;
+  font: inherit;
+  text-align: center;
+  color: var(--text-primary);
+  border: 2px dashed color-mix(in srgb, var(--primary-500) 40%, var(--border-color));
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--primary-500) 4%, var(--card-bg));
+  cursor: pointer;
+}
+.upload-zone:hover,
+.upload-zone.dragging {
+  border-color: var(--primary-500);
+  background: color-mix(in srgb, var(--primary-500) 9%, var(--card-bg));
+}
+.upload-zone:focus-visible {
+  outline: 3px solid var(--primary-500);
+  outline-offset: 3px;
+}
+.upload-zone.has-file {
+  border-style: solid;
+}
+.upload-zone mat-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: var(--primary-500);
+}
+.upload-zone strong {
+  font-size: 0.95rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.upload-zone span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.selected-file-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+.form-section .alert {
+  margin-top: 0.75rem;
+}
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0 0.5rem;
+}
+.form-actions > span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.form-actions > div {
+  display: flex;
+  gap: 0.75rem;
+}
+@media (max-width: 760px) {
+  .form-section {
+    padding: 1.15rem;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .current-file {
+    flex-wrap: wrap;
+  }
+  .current-file > div {
+    flex-basis: calc(100% - 40px);
+  }
+  .current-file > button {
+    width: 100%;
+  }
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .form-actions > div > button {
+    flex: 1;
+  }
+}

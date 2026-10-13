@@ -13,6 +13,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
+import { atlasCategoryPresentation } from '@core/utils/atlas-category-presentation';
 
 import { Articulo } from '@core/services/articulos.service';
 import { PublicacionService } from '@core/services/publicacion.service';
@@ -48,22 +49,45 @@ export class PublicAtlasComponent implements OnInit {
   readonly categorias = signal<AtlasCategoria[]>([]);
   readonly loading = signal(false);
   readonly loadError = signal('');
-  readonly selectedDescription = computed(() => this.categorias().find(c => c.id === this.selectedCategory())?.descripcion);
-  readonly selectedCategoryName = computed(() => this.selectedCategory() === 'SIN_CATEGORIA'
-    ? 'Sin categoría' : this.categorias().find(c => c.id === this.selectedCategory())?.nombre ?? 'Atlas');
-  readonly categoryCards = computed(() => this.categorias().map(categoria => ({
-    ...categoria,
-    total: this.articulos().filter(item => item.categoria?.id === categoria.id).length,
-  })));
-  readonly uncategorizedCount = computed(() => this.articulos().filter(item => !item.categoria?.id).length);
+  readonly selectedDescription = computed(
+    () => this.categorias().find((c) => c.id === this.selectedCategory())?.descripcion,
+  );
+  readonly selectedCategoryName = computed(() =>
+    this.selectedCategory() === 'SIN_CATEGORIA'
+      ? 'Sin categoría'
+      : (this.categorias().find((c) => c.id === this.selectedCategory())?.nombre ?? 'Atlas'),
+  );
+  readonly categoryCards = computed(() =>
+    this.categorias().map((categoria) => ({
+      ...categoria,
+      total: this.articulos().filter((item) => item.categoria?.id === categoria.id).length,
+    })),
+  );
+  readonly uncategorizedCount = computed(
+    () => this.articulos().filter((item) => !item.categoria?.id).length,
+  );
   readonly categorySearch = signal('');
   readonly onlyWithPublications = signal(false);
-  readonly filteredCategoryCards = computed(() => this.categoryCards().filter(cat =>
-    this.matchesCategory(`${cat.nombre} ${cat.descripcion ?? ''}`) && (!this.onlyWithPublications() || cat.total > 0)));
-  readonly showUncategorized = computed(() => this.uncategorizedCount() > 0 && this.matchesCategory('Sin categoría Publicaciones pendientes de clasificación'));
+  readonly filteredCategoryCards = computed(() =>
+    this.categoryCards().filter(
+      (cat) =>
+        this.matchesCategory(`${cat.nombre} ${cat.descripcion ?? ''}`) &&
+        (!this.onlyWithPublications() || cat.total > 0),
+    ),
+  );
+  readonly showUncategorized = computed(
+    () =>
+      this.uncategorizedCount() > 0 &&
+      this.matchesCategory('Sin categoría Publicaciones pendientes de clasificación'),
+  );
 
   private matchesCategory(text: string): boolean {
-    const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
+    const normalize = (value: string) =>
+      value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('es')
+        .trim();
     return normalize(text).includes(normalize(this.categorySearch()));
   }
   private readonly destroyRef = inject(DestroyRef);
@@ -100,43 +124,48 @@ export class PublicAtlasComponent implements OnInit {
     this.loadError.set('');
     forkJoin([this.publicacionService.getPublicAtlas(), this.categoriaService.list(true)])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({ next: ([data, categorias]) => {
-        this.categorias.set(categorias);
-        if (!['TODAS', 'SIN_CATEGORIA'].includes(this.selectedCategory()) && !categorias.some(c => c.id === this.selectedCategory())) {
-          this.selectedCategory.set('TODAS');
-        }
-        this.loading.set(false);
-        this.articulos.set(
-          data.map((item) => ({
-            id: item.id,
-            titulo: item.titulo,
-            descripcion: item.descripcion,
-            autor: Array.isArray(item.autores) ? item.autores.join(', ') : item.autores,
-            fuente: item.fuente,
-            enlace: this.buildDownloadUrl(item.download_url),
-            download_url: item.download_url,
-            sharepoint_url: item.sharepoint_url,
-            fecha_publicacion: item.fecha_publicacion,
-            departamento_id: item.departamento_id,
-            visibilidad: item.solo_suscriptores ? 'suscriptor' : 'publico',
-            bloqueado: item.bloqueado,
-            categoria: {
-              id: item.atlas_categoria?.id ?? '',
-              nombre: item.atlas_categoria?.nombre ?? 'Sin categoría',
-              codigo: 'ATLAS',
-              color: '#6366F1',
-              icono: 'picture_as_pdf',
-            },
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-          })),
-        );
-      }, error: () => {
-        this.articulos.set([]);
-        this.loading.set(false);
-        this.loadError.set('No se pudo cargar Atlas. Intenta actualizar los datos.');
-      } });
-
+      .subscribe({
+        next: ([data, categorias]) => {
+          this.categorias.set(categorias);
+          if (
+            !['TODAS', 'SIN_CATEGORIA'].includes(this.selectedCategory()) &&
+            !categorias.some((c) => c.id === this.selectedCategory())
+          ) {
+            this.selectedCategory.set('TODAS');
+          }
+          this.loading.set(false);
+          this.articulos.set(
+            data.map((item) => ({
+              id: item.id,
+              titulo: item.titulo,
+              descripcion: item.descripcion,
+              autor: Array.isArray(item.autores) ? item.autores.join(', ') : item.autores,
+              fuente: item.fuente,
+              enlace: this.buildDownloadUrl(item.download_url),
+              download_url: item.download_url,
+              sharepoint_url: item.sharepoint_url,
+              fecha_publicacion: item.fecha_publicacion,
+              departamento_id: item.departamento_id,
+              visibilidad: item.solo_suscriptores ? 'suscriptor' : 'publico',
+              bloqueado: item.bloqueado,
+              categoria: {
+                id: item.atlas_categoria?.id ?? '',
+                nombre: item.atlas_categoria?.nombre ?? 'Sin categoría',
+                codigo: 'ATLAS',
+                color: '#6366F1',
+                icono: 'picture_as_pdf',
+              },
+              created_at: item.created_at,
+              updated_at: item.updated_at,
+            })),
+          );
+        },
+        error: () => {
+          this.articulos.set([]);
+          this.loading.set(false);
+          this.loadError.set('No se pudo cargar Atlas. Intenta actualizar los datos.');
+        },
+      });
   }
 
   loadDepartamentos(): void {
@@ -161,11 +190,14 @@ export class PublicAtlasComponent implements OnInit {
         departamentos: this.departamentos(),
         target: 'atlas',
         context: 'global-atlas',
-        categoriaId: this.categorias().some(c => c.id === this.selectedCategory()) ? this.selectedCategory() : null,
+        categoriaId: this.categorias().some((c) => c.id === this.selectedCategory())
+          ? this.selectedCategory()
+          : null,
       },
     });
 
-    dialogRef.afterClosed()
+    dialogRef
+      .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result) return;
@@ -238,25 +270,14 @@ export class PublicAtlasComponent implements OnInit {
   }
 
   getCategoryIcon(cat: string): string {
-    switch (cat) {
-      case 'Atlas ULEAM': return 'map';
-      case 'Economía': return 'trending_up';
-      case 'Vitalidad Ecológica': return 'eco';
-      case 'Gobernanza': return 'groups';
-      case 'Cultura': return 'theater_comedy';
-      default: return 'menu_book';
-    }
+    return atlasCategoryPresentation(
+      cat,
+      this.categorias().find((category) => category.nombre === cat)?.icono,
+    ).icon;
   }
 
   getCategoryColor(cat: string): string {
-    switch (cat) {
-      case 'Atlas ULEAM': return '#6366F1';
-      case 'Economía': return '#C8102E'; // ULEAM Red
-      case 'Vitalidad Ecológica': return '#10B981'; // Green
-      case 'Gobernanza': return '#6366F1'; // Indigo
-      case 'Cultura': return '#F59E0B'; // Amber
-      default: return '#8B5CF6'; // Purple
-    }
+    return atlasCategoryPresentation(cat).color;
   }
 
   tieneAcceso(item: Articulo): boolean {
@@ -307,6 +328,3 @@ export class PublicAtlasComponent implements OnInit {
       });
   }
 }
-
-
-

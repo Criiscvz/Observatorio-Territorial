@@ -1,0 +1,258 @@
+<section class="atlas-page" aria-label="Formulario de Atlas">
+  <header class="page-header">
+    <div>
+      <a
+        class="back-link"
+        routerLink="/admin/atlas"
+        [queryParams]="{ categoria: form.controls.atlas_categoria_id.value || null }"
+        ><mat-icon>arrow_back</mat-icon>Volver a Atlas</a
+      >
+      <h1>{{ editingAtlas() ? 'Editar documento de Atlas' : 'Subir documento de Atlas' }}</h1>
+      <p>
+        {{
+          editingAtlas()
+            ? 'Actualiza la información o reemplaza el PDF sin crear otra publicación.'
+            : 'Completa la información y adjunta un PDF para incorporarlo a la biblioteca.'
+        }}
+      </p>
+    </div>
+    @if (!editingAtlas() && !loadingAtlas()) {
+      <button
+        mat-stroked-button
+        type="button"
+        [disabled]="saving()"
+        (click)="importFromSharePoint()"
+      >
+        <mat-icon>cloud_download</mat-icon>Importar desde SharePoint
+      </button>
+    }
+  </header>
+  @if (loadingAtlas()) {
+    <div class="atlas-card atlas-state" role="status">
+      <mat-spinner diameter="36" />
+      <p>Cargando documento…</p>
+    </div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="save()" class="atlas-form" [attr.aria-busy]="saving()">
+      <fieldset class="form-fields" [disabled]="saving()">
+        <section class="atlas-card form-section" aria-labelledby="document-info-title">
+          <div class="card-heading">
+            <span class="section-icon"><mat-icon>description</mat-icon></span>
+            <div>
+              <h2 id="document-info-title">Información del documento</h2>
+              <p>
+                {{ editingAtlas()?.codigo || 'El código ATL se asignará automáticamente.' }} · Los
+                campos con * son obligatorios.
+              </p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full"
+              ><mat-label>Título</mat-label
+              ><input
+                matInput
+                formControlName="titulo"
+                maxlength="255"
+                placeholder="Escribe un título descriptivo"
+              /><mat-error>Ingresa el título (máximo 255 caracteres).</mat-error></mat-form-field
+            >
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"
+              ><mat-label>Fecha de publicación</mat-label
+              ><input matInput type="date" formControlName="fecha_publicacion" /><mat-error
+                >La fecha es obligatoria.</mat-error
+              ></mat-form-field
+            >
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"
+              ><mat-label>Fuente</mat-label
+              ><input
+                matInput
+                formControlName="fuente"
+                maxlength="255"
+                placeholder="ULEAM"
+              /><mat-error>Ingresa la fuente (máximo 255 caracteres).</mat-error></mat-form-field
+            >
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"
+              ><mat-label>Autores</mat-label
+              ><input
+                matInput
+                formControlName="autores"
+                placeholder="Nombres separados por comas"
+              /><mat-hint>Opcional. Separa los autores con una coma.</mat-hint></mat-form-field
+            >
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"
+              ><mat-label>URL externa</mat-label
+              ><input
+                matInput
+                type="url"
+                formControlName="link_url"
+                placeholder="https://…"
+              /><mat-hint>Opcional. Enlace de referencia del documento.</mat-hint
+              ><mat-error>Ingresa una URL que comience con http o https.</mat-error></mat-form-field
+            >
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="full"
+              ><mat-label>Descripción</mat-label
+              ><textarea
+                matInput
+                rows="4"
+                formControlName="descripcion"
+                maxlength="3000"
+                placeholder="Resume el contenido del documento"
+              ></textarea
+              ><mat-hint align="end">{{ form.controls.descripcion.value.length }}/3000</mat-hint
+              ><mat-error
+                >Ingresa la descripción (máximo 3000 caracteres).</mat-error
+              ></mat-form-field
+            >
+          </div>
+        </section>
+        <section class="atlas-card form-section" aria-labelledby="document-access-title">
+          <div class="card-heading">
+            <span class="section-icon"><mat-icon>category</mat-icon></span>
+            <div>
+              <h2 id="document-access-title">Clasificación y acceso</h2>
+              <p>Elige dónde se muestra el documento y quién puede consultarlo.</p>
+            </div>
+          </div>
+          <div class="form-grid">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"
+              ><mat-label>Categoría de Atlas</mat-label
+              ><mat-select formControlName="atlas_categoria_id"
+                ><mat-option value="">Sin categoría</mat-option>
+                @for (categoria of categorias(); track categoria.id) {
+                  <mat-option [value]="categoria.id"
+                    ><mat-icon>{{
+                      categoryVisual(categoria.nombre, categoria.icono).icon
+                    }}</mat-icon
+                    >{{ categoria.nombre
+                    }}{{ categoria.publico === false ? ' (Privada)' : '' }}</mat-option
+                  >
+                }</mat-select
+              ><mat-hint
+                >Las categorías se administran desde la biblioteca.</mat-hint
+              ></mat-form-field
+            >
+            <mat-form-field appearance="outline" subscriptSizing="dynamic"
+              ><mat-label>Estado</mat-label
+              ><mat-select formControlName="estado"
+                ><mat-option value="PUBLICACION">Publicación</mat-option
+                ><mat-option value="EN_REVISION">En revisión</mat-option
+                ><mat-option value="SUSPENDIDO">Suspendido</mat-option
+                ><mat-option value="ARCHIVADO">Archivado</mat-option></mat-select
+              ></mat-form-field
+            >
+          </div>
+          <div class="subscriber-option">
+            <mat-checkbox formControlName="solo_suscriptores">Solo para suscriptores</mat-checkbox>
+            <p>
+              En una categoría pública, el documento publicado será accesible al público si está
+              desmarcado. Las categorías privadas conservan sus documentos privados.
+            </p>
+          </div>
+        </section>
+        <section class="atlas-card form-section" aria-labelledby="document-pdf-title">
+          <div class="card-heading">
+            <span class="section-icon"><mat-icon>picture_as_pdf</mat-icon></span>
+            <div>
+              <h2 id="document-pdf-title">Archivo PDF {{ editingAtlas() ? '' : '*' }}</h2>
+              <p>
+                {{
+                  editingAtlas()
+                    ? 'Conserva el archivo actual o adjunta uno nuevo para reemplazarlo.'
+                    : 'Adjunta un PDF de hasta 20 MB.'
+                }}
+              </p>
+            </div>
+          </div>
+          @if (editingAtlas(); as current) {
+            <div class="current-file">
+              <mat-icon>picture_as_pdf</mat-icon>
+              <div>
+                <strong>{{ current.nombre_archivo_original || 'PDF actual' }}</strong
+                ><span>{{
+                  selectedFile()
+                    ? 'Se reemplazará al guardar los cambios.'
+                    : 'Se conservará al guardar los cambios.'
+                }}</span>
+              </div>
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="!current.download_url && !current.sharepoint_url"
+                (click)="openCurrentPdf()"
+              >
+                <mat-icon>open_in_new</mat-icon>Ver PDF actual
+              </button>
+            </div>
+          }
+          <input
+            #pdfInput
+            type="file"
+            accept="application/pdf,.pdf"
+            hidden
+            (change)="onFileSelected($event)"
+          />
+          <button
+            type="button"
+            class="upload-zone"
+            [class.dragging]="isDraggingFile()"
+            [class.has-file]="selectedFile()"
+            (click)="pdfInput.click()"
+            (dragover)="onFileDragOver($event)"
+            (dragleave)="onFileDragLeave($event)"
+            (drop)="onFileDropped($event)"
+          >
+            <mat-icon>{{ selectedFile() ? 'task_alt' : 'upload_file' }}</mat-icon>
+            <strong>{{
+              selectedFile()?.name ||
+                (editingAtlas() ? 'Seleccionar PDF de reemplazo' : 'Seleccionar archivo PDF')
+            }}</strong>
+            <span>{{
+              selectedFile()
+                ? formatFileSize(selectedFile()!.size) + ' · PDF listo para guardar'
+                : 'Haz clic o arrastra aquí el archivo · Máximo 20 MB'
+            }}</span>
+          </button>
+          @if (selectedFile()) {
+            <div class="selected-file-actions">
+              <button mat-button type="button" (click)="clearSelectedFile(pdfInput)">
+                <mat-icon>close</mat-icon
+                >{{
+                  editingAtlas()
+                    ? 'Quitar reemplazo y conservar el actual'
+                    : 'Quitar archivo seleccionado'
+                }}
+              </button>
+            </div>
+          }
+          @if (fileError()) {
+            <div class="alert" role="alert">
+              <mat-icon>error_outline</mat-icon><span>{{ fileError() }}</span>
+            </div>
+          }
+        </section>
+      </fieldset>
+      @if (serverError()) {
+        <div class="alert" role="alert">
+          <mat-icon>error_outline</mat-icon><span>{{ serverError() }}</span>
+        </div>
+      }
+      <footer class="form-actions">
+        <span>Los cambios se aplican al guardar.</span>
+        <div>
+          <button
+            mat-stroked-button
+            type="button"
+            [disabled]="saving()"
+            routerLink="/admin/atlas"
+            [queryParams]="{ categoria: form.controls.atlas_categoria_id.value || null }"
+          >
+            Cancelar</button
+          ><button mat-flat-button color="primary" type="submit" [disabled]="saving()">
+            <mat-icon>{{ saving() ? 'hourglass_top' : 'save' }}</mat-icon
+            >{{ saving() ? 'Guardando…' : editingAtlas() ? 'Guardar cambios' : 'Guardar Atlas' }}
+          </button>
+        </div>
+      </footer>
+    </form>
+  }
+</section>

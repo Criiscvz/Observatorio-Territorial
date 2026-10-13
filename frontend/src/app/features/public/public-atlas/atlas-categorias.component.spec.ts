@@ -3,7 +3,10 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { of, Subject } from 'rxjs';
 import { AtlasCategoriaService } from '@core/services/atlas-categoria.service';
-import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  ConfirmDialogComponent,
+  ConfirmDialogData,
+} from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { AtlasCategoriasComponent } from './atlas-categorias.component';
 
 describe('Atlas category management', () => {
@@ -16,13 +19,24 @@ describe('Atlas category management', () => {
 
   beforeEach(() => {
     closed = new Subject<boolean>();
-    service = { list: vi.fn(() => of([item])), save: vi.fn(), delete: vi.fn(() => of({ message: 'Eliminada' })) };
-    dialog = { open: vi.fn((_component, options) => { data = options.data; return { afterClosed: () => closed }; }) };
-    TestBed.configureTestingModule({ providers: [
-      { provide: AtlasCategoriaService, useValue: service },
-      { provide: MatDialog, useValue: dialog },
-      { provide: MatSnackBar, useValue: { open: vi.fn() } },
-    ] });
+    service = {
+      list: vi.fn(() => of([item])),
+      save: vi.fn(),
+      delete: vi.fn(() => of({ message: 'Eliminada' })),
+    };
+    dialog = {
+      open: vi.fn((_component, options) => {
+        data = options.data;
+        return { afterClosed: () => closed };
+      }),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: AtlasCategoriaService, useValue: service },
+        { provide: MatDialog, useValue: dialog },
+        { provide: MatSnackBar, useValue: { open: vi.fn() } },
+      ],
+    });
     component = TestBed.runInInjectionContext(() => new AtlasCategoriasComponent());
   });
 
@@ -57,12 +71,52 @@ describe('Atlas category management', () => {
   it('normalizes names and prevents duplicate saves while a request is pending', () => {
     const response = new Subject<any>();
     service.save.mockReturnValue(response);
-    component.form.setValue({ nombre: '  Salud   pública ', descripcion: '' });
+    component.form.setValue({
+      nombre: '  Salud   pública ',
+      descripcion: '',
+      icono: 'science',
+      publico: true,
+    });
     component.save();
     component.save();
-    expect(service.save).toHaveBeenCalledExactlyOnceWith({ nombre: 'Salud pública', descripcion: null }, undefined);
+    expect(service.save).toHaveBeenCalledExactlyOnceWith(
+      { nombre: 'Salud pública', descripcion: null, icono: 'science', publico: true },
+      undefined,
+    );
     response.next({ message: 'Guardada', data: item });
     expect(component.saving()).toBe(false);
+  });
+
+  it('starts a new category as private with the automatic icon', () => {
+    component.create();
+    expect(component.form.getRawValue()).toEqual({
+      nombre: '',
+      descripcion: '',
+      icono: '',
+      publico: false,
+    });
+    expect(component.availableIcons.some((icon) => icon.value === 'science')).toBe(true);
+    expect(component.iconLabel('science')).toBe('Ciencia y tecnología');
+  });
+
+  it('loads the saved icon and visibility for editing and resets them for creation', () => {
+    component.edit({ ...item, icono: 'home', publico: true });
+    expect(component.form.controls.icono.value).toBe('home');
+    expect(component.form.controls.publico.value).toBe(true);
+    component.create();
+    expect(component.form.controls.icono.value).toBe('');
+    expect(component.form.controls.publico.value).toBe(false);
+  });
+
+  it('saves private visibility and clears a custom icon when automatic is selected', () => {
+    service.save.mockReturnValue(of({ message: 'Guardada', data: item }));
+    component.edit({ ...item, icono: 'home', publico: true });
+    component.form.patchValue({ icono: '', publico: false });
+    component.save();
+    expect(service.save).toHaveBeenCalledExactlyOnceWith(
+      { nombre: 'Salud', descripcion: null, icono: null, publico: false },
+      item.id,
+    );
   });
 
   it('the shared modal sends one request and stays open until the server responds', () => {
@@ -70,10 +124,12 @@ describe('Atlas category management', () => {
     const action = vi.fn(() => pending);
     const ref = { close: vi.fn(), disableClose: false };
     TestBed.resetTestingModule();
-    TestBed.configureTestingModule({ providers: [
-      { provide: MatDialogRef, useValue: ref },
-      { provide: MAT_DIALOG_DATA, useValue: { confirmAction: action } },
-    ] });
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: MatDialogRef, useValue: ref },
+        { provide: MAT_DIALOG_DATA, useValue: { confirmAction: action } },
+      ],
+    });
     const modal = TestBed.runInInjectionContext(() => new ConfirmDialogComponent());
     modal.onConfirm();
     modal.onConfirm();

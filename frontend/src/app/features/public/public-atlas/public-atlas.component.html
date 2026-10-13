@@ -119,7 +119,7 @@
             <div class="atlas-category-grid">
               @for (cat of filteredCategoryCards(); track cat.id) {
                 <button type="button" class="atlas-category-card" (click)="selectCategory(cat.id)" [attr.aria-label]="'Ver publicaciones de ' + cat.nombre">
-                  <span class="atlas-category-card__icon"><mat-icon>{{ getCategoryIcon(cat.nombre) }}</mat-icon></span>
+                  <span class="atlas-category-card__icon" [style.color]="getCategoryColor(cat.nombre)" [style.background]="'color-mix(in srgb, ' + getCategoryColor(cat.nombre) + ' 12%, transparent)'"><mat-icon>{{ getCategoryIcon(cat.nombre) }}</mat-icon></span>
                   <span class="atlas-category-card__name">{{ cat.nombre }}</span>
                   <span class="atlas-category-card__description">{{ cat.descripcion || 'Consulta las publicaciones de esta categoría.' }}</span>
                   <span class="atlas-category-card__footer">

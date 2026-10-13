@@ -12,9 +12,11 @@ export function isTrustedApiUrl(requestUrl: string): boolean {
     const url = new URL(requestUrl, appOrigin);
     const apiPath = apiUrl.pathname.replace(/\/+$/, '') || '/';
 
+    // Sanctum prepares the session outside /api, on the same trusted server.
     return (
       url.origin === apiUrl.origin &&
-      (apiPath === '/' || url.pathname === apiPath || url.pathname.startsWith(`${apiPath}/`))
+      (url.pathname === '/sanctum/csrf-cookie' ||
+        apiPath === '/' || url.pathname === apiPath || url.pathname.startsWith(`${apiPath}/`))
     );
   } catch {
     return false;

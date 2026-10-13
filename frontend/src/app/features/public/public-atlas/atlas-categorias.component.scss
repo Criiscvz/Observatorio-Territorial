@@ -1,0 +1,194 @@
+@use './atlas-admin.shared';
+.directory-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+.category-search {
+  width: 280px;
+}
+.directory-alert {
+  margin: 1rem 1.25rem 0;
+}
+.categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr));
+  gap: 1rem;
+  padding: 1.25rem;
+}
+.category-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+.category-card:hover {
+  border-color: var(--primary-200);
+  box-shadow: 0 3px 12px var(--shadow-color);
+}
+.category-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.category-heading h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.category-icon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-lg);
+  color: var(--category-color);
+  background: color-mix(in srgb, var(--category-color) 12%, transparent);
+}
+.category-description {
+  margin: 0.85rem 0 1.25rem;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.category-file-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: auto;
+}
+.category-file-actions a {
+  padding-inline: 0.5rem;
+  font-size: 0.8rem;
+}
+.upload-action {
+  color: var(--primary-500) !important;
+  border-color: var(--primary-200) !important;
+}
+.category-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  margin-top: 0.8rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--border-color);
+}
+.category-edit-actions button {
+  font-size: 0.78rem;
+  padding-inline: 0.5rem;
+}
+.category-empty {
+  grid-column: 1 / -1;
+}
+.visibility-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  color: var(--primary-600);
+  background: color-mix(in srgb, var(--primary-500) 10%, transparent);
+  font-size: 0.75rem;
+}
+.visibility-badge.private {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+.visibility-badge mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+.selected-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-primary);
+}
+.selected-icon mat-icon {
+  color: var(--primary-500);
+  flex-shrink: 0;
+}
+.visibility-setting {
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+}
+.visibility-setting p {
+  margin: 0.65rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.category-editor {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+.category-editor h2 {
+  color: var(--text-primary) !important;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.category-editor mat-dialog-content {
+  display: grid;
+  gap: 1rem;
+}
+.category-editor mat-form-field {
+  width: 100%;
+}
+.editor-description {
+  margin: 0;
+  font-size: 0.9rem;
+}
+.category-editor mat-dialog-actions {
+  padding: 1rem 1.5rem 1.5rem;
+  gap: 0.5rem;
+}
+.category-editor input::placeholder,
+.category-editor textarea::placeholder {
+  color: var(--text-tertiary) !important;
+}
+.category-editor button[type='submit']:not(:disabled) {
+  background: var(--primary-600);
+  color: white !important;
+}
+.category-editor button[type='submit']:not(:disabled):hover {
+  background: var(--primary-700);
+}
+.category-editor button[type='submit'] mat-icon {
+  color: inherit;
+}
+@media (max-width: 760px) {
+  .toolbar-actions,
+  .category-search {
+    width: 100%;
+  }
+  .category-search {
+    flex: 1;
+    min-width: 180px;
+  }
+}
+@media (max-width: 400px) {
+  .category-file-actions {
+    grid-template-columns: 1fr;
+  }
+  .category-edit-actions {
+    flex-wrap: wrap;
+  }
+}

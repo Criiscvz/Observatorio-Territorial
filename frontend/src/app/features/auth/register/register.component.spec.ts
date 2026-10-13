@@ -6,7 +6,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { RegisterComponent } from './register.component';
-import { AuthService } from '@core/services/auth.service';
+import { AuthService, RegisterPendingResponse } from '@core/services/auth.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Pipe({ name: 'translate', standalone: true })
@@ -64,6 +64,7 @@ describe('RegisterComponent', () => {
       component.form.setValue({ name: '', email: '', password: '', password_confirmation: '' });
       component.onSubmit();
       expect(authServiceSpy.register).not.toHaveBeenCalled();
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
     });
 
     it('should set error if passwords do not match', () => {
@@ -77,21 +78,39 @@ describe('RegisterComponent', () => {
 
       expect(authServiceSpy.register).not.toHaveBeenCalled();
       expect(translateSpy.instant).toHaveBeenCalledWith('common.validation.passwordMismatch');
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
     });
 
-    it('should navigate to /publico/departamentos on successful registration', () => {
-      component.form.setValue({
+    it.each([
+      { emailSent: true, resendAfter: 60 },
+      { emailSent: false, resendAfter: 0 }
+    ])('should navigate to email verification when emailSent=$emailSent', ({ emailSent, resendAfter }) => {
+      const formValue = {
         name: 'Test User',
         email: 'test@test.com',
         password: 'password123',
         password_confirmation: 'password123'
-      });
-      authServiceSpy.register.mockReturnValue(of({}));
+      };
+      const response: RegisterPendingResponse = {
+        message: 'Cuenta creada. Verifica tu correo.',
+        verification_required: true,
+        email: 'test@test.com',
+        email_sent: emailSent,
+        resend_after: resendAfter
+      };
+      component.form.setValue(formValue);
+      authServiceSpy.register.mockReturnValue(of(response));
 
       component.onSubmit();
 
-      expect(authServiceSpy.register).toHaveBeenCalled();
-      expect(routerSpy.navigate).toHaveBeenCalledWith(['/publico/departamentos']);
+      expect(authServiceSpy.register).toHaveBeenCalledExactlyOnceWith(formValue);
+      expect(routerSpy.navigate).toHaveBeenCalledExactlyOnceWith(['/auth/verificar-correo'], {
+        state: {
+          email: response.email,
+          emailSent: response.email_sent,
+          resendAfter: response.resend_after
+        }
+      });
     });
 
     it('should set error signal on registration failure', () => {
@@ -107,6 +126,7 @@ describe('RegisterComponent', () => {
 
       expect(component.error()).toBe('Email ya registrado');
       expect(component.loading()).toBe(false);
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
     });
 
     it('should use translate fallback on error without message', () => {
@@ -121,6 +141,8 @@ describe('RegisterComponent', () => {
       component.onSubmit();
 
       expect(translateSpy.instant).toHaveBeenCalledWith('auth.register.errors.registrationFailed');
+      expect(component.loading()).toBe(false);
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
     });
   });
 });
