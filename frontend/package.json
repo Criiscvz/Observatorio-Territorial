@@ -8,6 +8,7 @@
     "build:vercel": "node scripts/set-api-url.mjs && ng build --configuration production && node scripts/create-vercel-spa-entry.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:security-headers": "node --test scripts/security-headers.test.mjs",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },
   "prettier": {
