@@ -53,11 +53,28 @@ test('restringe bases, formularios y objetos embebidos', () => {
   assert.deepEqual(directives.get('object-src'), ["'none'"]);
 });
 
-test('conserva Material Icons, Google Fonts y estilos dinámicos de Angular', () => {
+test('sirve las fuentes propias y conserva los estilos dinámicos de Angular', () => {
   assert.deepEqual(directives.get('style-src'),
-    ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com']);
+    ["'self'", "'unsafe-inline'"]);
   assert.deepEqual(directives.get('font-src'),
-    ["'self'", 'data:', 'https://fonts.gstatic.com']);
+    ["'self'", 'data:']);
+});
+
+test('no depende de Google Fonts y declara las ligaduras del icono local', async () => {
+  const html = await readFile(new URL('src/index.html', frontendRoot), 'utf8');
+  const css = await readFile(new URL('src/fonts.css', frontendRoot), 'utf8');
+  assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(html));
+  assert.ok(angular.projects.frontend.architect.build.options.styles.includes('src/fonts.css'));
+  assert.match(css, /font-family:\s*'Material Icons'/);
+  assert.match(css, /font-display:\s*block/);
+  assert.match(css, /font-feature-settings:\s*'liga'/);
+  assert.match(css, /@fontsource\/material-icons\/files\/[^)]+\.woff2/);
+  for (const weight of [300, 400, 500]) {
+    assert.ok(css.includes(`@fontsource/roboto/latin-${weight}.css`));
+  }
+  const ngsw = JSON.parse(await readFile(new URL('ngsw-config.json', frontendRoot), 'utf8'));
+  assert.ok(ngsw.assetGroups.some((group) => group.installMode === 'prefetch'
+    && group.resources.files.includes('/media/*.woff2')));
 });
 
 test('permite imágenes propias, avatares HTTPS y previsualizaciones blob/data', () => {
@@ -128,5 +145,33 @@ test('el bundle verificado no conserva el origen de bloqueo de API sin configura
     const files = (await readdir(dist)).filter((file) => file.endsWith('.js'));
     for (const file of files) {
       assert.ok(!(await readFile(new URL(file, dist), 'utf8')).includes('api-url-not-configured.invalid'), file);
+    }
+  });
+
+test('el artefacto contiene fuentes WOFF2 y solo las referencia desde el mismo origen',
+  { skip: process.env.SECURITY_CHECK_BUILD !== '1' }, async () => {
+    const dist = new URL('dist/frontend/browser/', frontendRoot);
+    const html = await readFile(new URL('index.html', dist), 'utf8');
+    const styles = await Promise.all((await readdir(dist))
+      .filter((file) => file.endsWith('.css')).map((file) => readFile(new URL(file, dist), 'utf8')));
+    const css = styles.join('\n');
+    assert.ok(!/fonts\.(googleapis|gstatic)\.com/.test(html + css));
+    for (const family of ['Material Icons', 'Roboto']) {
+      assert.ok(css.includes(family), family);
+    }
+    const fontUrls = [...css.matchAll(/url\((?:["'])?([^\s)'";]+\.woff2)(?:["'])?\)/g)]
+      .map((match) => match[1]);
+    assert.ok(fontUrls.length >= 4, 'Faltan los iconos o alguno de los pesos de Roboto.');
+    for (const url of fontUrls) {
+      assert.ok(!/^(?:https?:)?\/\//i.test(url), url);
+      assert.ok(!(url.startsWith('..')), url);
+      const bytes = await readFile(new URL(url.replace(/^\//, ''), dist));
+      assert.equal(bytes.subarray(0, 4).toString('ascii'), 'wOF2', url);
+    }
+    const ngsw = JSON.parse(await readFile(new URL('ngsw.json', dist), 'utf8'));
+    const prefetched = ngsw.assetGroups.filter((group) => group.installMode === 'prefetch')
+      .flatMap((group) => group.urls);
+    for (const url of fontUrls) {
+      assert.ok(prefetched.includes(`/${url.replace(/^(?:\.\/|\/)/, '')}`), url);
     }
   });

@@ -41,6 +41,7 @@
               }
             ],
             "styles": [
+              "src/fonts.css",
               "src/material-theme.scss",
               "src/styles.css",
               "src/publication-library.css"
