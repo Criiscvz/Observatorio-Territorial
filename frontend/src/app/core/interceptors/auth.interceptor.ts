@@ -49,13 +49,21 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   };
 
   const isApiRequest = isTrustedApiUrl(req.url);
+  if (isApiRequest) {
+    // Also bypass an older worker that is still controlling this browser tab.
+    headers['ngsw-bypass'] = 'true';
+  }
   const csrfToken = isApiRequest && requiresCsrfProtection(req.method) ? getXsrfToken() : null;
 
   if (csrfToken) {
     headers['X-XSRF-TOKEN'] = csrfToken;
   }
 
-  req = req.clone({ setHeaders: headers, withCredentials: isApiRequest });
+  req = req.clone({
+    setHeaders: headers,
+    withCredentials: isApiRequest,
+    ...(isApiRequest ? { cache: 'no-store' as const } : {}),
+  });
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {

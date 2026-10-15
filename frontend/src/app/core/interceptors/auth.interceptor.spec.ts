@@ -35,6 +35,34 @@ describe('isTrustedApiUrl', () => {
     expect(isTrustedApiUrl(`${environment.apiUrl}/datasets?per_page=10`)).toBe(true);
   });
 
+  it('bypasses both service-worker and HTTP caches for trusted API reads', () => {
+    http.get(`${environment.apiUrl}/datasets/qa-only`).subscribe();
+    const req = httpMock.expectOne(`${environment.apiUrl}/datasets/qa-only`);
+    expect(req.request.headers.get('ngsw-bypass')).toBe('true');
+    expect(req.request.cache).toBe('no-store');
+    expect(req.request.withCredentials).toBe(true);
+    req.flush({});
+  });
+
+  it('keeps the bypass on writes and the Sanctum preparation request', () => {
+    const csrfUrl = new URL('/sanctum/csrf-cookie', environment.apiUrl).toString();
+    for (const url of [csrfUrl, `${environment.apiUrl}/logout`]) {
+      http.post(url, {}).subscribe();
+      const req = httpMock.expectOne(url);
+      expect(req.request.headers.get('ngsw-bypass')).toBe('true');
+      expect(req.request.cache).toBe('no-store');
+      req.flush({});
+    }
+  });
+
+  it('does not alter caching for unrelated static resources', () => {
+    http.get('https://cdn.example.org/assets.json', { cache: 'force-cache' }).subscribe();
+    const req = httpMock.expectOne('https://cdn.example.org/assets.json');
+    expect(req.request.headers.has('ngsw-bypass')).toBe(false);
+    expect(req.request.cache).toBe('force-cache');
+    req.flush({});
+  });
+
   it('rejects third-party origins and lookalike paths', () => {
     expect(isTrustedApiUrl('https://cdn.example.org/assets.json')).toBe(false);
     expect(isTrustedApiUrl(`${environment.apiUrl}.attacker.example/profile`)).toBe(false);

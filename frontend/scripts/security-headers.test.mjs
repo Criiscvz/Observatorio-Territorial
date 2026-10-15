@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
 import test from 'node:test';
 import { JSDOM } from 'jsdom';
@@ -6,6 +7,60 @@ import { JSDOM } from 'jsdom';
 const frontendRoot = new URL('../', import.meta.url);
 const vercel = JSON.parse(await readFile(new URL('vercel.json', frontendRoot), 'utf8'));
 const angular = JSON.parse(await readFile(new URL('angular.json', frontendRoot), 'utf8'));
+const pwa = JSON.parse(await readFile(new URL('ngsw-config.json', frontendRoot), 'utf8'));
+
+test('la PWA no almacena respuestas API ni sesiones en dataGroups', () => {
+  assert.deepEqual(pwa.dataGroups, []);
+  assert.ok(pwa.assetGroups.every((group) => !(group.resources.urls?.length)));
+  for (const group of pwa.assetGroups) {
+    assert.ok(group.resources.files.every((pattern) => !pattern.startsWith('/api')
+      && !pattern.startsWith('/sanctum') && !pattern.startsWith('/storage')));
+  }
+});
+
+test('el worker generado no contiene cachés de datos API',
+  { skip: process.env.SECURITY_CHECK_BUILD !== '1' }, async () => {
+    const sw = JSON.parse(await readFile(new URL('dist/frontend/browser/ngsw.json', frontendRoot), 'utf8'));
+    assert.deepEqual(sw.dataGroups, []);
+    assert.ok(sw.assetGroups.every((group) => group.patterns.length === 0));
+  });
+
+test('la precarga incluye el HTML CSR que genera Angular con SSR', () => {
+  assert.ok(pwa.assetGroups.some((group) => group.installMode === 'prefetch'
+    && group.resources.files.includes('/index.csr.html')));
+  assert.ok(pwa.assetGroups.some((group) => group.installMode === 'prefetch'
+    && group.resources.files.includes('/assets/i18n/*.json')));
+});
+
+test('el índice publicado coincide con el shell precargado y su hash',
+  { skip: process.env.SECURITY_CHECK_BUILD !== '1' }, async () => {
+    const dist = new URL('dist/frontend/browser/', frontendRoot);
+    const sw = JSON.parse(await readFile(new URL('ngsw.json', dist), 'utf8'));
+    assert.equal(sw.index, '/index.csr.html');
+    const shell = await readFile(new URL('index.csr.html', dist));
+    const published = await readFile(new URL('index.html', dist));
+    assert.deepEqual(published, shell);
+    assert.ok(sw.assetGroups.some((group) => group.installMode === 'prefetch'
+      && group.urls.includes(sw.index)));
+    assert.equal(sw.hashTable[sw.index], createHash('sha1').update(shell).digest('hex'));
+    for (const language of ['es', 'en']) {
+      const path = `/assets/i18n/${language}.json`;
+      const bytes = await readFile(new URL(path.slice(1), dist));
+      assert.ok(sw.assetGroups.some((group) => group.installMode === 'prefetch'
+        && group.urls.includes(path)), path);
+      assert.equal(sw.hashTable[path], createHash('sha1').update(bytes).digest('hex'), path);
+    }
+    const html = new JSDOM(shell.toString('utf8'));
+    try {
+      for (const script of html.window.document.querySelectorAll('script[src]')) {
+        const url = new URL(script.getAttribute('src'), 'https://app.test/').pathname;
+        const bytes = await readFile(new URL(url.slice(1), dist));
+        assert.equal(sw.hashTable[url], createHash('sha1').update(bytes).digest('hex'), url);
+      }
+    } finally {
+      html.window.close();
+    }
+  });
 const cspRules = vercel.headers.filter((rule) =>
   rule.headers.some((header) => header.key.toLowerCase() === 'content-security-policy'),
 );
