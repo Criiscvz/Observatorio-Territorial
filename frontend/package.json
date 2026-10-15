@@ -8,6 +8,7 @@
     "build:vercel": "node scripts/set-api-url.mjs && ng build --configuration production && node scripts/create-vercel-spa-entry.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:security-headers": "node --test scripts/security-headers.test.mjs",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },
   "prettier": {
@@ -37,6 +38,8 @@
     "@angular/router": "^21.1.0",
     "@angular/service-worker": "21.1.2",
     "@angular/ssr": "^21.1.2",
+    "@fontsource/material-icons": "5.3.0",
+    "@fontsource/roboto": "5.3.0",
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "echarts": "^5.6.0",

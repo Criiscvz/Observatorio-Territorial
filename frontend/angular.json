@@ -41,6 +41,7 @@
               }
             ],
             "styles": [
+              "src/fonts.css",
               "src/material-theme.scss",
               "src/styles.css",
               "src/publication-library.css"
@@ -54,6 +55,14 @@
           },
           "configurations": {
             "production": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
               "budgets": [
                 {
                   "type": "initial",

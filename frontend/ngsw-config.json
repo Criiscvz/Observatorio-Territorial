@@ -13,6 +13,7 @@
           "/manifest.webmanifest",
           "/*.css",
           "/*.js",
+          "/media/*.woff2",
           "/ULEAM.png"
         ]
       }
@@ -24,6 +25,7 @@
       "resources": {
         "files": [
           "/assets/**",
+          "/media/*.woff",
           "/icons/**",
           "/*.svg",
           "/*.png",
