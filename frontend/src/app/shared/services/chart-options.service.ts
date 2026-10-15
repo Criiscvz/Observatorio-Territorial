@@ -489,11 +489,20 @@ export class ChartOptionsService {
     cfg: any,
     maxValue: number,
   ): EChartsOption {
+    // Keep the same scale on every spoke, with readable intervals and headroom.
+    // A raw maxValue * 1.2 can produce uneven ticks (for example 28.799999999999997).
+    const paddedMax = maxValue * 1.2;
+    const magnitude = 10 ** Math.floor(Math.log10(paddedMax));
+    const factor = [1, 2, 3, 5, 10].find((step) => step * magnitude >= paddedMax) ?? 10;
+    const axisMax = Number((factor * magnitude).toPrecision(12));
+    const splitNumber = factor === 2 ? 4 : factor === 3 ? 6 : 5;
+
     return {
       ...base,
       title: { text: title, left: 'center', textStyle: { color: cfg.textColor } },
       radar: {
-        indicator: labels.map((l) => ({ name: l, max: maxValue * 1.2 })),
+        indicator: labels.map((l) => ({ name: l, max: axisMax })),
+        splitNumber,
         axisName: { color: cfg.textColorSecondary },
         splitLine: { lineStyle: { color: cfg.splitLineColor } },
         splitArea: { areaStyle: { color: ['transparent', `${cfg.splitLineColor}30`] } },

@@ -10,7 +10,9 @@
         "files": [
           "/favicon.ico",
           "/index.html",
+          "/index.csr.html",
           "/manifest.webmanifest",
+          "/assets/i18n/*.json",
           "/*.css",
           "/*.js",
           "/media/*.woff2",
@@ -40,46 +42,7 @@
       }
     }
   ],
-  "dataGroups": [
-    {
-      "name": "barometro-categorias",
-      "urls": [
-        "/api/categorias",
-        "/api/categorias/**"
-      ],
-      "cacheConfig": {
-        "maxSize": 50,
-        "maxAge": "1h",
-        "timeout": "5s",
-        "strategy": "freshness"
-      }
-    },
-    {
-      "name": "barometro-datasets",
-      "urls": [
-        "/api/datasets/**"
-      ],
-      "cacheConfig": {
-        "maxSize": 100,
-        "maxAge": "30m",
-        "timeout": "5s",
-        "strategy": "freshness"
-      }
-    },
-    {
-      "name": "public-data",
-      "urls": [
-        "/api/departamentos/**",
-        "/api/variables/**"
-      ],
-      "cacheConfig": {
-        "maxSize": 50,
-        "maxAge": "30m",
-        "timeout": "5s",
-        "strategy": "freshness"
-      }
-    }
-  ],
+  "dataGroups": [],
   "navigationUrls": [
     "/**",
     "!/**/*.*",

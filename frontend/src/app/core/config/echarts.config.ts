@@ -18,6 +18,7 @@ import {
   LegendComponent,
   MarkLineComponent,
   MarkPointComponent,
+  PolarComponent,
   RadarComponent,
   TitleComponent,
   TooltipComponent,
@@ -51,6 +52,7 @@ echarts.use([
   RadarComponent,
   MarkLineComponent,
   MarkPointComponent,
+  PolarComponent,
   // Renderer
   CanvasRenderer,
 ]);
