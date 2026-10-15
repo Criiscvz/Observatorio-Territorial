@@ -1,0 +1,18 @@
+# Worktrees, reports and temporary material stay local.
+/.worktrees/
+/output/
+/tmp/
+/storage/
+
+# Credentials must be supplied through the protected environment.
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+**/auth.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+*.bak

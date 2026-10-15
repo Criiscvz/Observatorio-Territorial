@@ -19,33 +19,38 @@ Render Free suspende servicios inactivos. La primera petición después de una s
 
 ## Variables de Render
 
+Los campos sensibles vacíos deben completarse directamente en el entorno
+protegido del servicio. No son contraseñas compartidas ni valores listos para
+copiar. Conserva el `APP_KEY` existente de una instalación en uso; genera uno
+solo para una instalación nueva y no lo publiques en Git o en capturas.
+
 ```env
 APP_ENV=production
 APP_DEBUG=false
-APP_KEY=base64:GENERADA_CON_php_artisan_key:generate_--show
+APP_KEY=
 APP_URL=https://TU-SERVICIO.onrender.com
 FRONTEND_URL=https://TU-PROYECTO.vercel.app
 LOG_CHANNEL=stderr
 LOG_LEVEL=warning
 
 DB_CONNECTION=pgsql
-DATABASE_URL=URL_DE_NEON_CON_sslmode=require
+DATABASE_URL=
 DB_SSLMODE=require
 
-MONGODB_URI=URI_DE_MONGODB_ATLAS
+MONGODB_URI=
 MONGODB_DATABASE=observatorio_nosql
 
 MICROSOFT_TENANT_ID=TENANT_ID_DE_MICROSOFT_ENTRA
 MICROSOFT_CLIENT_ID=APPLICATION_CLIENT_ID_DE_MICROSOFT_ENTRA
-MICROSOFT_CLIENT_SECRET=CLIENT_SECRET_DE_MICROSOFT_ENTRA
+MICROSOFT_CLIENT_SECRET=
 SHAREPOINT_SITE_ID=SITE_ID_DE_SHAREPOINT
 SHAREPOINT_DRIVE_ID=DRIVE_ID_DE_LA_BIBLIOTECA
 SHAREPOINT_FOLDER_PATH=RUTA_RAIZ_DE_ATLAS
 SHAREPOINT_BAROMETER_FOLDER_PATH=RUTA_RAIZ_DE_ARTICULOS_Y_REPORTES
 
 FILESYSTEM_DISK=s3
-AWS_ACCESS_KEY_ID=SUPABASE_S3_ACCESS_KEY
-AWS_SECRET_ACCESS_KEY=SUPABASE_S3_SECRET_KEY
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
 AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=NOMBRE_DEL_BUCKET
 AWS_ENDPOINT=https://PROJECT_REF.storage.supabase.co/storage/v1/s3

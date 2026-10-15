@@ -23,6 +23,18 @@ package-lock.json
 .env
 .env.local
 .env.*.local
+.env.*
+**/.env
+**/.env.*
+!.env.example
+auth.json
+**/auth.json
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.log
+**/*.bak
 
 # Testing artifacts
 .phpunit.result.cache
@@ -34,6 +46,16 @@ package-lock.json
 /storage/framework/views/*
 !/storage/logs/.gitignore
 !/storage/framework/.gitignore
+
+# Local uploads, private reviews and keys are not build inputs.
+/storage/app/private
+/storage/app/public/*
+/storage/*.key
+/storage/codex-logs/
+/.docker-codex/
+/tmp/
+/output/
+/toArray())
 
 # Build artifacts
 /public/hot

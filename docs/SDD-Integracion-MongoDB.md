@@ -279,7 +279,8 @@ composer require mongodb/laravel-mongodb:^5.2
 
 ### 7.3 Variables de entorno (`.env`)
 ```env
-MONGODB_URI=mongodb://root:secret123@127.0.0.1:27017/?authSource=admin
+# Configura la URI completa en el entorno protegido; no publiques usuario ni clave.
+MONGODB_URI=
 MONGODB_DATABASE=observatorio_nosql
 ```
 
@@ -291,7 +292,7 @@ MONGODB_DATABASE=observatorio_nosql
     restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: secret123
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:?MONGODB_ROOT_PASSWORD debe definirse en el entorno}
     ports:
       - "27017:27017"
     volumes:

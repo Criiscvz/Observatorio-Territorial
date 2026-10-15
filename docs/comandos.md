@@ -152,20 +152,31 @@ bun run lint
 
 ## Configuración de Base de Datos
 
-**Credenciales por defecto (Docker):**
+**Conexión local (Docker, sin contraseña predeterminada):**
 
 ```
 Host: localhost
 Puerto: 5432
 Base de datos: observatorio_uleam
 Usuario: postgres
-Contraseña: postgres
+Contraseña: definida mediante DB_PASSWORD en tu entorno local protegido
 ```
 
 **Cadena de conexión:**
+
+Define `DATABASE_URL` en el entorno protegido, o usa las variables `DB_HOST`,
+`DB_PORT`, `DB_DATABASE`, `DB_USERNAME` y `DB_PASSWORD`. No copies contraseñas
+a este documento ni al repositorio. No hay una URI lista para pegar con una
+clave compartida. Para entrar al PostgreSQL local con una solicitud de clave:
+
+```powershell
+docker exec -it observatorio_db psql -U postgres -d observatorio_uleam -W
 ```
-postgresql://postgres:postgres@localhost:5432/observatorio_uleam
-```
+
+La clave debe coincidir con la configurada cuando se inicializó el volumen.
+Cambiar una variable de Compose no cambia por sí solo la clave de una base ya
+creada. No elimines el volumen para resolverlo: revisa primero el respaldo y el
+procedimiento de cambio de credenciales.
 
 ---
 
