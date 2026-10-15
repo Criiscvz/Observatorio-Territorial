@@ -13,30 +13,11 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        $users = [
-            [
-                'name' => env('ADMIN_NAME'),
-                'email' => env('ADMIN_EMAIL'),
-                'password' => env('ADMIN_PASSWORD'),
-                'rol' => 'ADMIN',
-            ],
-            [
-                'name' => env('INITIAL_USER_NAME'),
-                'email' => env('INITIAL_USER_EMAIL'),
-                'password' => env('INITIAL_USER_PASSWORD'),
-                'rol' => 'USER',
-            ],
-            [
-                'name' => env('SUBSCRIBER_NAME'),
-                'email' => env('SUBSCRIBER_EMAIL'),
-                'password' => env('SUBSCRIBER_PASSWORD'),
-                'rol' => 'SUBSCRIBER',
-            ],
-        ];
+        $users = config('initial_users.users', []);
 
         foreach ($users as $userData) {
             if (!$this->hasValidConfiguration($userData)) {
-                $this->command?->warn("Usuario inicial {$userData['rol']} omitido: configura nombre, email y contraseña en .env.");
+                $this->command?->warn("Usuario inicial {$userData['rol']} omitido: configura nombre, email y contraseña en el entorno y actualiza la caché de configuración.");
                 continue;
             }
 
