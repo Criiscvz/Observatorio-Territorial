@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class AtlasCategoriaTest extends TestCase
@@ -132,6 +133,123 @@ class AtlasCategoriaTest extends TestCase
         $this->getJson("/api/departamentos/publicaciones/{$private->id}/download")->assertNotFound();
         $this->signIn();
         $this->get("/api/departamentos/publicaciones/{$private->id}/download")->assertOk();
+    }
+
+    public static function s3ReadErrors(): array
+    {
+        return [
+            'database timeout' => ['DatabaseTimeout', 544, 503],
+            'provider unavailable' => ['ServiceUnavailable', 503, 503],
+            'invalid storage permissions' => ['AccessDenied', 403, 503],
+            'missing bucket is not a missing document' => ['NoSuchBucket', 404, 503],
+            'unclassified gateway 404' => [null, 404, 503],
+            'confirmed missing object' => ['NoSuchKey', 404, 404],
+            'inconsistent missing-object error' => ['NoSuchKey', 503, 503],
+            'unsafe diagnostic code' => ['SECRET_DO_NOT_LOG sensitive value', 500, 503],
+        ];
+    }
+
+    #[DataProvider('s3ReadErrors')]
+    public function test_s3_download_distinguishes_missing_objects_from_provider_failures(
+        ?string $code,
+        int $providerStatus,
+        int $expectedStatus,
+    ): void {
+        config(['filesystems.default' => 's3']);
+        $publication = $this->publication(['archivo_pdf' => 'sensitive-pdf-path.pdf']);
+        $aws = new \Aws\S3\Exception\S3Exception('SECRET_DO_NOT_LOG', new \Aws\Command('GetObject'), [
+            'code' => $code, 'response' => new \GuzzleHttp\Psr7\Response($providerStatus),
+        ]);
+        $driver = \Mockery::mock(\League\Flysystem\FilesystemOperator::class);
+        $driver->shouldReceive('readStream')->once()->with('sensitive-pdf-path.pdf')->andThrow(
+            \League\Flysystem\UnableToReadFile::fromLocation('sensitive-pdf-path.pdf', 'SECRET_DO_NOT_LOG', $aws)
+        );
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('getDriver')->once()->andReturn($driver);
+        Storage::shouldReceive('disk')->once()->with('s3')->andReturn($disk);
+        \Illuminate\Support\Facades\Log::spy();
+
+        $response = $this->getJson("/api/departamentos/publicaciones/{$publication->id}/download")
+            ->assertStatus($expectedStatus)
+            ->assertDontSee('SECRET_DO_NOT_LOG')
+            ->assertDontSee('sensitive-pdf-path.pdf');
+        $this->assertSame('sensitive-pdf-path.pdf', $publication->fresh()->archivo_pdf);
+
+        if ($expectedStatus === 404) {
+            $response->assertJsonPath('message', 'Archivo no disponible. Un administrador debe volver a subir el PDF.');
+            \Illuminate\Support\Facades\Log::shouldNotHaveReceived('error');
+        } else {
+            $response->assertJsonPath('message', 'El almacenamiento no está disponible en este momento. Intenta descargar el PDF nuevamente más tarde.');
+            \Illuminate\Support\Facades\Log::shouldHaveReceived('error')->with('ATLAS_STORAGE_READ_FAILED', [
+                'disk' => 's3', 'exception' => \League\Flysystem\UnableToReadFile::class,
+                's3_code' => $code !== null && preg_match('/^[a-zA-Z0-9_]{1,100}$/D', $code) ? $code : 'Unknown',
+                's3_status' => $providerStatus,
+            ])->once();
+        }
+    }
+
+    public function test_existing_local_pdf_with_read_failure_is_not_reported_missing(): void
+    {
+        $publication = $this->publication(['archivo_pdf' => 'existing.pdf']);
+        $adapter = Storage::fake(config('filesystems.default'))->getAdapter();
+        $driver = \Mockery::mock(\League\Flysystem\FilesystemOperator::class);
+        $driver->shouldReceive('readStream')->once()->with('existing.pdf')->andThrow(
+            \League\Flysystem\UnableToReadFile::fromLocation('existing.pdf', 'SECRET_DO_NOT_LOG')
+        );
+        $driver->shouldReceive('fileExists')->once()->with('existing.pdf')->andReturn(true);
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('getDriver')->twice()->andReturn($driver);
+        $disk->shouldReceive('getAdapter')->once()->andReturn($adapter);
+        Storage::shouldReceive('disk')->once()->andReturn($disk);
+
+        $this->getJson("/api/departamentos/publicaciones/{$publication->id}/download")
+            ->assertStatus(503)->assertDontSee('SECRET_DO_NOT_LOG');
+    }
+
+    public function test_unconfirmed_pdf_read_is_unavailable_instead_of_not_found(): void
+    {
+        $publication = $this->publication(['archivo_pdf' => 'existing.pdf']);
+        $driver = \Mockery::mock(\League\Flysystem\FilesystemOperator::class);
+        $driver->shouldReceive('readStream')->once()->andReturn(false);
+        $disk = \Mockery::mock(\Illuminate\Filesystem\FilesystemAdapter::class);
+        $disk->shouldReceive('getDriver')->once()->andReturn($driver);
+        Storage::shouldReceive('disk')->once()->andReturn($disk);
+
+        $this->getJson("/api/departamentos/publicaciones/{$publication->id}/download")->assertStatus(503);
+    }
+
+    public function test_storage_configuration_failure_returns_safe_unavailable_response(): void
+    {
+        $publication = $this->publication(['archivo_pdf' => 'existing.pdf']);
+        Storage::shouldReceive('disk')->once()->andThrow(new \InvalidArgumentException('SECRET_DO_NOT_LOG'));
+
+        $this->getJson("/api/departamentos/publicaciones/{$publication->id}/download")
+            ->assertStatus(503)->assertDontSee('SECRET_DO_NOT_LOG');
+    }
+
+    public function test_unauthorized_download_does_not_contact_storage_even_during_an_outage(): void
+    {
+        $publication = $this->publication(['archivo_pdf' => 'private.pdf', 'solo_suscriptores' => true]);
+        Storage::shouldReceive('disk')->never();
+
+        $this->getJson("/api/departamentos/publicaciones/{$publication->id}/download")->assertForbidden();
+    }
+
+    public function test_missing_pdf_reference_returns_404_without_contacting_storage(): void
+    {
+        $publication = $this->publication();
+        Storage::shouldReceive('disk')->never();
+
+        $this->getJson("/api/departamentos/publicaciones/{$publication->id}/download")->assertNotFound();
+    }
+
+    public function test_sharepoint_only_download_preserves_redirect_without_contacting_storage(): void
+    {
+        $publication = $this->publication(['sharepoint_url' => 'https://example.test/original.pdf']);
+        Storage::shouldReceive('disk')->never();
+
+        $this->get("/api/departamentos/publicaciones/{$publication->id}/download")
+            ->assertRedirect('https://example.test/original.pdf');
     }
 
     public function test_failed_file_deletion_preserves_publication(): void
