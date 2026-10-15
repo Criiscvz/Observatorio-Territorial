@@ -211,14 +211,12 @@ class ObservatorioPublicacionController extends Controller
             return redirect()->away($publicacion->sharepoint_url);
         }
 
-        $disk = Storage::disk(config('filesystems.default'));
         abort_unless($publicacion->archivo_pdf, 404, 'Esta publicación no tiene un PDF guardado. Un administrador debe volver a subirlo.');
 
         $filename = $publicacion->nombre_archivo_original ?? $publicacion->titulo.'.pdf';
         $safeFilename = str_replace('"', '\"', $filename);
 
-        $stream = $disk->readStream($publicacion->archivo_pdf);
-        abort_unless(is_resource($stream), 404, 'Archivo no disponible. Un administrador debe volver a subir el PDF.');
+        $stream = $this->readPdfStream($publicacion->archivo_pdf);
 
         return response()->stream(function () use ($stream): void {
             fpassthru($stream);
@@ -229,6 +227,67 @@ class ObservatorioPublicacionController extends Controller
             'X-Content-Type-Options' => 'nosniff',
             'Content-Disposition' => 'inline; filename="'.$safeFilename.'"',
         ]);
+    }
+
+    /** @return resource */
+    private function readPdfStream(string $path)
+    {
+        $diskName = (string) config('filesystems.default');
+        $disk = null;
+        try {
+            $disk = Storage::disk($diskName);
+            // Laravel's throw=false wrapper discards the provider exception.
+            // Read through Flysystem so an outage is not mistaken for a missing PDF.
+            $stream = $disk->getDriver()->readStream($path);
+            if (! is_resource($stream)) {
+                throw new RuntimeException('Unconfirmed PDF read.');
+            }
+
+            return $stream;
+        } catch (\Throwable $exception) {
+            if ($this->isMissingPdf($exception, $disk, $path)) {
+                abort(404, 'Archivo no disponible. Un administrador debe volver a subir el PDF.');
+            }
+
+            $context = ['disk' => $diskName, 'exception' => get_class($exception)];
+            for ($cause = $exception; $cause !== null; $cause = $cause->getPrevious()) {
+                if ($cause instanceof \Aws\Exception\AwsException) {
+                    $code = $cause->getAwsErrorCode();
+                    $context['s3_code'] = is_string($code) && preg_match('/^[a-zA-Z0-9_]{1,100}$/D', $code) ? $code : 'Unknown';
+                    $context['s3_status'] = $cause->getStatusCode();
+                    break;
+                }
+            }
+            // Do not log the path, raw exception, response body, URL or credentials.
+            Log::error('ATLAS_STORAGE_READ_FAILED', $context);
+            abort(503, 'El almacenamiento no está disponible en este momento. Intenta descargar el PDF nuevamente más tarde.');
+        }
+    }
+
+    private function isMissingPdf(
+        \Throwable $exception,
+        ?\Illuminate\Filesystem\FilesystemAdapter $disk,
+        string $path,
+    ): bool {
+        if (! $exception instanceof \League\Flysystem\UnableToReadFile) {
+            return false;
+        }
+
+        for ($cause = $exception; $cause !== null; $cause = $cause->getPrevious()) {
+            if ($cause instanceof \Aws\Exception\AwsException) {
+                // A bare 404 can also mean NoSuchBucket or a gateway error.
+                return $cause->getStatusCode() === 404 && $cause->getAwsErrorCode() === 'NoSuchKey';
+            }
+        }
+
+        // Local disks (including Storage::fake) have no S3 error code. Confirm
+        // absence separately; permission/read failures on existing files are 503.
+        try {
+            return $disk?->getAdapter() instanceof \League\Flysystem\Local\LocalFilesystemAdapter
+                && ! $disk->getDriver()->fileExists($path);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public function update(UpdatePublicacionRequest $request, ObservatorioPublicacion $publicacion): JsonResponse
