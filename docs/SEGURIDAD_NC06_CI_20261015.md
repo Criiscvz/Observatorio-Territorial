@@ -57,8 +57,8 @@ y el temporal se elimina al terminar. Un error del escáner hace fallar el check
   expresiones. La expresión del puerto se corrigió a clave string durante esa validación.
 - Matcher real Docker: 31 exclusiones y 11 inclusiones; sin contexto real, imágenes
   descargadas ni contenedores ejecutados por ese ensayo.
-- Backend aislado PHP 8.4.25: SQLite, 188 casos (180 aprobados, ocho omitidos por
-  requerir PostgreSQL), 1.106 aserciones; PostgreSQL 16, 77 pruebas aprobadas y 183
+- Backend aislado PHP 8.4.25: SQLite, 191 casos (183 aprobados, ocho omitidos por
+  requerir PostgreSQL), 1.116 aserciones; PostgreSQL 16, 77 pruebas aprobadas y 183
   aserciones. Las suites se solapan: no sumar los totales como casos independientes.
 - Frontend: 208 pruebas aprobadas en 26 archivos. Build normal y build SPA
   `build:vercel` correctos; este último con `API_URL=/api`. Se restauró el placeholder
@@ -68,6 +68,21 @@ y el temporal se elimina al terminar. Un error del escáner hace fallar el check
 
 Estos resultados locales no se presentan como una ejecución de GitHub. Antes de
 fusionar, revisar el primer run real del PR y resolver cualquier fallo del runner.
+
+### Incompatibilidad encontrada por el primer run de GitHub
+
+El run inicial detectó 18 errores SQLite en una migración existente que enviaba
+`ALTER COLUMN fuente DROP NOT NULL` sin distinguir el motor. La imagen de pruebas
+local usa SQLite 3.53.4 y aceptaba esa sintaxis; el runner Ubuntu usa una versión
+anterior. Los trabajos Secretos, Higiene y Frontend pasaron y Resultado falló por
+el backend, acreditando que el agregado no oculta un fallo.
+
+Se añade un camino SQLite mediante Schema Builder, manteniendo literalmente el
+SQL PostgreSQL existente. Tres regresiones comprueban compatibilidad con la
+sintaxis SQLite anterior, conservación de filas y nullabilidad, SQL PostgreSQL
+intacto y ausencia de operaciones cuando falta la tabla. La nueva regresión falló
+antes del ajuste y pasó después. No se ejecutó ninguna migración en producción.
+Esta corrección acotada de compatibilidad es el único cambio de aplicación del PR.
 
 ## Uso local del escáner
 
