@@ -36,7 +36,7 @@ RUN apk add --no-cache --virtual .build-deps \
         opcache \
         pcntl \
     # MongoDB via PECL (requiere build-deps)
-    && pecl install mongodb \
+    && pecl install mongodb-2.5.2 \
     && docker-php-ext-enable mongodb \
     # Limpiar build deps
     && apk del .build-deps
