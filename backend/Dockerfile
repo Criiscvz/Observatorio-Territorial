@@ -75,7 +75,7 @@ RUN docker-php-ext-configure gd \
 # $PHPIZE_DEPS (autoconf, gcc, g++, make, ...) y openssl-dev se instalan
 # de forma temporal (--virtual) y se borran al terminar para no inflar la imagen.
 RUN apk add --no-cache --virtual .mongodb-build-deps $PHPIZE_DEPS openssl-dev \
-    && pecl install mongodb \
+    && pecl install mongodb-2.5.2 \
     && docker-php-ext-enable mongodb \
     && apk del .mongodb-build-deps
 
