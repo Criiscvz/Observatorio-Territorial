@@ -1,0 +1,16 @@
+title = "Observatorio: current tracked files"
+
+[extend]
+useDefault = true
+
+# Public Power BI "Publish to web" URLs in this demo seeder contain base64 JSON
+# with k/t/c identifiers, not Grafana credentials. Keep the exception scoped to
+# this one rule, this one path AND a complete standalone public-view URL line.
+# No directory-wide test/docs exclusions and no historical baseline are used.
+[[allowlists]]
+description = "Public Power BI view links in the reviewed demo seeder only"
+targetRules = ["grafana-api-key"]
+condition = "AND"
+paths = ['''(^|[\\/])backend[\\/]database[\\/]seeders[\\/]ReporteArticuloSeeder\.php$''']
+regexTarget = "line"
+regexes = ['''^\s*'https://app\.powerbi\.com/view\?r=[A-Za-z0-9_-]+={0,2}',?\s*$''']

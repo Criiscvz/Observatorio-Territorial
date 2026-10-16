@@ -93,7 +93,7 @@ La prueba de higiene es una guarda específica de regresión del repositorio, no
 ## Pendientes para el cierre
 
 1. La revisión local y las comprobaciones del diff están completas. Publicar un PR con la misma rama sin prefijo cuando se autorice. No fusionar ni desplegar por el solo hecho de que estas pruebas locales pasen. La higiene del árbol actual no cierra NC-03.
-2. Integrar un escáner mantenido en CI con salida redactada, permisos mínimos y tratamiento revisado de fixtures. Estas 14 pruebas aún no son una puerta obligatoria de GitHub ni cierran NC-06.
+2. Integrar un escáner mantenido en CI con salida redactada, permisos mínimos y tratamiento revisado de fixtures. El siguiente corte se prepara en [NC-06: controles automáticos](SEGURIDAD_NC06_CI_20261015.md). Estas 14 pruebas no son por sí solas una puerta obligatoria de GitHub ni cierran NC-06; el cierre requiere acreditar el run real y la regla de rama correspondiente.
 3. Remediar por separado las cuentas con coincidencias confirmadas y la configuración local, con autorización específica. Revisar omisiones y alcance histórico restante. No existe autorización ni necesidad acreditada para una purga indiscriminada; cualquier saneamiento del historial necesita respaldo, alcance y coordinación con colaboradores.
 4. Acreditar por separado revocación de tokens históricos y restauración aislada de respaldos. No se ejecutaron en esta tarea.
 5. Actualizar la matriz con un nuevo corte después de revisar/publicar la limpieza, conservando la versión anterior y sin confundir implementación local con cierre operativo o institucional.
