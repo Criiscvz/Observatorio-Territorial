@@ -1,0 +1,160 @@
+name: CI seguridad
+
+on:
+  pull_request:
+  push:
+    branches: [main, deploy-gratis]
+  workflow_dispatch:
+
+# PR code never receives deployment secrets, write tokens or OIDC credentials.
+permissions:
+  contents: read
+
+concurrency:
+  group: seguridad-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  secrets:
+    name: Secretos
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.17.0'
+          package-manager-cache: false
+      - name: Install checksum-verified Gitleaks
+        shell: bash
+        run: |
+          ci_binary="$(node scripts/install-gitleaks.mjs)"
+          printf 'GITLEAKS_BIN=%s\n' "$ci_binary" >> "$GITHUB_ENV"
+      - name: Prove detection, redaction and narrow fixture exception
+        run: node --test scripts/secret-scan.test.mjs
+      - name: Scan tracked files and all new commits without publishing raw findings
+        env:
+          SCAN_EVENT: ${{ github.event_name }}
+          SCAN_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          SCAN_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/scan-secrets.mjs
+
+  hygiene:
+    name: Higiene
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.17.0'
+          package-manager-cache: false
+      - name: Repository and workflow regressions
+        run: node --test scripts/test-repository-hygiene.mjs scripts/security-workflow.test.mjs
+      - name: Synthetic Docker context only
+        run: node scripts/test-docker-context-hygiene.mjs
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres@sha256:e013e867e712fec275706a6c51c966f0bb0c93cfa8f51000f85a15f9865a28cb # PostgreSQL 16 Alpine
+        env:
+          POSTGRES_DB: observatorio_ci_test
+          POSTGRES_USER: ci_test
+          POSTGRES_PASSWORD: synthetic-disposable-ci-only
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U ci_test -d observatorio_ci_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      DATABASE_URL: ''
+      DB_URL: ''
+      MONGODB_URI: ''
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      FILESYSTEM_DISK: local
+      LOG_CHANNEL: stderr
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: shivammathur/setup-php@4424c9aab975b57bd706ee5a39c6b4334d6e4f60 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring, dom, xml, xmlwriter, simplexml, sqlite3, pdo_sqlite, pdo_pgsql, gd, zip, intl, bcmath, mongodb
+          coverage: none
+          tools: composer:v2
+        env:
+          fail-fast: true
+      - name: Install locked dependencies without deployment scripts
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts --no-plugins
+      - name: Discover packages in the isolated testing environment
+        run: php artisan package:discover --ansi
+      - name: SQLite suite
+        run: php vendor/bin/phpunit --no-progress
+      - name: PostgreSQL 16 JSONB and isolation suites
+        env:
+          TEST_DB_CONNECTION: pgsql
+          TEST_DB_HOST: 127.0.0.1
+          TEST_DB_PORT: ${{ job.services.postgres.ports['5432'] }}
+          TEST_DB_DATABASE: observatorio_ci_test
+          TEST_DB_USERNAME: ci_test
+          TEST_DB_PASSWORD: synthetic-disposable-ci-only
+        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest'
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.17.0'
+          package-manager-cache: false
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Frontend unit tests
+        run: npm test -- --watch=false
+      - name: Production SPA build with a same-origin API path
+        env:
+          API_URL: /api
+        run: npm run build:vercel
+      - name: Security headers, PWA and generated-artifact regressions
+        env:
+          SECURITY_CHECK_BUILD: '1'
+        run: npm run test:security-headers
+
+  result:
+    name: Resultado
+    if: always()
+    needs: [secrets, hygiene, backend, frontend]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every security job to pass
+        env:
+          CI_JOB_RESULTS: ${{ toJSON(needs) }}
+        run: node -e 'const jobs = JSON.parse(process.env.CI_JOB_RESULTS); if (Object.values(jobs).some(job => job.result !== "success")) process.exit(1); console.log("All four security jobs passed.");'
