@@ -136,6 +136,29 @@ test('the documentation detector distinguishes empty values from the next line',
   assert.deepEqual(credentialLines('MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:?required}'), []);
 });
 
+test('the PostgreSQL guide distinguishes a prompt from password authentication', async () => {
+  const source = await readFile(resolve(root, 'docs/comandos.md'), 'utf8');
+  const start = source.indexOf('## Configuración de Base de Datos');
+  assert(start >= 0, 'The database connection guidance is required.');
+  const section = source.slice(start).split(/\r?\n---/)[0];
+  const command = section.split(/\r?\n/)
+    .find(line => /^docker exec -it observatorio_db psql\b/.test(line));
+  assert(typeof command === 'string', 'The documented Docker psql command is required.');
+  const args = command.trim().split(/\s+/);
+  const hostIndex = args.indexOf('-h');
+  // The root Compose service resolves this name to a non-loopback address.
+  // Do not log the command/section on failure: future edits may contain secrets.
+  assert(hostIndex >= 0 && args[hostIndex + 1] === 'observatorio_db',
+    'Use the Compose container hostname, not its local socket or loopback.');
+  assert(args.includes('-W'), 'Keep an interactive password prompt; never inline a password.');
+  assert(!/PGPASSWORD\s*=|--password\s*=/.test(command),
+    'Do not put a password assignment in the connection example.');
+  assert(/-W[^\r\n]*solo[^\r\n]*solicita[^\r\n]*no verifica/i.test(section),
+    'Explain that the prompt alone does not verify the password.');
+  assert(section.includes('pg_hba.conf') && section.includes('scram-sha-256')
+    && section.includes('trust'), 'Explain the effective HBA rule and its trust limitation.');
+});
+
 test('the documentation detector flags synthetic literals without returning their values', () => {
   const synthetic = 'synthetic-fixture-only';
   const findings = credentialLines(`DB_PASSWORD=${synthetic}\npostgresql://test:${synthetic}@localhost/test`);

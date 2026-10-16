@@ -167,16 +167,33 @@ Contraseña: definida mediante DB_PASSWORD en tu entorno local protegido
 Define `DATABASE_URL` en el entorno protegido, o usa las variables `DB_HOST`,
 `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` y `DB_PASSWORD`. No copies contraseñas
 a este documento ni al repositorio. No hay una URI lista para pegar con una
-clave compartida. Para entrar al PostgreSQL local con una solicitud de clave:
+clave compartida. Para conectar por TCP al servicio del Compose raíz, usa el
+nombre del contenedor, no su socket local ni su dirección loopback:
 
 ```powershell
-docker exec -it observatorio_db psql -U postgres -d observatorio_uleam -W
+docker exec -it observatorio_db psql -h observatorio_db -p 5432 -U postgres -d observatorio_uleam -W
 ```
 
-La clave debe coincidir con la configurada cuando se inicializó el volumen.
-Cambiar una variable de Compose no cambia por sí solo la clave de una base ya
-creada. No elimines el volumen para resolverlo: revisa primero el respaldo y el
-procedimiento de cambio de credenciales.
+La opción `-W` solo solicita la clave; no verifica por sí misma que el servidor
+la utilice. Sin `-h`, `psql` dentro del contenedor Linux usa un socket Unix.
+También `-h 127.0.0.1` puede usar una regla local `trust`: en ambos casos, entrar
+no demuestra que la contraseña sea correcta.
+
+El nombre `observatorio_db` resuelve a una dirección no-loopback en el Compose
+revisado. Para interpretar una conexión correcta como validación de la clave,
+la primera regla aplicable de `pg_hba.conf` para esa dirección, usuario y base
+debe exigir autenticación por contraseña, por ejemplo `scram-sha-256`. En la
+configuración local revisada, esa ruta TCP usa `scram-sha-256`; si tu volumen
+conserva una configuración distinta o la regla efectiva es `trust`, este ejemplo
+no acredita la clave. No cambies las reglas para omitir la autenticación.
+
+Cuando la ruta exige contraseña, esta debe coincidir con la configurada cuando
+se inicializó el volumen. Cambiar una variable de Compose no actualiza por sí
+solo la clave de una base ya creada. No elimines el volumen para resolverlo:
+revisa primero el respaldo y el procedimiento de cambio de credenciales.
+
+Referencias: [opción `-W` y conexiones de psql](https://www.postgresql.org/docs/16/app-psql.html#APP-PSQL-OPTION-PASSWORD)
+y [selección de reglas de `pg_hba.conf`](https://www.postgresql.org/docs/16/auth-pg-hba-conf.html).
 
 ---
 

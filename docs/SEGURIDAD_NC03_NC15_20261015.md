@@ -19,7 +19,7 @@ Se revisan los candidatos del inventario privado previo sin reproducir sus valor
 
 - `docs/SDD-Integracion-MongoDB.md`: URI vacía que debe completarse en el entorno protegido; el ejemplo Compose exige `MONGODB_ROOT_PASSWORD` y deja de incluir una clave literal.
 - `docs/SISTEMA.md`: los accesos de ejemplo pasan a describir las variables de usuarios iniciales, sin cuentas/contraseñas listas para copiar.
-- `docs/comandos.md`: se elimina la contraseña predeterminada y la URI con contraseña; se documenta la solicitud interactiva de clave del PostgreSQL local. Se advierte que cambiar una variable no actualiza la clave de un volumen existente y que no debe borrarse el volumen como solución.
+- `docs/comandos.md`: se elimina la contraseña predeterminada y la URI con contraseña. La revisión posterior corrige el ejemplo para usar el nombre no-loopback del contenedor y distingue el prompt `-W` de la autenticación efectiva de la primera regla HBA aplicable. Se advierte que una regla `trust` no verifica la clave, que cambiar una variable no actualiza la clave de un volumen existente y que no debe borrarse el volumen como solución. No se alteran reglas de autenticación ni cuentas.
 - `docs/DEPLOY_GRATIS.md`: seis valores sensibles quedan vacíos para completarlos en el panel protegido. Se distingue la generación de `APP_KEY` para una instalación nueva de la conservación de la clave existente.
 - `backend/.env.example` ya deja vacíos o `null` los campos sensibles examinados; no se rellenó con valores reales. La limpieza y sus regresiones no leen `.env`; la comparación privada autorizada posterior se describe por separado a continuación.
 
@@ -80,20 +80,20 @@ npm test -- --watch=false
 npm run build
 ```
 
-- Higiene: 13 pruebas aprobadas, ninguna omitida. Comprueban el índice, reglas reales de ignore, excepciones de plantillas, exclusiones esperadas de Docker, cuatro documentos, configuración sensible vacía/null y que el detector no devuelva valores.
+- Higiene: 14 pruebas aprobadas, ninguna omitida (13 iniciales más la regresión del ejemplo PostgreSQL añadida tras revisar el PR). Comprueban el índice, reglas reales de ignore, excepciones de plantillas, exclusiones esperadas de Docker, cuatro documentos, configuración sensible vacía/null y que el detector no devuelva valores. La prueba nueva falló con la guía anterior y pasó con la corrección; no inicia sesión ni prueba contraseñas.
 - Contexto Docker: ensayo final aprobado, con 31 rutas ficticias excluidas y 11 rutas necesarias conservadas. Antes de corregir las reglas, el ensayo inicial reprodujo 12 exclusiones ausentes. Motor local 29.5.3, sin leer el contexto real ni crear una imagen de aplicación.
 - Backend SQLite aislado: 188 casos, 180 aprobados, ocho omitidos por requerir PostgreSQL; 1.106 aserciones.
 - PostgreSQL 16 aislado y validación de columnas/aislamiento: 77 pruebas y 183 aserciones, todas aprobadas. Las suites se solapan; no sumar sus totales.
 - PHP 8.4.25 / PHPUnit 11.5.53. Se usan las imágenes ya existentes, sin descargas, `.env`, volúmenes del usuario ni red externa. Datos sintéticos y almacenamiento temporal.
 - Frontend: 208 pruebas aprobadas en 26 archivos; `npm run build` completado sin errores. Conserva 10 advertencias de presupuesto de estilos en archivos SCSS no modificados por esta limpieza. No se ejecutó `build:vercel` ni se cambió la URL de API.
-- Las suites anteriores se repitieron con estos cambios, sin fallos. Se verificaron el diff y las exclusiones después de añadir el respaldo del frontend. Las cinco copias locales son idénticas a sus blobs del commit base; no se modificaron ni eliminaron.
+- Las suites backend/frontend y el build corresponden al cambio inicial del PR (`7aa0ef3`), sin fallos. Tras corregir la guía PostgreSQL se repitieron las 14 pruebas de higiene y el ensayo Docker; no cambió código de aplicación ni se repitieron íntegramente esas suites. Se verificaron el diff y las exclusiones después de añadir el respaldo del frontend. Las cinco copias locales son idénticas a sus blobs del commit base; no se modificaron ni eliminaron.
 
 La prueba de higiene es una guarda específica de regresión del repositorio, no un escáner general de secretos ni un sustituto de reglas mantenidas por una herramienta especializada. No ejecuta peticiones, pruebas de contraseñas o escrituras de producción.
 
 ## Pendientes para el cierre
 
 1. La revisión local y las comprobaciones del diff están completas. Publicar un PR con la misma rama sin prefijo cuando se autorice. No fusionar ni desplegar por el solo hecho de que estas pruebas locales pasen. La higiene del árbol actual no cierra NC-03.
-2. Integrar un escáner mantenido en CI con salida redactada, permisos mínimos y tratamiento revisado de fixtures. Estas 13 pruebas aún no son una puerta obligatoria de GitHub ni cierran NC-06.
+2. Integrar un escáner mantenido en CI con salida redactada, permisos mínimos y tratamiento revisado de fixtures. Estas 14 pruebas aún no son una puerta obligatoria de GitHub ni cierran NC-06.
 3. Remediar por separado las cuentas con coincidencias confirmadas y la configuración local, con autorización específica. Revisar omisiones y alcance histórico restante. No existe autorización ni necesidad acreditada para una purga indiscriminada; cualquier saneamiento del historial necesita respaldo, alcance y coordinación con colaboradores.
 4. Acreditar por separado revocación de tokens históricos y restauración aislada de respaldos. No se ejecutaron en esta tarea.
 5. Actualizar la matriz con un nuevo corte después de revisar/publicar la limpieza, conservando la versión anterior y sin confundir implementación local con cierre operativo o institucional.
