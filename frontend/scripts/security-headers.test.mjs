@@ -138,7 +138,7 @@ test('permite imágenes propias, avatares HTTPS y previsualizaciones blob/data',
 
 test('limita conexiones al proxy del mismo origen y al backend HTTPS exacto', () => {
   assert.deepEqual(directives.get('connect-src'),
-    ["'self'", 'https://observatorio-territorial.onrender.com']);
+    ["'self'", 'https://observatorio-territorial-pruebas.onrender.com']);
   assert.ok(directives.has('upgrade-insecure-requests'));
 });
 
@@ -156,9 +156,9 @@ test('aplica nosniff, una política de referencia limitada y permisos no utiliza
 
 test('mantiene intactos el proxy de API/CSRF/almacenamiento y el fallback SPA', () => {
   assert.deepEqual(vercel.rewrites, [
-    { source: '/api/:path*', destination: 'https://observatorio-territorial.onrender.com/api/:path*' },
-    { source: '/sanctum/:path*', destination: 'https://observatorio-territorial.onrender.com/sanctum/:path*' },
-    { source: '/storage/:path*', destination: 'https://observatorio-territorial.onrender.com/storage/:path*' },
+    { source: '/api/:path*', destination: 'https://observatorio-territorial-pruebas.onrender.com/api/:path*' },
+    { source: '/sanctum/:path*', destination: 'https://observatorio-territorial-pruebas.onrender.com/sanctum/:path*' },
+    { source: '/storage/:path*', destination: 'https://observatorio-territorial-pruebas.onrender.com/storage/:path*' },
     { source: '/(.*)', destination: '/index.html' },
   ]);
   assert.equal(vercel.outputDirectory, 'dist/frontend/browser');
