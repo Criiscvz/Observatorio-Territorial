@@ -76,6 +76,12 @@ button:disabled {opacity:.5; cursor:default;}
 .preview {border:1px solid var(--border-color); border-radius:12px; overflow:hidden;}
 .preview-label {font-size:.75rem; background:var(--bg-tertiary); color:var(--text-secondary); padding:.7rem 1rem;}
 .preview-bar {display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; padding:1.5rem;}
+:host .preview-bar a.btn-viewer-preview {background:#4f46e5; border-color:#4f46e5; color:#fff; min-height:44px; font-weight:650;}
+:host .preview-bar a.btn-viewer-preview mat-icon,
+:host .preview-bar a.btn-viewer-preview span {color:inherit;}
+:host .preview-bar a.btn-viewer-preview:hover {background:#4338ca; border-color:#4338ca; color:#fff;}
+:host .preview-bar a.btn-viewer-preview:active {background:#3730a3; border-color:#3730a3;}
+:host .preview-bar a.btn-viewer-preview:focus-visible {outline:2px solid var(--primary-500); outline-offset:3px;}
 .preview-brand {display:flex; align-items:center; gap:.75rem; font-weight:600; font-size:.85rem;}
 .preview-brand img {width:38px; height:42px; object-fit:contain;}
 .preview-brand small {display:block; color:var(--primary-500); font-weight:400; font-size:.75rem;}
