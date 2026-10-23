@@ -11,7 +11,7 @@ class StorePublicacionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->input('tipo') !== 'ATLAS' || $this->user()?->rol === 'ADMIN';
     }
 
     protected function prepareForValidation(): void

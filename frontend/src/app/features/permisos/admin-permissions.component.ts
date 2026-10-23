@@ -59,7 +59,7 @@ export class AdminPermissionsComponent implements OnInit {
   readonly editorPermissions = [
     'Crear Artículos',
     'Crear Reportes',
-    'Crear Atlas',
+    'Crear Libros',
     'Envíos en revisión',
     'Panel del editor',
   ];
@@ -78,7 +78,7 @@ export class AdminPermissionsComponent implements OnInit {
       icon: 'edit_note',
       description: 'Gestiona contenidos en los Observatorios asignados.',
       access: 'Configurable por usuario',
-      permissions: ['Observatorios asignados', 'Crear Artículos, Reportes y Atlas', 'Envíos en revisión'],
+      permissions: ['Observatorios asignados', 'Crear Artículos, Reportes y Libros', 'Envíos en revisión'],
     },
     {
       rol: 'SUBSCRIBER',
@@ -100,6 +100,9 @@ export class AdminPermissionsComponent implements OnInit {
   users = signal<User[]>([]);
   loadingUsers = signal(true);
   searchTerm = signal('');
+  resetConfirmationId = signal<number | null>(null);
+  savingUserId = signal<number | null>(null);
+  saveStatus = signal('');
 
   filteredUsers = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -199,6 +202,23 @@ export class AdminPermissionsComponent implements OnInit {
     ).length;
   }
 
+  hasAllObservatorios(user: User): boolean {
+    return this.getUserPermisos(user).some(
+      (permiso) => permiso.modulo === 'observatorios' && permiso.nivel !== 'ninguno'
+        && permiso.departamento_id === null,
+    );
+  }
+
+  getAssignedObservatoriosNames(user: User): string[] {
+    if (this.hasAllObservatorios(user)) return [];
+    const assignedIds = new Set(this.getUserPermisos(user)
+      .filter((permiso) => permiso.modulo === 'observatorios' && permiso.nivel !== 'ninguno')
+      .map((permiso) => permiso.departamento_id));
+    return (user.departamentos || [])
+      .filter((departamento) => assignedIds.has(departamento.id))
+      .map((departamento) => departamento.nombre);
+  }
+
   tienePermisosPersonalizados(user: User): boolean {
     return this.permisosService.getUserPermisos(user.id).length > 0;
   }
@@ -206,6 +226,8 @@ export class AdminPermissionsComponent implements OnInit {
   // ─── acciones ───
 
   openPermissionsDialog(user: User): void {
+    if (this.savingUserId() !== null) return;
+    this.resetConfirmationId.set(null);
     const dialogRef = this.dialog.open(UserPermissionsDialogComponent, {
       width: '760px',
       maxWidth: '95vw',
@@ -218,11 +240,15 @@ export class AdminPermissionsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PermisoConfig[] | undefined) => {
         if (result) {
+          this.savingUserId.set(user.id);
+          this.saveStatus.set('');
           this.permisosService
             .saveUserPermisos(user.id, result)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
               next: (response) => {
+                this.savingUserId.set(null);
+                this.saveStatus.set('Asignación de observatorios actualizada.');
                 if (response.user) {
                   this.users.update((users) =>
                     users.map((item) => (item.id === response.user!.id ? response.user! : item))
@@ -237,6 +263,8 @@ export class AdminPermissionsComponent implements OnInit {
                 );
               },
               error: () => {
+                this.savingUserId.set(null);
+                this.saveStatus.set('No se pudieron guardar los permisos. Puedes volver a intentarlo.');
                 this.snackBar.open(
                   'No se pudieron guardar los permisos.',
                   'Cerrar',
@@ -249,6 +277,9 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   resetUserPermissions(user: User): void {
+    if (this.resetConfirmationId() !== user.id || this.savingUserId() !== null) return;
+    this.savingUserId.set(user.id);
+    this.saveStatus.set('');
     const emptyPermissions: PermisoConfig[] = [
       {
         modulo: 'observatorios',
@@ -261,8 +292,12 @@ export class AdminPermissionsComponent implements OnInit {
       .saveUserPermisos(user.id, emptyPermissions)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: () => {
-          this.users.set([...this.users()]);
+        next: (response) => {
+          this.savingUserId.set(null);
+          this.resetConfirmationId.set(null);
+          this.saveStatus.set(`Accesos de ${user.name} retirados.`);
+          this.users.update((users) => users.map((item) =>
+            item.id === response.user?.id ? response.user : item));
           this.snackBar.open(
             `Permisos de ${user.name} restablecidos.`,
             'Cerrar',
@@ -270,6 +305,8 @@ export class AdminPermissionsComponent implements OnInit {
           );
         },
         error: () => {
+          this.savingUserId.set(null);
+          this.saveStatus.set('No se pudieron quitar los accesos. Puedes volver a intentarlo.');
           this.snackBar.open(
             'No se pudieron restablecer los permisos.',
             'Cerrar',

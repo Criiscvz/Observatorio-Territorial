@@ -1,110 +1,40 @@
 <div class="auth-container">
-  <mat-card class="auth-card">
-    <mat-card-header class="justify-center mb-6">
-      <div class="text-center w-full">
-        <img src="ULEAM.png" alt="ULEAM" class="auth-logo" />
-        <mat-card-title class="auth-title">{{ 'auth.register.title' | translate }}</mat-card-title>
-        <mat-card-subtitle>{{ 'auth.register.subtitle' | translate }}</mat-card-subtitle>
-      </div>
-    </mat-card-header>
-
-    <mat-card-content>
-      @if (error()) {
-        <div class="alert alert-error">
-          <mat-icon>error_outline</mat-icon>
-          <span>{{ error() }}</span>
+  <section class="registration-card" aria-labelledby="register-title">
+    <a routerLink="/" class="registration-brand"><img src="ULEAM.png" alt="ULEAM" /><span>{{ appConfig.app.name }}<small>{{ appConfig.university.name }}</small></span></a>
+    <h1 id="register-title">{{ 'auth.register.title' | translate }}</h1>
+    <p class="registration-intro">{{ 'auth.register.accountIntro' | translate }}</p>
+    <ol class="registration-steps" [attr.aria-label]="'auth.register.progress' | translate">
+      <li [class.current]="step() === 1" [attr.aria-current]="step() === 1 ? 'step' : null"><span>1</span>{{ 'auth.register.stepAccount' | translate }}</li>
+      <li [class.current]="step() === 2" [attr.aria-current]="step() === 2 ? 'step' : null"><span>2</span>{{ 'auth.register.stepProfile' | translate }}<small>{{ 'auth.register.optional' | translate }}</small></li>
+    </ol>
+    <h2 #stepHeading tabindex="-1" class="step-heading">{{ (step() === 1 ? 'auth.register.accountDetails' : 'auth.register.profileTitle') | translate }}</h2>
+    @if (error()) { <div class="registration-error" role="alert"><mat-icon aria-hidden="true">error_outline</mat-icon><span>{{ error() }}</span></div> }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <fieldset [disabled]="loading()">
+      @if (step() === 1) {
+        <p class="registration-note">{{ 'auth.register.requiredNote' | translate }}</p>
+        <div class="registration-fields">
+          <div class="field"><label for="register-given-name">{{ 'auth.register.givenName' | translate }} *</label><input id="register-given-name" formControlName="given_name" autocomplete="given-name" maxlength="125" [attr.aria-invalid]="invalid('given_name')" aria-describedby="given-name-error" /><small id="given-name-error" class="field-error">@if (invalid('given_name')) { {{ 'common.validation.required' | translate }} }</small></div>
+          <div class="field"><label for="register-family-name">{{ 'auth.register.familyName' | translate }} *</label><input id="register-family-name" formControlName="family_name" autocomplete="family-name" maxlength="125" [attr.aria-invalid]="invalid('family_name')" aria-describedby="family-name-error" /><small id="family-name-error" class="field-error">@if (invalid('family_name')) { {{ 'common.validation.required' | translate }} }</small></div>
+          <div class="field full-width"><label for="register-email">{{ 'auth.register.email' | translate }} *</label><input id="register-email" type="email" formControlName="email" autocomplete="email" maxlength="255" [placeholder]="'auth.register.emailPlaceholder' | translate" [attr.aria-invalid]="invalid('email')" aria-describedby="email-help email-error" /><small id="email-help">{{ 'auth.register.emailHint' | translate }}</small><small id="email-error" class="field-error">@if (invalid('email')) { {{ 'common.validation.email' | translate }} }</small></div>
+          <div class="field"><label for="register-password">{{ 'auth.register.password' | translate }} *</label><div class="password-field"><input id="register-password" [type]="hidePassword() ? 'password' : 'text'" formControlName="password" autocomplete="new-password" [attr.aria-invalid]="invalid('password')" aria-describedby="password-help password-error" /><button type="button" mat-icon-button (click)="hidePassword.set(!hidePassword())" [attr.aria-label]="(hidePassword() ? 'auth.register.showPassword' : 'auth.register.hidePassword') | translate" [attr.aria-pressed]="!hidePassword()"><mat-icon aria-hidden="true">{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon></button></div><small id="password-error" class="field-error">@if (invalid('password')) { {{ 'common.validation.minLength' | translate: { min: 8 } }} }</small></div>
+          <div class="field"><label for="register-confirmation">{{ 'auth.register.confirmPassword' | translate }} *</label><div class="password-field"><input id="register-confirmation" [type]="hideConfirmation() ? 'password' : 'text'" formControlName="password_confirmation" autocomplete="new-password" [attr.aria-invalid]="invalid('password_confirmation') || (form.hasError('passwordMismatch') && form.controls.password_confirmation.touched)" /><button type="button" mat-icon-button (click)="hideConfirmation.set(!hideConfirmation())" [attr.aria-label]="(hideConfirmation() ? 'auth.register.showConfirmation' : 'auth.register.hideConfirmation') | translate" [attr.aria-pressed]="!hideConfirmation()"><mat-icon aria-hidden="true">{{ hideConfirmation() ? 'visibility_off' : 'visibility' }}</mat-icon></button></div></div>
         </div>
+        <p id="password-help" class="registration-note password-help">{{ 'common.validation.minLength' | translate: { min: 8 } }}</p>
+        <button mat-raised-button color="primary" type="submit" class="registration-primary">{{ 'auth.register.continue' | translate }}<mat-icon iconPositionEnd>arrow_forward</mat-icon></button>
+      } @else {
+        <p class="registration-note">{{ 'auth.register.profileIntro' | translate }}</p>
+        <app-community-profile-fields [form]="profileForm" />
+        <div class="registration-actions"><button mat-stroked-button type="button" (click)="previousStep()"><mat-icon>arrow_back</mat-icon>{{ 'auth.register.back' | translate }}</button><button mat-raised-button color="primary" type="submit">@if (loading()) { <mat-spinner diameter="20" /> } {{ (loading() ? 'auth.register.submitting' : 'auth.register.submit') | translate }}</button></div>
+        <button type="button" class="registration-skip" (click)="onSubmit(true)"><mat-icon aria-hidden="true">person_add</mat-icon><span>{{ 'auth.register.skip' | translate }}</span><mat-icon aria-hidden="true">arrow_forward</mat-icon></button>
+        <p class="skip-hint">{{ 'auth.register.skipHint' | translate }}</p>
       }
-
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <mat-form-field class="w-full" appearance="outline">
-          <mat-label>{{ 'auth.register.fullName' | translate }}</mat-label>
-          <input matInput type="text" formControlName="name" [placeholder]="'auth.register.fullNamePlaceholder' | translate" />
-          <mat-icon matSuffix>person</mat-icon>
-          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-            <mat-error>{{ 'common.validation.required' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field class="w-full" appearance="outline">
-          <mat-label>{{ 'auth.register.email' | translate }}</mat-label>
-          <input matInput type="email" formControlName="email" [placeholder]="'auth.register.emailPlaceholder' | translate" />
-          <mat-icon matSuffix>email</mat-icon>
-          @if (form.get('email')?.hasError('required') && form.get('email')?.touched) {
-            <mat-error>{{ 'common.validation.required' | translate }}</mat-error>
-          }
-          @if (form.get('email')?.hasError('email')) {
-            <mat-error>{{ 'common.validation.email' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field class="w-full" appearance="outline">
-          <mat-label>{{ 'auth.register.password' | translate }}</mat-label>
-          <input
-            matInput
-            [type]="hidePassword() ? 'password' : 'text'"
-            formControlName="password"
-          />
-          <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            (click)="hidePassword.set(!hidePassword())"
-          >
-            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
-          </button>
-          @if (form.get('password')?.hasError('required') && form.get('password')?.touched) {
-            <mat-error>{{ 'common.validation.required' | translate }}</mat-error>
-          }
-          @if (form.get('password')?.hasError('minlength')) {
-            <mat-error>{{ 'common.validation.minLength' | translate: { min: 8 } }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field class="w-full" appearance="outline">
-          <mat-label>{{ 'auth.register.confirmPassword' | translate }}</mat-label>
-          <input
-            matInput
-            [type]="hidePassword() ? 'password' : 'text'"
-            formControlName="password_confirmation"
-          />
-          <mat-icon matSuffix>lock</mat-icon>
-          @if (
-            form.get('password_confirmation')?.hasError('required') &&
-            form.get('password_confirmation')?.touched
-          ) {
-            <mat-error>{{ 'common.validation.required' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        <button
-          mat-raised-button
-          color="primary"
-          type="submit"
-          class="w-full mt-4"
-          [disabled]="form.invalid || loading()"
-        >
-          @if (loading()) {
-            <mat-spinner diameter="20" class="inline-block mr-2"></mat-spinner>
-            {{ 'auth.register.submitting' | translate }}
-          } @else {
-            {{ 'auth.register.submit' | translate }}
-          }
-        </button>
-      </form>
-
-      <div class="auth-divider"><span>o</span></div>
-      <button mat-stroked-button type="button" class="w-full google-button" [disabled]="loading()" (click)="continueWithGoogle()">
-        <mat-icon>account_circle</mat-icon>
-        Continuar con Google
-      </button>
-    </mat-card-content>
-
-    <mat-card-actions class="justify-center">
-      <p class="auth-footer-text">
-        {{ 'auth.register.hasAccount' | translate }}
-        <a routerLink="/auth/login" class="auth-link">{{ 'auth.register.loginLink' | translate }}</a>
-      </p>
-    </mat-card-actions>
-  </mat-card>
+      </fieldset>
+    </form>
+    @if (step() === 1) {
+      <div class="auth-divider"><span>{{ 'auth.register.or' | translate }}</span></div>
+      <button mat-stroked-button type="button" class="google-button" [disabled]="loading()" (click)="continueWithGoogle()"><mat-icon>account_circle</mat-icon>{{ 'auth.register.google' | translate }}</button>
+    }
+    <p class="auth-footer-text">{{ 'auth.register.hasAccount' | translate }} <a routerLink="/auth/login">{{ 'auth.register.loginLink' | translate }}</a></p>
+  </section>
 </div>

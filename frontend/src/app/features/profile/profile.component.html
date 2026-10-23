@@ -1,247 +1,111 @@
-<div class="profile-container">
-  <!-- Header -->
-  <div class="profile-header">
-    <a routerLink="/" class="back-link">
-      <mat-icon>arrow_back</mat-icon>
-      {{ 'common.buttons.back' | translate }}
-    </a>
-    <h1 class="profile-title">{{ 'profile.title' | translate }}</h1>
-    <p class="profile-subtitle">{{ 'profile.subtitle' | translate }}</p>
+<header class="profile-topbar">
+  <a class="profile-brand nav-profile" routerLink="/">
+    <img src="ULEAM.png" alt="ULEAM" />
+    <span>{{ 'layout.header.brand' | translate }}<small>{{ 'layout.header.brandSubtitle' | translate }}</small></span>
+  </a>
+  <div class="profile-topbar-actions">
+    <button class="profile-theme" type="button" (click)="themeService.toggleTheme()" [attr.aria-label]="(themeService.isDark() ? 'layout.header.themeLight' : 'layout.header.themeDark') | translate"><mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon></button>
+    <app-account-controls />
   </div>
-
+</header>
+<main class="profile-container">
+  <div class="profile-header">
+    <div><p class="profile-eyebrow">{{ 'profile.workspace.myAccount' | translate }}</p><h1>{{ 'profile.title' | translate }}</h1><p>{{ 'profile.workspace.subtitle' | translate }}</p></div>
+    <a class="profile-button nav-profile back-link" [routerLink]="backDestination()"><mat-icon>arrow_back</mat-icon>{{ (hasWorkspace() ? 'profile.workspace.backPanel' : 'profile.workspace.backHome') | translate }}</a>
+  </div>
   @if (loading()) {
-    <div class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>{{ 'common.messages.loading' | translate }}</p>
-    </div>
-  } @else if (user()) {
-    <div class="profile-content">
-      <!-- Avatar Section -->
-      <mat-card class="profile-card avatar-card">
-        <mat-card-content>
-          <div class="avatar-section">
-            <div class="avatar-wrapper">
-              @if (uploadingAvatar()) {
-                <div class="avatar-loading">
-                  <mat-spinner diameter="40"></mat-spinner>
-                </div>
-              } @else if (avatarUrl()) {
-                <img
-                  [src]="avatarUrl()"
-                  alt="Avatar"
-                  class="avatar-image"
-                  crossorigin="anonymous"
-                />
-              } @else {
-                <div class="avatar-placeholder">
-                  <span>{{ user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
-                </div>
-              }
-              <button
-                class="avatar-edit-btn"
-                (click)="triggerFileInput()"
-                [disabled]="uploadingAvatar()"
-              >
-                <mat-icon>camera_alt</mat-icon>
-              </button>
-            </div>
-            <input
-              #fileInput
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              (change)="onFileSelected($event)"
-              hidden
-            />
-            <div class="avatar-info">
-              <h2 class="user-name">{{ user()?.name }}</h2>
-              <p class="user-email">{{ user()?.email }}</p>
-              <span class="role-badge" [class]="getRoleBadgeClass()">
-                {{ getRoleLabel() | translate }}
-              </span>
-            </div>
+    <div class="loading-container"><mat-spinner diameter="40" /><p>{{ 'common.messages.loading' | translate }}</p></div>
+  } @else if (user(); as account) {
+    <section class="profile-panel identity-panel" [attr.aria-label]="'profile.workspace.accountSummary' | translate">
+      <div class="identity-main">
+        <div class="avatar-wrapper">
+          @if (avatarUrl()) { <img [src]="avatarUrl()" [alt]="'profile.workspace.photo' | translate" class="avatar-image" crossorigin="anonymous" /> }
+          @else { <div class="avatar-placeholder">{{ account.name.charAt(0).toUpperCase() || 'U' }}</div> }
+          @if (editing()) { <button type="button" class="avatar-edit" (click)="triggerFileInput()" [disabled]="saving()" [attr.aria-label]="'profile.workspace.changePhoto' | translate"><mat-icon>photo_camera</mat-icon></button> }
+        </div>
+        <div class="identity-copy">
+          <h2>{{ account.name }}</h2><p class="identity-email">{{ account.email }}</p>
+          <div class="identity-badges"><span class="role-badge"><mat-icon>verified_user</mat-icon>{{ getRoleLabel() | translate }}</span>
+            @if (account.email_verified_at) { <span class="verified-email"><mat-icon>check_circle</mat-icon>{{ 'profile.workspace.verified' | translate }}</span> }
           </div>
-
-          <div class="avatar-actions">
-            <button mat-stroked-button (click)="triggerFileInput()" [disabled]="uploadingAvatar()">
-              <mat-icon>upload</mat-icon>
-              {{ 'profile.avatar.upload' | translate }}
-            </button>
-            @if (avatarUrl()) {
-              <button
-                mat-stroked-button
-                color="warn"
-                (click)="deleteAvatar()"
-                [disabled]="uploadingAvatar()"
-              >
-                <mat-icon>delete</mat-icon>
-                {{ 'profile.avatar.delete' | translate }}
-              </button>
-            }
+          @if (account.perfil?.cargo) { <p class="identity-position">{{ account.perfil?.cargo }}</p> }
+        </div>
+      </div>
+      <dl class="identity-summary">
+        @if (account.created_at) { <div><dt><mat-icon>calendar_today</mat-icon>{{ 'profile.fields.createdAt' | translate }}</dt><dd>{{ account.created_at | date:'dd/MM/yyyy' }}</dd></div> }
+        <div><dt><mat-icon>account_balance</mat-icon>{{ 'profile.workspace.access' | translate }}</dt><dd>{{ (isAdminUser() ? 'profile.workspace.allObservatories' : 'profile.workspace.assignedCount') | translate:{count: assignedObservatorios().length} }}</dd></div>
+        <div><dt><mat-icon>interests</mat-icon>{{ 'auth.register.community.interest' | translate }}</dt><dd>{{ account.intereses?.[0]?.nombre || ('profile.workspace.notSelected' | translate) }}</dd></div>
+      </dl>
+      <div class="identity-actions">
+        @if (!editing()) {
+          <button class="profile-button profile-primary" type="button" (click)="startEditing()"><mat-icon>edit</mat-icon>{{ 'profile.workspace.edit' | translate }}</button>
+          <span class="mode-label"><mat-icon>lock_outline</mat-icon>{{ 'profile.workspace.consultation' | translate }}</span>
+        } @else {
+          <span class="mode-label editing-label"><mat-icon>edit</mat-icon>{{ 'profile.workspace.editing' | translate }}</span>
+          <div class="photo-actions"><button type="button" class="profile-button" (click)="triggerFileInput()" [disabled]="saving()"><mat-icon>photo_camera</mat-icon>{{ 'profile.workspace.changePhoto' | translate }}</button>
+            @if (avatarUrl()) { <button type="button" class="photo-remove" (click)="deleteAvatar()" [disabled]="saving()">{{ 'profile.avatar.delete' | translate }}</button> }
           </div>
+          <small>{{ 'profile.workspace.photoFormats' | translate }}</small>
+        }
+      </div>
+      <input #fileInput type="file" accept="image/jpeg,image/png,image/webp" (change)="onFileSelected($event)" [disabled]="!editing() || saving()" hidden />
+    </section>
 
-          <p class="avatar-hint">{{ 'profile.avatar.hint' | translate }}</p>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Profile Form -->
-      <mat-card class="profile-card form-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'profile.personalInfo' | translate }}</mat-card-title>
-          <mat-card-subtitle>{{ 'profile.personalInfoSubtitle' | translate }}</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
-            <div class="form-grid">
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>{{ 'profile.fields.name' | translate }}</mat-label>
-                <input matInput formControlName="name" />
-                <mat-icon matPrefix>person</mat-icon>
-                @if (profileForm.get('name')?.hasError('required')) {
-                  <mat-error>{{ 'profile.validation.nameRequired' | translate }}</mat-error>
-                }
-                @if (profileForm.get('name')?.hasError('maxlength')) {
-                  <mat-error>{{ 'profile.validation.nameMaxLength' | translate }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>{{ 'profile.fields.email' | translate }}</mat-label>
-                <input matInput [value]="user()?.email" disabled />
-                <mat-icon matPrefix>email</mat-icon>
-                <mat-hint>{{ 'profile.hints.emailReadOnly' | translate }}</mat-hint>
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'profile.fields.telefono' | translate }}</mat-label>
-                <input matInput formControlName="telefono" />
-                <mat-icon matPrefix>phone</mat-icon>
-                @if (profileForm.get('telefono')?.hasError('maxlength')) {
-                  <mat-error>{{ 'profile.validation.telefonoMaxLength' | translate }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline">
-                <mat-label>{{ 'profile.fields.cargo' | translate }}</mat-label>
-                <input matInput formControlName="cargo" />
-                <mat-icon matPrefix>work</mat-icon>
-                @if (profileForm.get('cargo')?.hasError('maxlength')) {
-                  <mat-error>{{ 'profile.validation.cargoMaxLength' | translate }}</mat-error>
-                }
-              </mat-form-field>
-
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>{{ 'profile.fields.bio' | translate }}</mat-label>
-                <textarea
-                  matInput
-                  formControlName="bio"
-                  rows="4"
-                  [placeholder]="'profile.placeholders.bio' | translate"
-                ></textarea>
-                <mat-icon matPrefix>description</mat-icon>
-                <mat-hint align="end"
-                  >{{ profileForm.get('bio')?.value?.length || 0 }}/500</mat-hint
-                >
-                @if (profileForm.get('bio')?.hasError('maxlength')) {
-                  <mat-error>{{ 'profile.validation.bioMaxLength' | translate }}</mat-error>
-                }
-              </mat-form-field>
-            </div>
-
-            <div class="form-actions">
-              <button
-                mat-raised-button
-                color="primary"
-                type="submit"
-                [disabled]="profileForm.invalid || saving()"
-              >
-                @if (saving()) {
-                  <mat-spinner diameter="20"></mat-spinner>
-                } @else {
-                  <ng-container>
-                    <mat-icon>save</mat-icon>
-                    {{ 'common.buttons.save' | translate }}
-                  </ng-container>
-                }
-              </button>
-            </div>
-          </form>
-        </mat-card-content>
-      </mat-card>
-
-      <!-- Account Info -->
-      <mat-card class="profile-card info-card">
-        <mat-card-header>
-          <mat-card-title>{{ 'profile.accountInfo' | translate }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="info-label">{{ 'profile.fields.role' | translate }}</span>
-              <span class="info-value">
-                <span class="role-badge" [class]="getRoleBadgeClass()">
-                  {{ getRoleLabel() | translate }}
-                </span>
-              </span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">{{ 'profile.fields.createdAt' | translate }}</span>
-              <span class="info-value">{{ user()?.created_at | date: 'medium' }}</span>
-            </div>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="profile-card observatorios-card">
-        <mat-card-header>
-          <mat-card-title>Observatorios asignados</mat-card-title>
-          <mat-card-subtitle>
-            Observatorios donde tienes permisos registrados.
-          </mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          @if (isAdminUser()) {
-            <div class="admin-access-note">
-              <mat-icon>verified_user</mat-icon>
-              <div>
-                <strong>Administrador: acceso completo</strong>
-                <p>Este usuario puede gestionar todos los Observatorios del sistema.</p>
-              </div>
-            </div>
-          } @else if (assignedObservatorios().length > 0) {
-            <div class="observatorios-list">
-              @for (observatorio of assignedObservatorios(); track observatorio.id) {
-                <article class="observatorio-item">
-                  <div class="observatorio-icon">
-                    <mat-icon>account_tree</mat-icon>
-                  </div>
-                  <div class="observatorio-copy">
-                    <h3>{{ observatorio.nombre }}</h3>
-                    <p>{{ observatorio.descripcion || observatorio.codigo_interno }}</p>
-                    <div class="observatorio-meta">
-                      <span class="access-chip">{{ getObservatorioRoleLabel(observatorio.rol) }}</span>
-                      @if (observatorio.assigned_at) {
-                        <span>Asignado: {{ observatorio.assigned_at | date: 'mediumDate' }}</span>
-                      }
-                    </div>
-                  </div>
-                  <a
-                    mat-stroked-button
-                    [routerLink]="['/admin/departamentos', observatorio.id]"
-                  >
-                    <mat-icon>open_in_new</mat-icon>
-                    Entrar
-                  </a>
-                </article>
-              }
-            </div>
+    <section class="profile-panel profile-details" [attr.aria-label]="'profile.workspace.sections' | translate">
+      <nav class="profile-tabs" role="tablist" [attr.aria-label]="'profile.workspace.sections' | translate">
+        <button id="profile-tab-personal" type="button" role="tab" aria-controls="profile-personal" [attr.aria-selected]="activeTab() === 'personal'" (click)="activeTab.set('personal')"><mat-icon>person_outline</mat-icon>{{ 'profile.workspace.personal' | translate }}</button>
+        <button id="profile-tab-community" type="button" role="tab" aria-controls="profile-community" [attr.aria-selected]="activeTab() === 'community'" (click)="activeTab.set('community')"><mat-icon>groups</mat-icon>{{ 'profile.workspace.community' | translate }}</button>
+        <button id="profile-tab-access" type="button" role="tab" aria-controls="profile-access" [attr.aria-selected]="activeTab() === 'access'" (click)="activeTab.set('access')"><mat-icon>security</mat-icon>{{ 'profile.workspace.access' | translate }}</button>
+      </nav>
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <div id="profile-personal" role="tabpanel" aria-labelledby="profile-tab-personal" [hidden]="activeTab() !== 'personal'">
+          <div class="section-heading"><h2>{{ 'profile.personalInfo' | translate }}</h2><span class="mode-label"><mat-icon>{{ editing() ? 'edit' : 'lock_outline' }}</mat-icon>{{ (editing() ? 'profile.workspace.editing' : 'profile.workspace.readOnly') | translate }}</span></div>
+          @if (!editing()) {
+            <dl class="profile-read-grid">
+              <div><dt>{{ 'profile.fields.name' | translate }}</dt><dd>{{ account.name }}</dd></div>
+              <div><dt>{{ 'profile.fields.email' | translate }}</dt><dd>{{ account.email }}</dd><small><mat-icon>lock_outline</mat-icon>{{ 'profile.hints.emailReadOnly' | translate }}</small></div>
+              <div><dt>{{ 'profile.fields.telefono' | translate }}</dt><dd [class.empty-value]="!account.perfil?.telefono">{{ account.perfil?.telefono || ('profile.workspace.notAdded' | translate) }}</dd></div>
+              <div><dt>{{ 'profile.fields.cargo' | translate }}</dt><dd [class.empty-value]="!account.perfil?.cargo">{{ account.perfil?.cargo || ('profile.workspace.notAdded' | translate) }}</dd></div>
+              <div class="full-width"><dt>{{ 'profile.fields.bio' | translate }}</dt><dd [class.empty-value]="!account.perfil?.bio">{{ account.perfil?.bio || ('profile.workspace.noBio' | translate) }}</dd></div>
+            </dl>
           } @else {
-            <div class="empty-observatorios">
-              <mat-icon>info</mat-icon>
-              <p>No tienes observatorios asignados.</p>
-            </div>
+            <fieldset class="form-grid" [disabled]="saving()">
+              <mat-form-field appearance="outline"><mat-label>{{ 'profile.fields.name' | translate }}</mat-label><input matInput formControlName="name" maxlength="255" autocomplete="name" />
+                @if (profileForm.get('name')?.hasError('required')) { <mat-error>{{ 'profile.validation.nameRequired' | translate }}</mat-error> }
+                @if (profileForm.get('name')?.hasError('maxlength')) { <mat-error>{{ 'profile.validation.nameMaxLength' | translate }}</mat-error> }
+              </mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>{{ 'profile.fields.email' | translate }}</mat-label><input matInput [value]="account.email" readonly aria-readonly="true" /><mat-hint>{{ 'profile.hints.emailReadOnly' | translate }}</mat-hint></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>{{ 'profile.fields.telefono' | translate }}</mat-label><input matInput formControlName="telefono" maxlength="20" type="tel" autocomplete="tel" />@if (profileForm.get('telefono')?.hasError('maxlength')) { <mat-error>{{ 'profile.validation.telefonoMaxLength' | translate }}</mat-error> }</mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>{{ 'profile.fields.cargo' | translate }}</mat-label><input matInput formControlName="cargo" maxlength="100" />@if (profileForm.get('cargo')?.hasError('maxlength')) { <mat-error>{{ 'profile.validation.cargoMaxLength' | translate }}</mat-error> }</mat-form-field>
+              <mat-form-field appearance="outline" class="full-width"><mat-label>{{ 'profile.fields.bio' | translate }}</mat-label><textarea matInput formControlName="bio" rows="3" maxlength="500"></textarea><mat-hint align="end">{{ profileForm.get('bio')?.value?.length || 0 }}/500</mat-hint>@if (profileForm.get('bio')?.hasError('maxlength')) { <mat-error>{{ 'profile.validation.bioMaxLength' | translate }}</mat-error> }</mat-form-field>
+            </fieldset>
           }
-        </mat-card-content>
-      </mat-card>
-    </div>
-  }
-</div>
+        </div>
+        <div id="profile-community" role="tabpanel" aria-labelledby="profile-tab-community" [hidden]="activeTab() !== 'community'">
+          <div class="section-heading"><h2>{{ 'profile.workspace.communityTitle' | translate }}</h2><span class="mode-label">{{ (editing() ? 'profile.workspace.editing' : 'profile.workspace.readOnly') | translate }}</span></div>
+          @if (editing()) { <fieldset class="community-fields" [disabled]="saving()"><p>{{ 'auth.register.profileIntro' | translate }}</p><app-community-profile-fields [form]="communityForm" /></fieldset> }
+          @else {
+            <dl class="profile-read-grid"><div><dt>{{ 'auth.register.community.link' | translate }}</dt><dd>{{ communityLabel('links', account.perfil?.vinculo) | translate }}</dd></div><div><dt>{{ 'auth.register.community.institution' | translate }}</dt><dd>{{ communityLabel('institutions', account.perfil?.institucion_tipo) | translate }}</dd></div>
+              @if (account.perfil?.institucion_tipo === 'OTRA') { <div class="full-width"><dt>{{ 'auth.register.community.institutionName' | translate }}</dt><dd>{{ account.perfil?.institucion }}</dd></div> }
+              <div class="full-width"><dt>{{ 'auth.register.community.interest' | translate }}</dt><dd>{{ account.intereses?.[0]?.nombre || ('profile.workspace.notSelected' | translate) }}</dd></div>
+            </dl>
+          }
+        </div>
+        <div id="profile-access" role="tabpanel" aria-labelledby="profile-tab-access" [hidden]="activeTab() !== 'access'">
+          <div class="section-heading"><h2>{{ 'profile.workspace.accessTitle' | translate }}</h2><span class="mode-label"><mat-icon>lock_outline</mat-icon>{{ 'profile.workspace.readOnly' | translate }}</span></div>
+          <div class="access-content"><div class="access-note"><mat-icon>verified_user</mat-icon><div><strong>{{ getRoleLabel() | translate }}</strong><p>{{ 'profile.workspace.permissionsNote' | translate }}</p></div></div>
+            @if (isAdminUser()) { <p>{{ 'profile.workspace.adminAccess' | translate }}</p> }
+            @else if (assignedObservatorios().length) {
+              @for (observatorio of assignedObservatorios(); track observatorio.id) {
+                <article class="observatory-row"><mat-icon>account_balance</mat-icon><div><h3>{{ observatorio.nombre }}</h3><p>{{ observatorio.descripcion || observatorio.codigo_interno }}</p><span class="access-chip">{{ getObservatorioRoleLabel(observatorio.rol) }}</span></div><a class="profile-button nav-profile" [routerLink]="['/admin/departamentos',observatorio.id]">{{ 'profile.workspace.open' | translate }}<mat-icon>arrow_forward</mat-icon></a></article>
+              }
+            } @else { <p>{{ 'profile.workspace.noAssignments' | translate }}</p> }
+          </div>
+        </div>
+        <footer class="profile-save-bar"><p [class.save-error]="saveError()" [attr.role]="saveError() ? 'alert' : 'status'" aria-live="polite">{{ (status() || (editing() ? (hasChanges ? 'common.messages.unsavedChanges' : 'profile.workspace.editHint') : 'profile.workspace.readHint')) | translate }}</p>
+          @if (editing()) { <div class="save-actions"><button type="button" class="profile-button" (click)="cancelEditing()" [disabled]="saving()">{{ 'profile.workspace.cancelEdit' | translate }}</button><button type="submit" class="profile-button profile-primary" [disabled]="saving() || !hasChanges">@if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>check</mat-icon> }{{ (saving() ? 'common.messages.saving' : 'profile.workspace.save') | translate }}</button></div> }
+        </footer>
+      </form>
+    </section>
+  } @else { <div role="alert" class="loading-container">{{ 'profile.messages.updateError' | translate }}</div> }
+</main>

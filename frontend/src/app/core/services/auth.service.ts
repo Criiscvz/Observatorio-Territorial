@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
+import { Observable, Subject, catchError, finalize, map, of, shareReplay, switchMap, tap, timeout } from 'rxjs';
 import { AuthResponse, LoginRequest, RegisterRequest, User, UserRole } from '../models';
 import { ApiService } from './api.service';
 
@@ -24,6 +24,11 @@ export interface VerificationMessageResponse {
 export class AuthService {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
+  private readonly sessionChanges = new Subject<'login' | 'logout'>();
+  readonly sessionChanges$ = this.sessionChanges.asObservable();
+  private sessionCheck?: Observable<boolean>;
+  private authRevision = 0;
+  get sessionVersion(): number { return this.authRevision; }
 
   // State con signals
   private readonly userSignal = signal<User | null>(null);
@@ -117,8 +122,11 @@ export class AuthService {
   }
 
   getCurrentUser(): Observable<User> {
+    const revision = this.authRevision;
     return this.api.get<User>('/user').pipe(
       tap((user) => {
+        // A response started before login/logout must not replace the newer session.
+        if (revision !== this.authRevision) return;
         const normalizedUser = this.normalizeUser(user);
         this.userSignal.set(normalizedUser);
       })
@@ -126,15 +134,23 @@ export class AuthService {
   }
 
   checkAuth(): Observable<boolean> {
-    return this.getCurrentUser().pipe(
-      map(() => true),
-      catchError(() => {
-        // Esta comprobación también se ejecuta desde guestGuard. Navegar aquí
-        // cancela la navegación actual (por ejemplo, hacia /auth/login).
-        this.clearAuthSilent();
-        return of(false);
-      })
-    );
+    if (!this.sessionCheck) {
+      const revision = this.authRevision;
+      this.sessionCheck = this.getCurrentUser().pipe(
+        // Includes the existing Render warmup gate and its cold-start retries.
+        // Bootstrap has its own short deadline; the shared check keeps running.
+        timeout({ first: 60000 }),
+        map(() => this.isAuthenticated()),
+        catchError((error) => {
+          if ((error.status === 401 || error.status === 419) && revision === this.authRevision) this.clearAuthSilent();
+          // A temporary outage is not a logout. Unknown sessions remain anonymous.
+          return of(this.isAuthenticated());
+        }),
+        finalize(() => { this.sessionCheck = undefined; }),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+    }
+    return this.sessionCheck;
   }
 
   /**
@@ -167,6 +183,7 @@ export class AuthService {
    * Actualizar datos del usuario en el estado local
    */
   updateUser(user: User): void {
+    this.authRevision++;
     const normalizedUser = this.normalizeUser(user);
     this.userSignal.set(normalizedUser);
   }
@@ -176,16 +193,20 @@ export class AuthService {
    * deciden si corresponde una redirección.
    */
   clearAuthSilent(): void {
+    this.authRevision++;
     this.userSignal.set(null);
   }
 
   private handleAuthSuccess(response: AuthResponse): void {
+    this.authRevision++;
     const normalizedUser = this.normalizeUser(response.user);
     this.userSignal.set(normalizedUser);
+    this.sessionChanges.next('login');
   }
 
   private completeLogout(): void {
     this.clearAuthSilent();
+    this.sessionChanges.next('logout');
     this.router.navigate(['/publico/departamentos']);
   }
 

@@ -29,9 +29,11 @@ app.use(
         formAction: ["'self'"],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:', ...(isDevelopment && apiOrigin ? [apiOrigin] : [])],
         fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
         connectSrc: ["'self'", ...(apiOrigin ? [apiOrigin] : [])],
+        frameSrc: ["'self'", 'blob:', 'https://app.powerbi.com'],
+        workerSrc: ["'self'"],
         // La API local usa HTTP; en producción se mantiene la mejora automática a HTTPS.
         'upgrade-insecure-requests': isDevelopment ? null : [],
       },

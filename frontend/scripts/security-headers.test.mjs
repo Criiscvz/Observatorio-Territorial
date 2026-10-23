@@ -143,7 +143,7 @@ test('limita conexiones al proxy del mismo origen y al backend HTTPS exacto', ()
 });
 
 test('conserva PDF locales/blob y la PWA sin permitir marcos externos arbitrarios', () => {
-  assert.deepEqual(directives.get('frame-src'), ["'self'", 'blob:']);
+  assert.deepEqual(directives.get('frame-src'), ["'self'", 'blob:', 'https://app.powerbi.com']);
   assert.deepEqual(directives.get('worker-src'), ["'self'"]);
   assert.deepEqual(directives.get('manifest-src'), ["'self'"]);
 });

@@ -1,0 +1,21 @@
+<footer class="essential-footer">
+  <div class="essential-footer__content">
+    <div class="essential-footer__brand">
+      <img src="ULEAM.png" alt="ULEAM" class="essential-footer__logo" />
+      <div>
+        <p class="essential-footer__name">{{ appConfig.app.name }}</p>
+        <p class="essential-footer__university">{{ appConfig.university.name }}</p>
+      </div>
+    </div>
+
+    <p class="essential-footer__tagline">{{ 'public.home.footer.tagline' | translate }}</p>
+
+    <div class="essential-footer__bottom">
+      <p class="essential-footer__copyright">{{ 'layout.footer.copyright' | translate: { year: currentYear } }}</p>
+      <a class="essential-footer__website-link" [href]="appConfig.university.url" target="_blank" rel="noopener noreferrer">
+        {{ 'public.home.footer.websiteLink' | translate }}
+        <mat-icon aria-hidden="true">north_east</mat-icon>
+      </a>
+    </div>
+  </div>
+</footer>

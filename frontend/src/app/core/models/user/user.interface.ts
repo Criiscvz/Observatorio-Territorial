@@ -13,4 +13,5 @@ export interface User {
   updated_at?: string;
   perfil?: Perfil | null;
   departamentos?: DepartamentoConRol[];
+  intereses?: { id: string; nombre: string }[];
 }

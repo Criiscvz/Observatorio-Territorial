@@ -5,6 +5,8 @@ import { ApiService } from './api.service';
 /** Estructura real que devuelve GET /api/reportes */
 export interface Reporte {
   id: string;
+  codigo?: string | null;
+  autores?: string[] | string | null;
   nombre_indicador: string;
   descripcion_indicador?: string | null;
   fecha_publicacion?: string | null;

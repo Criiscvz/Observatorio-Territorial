@@ -13,7 +13,7 @@ class AtlasCategoria extends Model
 
     protected $table = 'atlas_categorias';
     protected $fillable = ['nombre', 'descripcion', 'publico', 'icono'];
-    protected $visible = ['id', 'nombre', 'descripcion', 'publico', 'icono'];
+    protected $visible = ['id', 'nombre', 'descripcion', 'publico', 'icono', 'publicacion_destacada_id'];
     protected $attributes = ['publico' => false, 'icono' => null];
     protected $casts = ['publico' => 'boolean'];
 

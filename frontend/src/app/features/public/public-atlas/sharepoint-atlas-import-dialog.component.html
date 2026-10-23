@@ -3,7 +3,7 @@
     <div class="sharepoint-dialog__title-group">
       <span class="sharepoint-dialog__eyebrow">Gestión / SharePoint</span>
       <h2 mat-dialog-title>Importar desde SharePoint</h2>
-      <p>Selecciona archivos PDF desde {{ rootLabel }} para importarlos como {{ destinationLabel }}.</p>
+      <p>Selecciona archivos PDF desde {{ browser()?.root?.name || rootLabel }} para importarlos como {{ destinationLabel }}.</p>
     </div>
     <button
       mat-icon-button

@@ -63,6 +63,61 @@ class SharePointService
         return $this->getPdfFileInsideConfiguredRoot($fileId, 'folder_path');
     }
 
+    /** Downloads a validated PDF to a temporary file; caller must unlink it. */
+    public function downloadPdf(string $fileId): string
+    {
+        $temporary = tempnam(sys_get_temp_dir(), 'observatorio-pdf-');
+        if ($temporary === false) throw new \UnexpectedValueException('No se pudo preparar la copia del PDF.');
+        $target = fopen($temporary, 'wb');
+        $body = null;
+        try {
+            if (! is_resource($target)) throw new \UnexpectedValueException('No se pudo preparar la copia del PDF.');
+            // Graph redirects to a short-lived download URL. Never forward the Graph token.
+            $response = $this->graph()->withOptions(['allow_redirects' => false, 'stream' => true])
+                ->get('/drives/'.rawurlencode($this->driveId()).'/items/'.rawurlencode($fileId).'/content');
+            for ($redirects = 0; $response->redirect() && $redirects < 3; $redirects++) {
+                $location = $response->header('Location');
+                $parts = parse_url($location);
+                $host = strtolower((string) ($parts['host'] ?? ''));
+                $trusted = false;
+                foreach (['sharepoint.com', 'sharepoint-df.com', '1drv.com', 'onedrive.com'] as $domain) {
+                    $trusted = $trusted || $host === $domain || str_ends_with($host, '.'.$domain);
+                }
+                if (! $trusted || ($parts['scheme'] ?? '') !== 'https' || isset($parts['user']) || isset($parts['pass']) || isset($parts['port'])) {
+                    throw new \UnexpectedValueException('SharePoint devolvió un destino de descarga no autorizado.');
+                }
+                $response->toPsrResponse()->getBody()->close();
+                $response = Http::timeout(60)->withOptions(['allow_redirects' => false, 'stream' => true])->get($location);
+            }
+            if (! $response->successful()) throw new \UnexpectedValueException('No se pudo descargar el PDF de SharePoint.');
+            $limit = 20 * 1024 * 1024;
+            if ((int) $response->header('Content-Length') > $limit) throw new \UnexpectedValueException('El PDF supera el máximo de 20 MB.');
+            $body = $response->toPsrResponse()->getBody();
+            $size = 0;
+            while (! $body->eof()) {
+                $chunk = $body->read(65536);
+                if ($chunk === '' && ! $body->eof()) throw new \UnexpectedValueException('La descarga del PDF quedó incompleta.');
+                $size += strlen($chunk);
+                if ($size > $limit) throw new \UnexpectedValueException('El PDF supera el máximo de 20 MB.');
+                if (fwrite($target, $chunk) !== strlen($chunk)) throw new \UnexpectedValueException('No se pudo guardar la copia del PDF.');
+            }
+            fclose($target); $target = null;
+            $header = file_get_contents($temporary, false, null, 0, 8);
+            if ($size < 8 || ! is_string($header) || ! preg_match('/^%PDF-\d\.\d/', $header)) {
+                throw new \UnexpectedValueException('El contenido descargado no es un PDF válido.');
+            }
+            return $temporary;
+        } catch (\Throwable $error) {
+            if (is_resource($target)) { fclose($target); $target = null; }
+            @unlink($temporary);
+            if ($error instanceof \UnexpectedValueException) throw $error;
+            throw new \UnexpectedValueException('No se pudo descargar el PDF de SharePoint. Inténtalo nuevamente.');
+        } finally {
+            if (is_resource($target)) fclose($target);
+            $body?->close();
+        }
+    }
+
     public function getPdfFileInsideBarometerRoot(string $fileId): array
     {
         return $this->getPdfFileInsideConfiguredRoot($fileId, 'barometer_folder_path', true);

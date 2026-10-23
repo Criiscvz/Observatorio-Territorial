@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { adminGuard } from '@core/guards/role.guard';
+import { AuthService } from '@core/services/auth.service';
 import { provideTranslateService } from '@ngx-translate/core';
 import {
   ConfirmDialogComponent,
@@ -56,6 +57,7 @@ describe('Observatory management directory', () => {
       imports: [DepartamentoListComponent],
       providers: [
         provideRouter([]),
+        {provide:AuthService,useValue:{isAdmin:()=>true}},
         provideTranslateService({ fallbackLang: 'es' }),
         { provide: DepartamentoService, useValue: service },
         { provide: MatDialog, useValue: dialog },
@@ -146,7 +148,7 @@ describe('Observatory management directory', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelectorAll('.observatorio-card')).toHaveLength(2);
+    expect(element.querySelectorAll('.observatorio-row')).toHaveLength(2);
     expect(element.querySelector('.observatorio-icon mat-icon')?.textContent).toBe('eco');
     expect(element.querySelectorAll('.visibility-badge.private')).toHaveLength(1);
     expect(element.querySelector('a[href="/admin/departamentos/nuevo"]')).not.toBeNull();
@@ -156,13 +158,14 @@ describe('Observatory management directory', () => {
     search.value = 'ecologica';
     search.dispatchEvent(new Event('input'));
     await fixture.whenStable();
-    expect(element.querySelectorAll('.observatorio-card')).toHaveLength(1);
+    expect(element.querySelectorAll('.observatorio-row')).toHaveLength(1);
     fixture.destroy();
   });
 
   it('keeps the directory admin-only and separate from the detail and form routes', () => {
     const route = ADMIN_ROUTES.find((item) => item.path === 'departamentos');
-    expect(route?.canActivate).toEqual([adminGuard]);
+    expect(route?.canActivate?.length).toBe(1);
+    expect(route?.canActivate).not.toEqual([adminGuard]);
     expect(ADMIN_ROUTES.indexOf(route!)).toBeLessThan(
       ADMIN_ROUTES.findIndex((item) => item.path === 'departamentos/:id'),
     );
@@ -172,5 +175,57 @@ describe('Observatory management directory', () => {
     expect(
       ADMIN_ROUTES.find((item) => item.path === 'departamentos/:id/editar')?.canActivate,
     ).toEqual([adminGuard]);
+  });
+
+  it('opens confirmation directly from the trash button and prevents accidental or repeated deletion', async () => {
+    const fixture = TestBed.createComponent(DepartamentoListComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    const buttons = Array.from(element.querySelectorAll<HTMLButtonElement>('.delete-action'));
+    expect(buttons).toHaveLength(items.length);
+    expect(element.querySelector('mat-menu, .more-action')).toBeNull();
+    expect(buttons[0].getAttribute('aria-label')).toContain(items[0].nombre);
+    expect(buttons[0].querySelector('mat-icon')?.textContent).toBe('delete_outline');
+
+    buttons[0].click();
+    fixture.detectChanges();
+    expect(dialog.open).toHaveBeenCalledOnce();
+    expect(data.confirmColor).toBe('warn');
+    expect(service.delete).not.toHaveBeenCalled();
+    expect(buttons.every((button) => button.disabled)).toBe(true);
+    buttons[1].click();
+    expect(dialog.open).toHaveBeenCalledOnce();
+
+    closed.next(false);
+    fixture.detectChanges();
+    expect(buttons.every((button) => !button.disabled)).toBe(true);
+    expect(service.delete).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('muestra diez por página, mantiene todas las filas y vuelve a la primera página al filtrar', () => {
+    const many = Array.from({length:24},(_,index)=>({...items[index%2],id:'obs-'+index,nombre:'Observatorio '+index,codigo_interno:'COD-'+index}));
+    service.getAll.mockReturnValue(of(many));
+    component.load();
+    expect(component.visibleDepartamentos()).toEqual(many.slice(0,10));
+    component.changePage(1);
+    expect(component.visibleDepartamentos()).toEqual(many.slice(10,20));
+    component.changePage(1);
+    expect(component.visibleDepartamentos()).toEqual(many.slice(20));
+    expect(component.rangeStart()).toBe(21);expect(component.rangeEnd()).toBe(24);
+    component.updateSearch('Observatorio 22');
+    expect(component.currentPage()).toBe(0);expect(component.visibleDepartamentos()).toEqual([many[22]]);
+    component.clearFilters();component.updateVisibility('private');
+    expect(component.filteredDepartamentos()).toHaveLength(12);
+    expect(component.visibleDepartamentos()).toHaveLength(10);
+    expect(service.getAll).toHaveBeenCalledOnce();expect(service.delete).not.toHaveBeenCalled();
+  });
+
+  it('mantiene una página válida cuando la última página desaparece tras actualizar', () => {
+    component.departamentos.set(Array.from({length:11},(_,index)=>({...items[0],id:'obs-'+index})));
+    component.changePage(1);expect(component.visibleDepartamentos()).toHaveLength(1);
+    component.departamentos.set(items);
+    expect(component.currentPage()).toBe(0);expect(component.visibleDepartamentos()).toEqual(items);
   });
 });

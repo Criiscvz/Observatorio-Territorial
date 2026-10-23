@@ -1,167 +1,45 @@
 <section class="management-page" [attr.aria-label]="'layout.sidebar.manageDepartments' | translate">
   <header class="page-header">
     <div>
-      <a class="back-link" routerLink="/admin/dashboard">
-        <mat-icon>arrow_back</mat-icon>{{ 'departamentos.management.backDashboard' | translate }}
-      </a>
+      <a class="back-link" routerLink="/admin/dashboard"><mat-icon>arrow_back</mat-icon>{{ 'departamentos.management.backDashboard' | translate }}</a>
       <h1>{{ 'departamentos.title' | translate }}</h1>
-      <p>{{ 'departamentos.management.subtitle' | translate }}</p>
+      <p>{{isAdmin() ? ('departamentos.management.subtitle' | translate) : 'Consulta tus observatorios asignados y accede a tus publicaciones.'}}</p>
     </div>
-    <div class="page-actions">
-      <a mat-flat-button color="primary" routerLink="/admin/departamentos/nuevo">
-        <mat-icon>add</mat-icon>{{ 'departamentos.list.newDepartment' | translate }}
-      </a>
-    </div>
+    @if(isAdmin()){<a class="directory-action create-action" routerLink="/admin/departamentos/nuevo"><mat-icon>add</mat-icon>{{ 'departamentos.list.newDepartment' | translate }}</a>}
+    @else{<a class="directory-action create-action" routerLink="/admin/publicaciones/nueva"><mat-icon>add</mat-icon>Nueva publicación</a>}
   </header>
   <section class="management-card" aria-labelledby="observatorio-directory-title">
+    <h2 id="observatorio-directory-title" class="visually-hidden">{{ 'departamentos.management.available' | translate }}</h2>
     <div class="directory-toolbar">
-      <div class="card-heading">
-        <span class="section-icon"><mat-icon>business</mat-icon></span>
-        <div>
-          <h2 id="observatorio-directory-title">
-            {{ 'departamentos.management.available' | translate }}
-          </h2>
-          <p role="status">
-            {{
-              'departamentos.management.count'
-                | translate
-                  : { shown: filteredDepartamentos().length, total: departamentos().length }
-            }}
-          </p>
-        </div>
-      </div>
-      <div class="toolbar-actions">
-        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="observatorio-search">
-          <mat-label>{{ 'layout.sidebar.searchDepartments' | translate }}</mat-label>
-          <mat-icon matPrefix>search</mat-icon>
-          <input
-            matInput
-            type="search"
-            [value]="search()"
-            (input)="search.set($any($event.target).value)"
-            [placeholder]="'departamentos.management.searchPlaceholder' | translate"
-          />
-          @if (search()) {
-            <button
-              mat-icon-button
-              matSuffix
-              type="button"
-              [attr.aria-label]="'layout.sidebar.clearSearch' | translate"
-              (click)="search.set('')"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          }
-        </mat-form-field>
-        <button
-          mat-stroked-button
-          type="button"
-          (click)="load()"
-          [disabled]="loading() || deleting()"
-        >
-          <mat-icon>refresh</mat-icon>{{ 'departamentos.management.refresh' | translate }}
-        </button>
-      </div>
+      <div class="directory-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" [value]="search()" (input)="updateSearch($any($event.target).value)" [attr.aria-label]="'layout.sidebar.searchDepartments' | translate" [placeholder]="'departamentos.management.searchPlaceholder' | translate">@if(search()){<button type="button" class="icon-action" (click)="updateSearch('')" [attr.aria-label]="'layout.sidebar.clearSearch' | translate"><mat-icon>close</mat-icon></button>}</div>
+      <select class="visibility-filter" [value]="visibility()" (change)="updateVisibility($any($event.target).value)" [attr.aria-label]="'departamentos.management.visibility' | translate"><option value="">{{ 'departamentos.management.allVisibility' | translate }}</option><option value="public">{{ 'common.labels.public' | translate }}</option><option value="private">{{ 'common.labels.private' | translate }}</option></select>
+      <span class="directory-count" role="status">{{ 'departamentos.management.count' | translate:{shown:filteredDepartamentos().length,total:departamentos().length} }}</span>
+      <button type="button" class="icon-action refresh-action" (click)="load()" [disabled]="loading()||deleting()" [matTooltip]="'departamentos.management.refresh' | translate" [attr.aria-label]="'departamentos.management.refresh' | translate"><mat-icon>refresh</mat-icon></button>
     </div>
-    @if (error()) {
-      <div class="alert directory-alert" role="alert">
-        <mat-icon>error_outline</mat-icon>{{ error() }}
-      </div>
-    }
-    @if (loading()) {
-      <div class="management-state" role="status">
-        <mat-spinner diameter="36" />
-        <p>{{ 'common.messages.loading' | translate }}</p>
-      </div>
-    } @else {
-      <div class="observatorios">
-        @for (item of filteredDepartamentos(); track item.id) {
-          <article class="observatorio-card" [attr.aria-label]="item.nombre">
-            <div class="observatorio-heading">
-              <span class="observatorio-icon"
-                ><mat-icon>{{ item.icono || 'business' }}</mat-icon></span
-              >
-              <div>
-                <h3>{{ item.nombre }}</h3>
-                <span class="observatorio-code">{{ item.codigo_interno }}</span>
-              </div>
-            </div>
-            <div class="observatorio-meta">
-              <span class="visibility-badge" [class.private]="!item.publico">
-                <mat-icon>{{ item.publico ? 'public' : 'lock_outline' }}</mat-icon>
-                {{ (item.publico ? 'common.labels.public' : 'common.labels.private') | translate }}
-              </span>
-              @if (datasetCount(item) !== undefined) {
-                <span class="dataset-count"
-                  ><mat-icon>storage</mat-icon>{{ datasetCount(item) }}
-                  {{ 'common.units.datasets' | translate }}</span
-                >
-              }
-            </div>
-            <p class="observatorio-description">
-              {{ item.descripcion || ('departamentos.detail.noDescription' | translate) }}
-            </p>
-            <div class="observatorio-actions">
-              <a
-                mat-stroked-button
-                [routerLink]="['/admin/departamentos', item.id]"
-                [attr.aria-label]="
-                  ('departamentos.management.view' | translate) + ' ' + item.nombre
-                "
-              >
-                <mat-icon>folder_open</mat-icon>{{ 'departamentos.management.view' | translate }}
-              </a>
-              <a
-                mat-stroked-button
-                [routerLink]="['/admin/departamentos', item.id, 'editar']"
-                [attr.aria-label]="('common.buttons.edit' | translate) + ' ' + item.nombre"
-              >
-                <mat-icon>edit</mat-icon>{{ 'common.buttons.edit' | translate }}
-              </a>
-            </div>
-            <div class="observatorio-delete-action">
-              <button
-                mat-button
-                type="button"
-                class="danger-action"
-                (click)="remove(item)"
-                [disabled]="deleting() || loading()"
-                [attr.aria-label]="('common.buttons.delete' | translate) + ' ' + item.nombre"
-              >
-                <mat-icon>delete_outline</mat-icon>{{ 'common.buttons.delete' | translate }}
-              </button>
-            </div>
-          </article>
-        } @empty {
-          @if (!error()) {
-            <div class="management-state observatorio-empty">
-              <mat-icon>{{ search() ? 'search_off' : 'business' }}</mat-icon>
-              <h3>
-                {{
-                  (search() ? 'common.messages.noResults' : 'departamentos.list.empty') | translate
-                }}
-              </h3>
-              <p>
-                {{
-                  (search()
-                    ? 'departamentos.management.noResultsDescription'
-                    : 'departamentos.list.emptyDescription'
-                  ) | translate
-                }}
-              </p>
-              @if (search()) {
-                <button mat-stroked-button type="button" (click)="search.set('')">
-                  {{ 'layout.sidebar.clearSearch' | translate }}
-                </button>
-              } @else {
-                <a mat-flat-button color="primary" routerLink="/admin/departamentos/nuevo"
-                  ><mat-icon>add</mat-icon>{{ 'departamentos.list.newDepartment' | translate }}</a
-                >
-              }
-            </div>
+    @if(error()){<div class="alert directory-alert" role="alert"><mat-icon>error_outline</mat-icon>{{error()}}</div>}
+    @if(loading()){<div class="management-state" role="status"><mat-spinner diameter="36"/><p>{{ 'common.messages.loading' | translate }}</p></div>}
+    @else {
+      <table class="directory-table" [attr.aria-label]="'departamentos.management.available' | translate">
+        <thead><tr><th>{{ 'departamentos.management.observatoryColumn' | translate }}</th><th>{{ 'departamentos.management.visibility' | translate }}</th><th>{{ 'departamentos.management.actions' | translate }}</th></tr></thead>
+        <tbody>
+          @for(item of visibleDepartamentos();track item.id){
+            <tr class="observatorio-row">
+              <td><div class="observatorio-heading"><span class="observatorio-icon"><mat-icon>{{item.icono||'business'}}</mat-icon></span><div><a class="observatorio-name" [routerLink]="['/admin/departamentos',item.id]">{{item.nombre}}</a><span class="observatorio-code">{{item.codigo_interno}}</span></div></div></td>
+              <td><span class="visibility-badge" [class.private]="!item.publico"><mat-icon>{{item.publico?'public':'lock_outline'}}</mat-icon>{{ (item.publico?'common.labels.public':'common.labels.private') | translate }}</span></td>
+              <td><div class="observatorio-actions">
+                <a class="directory-action manage-action" [routerLink]="['/admin/departamentos',item.id]" [attr.aria-label]="('departamentos.management.manage' | translate)+' '+item.nombre"><mat-icon>folder_open</mat-icon><span>{{ 'departamentos.management.manage' | translate }}</span></a>
+                @if(isAdmin()) {
+                <a class="directory-action edit-action" [routerLink]="['/admin/departamentos',item.id,'editar']" [attr.aria-label]="('common.buttons.edit' | translate)+' '+item.nombre"><mat-icon>edit</mat-icon><span>{{ 'common.buttons.edit' | translate }}</span></a>
+                <button type="button" class="icon-action delete-action" (click)="remove(item)" [disabled]="loading()||deleting()" [matTooltip]="'common.buttons.delete' | translate" [attr.aria-label]="('common.buttons.delete' | translate)+' '+item.nombre"><mat-icon aria-hidden="true">delete_outline</mat-icon></button>
+                }
+              </div></td>
+            </tr>
+          } @empty {
+            @if(!error()){<tr><td colspan="3"><div class="management-state"><mat-icon>{{search()||visibility()?'search_off':'business'}}</mat-icon><h3>{{ (search()||visibility()?'common.messages.noResults':'departamentos.list.empty') | translate }}</h3><p>{{ (search()||visibility()?'departamentos.management.noResultsDescription':'departamentos.list.emptyDescription') | translate }}</p>@if(search()||visibility()){<button type="button" class="directory-action" (click)="clearFilters()">{{ 'departamentos.management.clearFilters' | translate }}</button>}@else if(isAdmin()){<a class="directory-action create-action" routerLink="/admin/departamentos/nuevo"><mat-icon>add</mat-icon>{{ 'departamentos.list.newDepartment' | translate }}</a>}</div></td></tr>}
           }
-        }
-      </div>
+        </tbody>
+      </table>
+      <footer class="directory-pagination"><span role="status">{{ 'departamentos.management.pageRange' | translate:{start:rangeStart(),end:rangeEnd(),total:filteredDepartamentos().length} }} <span class="page-size">· {{ 'departamentos.management.perPage' | translate:{count:pageSize} }}</span></span><div class="pagination-buttons"><button type="button" class="icon-action" (click)="changePage(-1)" [disabled]="currentPage()===0" [attr.aria-label]="'departamentos.management.previous' | translate"><mat-icon>chevron_left</mat-icon></button><span>{{currentPage()+1}} / {{pageCount()}}</span><button type="button" class="icon-action" (click)="changePage(1)" [disabled]="currentPage()+1>=pageCount()" [attr.aria-label]="'departamentos.management.next' | translate"><mat-icon>chevron_right</mat-icon></button></div></footer>
     }
   </section>
 </section>

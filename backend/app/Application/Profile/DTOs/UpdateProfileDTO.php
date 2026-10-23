@@ -11,6 +11,7 @@ class UpdateProfileDTO
         public readonly ?string $telefono = null,
         public readonly ?string $cargo = null,
         public readonly ?string $bio = null,
+        public readonly array $community = [],
     ) {}
 
     public static function fromArray(array $data): self
@@ -20,6 +21,7 @@ class UpdateProfileDTO
             telefono: $data['telefono'] ?? null,
             cargo: $data['cargo'] ?? null,
             bio: $data['bio'] ?? null,
+            community: \Illuminate\Support\Arr::only($data, ['vinculo', 'institucion_tipo', 'institucion', 'interes_departamento_id']),
         );
     }
 
@@ -30,6 +32,6 @@ class UpdateProfileDTO
             'telefono' => $this->telefono,
             'cargo' => $this->cargo,
             'bio' => $this->bio,
-        ], fn($value) => $value !== null);
+        ], fn ($value) => $value !== null);
     }
 }

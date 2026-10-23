@@ -87,7 +87,20 @@ Route::get('/avatars/{filename}', function (string $filename) {
 })->where('filename', '(?i:[a-z0-9_-]+\\.(jpg|jpeg|png|webp))');
 
 // ============ AUTH ============
+Route::get('/publico/configuracion', [\App\Presentation\Http\Controllers\Api\AdminWorkspaceController::class, 'configuration']);
+Route::prefix('admin')->middleware(['auth:sanctum', 'role:ADMIN'])->group(function () {
+    $controller = \App\Presentation\Http\Controllers\Api\AdminWorkspaceController::class;
+    Route::get('/configuracion', [$controller, 'configuration']);
+    Route::put('/configuracion', [$controller, 'updateConfiguration']);
+    Route::get('/inicio', [$controller, 'summary']);
+    Route::get('/publicaciones', [$controller, 'indexPublications']);
+});
 require __DIR__ . '/modules/auth.php';
+Route::prefix('editor')->middleware(['auth:sanctum', 'role:EDITOR'])->group(function () {
+    $controller = \App\Presentation\Http\Controllers\Api\EditorWorkspaceController::class;
+    Route::get('/inicio', [$controller, 'summary']);
+    Route::get('/publicaciones', [$controller, 'indexPublications']);
+});
 require __DIR__ . '/modules/atlas.php';
 
 // ============ PROFILE ============

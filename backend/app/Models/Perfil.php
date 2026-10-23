@@ -19,6 +19,9 @@ class Perfil extends Model
         'cargo',
         'avatar',
         'bio',
+        'vinculo',
+        'institucion_tipo',
+        'institucion',
     ];
 
     /**

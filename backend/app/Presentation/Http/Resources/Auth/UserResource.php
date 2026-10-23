@@ -23,7 +23,14 @@ class UserResource extends JsonResource
                 'cargo' => $this->perfil->cargo,
                 'avatar' => $this->perfil->avatar,
                 'bio' => $this->perfil->bio,
+                'vinculo' => $this->perfil->vinculo,
+                'institucion_tipo' => $this->perfil->institucion_tipo,
+                'institucion' => $this->perfil->institucion,
             ]),
+            'intereses' => $this->whenLoaded('intereses', fn () => $this->intereses
+                ->filter(fn ($observatorio) => $observatorio->publico)
+                ->map(fn ($observatorio) => ['id' => $observatorio->id, 'nombre' => $observatorio->nombre])
+                ->values()),
             'departamentos' => $this->whenLoaded(
                 'departamentos',
                 fn() =>

@@ -42,6 +42,7 @@ function requiresCsrfProtection(method: string): boolean {
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const authService = inject(AuthService);
+  const sessionVersion = authService.sessionVersion;
 
   // Clonar request con headers comunes
   const headers: Record<string, string> = {
@@ -67,11 +68,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (isApiRequest && error.status === 401) {
+      if (isApiRequest && error.status === 401 && sessionVersion === authService.sessionVersion) {
         // La navegación la resuelve el guard de la ruta. Redirigir desde aquí
         // interrumpe guestGuard al abrir /auth/login o /auth/register.
         authService.clearAuthSilent();
-      } else if (isApiRequest && error.status === 403 && authService.isAuthenticated()) {
+      } else if (isApiRequest && error.status === 403 && authService.isAuthenticated() &&
+        !/\/departamentos\/publicaciones\/[^/?]+\/download(?:\?|$)/.test(req.url)) {
         // Sin permisos - redirigir a dashboard
         router.navigate(['/admin/dashboard']);
       }

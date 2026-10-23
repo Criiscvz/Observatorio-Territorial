@@ -1,236 +1,72 @@
-﻿<div class="page-container">
-  <mat-tab-group class="atlas-tabs" animationDuration="200ms">
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <mat-icon>picture_as_pdf</mat-icon>
-        <span>Reportes PDF</span>
-      </ng-template>
+<section class="atlas-directory" aria-labelledby="atlas-heading" [attr.aria-busy]="loading()">
+  <header class="directory-heading">
+    <div>
+      <p class="eyebrow">Información para comprender el territorio</p>
+      <h1 id="atlas-heading">Atlas territorial</h1>
+      <p>Explora las visualizaciones de cada categoría y consulta sus indicadores sin salir del portal.</p>
+    </div>
+    <button type="button" class="public-button refresh-button" aria-label="Actualizar Atlas" [disabled]="loading()" (click)="loadData()">
+      <mat-icon>refresh</mat-icon><span>Actualizar</span>
+    </button>
+  </header>
 
-      <div class="tab-inner">
-        <div class="page-header">
-          <div class="header-icon">
-            <mat-icon>auto_stories</mat-icon>
-          </div>
-          <div class="header-info">
-            <h1>Atlas de Publicaciones Territoriales</h1>
-            <p>
-              Explora y descarga informes PDF sincronizados desde SharePoint para el Atlas
-              Territorial del Observatorio ULEAM.
-            </p>
+  <div class="directory-tools">
+    <label class="public-search">
+      <mat-icon aria-hidden="true">search</mat-icon>
+      <input type="search" aria-label="Buscar categoría o tema de Atlas" placeholder="Buscar categoría o tema…" [value]="query()" (input)="search($any($event.target).value)">
+    </label>
+    <label class="available-filter">
+      <input type="checkbox" [checked]="onlyAvailable()" (change)="filterAvailable($any($event.target).checked)">
+      Solo Atlas disponibles
+    </label>
+  </div>
 
-            <div class="header-stats">
-              <span class="stat">
-                <mat-icon>library_books</mat-icon>
-                {{ articulos().length }} publicaciones disponibles
-              </span>
-              <span class="stat">
-                <mat-icon>picture_as_pdf</mat-icon>
-                Formato PDF
-              </span>
+  @if (loading()) {
+    <div class="directory-empty" role="status"><mat-spinner diameter="32" /><p>Cargando Atlas…</p></div>
+  } @else if (loadError()) {
+    <div class="directory-empty" role="alert">
+      <mat-icon>cloud_off</mat-icon><h2>No se pudo cargar el Atlas</h2>
+      <p>Comprueba tu conexión e inténtalo de nuevo.</p>
+      <button class="public-button" type="button" (click)="loadData()"><mat-icon>refresh</mat-icon>Reintentar</button>
+    </div>
+  } @else {
+    <p class="directory-count" role="status"><strong>{{ filtered().length }} {{ filtered().length === 1 ? 'categoría' : 'categorías' }}</strong><span>· {{ availableCount() }} Atlas {{ availableCount() === 1 ? 'disponible' : 'disponibles' }}</span></p>
+    <div class="directory-list">
+      @for (entry of visible(); track entry.id) {
+        <article class="directory-row">
+          <span class="category-icon" aria-hidden="true"><mat-icon>{{ categoryVisual(entry.nombre, entry.icono).icon }}</mat-icon></span>
+          <div class="atlas-copy">
+            <h2>{{ entry.nombre }}</h2>
+            <p class="atlas-summary">{{ entry.publication?.titulo || entry.descripcion || 'Consulta las visualizaciones de esta categoría.' }}</p>
+            <div class="atlas-meta">
+              <span class="atlas-availability" [class.is-available]="entry.available"><mat-icon aria-hidden="true">{{ entry.available ? 'check_circle_outline' : entry.publication ? 'info_outline' : 'remove_circle_outline' }}</mat-icon>{{ entry.status }}</span>
+              @if (entry.publication; as publication) {
+                @if (publication.updated_at || publication.fecha_publicacion; as date) { <span>Actualizado el {{ date | date:'dd/MM/yyyy' }}</span> }
+                @if (publication.fuente) { <span class="atlas-source">Fuente: {{ publication.fuente }}</span> }
+              }
             </div>
           </div>
-          @if (canImportFromSharePoint()) {
-            <div class="header-actions">
-              <button
-                mat-raised-button
-                color="primary"
-                type="button"
-                (click)="importarDesdeSharePoint()"
-              >
-                <mat-icon>cloud_download</mat-icon>
-                Importar desde SharePoint
-              </button>
-            </div>
-          }
+          <button class="public-button public-button--primary view-atlas" type="button" [disabled]="!entry.available" [attr.aria-label]="'Ver Atlas de ' + entry.nombre" (click)="openAtlas(entry)">
+            <mat-icon>bar_chart</mat-icon>Ver Atlas<mat-icon aria-hidden="true">fullscreen</mat-icon>
+          </button>
+        </article>
+      } @empty {
+        <div class="directory-empty">
+          <mat-icon>{{ entries().length ? 'search_off' : 'map' }}</mat-icon>
+          <h2>{{ entries().length ? 'No encontramos categorías' : 'Aún no hay categorías públicas' }}</h2>
+          <p>{{ entries().length ? 'Prueba con otro tema o desactiva «Solo Atlas disponibles».' : 'Los Atlas estarán disponibles aquí cuando se publiquen.' }}</p>
         </div>
-
-        @if (showEditorPanelButton()) {
-          <section class="editor-panel-entry">
-            <div>
-              <strong>Panel del editor</strong>
-              <span>Gestiona artículos, reportes y atlas de tus Observatorios asignados.</span>
-            </div>
-            <a mat-raised-button color="primary" routerLink="/admin/dashboard">
-              <mat-icon>edit_note</mat-icon>
-              Ir al panel del editor
-            </a>
-          </section>
-        }
-
-        <div class="atlas-navigation">
-          @if (selectedCategory() !== 'TODAS') {
-            <button mat-stroked-button type="button" (click)="selectCategory('TODAS')">
-              <mat-icon>arrow_back</mat-icon>Volver a categorías
-            </button>
-          }
-          <button mat-stroked-button type="button" (click)="loadData()" [disabled]="loading()">Actualizar datos</button>
+      }
+    </div>
+    @if (filtered().length) {
+      <nav class="public-pagination" aria-label="Paginación de categorías de Atlas">
+        <span>{{ rangeStart() }}–{{ rangeEnd() }} de {{ filtered().length }} {{ filtered().length === 1 ? 'categoría' : 'categorías' }} · {{ pageSize }} por página</span>
+        <div>
+          <button class="page-button" type="button" aria-label="Página anterior de Atlas" [disabled]="currentPage() === 0" (click)="changePage(-1)"><mat-icon>chevron_left</mat-icon></button>
+          <span>{{ currentPage() + 1 }} / {{ pageCount() }}</span>
+          <button class="page-button" type="button" aria-label="Página siguiente de Atlas" [disabled]="currentPage() + 1 >= pageCount()" (click)="changePage(1)"><mat-icon>chevron_right</mat-icon></button>
         </div>
-
-        @if (selectedCategory() !== 'TODAS') {
-        <section class="filters-section" aria-labelledby="atlas-category-heading">
-          <h2 id="atlas-category-heading">{{ selectedCategoryName() }}</h2>
-          @if (selectedDescription()) { <p>{{ selectedDescription() }}</p> }
-          <div class="search-container">
-            <mat-form-field appearance="outline" class="search-field">
-              <mat-icon matPrefix>search</mat-icon>
-              <mat-label>Buscar publicaciones...</mat-label>
-              <input
-                matInput
-                [value]="searchTerm()"
-                (input)="onSearch($any($event.target).value)"
-                placeholder="Titulo, descripción o autor..."
-              />
-              @if (searchTerm()) {
-                <button matSuffix mat-icon-button type="button" (click)="clearSearch()">
-                  <mat-icon>close</mat-icon>
-                </button>
-              }
-            </mat-form-field>
-            @if (searchTerm()) {
-              <span class="results-count">
-                {{ filteredArticulos().length }} resultado(s) encontrado(s)
-              </span>
-            }
-          </div>
-
-        </section>
-        }
-
-        @if (loading()) {
-          <p role="status">Cargando Atlas…</p>
-        } @else if (loadError()) {
-          <p role="alert">{{ loadError() }}</p>
-        } @else if (selectedCategory() === 'TODAS') {
-          <section aria-labelledby="atlas-categories-heading">
-            <div class="atlas-directory-heading">
-              <h2 id="atlas-categories-heading">Explora las categorías de Atlas</h2>
-              <p>Selecciona una categoría para consultar sus publicaciones.</p>
-              <mat-form-field appearance="outline" class="search-field">
-                <mat-label>Buscar categorías</mat-label>
-                <mat-icon matPrefix>search</mat-icon>
-                <input matInput type="search" placeholder="Nombre o descripción" [value]="categorySearch()" (input)="categorySearch.set($any($event.target).value)" />
-                @if (categorySearch()) {
-                  <button matSuffix mat-icon-button type="button" aria-label="Limpiar búsqueda de categorías" (click)="categorySearch.set('')"><mat-icon>close</mat-icon></button>
-                }
-              </mat-form-field>
-              <label><input type="checkbox" [checked]="onlyWithPublications()" (change)="onlyWithPublications.set($any($event.target).checked)" /> Solo categorías con publicaciones</label>
-              <p role="status">{{ filteredCategoryCards().length + (showUncategorized() ? 1 : 0) }} categorías encontradas</p>
-            </div>
-            <div class="atlas-category-grid">
-              @for (cat of filteredCategoryCards(); track cat.id) {
-                <button type="button" class="atlas-category-card" (click)="selectCategory(cat.id)" [attr.aria-label]="'Ver publicaciones de ' + cat.nombre">
-                  <span class="atlas-category-card__icon" [style.color]="getCategoryColor(cat.nombre)" [style.background]="'color-mix(in srgb, ' + getCategoryColor(cat.nombre) + ' 12%, transparent)'"><mat-icon>{{ getCategoryIcon(cat.nombre) }}</mat-icon></span>
-                  <span class="atlas-category-card__name">{{ cat.nombre }}</span>
-                  <span class="atlas-category-card__description">{{ cat.descripcion || 'Consulta las publicaciones de esta categoría.' }}</span>
-                  <span class="atlas-category-card__footer">
-                    <span>{{ cat.total }} {{ cat.total === 1 ? 'publicación' : 'publicaciones' }}</span>
-                    <mat-icon>arrow_forward</mat-icon>
-                  </span>
-                </button>
-              }
-              @if (!filteredCategoryCards().length && !showUncategorized()) { <p>No hay categorías que coincidan con la búsqueda.</p> }
-              @if (showUncategorized()) {
-                <button type="button" class="atlas-category-card" (click)="selectCategory('SIN_CATEGORIA')" aria-label="Ver publicaciones sin categoría">
-                  <span class="atlas-category-card__icon"><mat-icon>folder_open</mat-icon></span>
-                  <span class="atlas-category-card__name">Sin categoría</span>
-                  <span class="atlas-category-card__description">Publicaciones que todavía no tienen una categoría asignada.</span>
-                  <span class="atlas-category-card__footer"><span>{{ uncategorizedCount() }} publicaciones</span><mat-icon>arrow_forward</mat-icon></span>
-                </button>
-              }
-            </div>
-          </section>
-        } @else if (filteredArticulos().length > 0) {
-          <div class="publications-grid">
-            @for (art of filteredArticulos(); track art.id) {
-              <div class="publication-card" [class.locked]="!tieneAcceso(art)">
-                <div
-                  class="card-cover"
-                  [style.background]="
-                    'linear-gradient(135deg, ' +
-                    getCategoryColor(art.categoria?.nombre || '') +
-                    ' 0%, #1e1b4b 100%)'
-                  "
-                >
-                  <div class="cover-pattern"></div>
-                  <span class="category-badge">
-                    <mat-icon>{{ getCategoryIcon(art.categoria?.nombre || '') }}</mat-icon>
-                    {{ art.categoria?.nombre || 'Atlas ULEAM' }}
-                  </span>
-                  @if (art.visibilidad === 'suscriptor') {
-                    <span class="subscription-badge">
-                      <mat-icon>lock</mat-icon>
-                      <span>Suscriptor</span>
-                    </span>
-                  }
-                  <div class="cover-doc-info">
-                    <mat-icon class="pdf-icon">picture_as_pdf</mat-icon>
-                  </div>
-                  @if (!tieneAcceso(art)) {
-                    <div class="lock-overlay">
-                      <mat-icon>lock</mat-icon>
-                    </div>
-                  }
-                </div>
-
-                <div class="card-body">
-                  <h3 class="publication-title" [title]="art.titulo">{{ art.titulo }}</h3>
-                  <p class="publication-desc">{{ art.descripcion }}</p>
-
-                  <div class="publication-metadata">
-                    @if (art.autor) {
-                      <div class="meta-row">
-                        <mat-icon class="meta-icon">person</mat-icon>
-                        <span class="meta-text">{{ art.autor }}</span>
-                      </div>
-                    }
-                    @if (art.fecha_publicacion) {
-                      <div class="meta-row">
-                        <mat-icon class="meta-icon">calendar_today</mat-icon>
-                        <span class="meta-text">{{ art.fecha_publicacion | date: 'dd/MM/yyyy' }}</span>
-                      </div>
-                    }
-                  </div>
-                </div>
-
-                <div class="card-actions">
-                  @if (!tieneAcceso(art)) {
-                    <button
-                      mat-stroked-button
-                      class="publication-action-button publication-action-button--subscriber"
-                      type="button"
-                      (click)="sugerirSuscripcion()"
-                    >
-                      <mat-icon>lock</mat-icon>
-                      <span>Suscribirse</span>
-                    </button>
-                  } @else {
-                    <button
-                      mat-stroked-button
-                      type="button"
-                      (click)="visualizarPdf(art)"
-                      class="publication-action-button"
-                    >
-                      <mat-icon>picture_as_pdf</mat-icon>
-                      Abrir PDF
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="empty-state">
-            <mat-icon>picture_as_pdf</mat-icon>
-            <h3>No se encontraron reportes PDF</h3>
-            <p>{{ searchTerm() ? 'No hay publicaciones que coincidan con tu búsqueda.' : 'No hay contenido publicado disponible para esta selección.' }}</p>
-          </div>
-        }
-      </div>
-    </mat-tab>
-  </mat-tab-group>
-</div>
-
-
-
-
-
+      </nav>
+    }
+  }
+</section>

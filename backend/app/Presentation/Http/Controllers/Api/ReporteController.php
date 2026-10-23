@@ -405,13 +405,15 @@ class ReporteController extends Controller
 
         return [
             'id' => $publicacion->id,
+            'codigo' => $publicacion->codigo,
+            'autores' => $publicacion->autores,
             'nombre_indicador' => $publicacion->titulo,
             'descripcion_indicador' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $publicacion->descripcion,
             'fecha_publicacion' => $publicacion->fecha_publicacion?->format('Y-m-d'),
-            'link_url' => $isLocked ? null : $publicacion->link_url,
-            'ficha_indicador' => $isLocked ? null : ($publicacion->sharepoint_url ?: $downloadUrl),
+            'link_url' => $isLocked || ($publicacion->sharepoint_file_id && $publicacion->link_url === $publicacion->sharepoint_url) ? null : $publicacion->link_url,
+            'ficha_indicador' => $isLocked ? null : ($downloadUrl ?: ($publicacion->sharepoint_file_type === 'application/pdf' ? $publicacion->sharepoint_url : null)),
             'download_url' => $isLocked ? null : $downloadUrl,
-            'sharepoint_url' => $isLocked ? null : $publicacion->sharepoint_url,
+            'sharepoint_url' => $isLocked || $publicacion->archivo_pdf || $publicacion->sharepoint_file_type !== 'application/pdf' ? null : $publicacion->sharepoint_url,
             'fuente' => $publicacion->fuente,
             'categoria_id' => null,
             'departamento_id' => $publicacion->departamento_id,

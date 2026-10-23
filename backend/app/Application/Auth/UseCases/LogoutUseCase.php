@@ -10,6 +10,7 @@ class LogoutUseCase
 {
     public function execute(): void
     {
-        Auth::logout();
+        // Sanctum authenticates the API request, but the browser session belongs to web.
+        Auth::guard('web')->logout();
     }
 }

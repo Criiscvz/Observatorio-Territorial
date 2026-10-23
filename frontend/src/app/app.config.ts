@@ -20,6 +20,7 @@ import { routes } from './app.routes';
 import { repositoryProviders } from './core/di/providers';
 import { authInterceptor, retryInterceptor } from './core/interceptors';
 import { clearLegacyApiCaches } from './core/utils/pwa-cache';
+import { AuthSessionService } from './core/services/auth-session.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -28,6 +29,7 @@ export const appConfig: ApplicationConfig = {
       if (isPlatformBrowser(inject(PLATFORM_ID))) return clearLegacyApiCaches();
       return undefined;
     }),
+    provideAppInitializer(() => inject(AuthSessionService).initialize()),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, retryInterceptor])),

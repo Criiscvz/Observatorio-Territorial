@@ -1,3 +1,30 @@
+/* Centered workspace overlay; the page behind it keeps its scroll position. */
+.atlas-workspace-dialog .mat-mdc-dialog-surface { padding: 0 !important; overflow: hidden; background: var(--card-bg); }
+.atlas-workspace-dialog .atlas-eyebrow { color: var(--atlas-dialog-accent, var(--primary-700)); }
+.atlas-workspace-dialog .field-error { color: var(--atlas-dialog-error, var(--error-color-dark)); }
+.atlas-workspace-dialog .atlas-button.danger { color: var(--atlas-dialog-error, var(--error-color-dark)); }
+.dark .atlas-workspace-dialog { color-scheme: dark; --atlas-dialog-accent: var(--primary-300); --atlas-dialog-error: var(--error-color-light); }
+.publication-workspace-dialog { color-scheme: light; height: calc(100dvh - 24px) !important; max-height: 820px !important; }
+.publication-workspace-dialog .mat-mdc-dialog-surface {
+  padding: 0 !important;
+  background: transparent !important;
+  border-radius: 16px !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0;
+  overflow: hidden !important;
+}
+.publication-workspace-dialog .mat-mdc-dialog-container { padding: 0 !important; height: 100%; min-height: 0; }
+.publication-workspace-dialog .mat-mdc-dialog-inner-container { height: 100%; min-height: 0; align-items: stretch; }
+.publication-workspace-backdrop { background: rgba(2, 6, 23, 0.62) !important; }
+.dark .publication-workspace-dialog {
+  color-scheme: dark;
+  --publication-dialog-accent: var(--primary-300);
+  --publication-dialog-error: var(--error-color-light);
+  --publication-dialog-success: #a2e8bc;
+  --publication-dialog-warning: #fde68a;
+}
+
 /* Compact publication library, scoped to the observatory management view. */
 app-departamento-detail .publication-table {
   overflow: hidden;

@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { ApiService } from './api.service';
 import { environment } from '../../../environments/environment';
+import { AuthSessionService } from './auth-session.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -110,6 +111,78 @@ describe('AuthService', () => {
   });
 
   describe('checkAuth()', () => {
+    it('restores an administrator from the cookie session in a fresh tab without browser storage', () => {
+      service.checkAuth().subscribe();
+      httpMock.expectOne(`${environment.apiUrl}/user`).flush({...mockUser, rol:'admin'});
+      expect(service.isAdmin()).toBe(true);
+      expect(service.isAuthenticated()).toBe(true);
+      expect(localStorage.length).toBe(0);
+      expect(sessionStorage.length).toBe(0);
+    });
+
+    it('shares concurrent checks and checks the server again after completion', () => {
+      service.checkAuth().subscribe(); service.checkAuth().subscribe();
+      httpMock.expectOne(`${environment.apiUrl}/user`).flush(mockUser);
+      service.checkAuth().subscribe();
+      httpMock.expectOne(`${environment.apiUrl}/user`).flush(mockUser);
+      expect(service.isAuthenticated()).toBe(true);
+    });
+
+    it('does not restore a pending user response after logout', () => {
+      service.checkAuth().subscribe();
+      const pending = httpMock.expectOne(`${environment.apiUrl}/user`);
+      service.logout().subscribe();
+      httpMock.expectOne(`${environment.apiUrl}/logout`).flush({});
+      pending.flush(mockUser);
+      expect(service.isAuthenticated()).toBe(false);
+    });
+
+    it('does not let an old anonymous check erase a more recent login', () => {
+      service.checkAuth().subscribe();
+      const oldCheck = httpMock.expectOne(`${environment.apiUrl}/user`);
+      service.login({email:'test@test.com',password:'password'}).subscribe();
+      httpMock.expectOne('http://localhost:8000/sanctum/csrf-cookie').flush({});
+      httpMock.expectOne(`${environment.apiUrl}/login`).flush({user:{...mockUser,rol:'ADMIN'}});
+      oldCheck.flush({}, {status:401,statusText:'Unauthorized'});
+      expect(service.isAdmin()).toBe(true);
+    });
+
+    it('does not close a known session on temporary server errors', () => {
+      service.updateUser(mockUser);
+      service.checkAuth().subscribe();
+      httpMock.expectOne(`${environment.apiUrl}/user`).flush({}, {status:503,statusText:'Unavailable'});
+      expect(service.isAuthenticated()).toBe(true);
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
+    });
+
+    it('bounds session checks when the backend remains offline', async () => {
+      vi.useFakeTimers();
+      try {
+        let valid: boolean | undefined;
+        service.checkAuth().subscribe(value => valid = value);
+        const pending = httpMock.expectOne(`${environment.apiUrl}/user`);
+        await vi.advanceTimersByTimeAsync(60001);
+        expect(valid).toBe(false);
+        expect(pending.cancelled).toBe(true);
+        expect(routerSpy.navigate).not.toHaveBeenCalled();
+      } finally { vi.useRealTimers(); }
+    });
+
+    it('opens the page promptly but still restores a slow cookie session after backend warmup', async () => {
+      vi.useFakeTimers();
+      try {
+        let startupFinished = false;
+        TestBed.inject(AuthSessionService).initialize().subscribe(() => startupFinished = true);
+        const request = httpMock.expectOne(`${environment.apiUrl}/user`);
+        await vi.advanceTimersByTimeAsync(6500);
+        expect(startupFinished).toBe(true);
+        expect(request.cancelled).toBe(false);
+        request.flush({...mockUser, rol:'ADMIN'});
+        expect(service.isAdmin()).toBe(true);
+        expect(localStorage.length).toBe(0);
+      } finally { vi.useRealTimers(); }
+    });
+
     it('should clear a stale session without redirecting the active navigation', () => {
       service['userSignal'].set(mockUser);
       let authenticated: boolean | undefined;

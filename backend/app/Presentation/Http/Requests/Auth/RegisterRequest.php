@@ -7,6 +7,7 @@ namespace App\Presentation\Http\Requests\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Models\User;
 use Illuminate\Support\Str;
+use App\Presentation\Http\Requests\Profile\CommunityProfileRules;
 
 class RegisterRequest extends FormRequest
 {
@@ -22,7 +23,7 @@ class RegisterRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        return array_merge(CommunityProfileRules::rules($this), [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
                 'required', 'string', 'email', 'max:255',
@@ -33,7 +34,7 @@ class RegisterRequest extends FormRequest
                 },
             ],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ];
+        ]);
     }
 
     public function messages(): array

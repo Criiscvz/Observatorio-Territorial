@@ -8,12 +8,29 @@ use App\Models\ObservatorioPublicacion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Illuminate\Support\Facades\Storage;
 use Mockery\MockInterface;
 use Tests\TestCase;
 
 class SharePointArticleImportTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['filesystems.default' => 'local']);
+        Storage::fake('local');
+    }
+
+    private function mockDownload(MockInterface $mock): void
+    {
+        $mock->shouldReceive('downloadPdf')->andReturnUsing(function () {
+            $path = tempnam(sys_get_temp_dir(), 'pdf-test-');
+            file_put_contents($path, "%PDF-1.7\nCopia de prueba\n%%EOF");
+            return $path;
+        });
+    }
 
     public function test_barometer_files_are_imported_as_articles_reports_and_department_books(): void
     {
@@ -32,6 +49,7 @@ class SharePointArticleImportTest extends TestCase
         $atlasFile = $this->sharePointFile('atlas-pdf', 'Atlas Territorial.pdf');
 
         $this->mock(SharePointService::class, function (MockInterface $mock) use ($barometerFile, $reportFile, $atlasFile) {
+            $this->mockDownload($mock);
             $mock->shouldReceive('browseBarometerFolder')
                 ->twice()
                 ->with(null)
@@ -77,7 +95,7 @@ class SharePointArticleImportTest extends TestCase
             ->assertOk()
             ->assertJsonFragment([
                 'titulo' => 'Indicadores Barómetro',
-                'sharepoint_url' => 'https://sharepoint.test/barometer-pdf',
+                'sharepoint_url' => null,
             ]);
 
         $this->getJson("/api/departamentos/{$departamento->id}/publicaciones/reportes/sharepoint/browse")
@@ -131,6 +149,50 @@ class SharePointArticleImportTest extends TestCase
             'LIB-',
             ObservatorioPublicacion::where('sharepoint_file_id', 'atlas-pdf')->value('codigo'),
         );
+    }
+
+    public function test_current_import_routes_preserve_types_and_report_partial_failures_and_duplicates(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['rol' => 'ADMIN', 'is_active' => true]));
+        $service = $this->mock(SharePointService::class);
+        $this->mockDownload($service);
+        foreach (['articulos' => 'ARTICULO', 'libros' => 'LIBRO', 'reportes' => 'REPORTE'] as $target => $type) {
+            $department = Departamento::create(['nombre' => 'Destino '.$type, 'codigo_interno' => 'DEST-'.$type, 'publico' => false]);
+            $resolve = $type === 'LIBRO' ? 'getPdfFileInsideRoot' : 'getPdfFileInsideBarometerRoot';
+            $id = $target.'-pdf';
+            $service->shouldReceive($resolve)->twice()->with($id)->andReturn($this->sharePointFile($id, $type.'.pdf'));
+            $service->shouldReceive($resolve)->once()->with($target.'-invalid')->andThrow(new \RuntimeException('El archivo no es un PDF valido.'));
+            $service->shouldReceive($resolve)->once()->with($target.'-unavailable')->andThrow(new \RuntimeException('No se pudo obtener el archivo de SharePoint.'));
+            $endpoint = "/api/departamentos/{$department->id}/publicaciones/{$target}/sharepoint/import-many";
+            $this->postJson($endpoint, ['sharepoint_file_ids' => [$id, $target.'-invalid', $target.'-unavailable']])
+                ->assertOk()->assertJsonPath('totals.imported', 1)->assertJsonPath('totals.rejected', 1)->assertJsonPath('totals.errors', 1)
+                ->assertJsonPath('data.imported.0.tipo', $type)->assertJsonPath('data.imported.0.departamento_id', $department->id);
+            $this->postJson($endpoint, ['sharepoint_file_ids' => [$id]])->assertOk()
+                ->assertJsonPath('totals.imported', 0)->assertJsonPath('totals.duplicates', 1);
+            $this->getJson("/api/departamentos/{$department->id}/publicaciones?tipo={$type}")->assertOk()->assertJsonCount(1, 'data');
+            $this->assertSame(1, ObservatorioPublicacion::where('departamento_id', $department->id)->where('tipo', $type)->count());
+        }
+        $this->assertSame(0, ObservatorioPublicacion::where('tipo', 'ATLAS')->count());
+    }
+
+    public function test_import_routes_reject_unauthorized_users(): void
+    {
+        $department = Departamento::create(['nombre' => 'Destino protegido', 'codigo_interno' => 'PROT-SP', 'publico' => true]);
+        $endpoint = "/api/departamentos/{$department->id}/publicaciones/libros/sharepoint/import-many";
+        $this->postJson($endpoint, ['sharepoint_file_ids' => ['pdf']])->assertUnauthorized();
+        Sanctum::actingAs(User::factory()->create(['rol' => 'USER']));
+        $this->postJson($endpoint, ['sharepoint_file_ids' => ['pdf']])->assertForbidden();
+        $this->assertSame(0, ObservatorioPublicacion::count());
+    }
+
+    public function test_import_routes_reject_empty_and_repeated_selections(): void
+    {
+        $department = Departamento::create(['nombre' => 'Destino protegido', 'codigo_interno' => 'PROT-SP', 'publico' => true]);
+        $endpoint = "/api/departamentos/{$department->id}/publicaciones/libros/sharepoint/import-many";
+        Sanctum::actingAs(User::factory()->create(['rol' => 'ADMIN']));
+        $this->postJson($endpoint, ['sharepoint_file_ids' => []])->assertUnprocessable()->assertJsonValidationErrors('sharepoint_file_ids');
+        $this->postJson($endpoint, ['sharepoint_file_ids' => ['same', 'same']])->assertUnprocessable();
+        $this->assertSame(0, ObservatorioPublicacion::count());
     }
 
     private function sharePointFile(string $id, string $name): array

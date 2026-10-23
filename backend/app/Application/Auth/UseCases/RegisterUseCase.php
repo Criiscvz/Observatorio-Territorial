@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Application\Auth\UseCases;
 
 use App\Application\Auth\DTOs\RegisterDTO;
+use App\Application\Profile\Services\CommunityProfileUpdater;
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class RegisterUseCase
 {
+    public function __construct(private readonly CommunityProfileUpdater $communityProfileUpdater) {}
+
     public function execute(RegisterDTO $dto): User
     {
         return DB::transaction(function () use ($dto) {
@@ -25,6 +28,7 @@ class RegisterUseCase
 
             // Crear perfil vacío automáticamente
             $user->perfil()->create([]);
+            $this->communityProfileUpdater->execute($user, $dto->community);
 
             return $user;
         });

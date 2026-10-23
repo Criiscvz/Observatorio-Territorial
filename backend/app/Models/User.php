@@ -113,6 +113,12 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function intereses(): BelongsToMany
+    {
+        return $this->belongsToMany(Departamento::class, 'usuario_intereses', 'user_id', 'departamento_id')
+            ->withTimestamps();
+    }
+
     /**
      * Datasets subidos por el usuario
      */

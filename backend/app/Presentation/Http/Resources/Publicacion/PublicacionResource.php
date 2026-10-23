@@ -12,7 +12,8 @@ class PublicacionResource extends JsonResource
         $user = $request->user('sanctum') ?: $request->user();
         $isSubscriberContent = (bool) $this->solo_suscriptores;
         $routeAction = (string) ($request->route()?->getActionName() ?? '');
-        $isManagementRequest = str_contains($routeAction, 'ObservatorioPublicacionController');
+        $isManagementRequest = str_contains($routeAction, 'ObservatorioPublicacionController')
+            || str_contains($routeAction, 'AtlasEnlaceController');
         $isEditorOwner = $isManagementRequest
             && $user?->rol === 'EDITOR'
             && (int) $this->creado_por === (int) $user->id;
@@ -26,6 +27,7 @@ class PublicacionResource extends JsonResource
         }
 
         $hideAtlasInternals = $this->tipo === 'ATLAS' && ! $isManagementRequest;
+        $hasSharePointPdf = $this->sharepoint_url && ($this->tipo !== 'REPORTE' || $this->sharepoint_file_type === 'application/pdf');
 
         return [
             'id' => $this->id,
@@ -48,15 +50,15 @@ class PublicacionResource extends JsonResource
             'codigo' => $this->codigo,
             'titulo' => $this->titulo,
             'fecha_publicacion' => $this->fecha_publicacion?->format('Y-m-d'),
-            'link_url' => $isLocked ? null : $this->link_url,
+            'link_url' => $isLocked || (! $isManagementRequest && $this->sharepoint_file_id && $this->link_url === $this->sharepoint_url) ? null : $this->link_url,
             'descripcion' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $this->descripcion,
             'autores' => $this->autores,
             'fuente' => $this->fuente,
             'nombre_archivo_original' => $isLocked ? null : $this->nombre_archivo_original,
-            'download_url' => (! $isLocked && ($this->archivo_pdf || $this->sharepoint_url))
+            'download_url' => (! $isLocked && ($this->archivo_pdf || $hasSharePointPdf))
                 ? $downloadUrl
                 : null,
-            'sharepoint_url' => ($isLocked || $this->archivo_pdf) ? null : $this->sharepoint_url,
+            'sharepoint_url' => ($isLocked || $this->archivo_pdf || ! $hasSharePointPdf) ? null : $this->sharepoint_url,
             'sharepoint_file_id' => $hideAtlasInternals ? null : $this->sharepoint_file_id,
             'sharepoint_file_name' => $hideAtlasInternals ? null : $this->sharepoint_file_name,
             'sharepoint_file_type' => $hideAtlasInternals ? null : $this->sharepoint_file_type,

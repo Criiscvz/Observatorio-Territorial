@@ -48,25 +48,30 @@
     <mat-card-header>
       <mat-card-title>
         <mat-icon>manage_accounts</mat-icon>
-        Editores con acceso a Observatorios
+        Editores y observatorios
       </mat-card-title>
       <mat-card-subtitle>
-        Solo los usuarios EDITOR requieren configuración manual. Aquí se asignan uno o varios Observatorios.
+        Administra el alcance de cada editor.
       </mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content class="card-content">
       <div class="users-toolbar">
-        <mat-form-field appearance="outline" class="search-field">
-          <mat-icon matPrefix>search</mat-icon>
+        <label class="editor-search">
+          <mat-icon aria-hidden="true">search</mat-icon>
           <input
-            matInput
             type="text"
+            aria-label="Buscar editor por nombre o correo"
             placeholder="Buscar editor por nombre o correo"
             [ngModel]="searchTerm()"
             (ngModelChange)="searchTerm.set($event)"
           />
-        </mat-form-field>
+        </label>
+      </div>
+
+      <div class="editor-scope-note">
+        <mat-icon aria-hidden="true">info_outline</mat-icon>
+        <span>El rol define los permisos. Cada editor gestiona contenido únicamente en sus observatorios asignados.</span>
       </div>
 
       @if (loadingUsers()) {
@@ -80,61 +85,76 @@
           <p>No se encontraron usuarios con rol EDITOR.</p>
         </div>
       } @else {
-        <div class="users-grid">
+        <div class="editors-list" aria-label="Editores y sus observatorios asignados">
           @for (user of filteredUsers(); track user.id) {
-            <div class="user-card">
-              <div class="user-card-head">
+            <article class="editor-row">
+              <div class="editor-identity">
                 <div class="user-avatar">{{ getInitial(user) }}</div>
                 <div class="user-meta">
-                  <span class="user-name" [title]="user.name">{{ user.name }}</span>
-                  <span class="user-email" [title]="user.email">{{ user.email }}</span>
-                  <span class="user-permission-summary">
-                    {{ getAssignedObservatoriosCount(user) }} Observatorios asignados
-                  </span>
+                  <h3 class="editor-name">{{ user.name }}</h3>
+                  <span class="user-email">{{ user.email }}</span>
                 </div>
                 <span class="role-badge badge-editor">EDITOR</span>
               </div>
 
-              <div class="user-card-body">
-                <div class="admin-note editor-note">
-                  <mat-icon>info</mat-icon>
-                  <span>El editor solo puede gestionar contenido en los Observatorios asignados.</span>
-                </div>
-
-                <div class="modulos-permisos">
-                  @for (permission of editorPermissions; track permission) {
-                    <div class="modulo-row">
-                      <div class="modulo-icon-wrapper">
-                        <mat-icon class="modulo-icon">check_circle</mat-icon>
-                      </div>
-                      <div class="modulo-info">
-                        <span class="modulo-label">{{ permission }}</span>
-                        <span class="nivel-chip nivel-write">Incluido</span>
-                      </div>
-                    </div>
+              <div class="editor-assignments">
+                <span class="assignment-count">
+                  @if (hasAllObservatorios(user)) {
+                    Todos los observatorios
+                  } @else {
+                    {{ getAssignedObservatoriosCount(user) }}
+                    {{ getAssignedObservatoriosCount(user) === 1 ? 'observatorio asignado' : 'observatorios asignados' }}
                   }
-                </div>
+                </span>
+                @for (name of getAssignedObservatoriosNames(user); track $index) {
+                  <span class="observatorio-chip"><mat-icon aria-hidden="true">account_balance</mat-icon>{{ name }}</span>
+                }
               </div>
 
-              <div class="user-card-actions">
+              <div class="editor-actions">
                 <button
-                  mat-stroked-button
-                  class="reset-btn"
-                  matTooltip="Quitar todos los Observatorios asignados"
-                  (click)="resetUserPermissions(user)"
+                  type="button"
+                  class="editor-action reset-access"
+                  [disabled]="savingUserId() !== null || getAssignedObservatoriosCount(user) === 0"
+                  [attr.aria-label]="'Quitar accesos de ' + user.name"
+                  (click)="resetConfirmationId.set(user.id)"
                 >
-                  <mat-icon>restart_alt</mat-icon>
+                  <mat-icon aria-hidden="true">remove_moderator</mat-icon>
                   Quitar accesos
                 </button>
-                <button mat-flat-button color="primary" (click)="openPermissionsDialog(user)">
-                  <mat-icon>security</mat-icon>
-                  Gestionar Observatorios
+                <button type="button" class="editor-action manage-observatorios"
+                  [disabled]="savingUserId() !== null"
+                  [attr.aria-label]="'Gestionar observatorios de ' + user.name"
+                  (click)="openPermissionsDialog(user)">
+                  <mat-icon aria-hidden="true">tune</mat-icon>
+                  {{ savingUserId() === user.id ? 'Guardando...' : 'Gestionar observatorios' }}
                 </button>
               </div>
-            </div>
+
+              @if (resetConfirmationId() === user.id) {
+                <div class="reset-confirmation" role="group" [attr.aria-label]="'Confirmar retirada de accesos de ' + user.name">
+                  <div><strong>¿Quitar los accesos de {{ user.name }}?</strong>
+                    <p>Dejará de gestionar sus observatorios asignados. Su cuenta y su rol se conservarán.</p></div>
+                  <div class="confirmation-actions">
+                    <button type="button" class="editor-action" [disabled]="savingUserId() !== null" (click)="resetConfirmationId.set(null)">Cancelar</button>
+                    <button type="button" class="editor-action confirm-reset" [disabled]="savingUserId() !== null" (click)="resetUserPermissions(user)">Confirmar</button>
+                  </div>
+                </div>
+              }
+            </article>
           }
         </div>
       }
+
+      <details class="editor-role-details">
+        <summary><mat-icon aria-hidden="true">expand_more</mat-icon>Ver permisos incluidos en el rol Editor</summary>
+        <ul>
+          @for (permission of editorPermissions; track permission) {
+            <li><mat-icon aria-hidden="true">check</mat-icon>{{ permission }}</li>
+          }
+        </ul>
+      </details>
+      <p class="permissions-status" role="status">{{ saveStatus() }}</p>
     </mat-card-content>
   </mat-card>
 </div>

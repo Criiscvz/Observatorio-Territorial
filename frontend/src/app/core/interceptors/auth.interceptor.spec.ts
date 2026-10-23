@@ -16,7 +16,7 @@ describe('isTrustedApiUrl', () => {
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         { provide: Router, useValue: { navigate: vi.fn() } },
-        { provide: AuthService, useValue: { clearAuthSilent: vi.fn() } },
+        { provide: AuthService, useValue: { clearAuthSilent: vi.fn(), isAuthenticated: () => true, sessionVersion: 0 } },
       ],
     });
 
@@ -108,5 +108,27 @@ describe('isTrustedApiUrl', () => {
     expect(externalRequest.request.withCredentials).toBe(false);
     expect(externalRequest.request.headers.has('X-XSRF-TOKEN')).toBe(false);
     externalRequest.flush({});
+  });
+
+  it('keeps a denied PDF in the reader instead of navigating away from the library', () => {
+    const url = `${environment.apiUrl}/departamentos/publicaciones/private-pdf/download`;
+    http.get(url, {responseType:'arraybuffer'}).subscribe({error: () => undefined});
+    httpMock.expectOne(url).flush(null, {status:403,statusText:'Forbidden'});
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+  });
+
+  it('clears a rejected current session without redirecting the active public page', () => {
+    http.get(`${environment.apiUrl}/user`).subscribe({error: () => undefined});
+    httpMock.expectOne(`${environment.apiUrl}/user`).flush({}, {status:401,statusText:'Unauthorized'});
+    expect(TestBed.inject(AuthService).clearAuthSilent).toHaveBeenCalledOnce();
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+  });
+
+  it('does not clear a new login when an older request returns 401 late', () => {
+    http.get(`${environment.apiUrl}/user`).subscribe({error: () => undefined});
+    const pending = httpMock.expectOne(`${environment.apiUrl}/user`);
+    (TestBed.inject(AuthService) as any).sessionVersion = 1;
+    pending.flush({}, {status:401,statusText:'Unauthorized'});
+    expect(TestBed.inject(AuthService).clearAuthSilent).not.toHaveBeenCalled();
   });
 });

@@ -57,6 +57,7 @@ class AtlasCategoriaTest extends TestCase
         });
         (require database_path('migrations/2026_09_27_000001_create_atlas_categorias.php'))->up();
         (require database_path('migrations/2026_10_07_000001_add_visibility_and_icon_to_atlas_categorias.php'))->up();
+        (require database_path('migrations/2026_10_21_000001_add_selected_publication_to_atlas_categories.php'))->up();
     }
 
     private function signIn(string $role = 'ADMIN'): void
@@ -243,13 +244,15 @@ class AtlasCategoriaTest extends TestCase
         $this->getJson("/api/departamentos/publicaciones/{$publication->id}/download")->assertNotFound();
     }
 
-    public function test_sharepoint_only_download_preserves_redirect_without_contacting_storage(): void
+    public function test_sharepoint_only_download_requires_saved_copy_without_redirecting_or_contacting_storage(): void
     {
         $publication = $this->publication(['sharepoint_url' => 'https://example.test/original.pdf']);
         Storage::shouldReceive('disk')->never();
 
-        $this->get("/api/departamentos/publicaciones/{$publication->id}/download")
-            ->assertRedirect('https://example.test/original.pdf');
+        $this->getJson("/api/departamentos/publicaciones/{$publication->id}/download")
+            ->assertStatus(409)
+            ->assertHeaderMissing('Location')
+            ->assertDontSee('https://example.test/original.pdf');
     }
 
     public function test_failed_file_deletion_preserves_publication(): void
@@ -297,6 +300,11 @@ class AtlasCategoriaTest extends TestCase
         $first = AtlasCategoria::create(['nombre' => 'Salud']);
         $second = AtlasCategoria::create(['nombre' => 'Ambiente']);
         $this->mock(SharePointService::class, function ($mock) {
+            $mock->shouldReceive('downloadPdf')->once()->with('pdf-1')->andReturnUsing(function () {
+                $path = tempnam(sys_get_temp_dir(), 'atlas-import-test-');
+                file_put_contents($path, "%PDF-1.7\nCopia de prueba\n%%EOF");
+                return $path;
+            });
             $mock->shouldReceive('getPdfFileInsideRoot')->twice()->with('pdf-1')->andReturn([
                 'id' => 'pdf-1', 'name' => 'Documento.pdf', 'web_url' => 'https://example.test/file',
                 'mime_type' => 'application/pdf', 'size' => 100, 'last_modified_at' => '2026-09-26T12:00:00Z',
@@ -309,6 +317,7 @@ class AtlasCategoriaTest extends TestCase
         $this->postJson($endpoint, ['sharepoint_file_ids' => ['pdf-1'], 'atlas_categoria_id' => $second->id])
             ->assertOk()->assertJsonPath('totals.duplicates', 1);
         $this->assertSame($first->id, ObservatorioPublicacion::firstOrFail()->atlas_categoria_id);
+        Storage::disk(config('filesystems.default'))->assertExists(ObservatorioPublicacion::firstOrFail()->archivo_pdf);
         $this->deleteJson("/api/atlas/categorias/{$first->id}")->assertConflict();
         $second->delete();
         $this->postJson($endpoint, ['sharepoint_file_ids' => ['pdf-2'], 'atlas_categoria_id' => $second->id])
@@ -317,10 +326,14 @@ class AtlasCategoriaTest extends TestCase
 
     private function publication(array $attributes = []): ObservatorioPublicacion
     {
-        return ObservatorioPublicacion::create(array_merge([
+        $publication = ObservatorioPublicacion::create(array_merge([
             'tipo' => 'ATLAS', 'estado' => 'PUBLICACION', 'titulo' => 'Atlas de prueba',
             'fecha_publicacion' => '2026-09-26', 'solo_suscriptores' => false,
         ], $attributes));
+        if ($publication->atlas_categoria_id) {
+            AtlasCategoria::whereKey($publication->atlas_categoria_id)->update(['publicacion_destacada_id' => $publication->id]);
+        }
+        return $publication;
     }
 
     public function test_admin_can_create_edit_list_and_soft_delete(): void

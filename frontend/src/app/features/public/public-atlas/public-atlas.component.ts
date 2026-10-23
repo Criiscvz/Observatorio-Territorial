@@ -1,330 +1,121 @@
-﻿import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal, DestroyRef } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatTabsModule } from '@angular/material/tabs';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, computed, DestroyRef, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { forkJoin } from 'rxjs';
+import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
-import { atlasCategoryPresentation } from '@core/utils/atlas-category-presentation';
-
-import { Articulo } from '@core/services/articulos.service';
 import { PublicacionService } from '@core/services/publicacion.service';
-import { AuthService } from '@core/services/auth.service';
-import { PermisosService } from '@core/services/permisos.service';
-import { DepartamentoService } from '@core/services/departamento.service';
-import { Departamento } from '@core/models';
-import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
-import { environment } from '../../../../environments/environment';
-import { SharePointAtlasImportDialogComponent } from './sharepoint-atlas-import-dialog.component';
+import { atlasCategoryPresentation } from '@core/utils/atlas-category-presentation';
+import { PublicLibraryPublication, publicHttpUrl } from '../components/public-library-publication';
+import { powerBiEmbedUrl } from '../components/publication-viewer.component';
+import { PublicationViewerService } from '../components/publication-viewer.service';
+
+interface AtlasDirectoryEntry extends AtlasCategoria {
+  publication: ObservatorioPublicacion | null;
+  reportUrl: string | null;
+  available: boolean;
+  status: string;
+}
 
 @Component({
   selector: 'app-public-atlas',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatTabsModule,
-    MatDialogModule,
-    MatSnackBarModule,
-    RouterLink,
-    TranslateModule,
-  ],
+  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './public-atlas.component.html',
   styleUrl: './public-atlas.component.scss',
 })
 export class PublicAtlasComponent implements OnInit {
-  private readonly categoriaService = inject(AtlasCategoriaService);
-  readonly categorias = signal<AtlasCategoria[]>([]);
-  readonly loading = signal(false);
-  readonly loadError = signal('');
-  readonly selectedDescription = computed(
-    () => this.categorias().find((c) => c.id === this.selectedCategory())?.descripcion,
-  );
-  readonly selectedCategoryName = computed(() =>
-    this.selectedCategory() === 'SIN_CATEGORIA'
-      ? 'Sin categoría'
-      : (this.categorias().find((c) => c.id === this.selectedCategory())?.nombre ?? 'Atlas'),
-  );
-  readonly categoryCards = computed(() =>
-    this.categorias().map((categoria) => ({
-      ...categoria,
-      total: this.articulos().filter((item) => item.categoria?.id === categoria.id).length,
-    })),
-  );
-  readonly uncategorizedCount = computed(
-    () => this.articulos().filter((item) => !item.categoria?.id).length,
-  );
-  readonly categorySearch = signal('');
-  readonly onlyWithPublications = signal(false);
-  readonly filteredCategoryCards = computed(() =>
-    this.categoryCards().filter(
-      (cat) =>
-        this.matchesCategory(`${cat.nombre} ${cat.descripcion ?? ''}`) &&
-        (!this.onlyWithPublications() || cat.total > 0),
-    ),
-  );
-  readonly showUncategorized = computed(
-    () =>
-      this.uncategorizedCount() > 0 &&
-      this.matchesCategory('Sin categoría Publicaciones pendientes de clasificación'),
-  );
-
-  private matchesCategory(text: string): boolean {
-    const normalize = (value: string) =>
-      value
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLocaleLowerCase('es')
-        .trim();
-    return normalize(text).includes(normalize(this.categorySearch()));
-  }
+  private readonly categories = inject(AtlasCategoriaService);
+  private readonly publications = inject(PublicacionService);
+  private readonly viewer = inject(PublicationViewerService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly publicacionService = inject(PublicacionService);
-  private readonly authService = inject(AuthService);
-  private readonly permisosService = inject(PermisosService);
-  private readonly departamentoService = inject(DepartamentoService);
-  private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
-
-  searchTerm = signal('');
-  selectedCategory = signal<string>('TODAS');
-
-  articulos = signal<Articulo[]>([]);
-  departamentos = signal<Departamento[]>([]);
-  readonly showEditorPanelButton = computed(() => this.authService.isEditor());
-  readonly canImportFromSharePoint = computed(() => this.authService.isAdmin());
-
-  // Computed properties for permissions
-  canCreate = computed(() => {
-    const user = this.authService.user();
-    if (!user) return false;
-    return this.permisosService.puedeEditar(user.id, 'atlas');
+  private readonly platformId = inject(PLATFORM_ID);
+  readonly loading = signal(false);
+  readonly loadError = signal(false);
+  readonly categorias = signal<AtlasCategoria[]>([]);
+  readonly atlas = signal<ObservatorioPublicacion[]>([]);
+  readonly query = signal('');
+  readonly onlyAvailable = signal(false);
+  readonly page = signal(0);
+  readonly pageSize = 5;
+  readonly categoryVisual = atlasCategoryPresentation;
+  readonly entries = computed<AtlasDirectoryEntry[]>(() => {
+    const selected = new Map(this.atlas().map(item => [item.id, item]));
+    return this.categorias().filter(category => category.publico !== false).map(category => {
+      const candidate = selected.get(category.publicacion_destacada_id ?? '');
+      const publication = candidate?.atlas_categoria?.id === category.id ? candidate : null;
+      const restricted = !!(publication?.bloqueado || publication?.solo_suscriptores);
+      const reportUrl = restricted ? null : powerBiEmbedUrl(publication?.link_url ?? null);
+      return {
+        ...category, publication, reportUrl, available: !!reportUrl,
+        status: !publication ? 'Sin Atlas publicado' : restricted ? 'Acceso restringido'
+          : reportUrl ? 'Atlas disponible' : 'Enlace no compatible con el visor',
+      };
+    });
   });
+  readonly filtered = computed(() => {
+    const query = this.normalize(this.query());
+    return this.entries().filter(entry => (!this.onlyAvailable() || entry.available) &&
+      this.normalize([entry.nombre, entry.descripcion, entry.publication?.titulo, entry.publication?.fuente].join(' ')).includes(query));
+  });
+  readonly availableCount = computed(() => this.filtered().filter(entry => entry.available).length);
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize)));
+  readonly currentPage = computed(() => Math.min(this.page(), this.pageCount() - 1));
+  readonly visible = computed(() => this.filtered().slice(this.currentPage() * this.pageSize, (this.currentPage() + 1) * this.pageSize));
+  readonly rangeStart = computed(() => this.filtered().length ? this.currentPage() * this.pageSize + 1 : 0);
+  readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.filtered().length));
 
   ngOnInit(): void {
-    this.loadData();
-    this.loadDepartamentos();
+    if (isPlatformBrowser(this.platformId)) this.loadData();
   }
 
   loadData(): void {
     if (this.loading()) return;
     this.loading.set(true);
-    this.loadError.set('');
-    forkJoin([this.publicacionService.getPublicAtlas(), this.categoriaService.list(true)])
+    this.loadError.set(false);
+    forkJoin({ atlas: this.publications.getPublicAtlas(), categories: this.categories.list(true) })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ([data, categorias]) => {
-          this.categorias.set(categorias);
-          if (
-            !['TODAS', 'SIN_CATEGORIA'].includes(this.selectedCategory()) &&
-            !categorias.some((c) => c.id === this.selectedCategory())
-          ) {
-            this.selectedCategory.set('TODAS');
-          }
+        next: data => {
+          this.categorias.set(data.categories);
+          this.atlas.set(data.atlas);
+          this.page.set(0);
           this.loading.set(false);
-          this.articulos.set(
-            data.map((item) => ({
-              id: item.id,
-              titulo: item.titulo,
-              descripcion: item.descripcion,
-              autor: Array.isArray(item.autores) ? item.autores.join(', ') : item.autores,
-              fuente: item.fuente,
-              enlace: this.buildDownloadUrl(item.download_url),
-              download_url: item.download_url,
-              sharepoint_url: item.sharepoint_url,
-              fecha_publicacion: item.fecha_publicacion,
-              departamento_id: item.departamento_id,
-              visibilidad: item.solo_suscriptores ? 'suscriptor' : 'publico',
-              bloqueado: item.bloqueado,
-              categoria: {
-                id: item.atlas_categoria?.id ?? '',
-                nombre: item.atlas_categoria?.nombre ?? 'Sin categoría',
-                codigo: 'ATLAS',
-                color: '#6366F1',
-                icono: 'picture_as_pdf',
-              },
-              created_at: item.created_at,
-              updated_at: item.updated_at,
-            })),
-          );
         },
         error: () => {
-          this.articulos.set([]);
+          this.categorias.set([]);
+          this.atlas.set([]);
+          this.loadError.set(true);
           this.loading.set(false);
-          this.loadError.set('No se pudo cargar Atlas. Intenta actualizar los datos.');
         },
       });
   }
 
-  loadDepartamentos(): void {
-    this.departamentoService
-      .getPublicos()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (departamentos) => this.departamentos.set(departamentos ?? []),
-        error: () => this.departamentos.set([]),
-      });
+  search(value: string): void { this.query.set(value); this.page.set(0); }
+  filterAvailable(value: boolean): void { this.onlyAvailable.set(value); this.page.set(0); }
+  changePage(delta: number): void {
+    this.page.set(Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1)));
   }
 
-  importarDesdeSharePoint(): void {
-    const dialogRef = this.dialog.open(SharePointAtlasImportDialogComponent, {
-      width: 'min(96vw, 980px)',
-      maxWidth: '96vw',
-      panelClass: 'sharepoint-import-dialog-panel',
-      backdropClass: 'sharepoint-import-dialog-backdrop',
-      autoFocus: false,
-      restoreFocus: false,
-      data: {
-        departamentos: this.departamentos(),
-        target: 'atlas',
-        context: 'global-atlas',
-        categoriaId: this.categorias().some((c) => c.id === this.selectedCategory())
-          ? this.selectedCategory()
-          : null,
-      },
-    });
-
-    dialogRef
-      .afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
-        if (!result) return;
-        const totals = result.totals;
-        const message = `${totals.imported} importados, ${totals.duplicates} duplicados, ${totals.rejected} rechazados, ${totals.errors} errores`;
-        this.snackBar.open(message, 'Cerrar', { duration: 7000 });
-        this.loadData();
-      });
+  openAtlas(entry: AtlasDirectoryEntry): void {
+    // Re-read the selection so an outdated row cannot open a replaced link.
+    const current = this.entries().find(item => item.id === entry.id);
+    const publication = current?.publication;
+    if (!current?.available || !current.reportUrl || !publication) return;
+    const item: PublicLibraryPublication = {
+      id: publication.id, type: 'REPORTE', title: publication.titulo,
+      code: publication.codigo || 'Atlas', date: publication.fecha_publicacion || null,
+      authors: Array.isArray(publication.autores) ? publication.autores.join(', ') : publication.autores || '',
+      description: publication.descripcion || current.descripcion || '', source: publication.fuente || '',
+      sourceUrl: publicHttpUrl(publication.fuente), reportUrl: current.reportUrl,
+      download_url: null, sharepoint_url: null, locked: false,
+    };
+    this.viewer.open(item, current.nombre, 'report', 'atlas');
   }
 
-  private buildDownloadUrl(downloadUrl?: string | null): string | null {
-    if (!downloadUrl) return null;
-    if (/^https?:\/\//i.test(downloadUrl)) return downloadUrl;
-    return `${environment.apiUrl}${downloadUrl.replace(/^\/api/, '')}`;
-  }
-
-  canEdit(item: Articulo): boolean {
-    const user = this.authService.user();
-    if (!user) return false;
-    return this.permisosService.puedeEditar(user.id, 'atlas');
-  }
-
-  canDelete(item: Articulo): boolean {
-    const user = this.authService.user();
-    if (!user) return false;
-    return this.permisosService.esAdmin(user.id, 'atlas');
-  }
-
-  // Artículos (publicaciones)
-
-  filteredArticulos = computed<Articulo[]>(() => {
-    const term = this.searchTerm().toLowerCase().trim();
-    const cat = this.selectedCategory();
-    let list = this.articulos();
-
-    if (cat === 'SIN_CATEGORIA') {
-      list = list.filter((a) => !a.categoria?.id);
-    } else if (cat !== 'TODAS') {
-      list = list.filter((a) => a.categoria?.id === cat);
-    }
-
-    if (term) {
-      list = list.filter(
-        (a) =>
-          a.titulo.toLowerCase().includes(term) ||
-          (a.descripcion?.toLowerCase() || '').includes(term) ||
-          (a.autor?.toLowerCase() || '').includes(term) ||
-          (a.categoria?.nombre?.toLowerCase() || '').includes(term),
-      );
-    }
-
-    return list;
-  });
-
-  // Reportes (PDF)
-
-  // Interfaz
-
-  onSearch(term: string): void {
-    this.searchTerm.set(term);
-  }
-
-  clearSearch(): void {
-    this.searchTerm.set('');
-  }
-
-  selectCategory(cat: string): void {
-    this.searchTerm.set('');
-    this.selectedCategory.set(cat);
-  }
-
-  getCategoryIcon(cat: string): string {
-    return atlasCategoryPresentation(
-      cat,
-      this.categorias().find((category) => category.nombre === cat)?.icono,
-    ).icon;
-  }
-
-  getCategoryColor(cat: string): string {
-    return atlasCategoryPresentation(cat).color;
-  }
-
-  tieneAcceso(item: Articulo): boolean {
-    if (item.bloqueado === true) return false;
-
-    const vis = item.visibilidad || 'publico';
-    if (vis === 'publico') return true;
-
-    if (!this.authService.isAuthenticated()) return false;
-
-    const user = this.authService.user();
-    if (!user) return false;
-
-    const role = String(user.rol ?? '').toUpperCase();
-    return ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
-  }
-
-  sugerirSuscripcion(): void {
-    this.dialog.open(SubscriberAccessDialogComponent, {
-      width: 'min(92vw, 460px)',
-      maxWidth: '92vw',
-      panelClass: 'subscriber-access-dialog-panel',
-      backdropClass: 'subscriber-access-dialog-backdrop',
-      autoFocus: false,
-      restoreFocus: false,
-      data: {
-        title: 'Contenido exclusivo para suscriptores',
-        message:
-          'Este contenido está disponible exclusivamente para usuarios suscriptores. Inicie sesión con una cuenta suscriptora o suscríbase para obtener acceso.',
-        icon: 'lock',
-        closeText: 'Entendido',
-      },
-    });
-  }
-
-  visualizarPdf(item: Articulo): void {
-    this.publicacionService
-      .openPdf({
-        download_url: item.download_url ?? null,
-        sharepoint_url: item.sharepoint_url ?? null,
-      })
-      .subscribe((opened) => {
-        if (!opened) {
-          this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
-            duration: 3500,
-          });
-        }
-      });
+  private normalize(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
   }
 }

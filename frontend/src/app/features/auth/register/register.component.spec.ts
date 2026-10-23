@@ -1,148 +1,70 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Pipe, PipeTransform } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterTestingModule } from '@angular/router/testing';
-import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { RegisterComponent } from './register.component';
-import { AuthService, RegisterPendingResponse } from '@core/services/auth.service';
+import { Component, Input, Pipe } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { FormGroup } from '@angular/forms';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { Subject, of, throwError } from 'rxjs';
+import { AuthService } from '@core/services/auth.service';
+import { CommunityProfileFieldsComponent } from '../../../shared/components/community-profile-fields/community-profile-fields.component';
+import { RegisterComponent } from './register.component';
 
 @Pipe({ name: 'translate', standalone: true })
-class MockTranslatePipe implements PipeTransform {
-  transform(value: string): string { return value; }
-}
+class MockTranslatePipe { transform(value: string) { return value; } }
+@Component({ selector: 'app-community-profile-fields', standalone: true, template: '' })
+class MockCommunityFields { @Input() form!: FormGroup; }
 
-describe('RegisterComponent', () => {
+describe('RegisterComponent two-step registration', () => {
   let component: RegisterComponent;
-  let fixture: ComponentFixture<RegisterComponent>;
-  let authServiceSpy: any;
-  let routerSpy: any;
-  let translateSpy: any;
-
+  let auth: { register: ReturnType<typeof vi.fn>; getGoogleAuthorizationUrl: ReturnType<typeof vi.fn> };
+  let router: Router;
+  const account = { given_name: ' Persona ', family_name: ' Ejemplo ', email: 'PERSONA@example.test', password: 'test-password', password_confirmation: 'test-password' };
+  const pending = { email: 'persona@example.test', email_sent: true, resend_after: 60, verification_required: true };
   beforeEach(async () => {
-    authServiceSpy = {
-      register: vi.fn()
-    };
-    translateSpy = { instant: vi.fn().mockImplementation((k) => k) };
-
-    TestBed.overrideComponent(RegisterComponent, {
-      remove: { imports: [TranslateModule] },
-      add: { imports: [MockTranslatePipe] }
-    });
-    TestBed.overrideProvider(AuthService, { useValue: authServiceSpy });
-    TestBed.overrideProvider(TranslateService, { useValue: translateSpy });
-
-    await TestBed.configureTestingModule({
-      imports: [RegisterComponent, ReactiveFormsModule, NoopAnimationsModule, RouterTestingModule.withRoutes([])],
-      providers: [
-        FormBuilder
-      ]
-    }).compileComponents();
-
-    routerSpy = TestBed.inject(Router);
-    vi.spyOn(routerSpy, 'navigate').mockImplementation(() => Promise.resolve(true));
-
-    fixture = TestBed.createComponent(RegisterComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    auth = { register: vi.fn().mockReturnValue(of(pending)), getGoogleAuthorizationUrl: vi.fn() };
+    TestBed.overrideComponent(RegisterComponent, { remove: { imports: [TranslateModule, CommunityProfileFieldsComponent] }, add: { imports: [MockTranslatePipe, MockCommunityFields] } });
+    await TestBed.configureTestingModule({ imports: [RegisterComponent], providers: [provideRouter([]), provideNoopAnimations(),
+      { provide: AuthService, useValue: auth }, { provide: TranslateService, useValue: { instant: (key: string) => key } }] }).compileComponents();
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    const fixture = TestBed.createComponent(RegisterComponent);
+    component = fixture.componentInstance; fixture.detectChanges();
   });
-
-  it('should create with 4 form fields', () => {
-    expect(component).toBeTruthy();
-    expect(Object.keys(component.form.controls)).toHaveLength(4);
+  it('validates the account before advancing and does not create it on the first step', () => {
+    component.nextStep(); expect(component.step()).toBe(1);
+    component.form.setValue(account); component.onSubmit();
+    expect(component.step()).toBe(2); expect(auth.register).not.toHaveBeenCalled();
+    component.previousStep(); expect(component.form.value.given_name).toBe(account.given_name);
   });
-
-  it('should start with loading=false and error=null', () => {
-    expect(component.loading()).toBe(false);
-    expect(component.error()).toBeNull();
+  it('rejects mismatched passwords and whitespace-only names', () => {
+    component.form.setValue({ ...account, given_name: ' ', password_confirmation: 'different' });
+    component.nextStep(); expect(component.step()).toBe(1); expect(component.error()).toBe('common.validation.passwordMismatch');
   });
-
-  describe('onSubmit()', () => {
-    it('should not call register if form is invalid', () => {
-      component.form.setValue({ name: '', email: '', password: '', password_confirmation: '' });
-      component.onSubmit();
-      expect(authServiceSpy.register).not.toHaveBeenCalled();
-      expect(routerSpy.navigate).not.toHaveBeenCalled();
-    });
-
-    it('should set error if passwords do not match', () => {
-      component.form.setValue({
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'password123',
-        password_confirmation: 'different'
-      });
-      component.onSubmit();
-
-      expect(authServiceSpy.register).not.toHaveBeenCalled();
-      expect(translateSpy.instant).toHaveBeenCalledWith('common.validation.passwordMismatch');
-      expect(routerSpy.navigate).not.toHaveBeenCalled();
-    });
-
-    it.each([
-      { emailSent: true, resendAfter: 60 },
-      { emailSent: false, resendAfter: 0 }
-    ])('should navigate to email verification when emailSent=$emailSent', ({ emailSent, resendAfter }) => {
-      const formValue = {
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'password123',
-        password_confirmation: 'password123'
-      };
-      const response: RegisterPendingResponse = {
-        message: 'Cuenta creada. Verifica tu correo.',
-        verification_required: true,
-        email: 'test@test.com',
-        email_sent: emailSent,
-        resend_after: resendAfter
-      };
-      component.form.setValue(formValue);
-      authServiceSpy.register.mockReturnValue(of(response));
-
-      component.onSubmit();
-
-      expect(authServiceSpy.register).toHaveBeenCalledExactlyOnceWith(formValue);
-      expect(routerSpy.navigate).toHaveBeenCalledExactlyOnceWith(['/auth/verificar-correo'], {
-        state: {
-          email: response.email,
-          emailSent: response.email_sent,
-          resendAfter: response.resend_after
-        }
-      });
-    });
-
-    it('should set error signal on registration failure', () => {
-      component.form.setValue({
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'password123',
-        password_confirmation: 'password123'
-      });
-      authServiceSpy.register.mockReturnValue(throwError(() => ({ error: { message: 'Email ya registrado' } })));
-
-      component.onSubmit();
-
-      expect(component.error()).toBe('Email ya registrado');
-      expect(component.loading()).toBe(false);
-      expect(routerSpy.navigate).not.toHaveBeenCalled();
-    });
-
-    it('should use translate fallback on error without message', () => {
-      component.form.setValue({
-        name: 'Test',
-        email: 'test@test.com',
-        password: 'password123',
-        password_confirmation: 'password123'
-      });
-      authServiceSpy.register.mockReturnValue(throwError(() => ({})));
-
-      component.onSubmit();
-
-      expect(translateSpy.instant).toHaveBeenCalledWith('auth.register.errors.registrationFailed');
-      expect(component.loading()).toBe(false);
-      expect(routerSpy.navigate).not.toHaveBeenCalled();
-    });
+  it('sends selected public interest and institutional profile', () => {
+    component.form.setValue(account); component.nextStep();
+    component.profileForm.setValue({ vinculo: 'DOCENTE', institucion_tipo: 'OTRA', institucion: ' Universidad ', interes_departamento_id: 'observatory-id' });
+    component.onSubmit();
+    expect(auth.register).toHaveBeenCalledWith({ name: 'Persona Ejemplo', email: 'persona@example.test', password: account.password, password_confirmation: account.password,
+      vinculo: 'DOCENTE', institucion_tipo: 'OTRA', institucion: 'Universidad', interes_departamento_id: 'observatory-id' });
+    expect(router.navigate).toHaveBeenCalledWith(['/auth/verificar-correo'], { state: { email: pending.email, emailSent: true, resendAfter: 60 } });
+  });
+  it('requires another institution name unless the entire profile is skipped', () => {
+    component.form.setValue(account); component.nextStep();
+    component.profileForm.patchValue({ vinculo: 'DOCENTE', institucion_tipo: 'OTRA', institucion: '' });
+    component.onSubmit(); expect(auth.register).not.toHaveBeenCalled();
+    component.onSubmit(true);
+    expect(auth.register).toHaveBeenCalledExactlyOnceWith({ name: 'Persona Ejemplo', email: 'persona@example.test', password: account.password, password_confirmation: account.password });
+  });
+  it('blocks duplicate submissions and sends account errors back to the first step', () => {
+    const request = new Subject<any>(); auth.register.mockReturnValue(request);
+    component.form.setValue(account); component.nextStep(); component.onSubmit(true); component.onSubmit(true);
+    expect(auth.register).toHaveBeenCalledTimes(1);
+    request.error({ error: { errors: { email: ['Ya registrado'] } } });
+    expect(component.step()).toBe(1); expect(component.error()).toBe('Ya registrado'); expect(component.loading()).toBe(false);
+  });
+  it('keeps a usable failure state when registration fails', () => {
+    auth.register.mockReturnValue(throwError(() => ({})));
+    component.form.setValue(account); component.nextStep(); component.onSubmit(true);
+    expect(component.error()).toBe('auth.register.errors.registrationFailed'); expect(component.loading()).toBe(false);
   });
 });

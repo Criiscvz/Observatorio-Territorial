@@ -1,0 +1,36 @@
+<header class="workspace-header">
+  <div class="workspace-header-content">
+    <div class="workspace-header-start">
+      <button type="button" class="workspace-icon" (click)="toggleSidenav.emit()"
+        [matTooltip]="'layout.header.menu' | translate" [attr.aria-label]="'layout.header.menu' | translate"
+        [attr.aria-expanded]="menuExpanded()" aria-controls="workspace-navigation">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <a routerLink="/admin/dashboard" class="workspace-brand nav-workspace">
+        <img src="ULEAM.png" alt="ULEAM" />
+        <span class="workspace-brand-copy">
+          <strong>{{ 'layout.header.brand' | translate }}</strong>
+          <span>{{ 'layout.header.brandSubtitle' | translate }}</span>
+        </span>
+      </a>
+    </div>
+    <div class="workspace-header-utilities">
+      <button type="button" class="workspace-language" [matMenuTriggerFor]="languageMenu" [attr.aria-label]="'language.select' | translate">
+        <mat-icon>language</mat-icon><span>{{ languageService.currentLang().toUpperCase() }}</span>
+      </button>
+      <mat-menu #languageMenu="matMenu">
+        @for (lang of languageService.availableLanguages; track lang.code) {
+          <button mat-menu-item (click)="languageService.setLanguage(lang.code)">
+            <span>{{ lang.name }}</span>
+            @if (languageService.currentLang() === lang.code) { <mat-icon>check</mat-icon> }
+          </button>
+        }
+      </mat-menu>
+      <button type="button" class="workspace-icon" (click)="themeService.toggleTheme()"
+        [attr.aria-label]="(themeService.isDark() ? 'layout.header.themeLight' : 'layout.header.themeDark') | translate">
+        <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+      <app-account-controls />
+    </div>
+  </div>
+</header>

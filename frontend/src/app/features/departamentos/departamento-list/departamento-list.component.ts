@@ -7,9 +7,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { AuthService } from '@core/services/auth.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
   ConfirmDialogComponent,
@@ -28,11 +30,13 @@ import { tap } from 'rxjs';
     MatIconModule,
     MatInputModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
   ],
   templateUrl: './departamento-list.component.html',
   styleUrl: './departamento-list.component.scss',
 })
 export class DepartamentoListComponent implements OnInit {
+  readonly isAdmin = inject(AuthService).isAdmin;
   private readonly service = inject(DepartamentoService);
   private readonly dialog = inject(MatDialog);
   private readonly snackbar = inject(MatSnackBar);
@@ -43,6 +47,9 @@ export class DepartamentoListComponent implements OnInit {
   readonly loading = signal(false);
   readonly deleting = signal(false);
   readonly error = signal('');
+  readonly pageSize = 10;
+  readonly page = signal(0);
+  readonly visibility = signal('');
   readonly filteredDepartamentos = computed(() => {
     const normalize = (value: string) =>
       value
@@ -52,9 +59,23 @@ export class DepartamentoListComponent implements OnInit {
         .trim();
     const query = normalize(this.search());
     return this.departamentos().filter((item) =>
-      normalize(`${item.nombre} ${item.codigo_interno} ${item.descripcion ?? ''}`).includes(query),
+      normalize(`${item.nombre} ${item.codigo_interno} ${item.descripcion ?? ''}`).includes(query)
+      && (!this.visibility() || item.publico === (this.visibility() === 'public')),
     );
   });
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filteredDepartamentos().length / this.pageSize)));
+  readonly currentPage = computed(() => Math.min(this.page(), this.pageCount() - 1));
+  readonly visibleDepartamentos = computed(() => {
+    const start = this.currentPage() * this.pageSize;
+    return this.filteredDepartamentos().slice(start, start + this.pageSize);
+  });
+  readonly rangeStart = computed(() => this.filteredDepartamentos().length ? this.currentPage() * this.pageSize + 1 : 0);
+  readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.filteredDepartamentos().length));
+
+  updateSearch(value: string): void { this.search.set(value); this.page.set(0); }
+  updateVisibility(value: string): void { this.visibility.set(['public','private'].includes(value) ? value : ''); this.page.set(0); }
+  clearFilters(): void { this.search.set(''); this.visibility.set(''); this.page.set(0); }
+  changePage(direction: number): void { this.page.set(Math.max(0, Math.min(this.currentPage() + direction, this.pageCount() - 1))); }
 
   ngOnInit(): void {
     this.load();
@@ -84,7 +105,7 @@ export class DepartamentoListComponent implements OnInit {
   }
 
   remove(item: Departamento): void {
-    if (this.deleting() || this.loading()) return;
+    if (!this.isAdmin() || this.deleting() || this.loading()) return;
     this.deleting.set(true);
     const data: ConfirmDialogData = {
       title: this.translate.instant('departamentos.management.deleteTitle'),

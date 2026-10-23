@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Presentation\Http\Requests\Profile\CommunityProfileRules;
 
 #[OA\Tag(name: 'Profile', description: 'Endpoints de perfil de usuario')]
 class ProfileController extends Controller
@@ -34,7 +35,7 @@ class ProfileController extends Controller
     public function show(Request $request): JsonResponse
     {
         $user = $request->user();
-        $user->load(['perfil', 'departamentos']);
+        $user->load(['perfil', 'departamentos', 'intereses']);
 
         return response()->json([
             'success' => true,
@@ -53,7 +54,11 @@ class ProfileController extends Controller
                     new OA\Property(property: 'name', type: 'string', example: 'Juan Pérez'),
                     new OA\Property(property: 'telefono', type: 'string', example: '+593 999 999 999'),
                     new OA\Property(property: 'cargo', type: 'string', example: 'Desarrollador'),
-                    new OA\Property(property: 'bio', type: 'string', example: 'Descripción del usuario')
+                    new OA\Property(property: 'bio', type: 'string', example: 'Descripción del usuario'),
+                    new OA\Property(property: 'vinculo', type: 'string', nullable: true),
+                    new OA\Property(property: 'institucion_tipo', type: 'string', nullable: true),
+                    new OA\Property(property: 'institucion', type: 'string', nullable: true),
+                    new OA\Property(property: 'interes_departamento_id', type: 'string', format: 'uuid', nullable: true)
                 ]
             )
         ),
@@ -66,16 +71,16 @@ class ProfileController extends Controller
     )]
     public function update(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validated = $request->validate(array_merge(CommunityProfileRules::rules($request), [
             'name' => 'sometimes|string|max:255',
             'telefono' => 'sometimes|nullable|string|max:20',
             'cargo' => 'sometimes|nullable|string|max:100',
             'bio' => 'sometimes|nullable|string|max:500',
-        ]);
+        ]));
 
         $dto = UpdateProfileDTO::fromArray($validated);
         $user = $this->updateProfileUseCase->execute($request->user(), $dto);
-        $user->load(['perfil', 'departamentos']);
+        $user->load(['perfil', 'departamentos', 'intereses']);
 
         return response()->json([
             'success' => true,

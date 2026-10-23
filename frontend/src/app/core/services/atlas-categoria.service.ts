@@ -8,6 +8,7 @@ export interface AtlasCategoria {
   descripcion: string | null;
   icono?: string | null;
   publico?: boolean;
+  publicacion_destacada_id?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -44,7 +44,7 @@ export class UserPermissionsDialogComponent implements OnInit {
   readonly editorPermissions = [
     'Crear Artículos',
     'Crear Reportes',
-    'Crear Atlas',
+    'Crear Libros',
     'Enviar contenido a revisión',
     'Ver sus envíos',
     'Entrar al panel del editor',

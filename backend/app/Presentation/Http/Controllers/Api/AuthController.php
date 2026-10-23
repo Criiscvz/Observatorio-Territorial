@@ -85,7 +85,11 @@ class AuthController extends Controller
                     new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com'),
                     new OA\Property(property: 'password', type: 'string', format: 'password'),
-                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password')
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password'),
+                    new OA\Property(property: 'vinculo', type: 'string', nullable: true, enum: ['ESTUDIANTE', 'DOCENTE', 'INVESTIGADOR', 'PERSONAL_ADMINISTRATIVO', 'PUBLICO_GENERAL']),
+                    new OA\Property(property: 'institucion_tipo', type: 'string', nullable: true, enum: ['ULEAM', 'OTRA', 'NINGUNA']),
+                    new OA\Property(property: 'institucion', type: 'string', nullable: true),
+                    new OA\Property(property: 'interes_departamento_id', type: 'string', format: 'uuid', nullable: true)
                 ]
             )
         ),

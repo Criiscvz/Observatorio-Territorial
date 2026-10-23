@@ -306,14 +306,16 @@ class ArticuloController extends Controller
 
         return [
             'id' => $publicacion->id,
+            'codigo' => $publicacion->codigo,
             'titulo' => $publicacion->titulo,
             'descripcion' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $publicacion->descripcion,
             'autor' => $publicacion->autores,
             'fuente' => $publicacion->fuente,
             'estado' => $publicacion->estado,
             'enlace' => $isLocked ? null : ($hasPdf ? $downloadUrl : $publicacion->link_url),
+            'link_url' => $isLocked || ($publicacion->sharepoint_file_id && $publicacion->link_url === $publicacion->sharepoint_url) ? null : $publicacion->link_url,
             'download_url' => $isLocked || ! $hasPdf ? null : $downloadUrl,
-            'sharepoint_url' => $isLocked ? null : $publicacion->sharepoint_url,
+            'sharepoint_url' => $isLocked || $publicacion->archivo_pdf ? null : $publicacion->sharepoint_url,
             'fecha_publicacion' => $publicacion->fecha_publicacion?->format('Y-m-d'),
             'fecha_recepcion' => $publicacion->created_at?->format('Y-m-d'),
             'categoria_id' => null,

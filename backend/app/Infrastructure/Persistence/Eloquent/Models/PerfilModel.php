@@ -21,6 +21,9 @@ class PerfilModel extends Model
         'cargo',
         'avatar',
         'bio',
+        'vinculo',
+        'institucion_tipo',
+        'institucion',
     ];
 
     public function user(): BelongsTo

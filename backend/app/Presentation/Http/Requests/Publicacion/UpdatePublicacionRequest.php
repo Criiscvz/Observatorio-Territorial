@@ -11,7 +11,7 @@ class UpdatePublicacionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->route('publicacion')?->tipo !== 'ATLAS' || $this->user()?->rol === 'ADMIN';
     }
 
     protected function prepareForValidation(): void

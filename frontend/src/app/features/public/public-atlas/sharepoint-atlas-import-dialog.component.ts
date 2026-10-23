@@ -59,12 +59,7 @@ export class SharePointAtlasImportDialogComponent {
   readonly target: SharePointImportTarget = this.data.target ?? 'atlas';
   readonly isObservatorioContext = this.data.context === 'observatorio';
   readonly isGlobalAtlasContext = this.target === 'atlas' && !this.isObservatorioContext;
-  readonly rootLabel =
-    this.target === 'atlas' && this.isObservatorioContext
-      ? 'Libros'
-      : this.target === 'atlas'
-        ? 'Atlas'
-        : 'Barómetro';
+  readonly rootLabel = this.target === 'articulos' || this.target === 'reportes' ? 'Barómetro' : 'Atlas';
   readonly destinationLabel =
     this.target === 'articulos'
       ? 'Artículos'
