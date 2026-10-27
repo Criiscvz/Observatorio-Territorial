@@ -58,8 +58,9 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
     }
   };
   readonly item = this.data.item;
+  readonly localPreview = !!this.data.localPdf;
   readonly isAtlas = this.data.context === 'atlas';
-  readonly hasPdf = hasPublicPdf(this.item);
+  readonly hasPdf = !this.item.locked && (this.localPreview || hasPublicPdf(this.item));
   readonly reportUrl = powerBiEmbedUrl(this.item.locked ? null : this.item.reportUrl);
   readonly mode = signal<ReaderMode>(this.data.mode);
   readonly loading = signal(false);
@@ -116,7 +117,8 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
     const id = ++this.loadId;
     this.error.set(''); this.loading.set(true);
     try {
-      const bytes = await firstValueFrom(this.publications.loadPdf(this.item).pipe(takeUntilDestroyed(this.destroyRef)));
+      const bytes = this.data.localPdf ? await this.data.localPdf.arrayBuffer()
+        : await firstValueFrom(this.publications.loadPdf(this.item).pipe(takeUntilDestroyed(this.destroyRef)));
       if (this.destroyed || id !== this.loadId) return;
       const task = await this.engine.open(bytes);
       if (this.destroyed || id !== this.loadId) { void task.destroy(); return; }

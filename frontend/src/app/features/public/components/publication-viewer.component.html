@@ -23,7 +23,7 @@
       <button class="reader-icon" aria-label="Página siguiente" [disabled]="page() >= total() || loading()" (click)="go(page() + 1)"><mat-icon>chevron_right</mat-icon></button>
     </div>
     <label class="reader-zoom"><mat-icon>zoom_in</mat-icon><select #zoomInput aria-label="Zoom del documento" [value]="zoom()" (change)="setZoom(zoomInput.value)"><option value="fit">Ajustar al ancho</option><option value="75">75 %</option><option value="100">100 %</option><option value="125">125 %</option><option value="150">150 %</option><option value="200">200 %</option></select></label>
-    <span class="reader-status" aria-live="polite">{{ loading() ? 'Cargando documento…' : rendering() ? 'Preparando página…' : total() ? 'Lectura en el portal' : '' }}</span>
+    <span class="reader-status" aria-live="polite">{{ loading() ? 'Cargando documento…' : rendering() ? 'Preparando página…' : total() ? (localPreview ? 'Vista previa · Sin guardar' : 'Lectura en el portal') : '' }}</span>
   </div>
 }
 <div class="reader-workspace" [class.with-info]="info()">
@@ -55,4 +55,4 @@
     </section>
   }
 </div>
-<footer class="reader-footer"><span>{{ mode() === 'pdf' ? 'Documento PDF' : isAtlas ? 'Atlas interactivo' : 'Reporte interactivo' }} · {{ item.code }}</span><span>{{ item.locked ? 'Acceso restringido' : 'Observatorio Territorial ULEAM' }}</span></footer>
+<footer class="reader-footer"><span>{{ localPreview ? 'Vista previa local' : mode() === 'pdf' ? 'Documento PDF' : isAtlas ? 'Atlas interactivo' : 'Reporte interactivo' }} · {{ item.code }}</span><span>{{ localPreview ? 'El archivo se subirá al guardar la publicación.' : item.locked ? 'Acceso restringido' : 'Observatorio Territorial ULEAM' }}</span></footer>

@@ -9,15 +9,16 @@ import { powerBiEmbedUrl, PublicationViewerComponent } from './publication-viewe
 import { toPublicLibraryItem } from './public-library-publication';
 
 describe('Visor superpuesto de publicaciones', () => {
-  function setup(options: {mobile?:boolean; status?:number; mode?:'pdf'|'report'; report?:string; pending?:Subject<ArrayBuffer>; locked?:boolean; context?:'atlas'} = {}) {
+  function setup(options: {mobile?:boolean; status?:number; mode?:'pdf'|'report'; report?:string; pending?:Subject<ArrayBuffer>; locked?:boolean; context?:'atlas'; localPdf?:File} = {}) {
     const item=toPublicLibraryItem({id:'lib',tipo:'LIBRO',titulo:'Libro real',autores:['Ana'],codigo:'LIB-1',download_url:'/api/departamentos/publicaciones/lib/download',bloqueado:options.locked} as any,'LIBRO',true);
     if(options.report) item.reportUrl=options.report;
+    if(options.localPdf){item.download_url=null;item.sharepoint_url=null;}
     const loadPdf=vi.fn(() => options.pending || (options.status ? throwError(() => new HttpErrorResponse({status:options.status})) : of(new ArrayBuffer(8))));
     const render=vi.fn(() => ({promise:Promise.resolve(),cancel:vi.fn()}));
     const pdf={numPages:3,getPage:vi.fn(async () => ({getViewport:({scale}:any)=>({width:600*scale,height:800*scale}),render})),getOutline:vi.fn(async()=>[{title:'Contenido',dest:[1],items:[]}])};
     const task={promise:Promise.resolve(pdf),destroy:vi.fn(async()=>undefined)};
     const engine={open:vi.fn(async()=>task)}; const ref={updateSize:vi.fn(),close:vi.fn(),addPanelClass:vi.fn(),removePanelClass:vi.fn(),disableClose:false};
-    TestBed.configureTestingModule({providers:[{provide:MAT_DIALOG_DATA,useValue:{item,departmentName:'Salud',mode:options.mode||'pdf',context:options.context}},
+    TestBed.configureTestingModule({providers:[{provide:MAT_DIALOG_DATA,useValue:{item,departmentName:'Salud',mode:options.mode||'pdf',context:options.context,localPdf:options.localPdf}},
       {provide:PublicacionService,useValue:{loadPdf}}, {provide:PdfEngineService,useValue:engine}, {provide:MatDialogRef,useValue:ref},
       {provide:BreakpointObserver,useValue:{observe:()=>of({matches:!!options.mobile})}}]});
     const fixture=TestBed.createComponent(PublicationViewerComponent); fixture.detectChanges();
@@ -46,6 +47,23 @@ describe('Visor superpuesto de publicaciones', () => {
   it('cancela una descarga en curso al cerrar y no crea el worker después',async()=>{
     const pending=new Subject<ArrayBuffer>(); const {fixture,engine}=setup({pending}); expect(pending.observed).toBe(true);
     fixture.destroy(); expect(pending.observed).toBe(false); pending.next(new ArrayBuffer(4)); await Promise.resolve(); expect(engine.open).not.toHaveBeenCalled();
+  });
+  it('lee un archivo local con paginación sin solicitar la API y libera el documento al cerrar',async()=>{
+    const bytes=new ArrayBuffer(12);const localPdf=new File(['%PDF-1.4'],'vista-previa.pdf',{type:'application/pdf'});
+    Object.defineProperty(localPdf,'arrayBuffer',{value:vi.fn(async()=>bytes)});
+    const {component,fixture,loadPdf,engine,element,task}=setup({localPdf});
+    await vi.waitFor(()=>expect(component.total()).toBe(3));fixture.detectChanges();
+    expect(loadPdf).not.toHaveBeenCalled();expect(engine.open).toHaveBeenCalledWith(bytes);
+    expect(element.querySelector('.reader-status')?.textContent).toContain('Vista previa');
+    component.go(2);expect(component.page()).toBe(2);
+    fixture.destroy();expect(task.destroy).toHaveBeenCalledOnce();
+  });
+  it('descarta una lectura local pendiente si el visor se cierra antes de terminar',async()=>{
+    let finish!:(bytes:ArrayBuffer)=>void;
+    const localPdf=new File(['%PDF-1.4'],'pendiente.pdf',{type:'application/pdf'});
+    Object.defineProperty(localPdf,'arrayBuffer',{value:()=>new Promise<ArrayBuffer>(resolve=>finish=resolve)});
+    const {fixture,engine,loadPdf}=setup({localPdf});fixture.destroy();finish(new ArrayBuffer(8));await Promise.resolve();
+    expect(engine.open).not.toHaveBeenCalled();expect(loadPdf).not.toHaveBeenCalled();
   });
   it('bloquea un recurso restringido aunque se abra el componente directamente',()=>{
     const {loadPdf,element}=setup({locked:true}); expect(loadPdf).not.toHaveBeenCalled(); expect(element.querySelector('iframe')).toBeNull();

@@ -26,7 +26,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { LibraryType, ObservatoryLibraryComponent } from './observatory-library.component';
 import { PublicationViewerService } from '@features/public/components/publication-viewer.service';
-import { hasPublicPdf, toPublicLibraryItem } from '@features/public/components/public-library-publication';
+import { hasPublicPdf, publicHttpUrl, PublicLibraryPublication, toPublicLibraryItem } from '@features/public/components/public-library-publication';
 
 @Component({
   selector: 'app-departamento-detail',
@@ -644,6 +644,11 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   openPdf(publicacion: ObservatorioPublicacion): void {
+    if (publicacion.bloqueado) return;
+    if (publicacion.tipo === 'ARTICULO' || publicacion.tipo === 'LIBRO') {
+      this.viewLibraryPublication(publicacion);
+      return;
+    }
     this.publicacionService.openPdf(publicacion).subscribe((opened) => {
       if (!opened) {
         this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
@@ -651,6 +656,34 @@ export class DepartamentoDetailComponent implements OnInit {
         });
       }
     });
+  }
+
+  get canPreviewEditorPdf(): boolean {
+    const current = this.editingPublication();
+    return this.showPublicationForm() && (this.isArticulo || this.isLibro) && !current?.bloqueado
+      && !!(this.selectedFile() || (current && this.hasPublicationPdf(current)));
+  }
+
+  previewEditorPdf(): void {
+    if (!this.canPreviewEditorPdf || !this.canManagePublications || this.savingPublication()) return;
+    const current = this.editingPublication();
+    const file = this.selectedFile();
+    const values = this.publicationForm.getRawValue();
+    const item: PublicLibraryPublication = {
+      id: current?.id || 'local-pdf-preview', type: this.isLibro ? 'LIBRO' : 'ARTICULO',
+      title: values.titulo.trim() || file?.name || current?.titulo || 'Documento PDF',
+      code: current?.codigo || 'Sin guardar', date: values.fecha_publicacion || null,
+      authors: values.autores.map(author => author.trim()).filter(Boolean).join(', '),
+      description: values.descripcion, source: values.fuente,
+      sourceUrl: publicHttpUrl(values.link_url) || publicHttpUrl(values.fuente), reportUrl: null,
+      // Preserve the permission-checked management URL for saved PDFs. A selected
+      // replacement stays in this browser and is not uploaded by the reader.
+      download_url: file ? null : current?.download_url || null,
+      sharepoint_url: file ? null : current?.sharepoint_url || null, locked: false,
+    };
+    const department = this.departamento()?.nombre || '';
+    if (file) this.publicationViewer.open(item, department, 'pdf', undefined, file);
+    else this.publicationViewer.open(item, department, 'pdf');
   }
 
   hasPublicationPdf(publicacion: ObservatorioPublicacion): boolean {

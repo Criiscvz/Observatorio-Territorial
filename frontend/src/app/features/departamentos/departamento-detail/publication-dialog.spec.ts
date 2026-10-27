@@ -11,6 +11,8 @@ import { DepartamentoService } from '@core/services/departamento.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { DepartamentoDetailComponent } from './departamento-detail.component';
+import { PublicationViewerService } from '@features/public/components/publication-viewer.service';
+import { PdfEngineService } from '@features/public/components/pdf-engine.service';
 
 describe('Ventana central de revisión y edición', () => {
   const publication = (id='rep-1', extra: Partial<ObservatorioPublicacion> = {}): ObservatorioPublicacion => ({
@@ -23,17 +25,20 @@ describe('Ventana central de revisión y edición', () => {
     let items=[publication(),publication('art-2',{tipo:'ARTICULO',codigo:'ART-0002',titulo:'Atención primaria'})];
     const service={
       getAll:vi.fn(()=>of(items)),getInReview:vi.fn(()=>of(items.filter(x=>x.estado==='EN_REVISION'))),
-      canUpload:vi.fn(()=>of({can_upload:true})),openPdf:vi.fn(()=>of(true)),
+      canUpload:vi.fn(()=>of({can_upload:true})),openPdf:vi.fn(()=>of(true)),loadPdf:vi.fn(()=>of(new ArrayBuffer(8))),
       update:vi.fn((id:string, data:FormData)=>{
         const updated={...items.find(x=>x.id===id)!,titulo:String(data.get('titulo')),estado:data.get('estado') as ObservatorioPublicacion['estado'],solo_suscriptores:data.get('solo_suscriptores')==='1'};
         items=items.map(x=>x.id===id?updated:x);return of(updated);
       }),
     };
+    const pdfTask={promise:Promise.resolve({numPages:1,getPage:async()=>({getViewport:()=>({width:600,height:800}),render:()=>({promise:Promise.resolve(),cancel:vi.fn()})}),getOutline:async()=>null}),destroy:vi.fn(async()=>undefined)};
+    const engine={open:vi.fn(async()=>pdfTask)};
     TestBed.configureTestingModule({imports:[DepartamentoDetailComponent],providers:[
       provideRouter([]),provideTranslateService({fallbackLang:'es'}),
       {provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:convertToParamMap({})},params:of({id:'salud'}),queryParamMap:of(convertToParamMap({}))}},
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Observatorio de la Salud',publico:true,datasets:[]})}},
       {provide:DatasetService,useValue:{}},{provide:PublicacionService,useValue:service},
+      {provide:PdfEngineService,useValue:engine},
       {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>!admin,canReviewObservatory:()=>admin,user:()=>({id:1}),hasRoleInDepartamento:()=>true}},
       {provide:MatSnackBar,useValue:{open:vi.fn()}},
     ]});
@@ -46,8 +51,54 @@ describe('Ventana central de revisión y edición', () => {
     const change=async(name:string,value:string)=>{const input=overlay().querySelector<HTMLInputElement>(`[name=${name}]`)!;input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));await refresh();};
     const review=async()=>{component.openReviewPanel();await refresh();};
     const edit=async(item=publication())=>{component.editPublication(item);await refresh();};
-    return {fixture,component,service,container,overlay,click,change,refresh,review,edit};
+    return {fixture,component,service,container,overlay,click,change,refresh,review,edit,engine};
   }
+
+  it.each(['ARTICULO','LIBRO'] as const)('abre el visor para el PDF de %s en revisión y conserva el formulario al cerrarlo',async(tipo)=>{
+    const {component,container,click,change,refresh,overlay,service,engine}=await setup();
+    const url='/api/departamentos/publicaciones/doc/download?context=management';
+    component.editPublication(publication('doc',{tipo,download_url:url,solo_suscriptores:true}));await refresh();
+    await change('titulo','Cambios pendientes de revisión');await click('.dialog-footer button[type=submit]');
+    const form=overlay().querySelector('.dialog-form');
+    const external=vi.spyOn(window,'open').mockReturnValue(null);
+    try{
+      await click('.editor-preview-pdf');
+      await vi.waitFor(()=>expect(engine.open).toHaveBeenCalledOnce());
+      expect(service.loadPdf).toHaveBeenCalledWith(expect.objectContaining({type:tipo,title:'Cambios pendientes de revisión',download_url:url,locked:false}));
+      expect(container.querySelectorAll('.publication-reader-panel')).toHaveLength(1);
+      expect(container.querySelectorAll('.publication-workspace-dialog')).toHaveLength(1);
+      expect(service.update).not.toHaveBeenCalled();expect(external).not.toHaveBeenCalled();
+      container.querySelector<HTMLButtonElement>('[aria-label="Cerrar visor"]')!.click();await refresh();
+      await vi.waitFor(()=>expect(container.querySelector('.publication-reader-panel')).toBeNull());
+      expect(overlay().querySelector('.dialog-form')).toBe(form);expect(component.editorStep()).toBe(2);
+      expect(component.publicationForm.controls.titulo.value).toBe('Cambios pendientes de revisión');
+      expect(component.publicationForm.dirty).toBe(true);
+    }finally{external.mockRestore();}
+  });
+
+  it('visualiza el reemplazo local sin descargar el anterior ni subirlo antes de guardar',async()=>{
+    const {component,container,refresh,click,service,engine}=await setup();
+    component.editPublication(publication('doc',{tipo:'LIBRO'}));component.editorStep.set(2);await refresh();
+    const bytes=new ArrayBuffer(12);const file=new File(['%PDF-1.4'],'nuevo-libro.pdf',{type:'application/pdf'});
+    Object.defineProperty(file,'arrayBuffer',{value:vi.fn(async()=>bytes)});
+    component.onFileSelected({target:{files:[file]}} as any);await refresh();
+    await click('.editor-preview-pdf');await vi.waitFor(()=>expect(engine.open).toHaveBeenCalledWith(bytes));
+    expect(service.loadPdf).not.toHaveBeenCalled();expect(service.update).not.toHaveBeenCalled();
+    expect(container.querySelector('.reader-footer')?.textContent).toContain('Vista previa local');
+    container.querySelector<HTMLButtonElement>('[aria-label="Cerrar visor"]')!.click();await refresh();
+    expect(component.selectedFile()).toBe(file);
+    await click('.dialog-footer button[type=submit]');
+    expect(service.update.mock.calls[0][1].get('archivo')).toBe(file);
+  });
+
+  it('no ofrece vista previa sin PDF, para reportes ni para un recurso bloqueado',async()=>{
+    const {component,refresh,overlay,service,engine}=await setup();
+    for(const extra of [{tipo:'ARTICULO',download_url:null,sharepoint_url:null},{tipo:'REPORTE'},{tipo:'LIBRO',bloqueado:true}] as Partial<ObservatorioPublicacion>[]){
+      component.editPublication(publication('doc',extra));component.editorStep.set(2);await refresh();
+      expect(overlay().querySelector('.editor-preview-pdf')).toBeNull();component.previewEditorPdf();
+    }
+    expect(service.loadPdf).not.toHaveBeenCalled();expect(engine.open).not.toHaveBeenCalled();
+  });
 
   it('abre la revisión fuera de la página y pasa a edición en el mismo diálogo sin mover la biblioteca', async()=>{
     const {fixture,container,overlay,review,click,component}=await setup();
