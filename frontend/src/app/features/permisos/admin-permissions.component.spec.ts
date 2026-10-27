@@ -3,6 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of, Subject } from 'rxjs';
+import { AuthService } from '@core/services/auth.service';
 import { User } from '@core/models';
 import { PermisoConfig } from '@core/models/permisos';
 import { PermisosService } from '@core/services/permisos.service';
@@ -26,6 +27,7 @@ describe('Lista compacta de editores', () => {
     };
     const dialog = {open: vi.fn(() => ({afterClosed: () => of(undefined as PermisoConfig[] | undefined)}))};
     TestBed.configureTestingModule({providers: [provideTranslateService(),
+      {provide: AuthService, useValue: {user:()=>({rol:'ADMIN'}),isAdmin:()=>true}},
       {provide: PermisosService, useValue: service},
       {provide: UserService, useValue: {getUsers: () => of({data: [editor, {...editor, id: 2, rol: 'ADMIN'}], meta: {last_page: 1}})}},
       {provide: MatDialog, useValue: dialog}, {provide: MatSnackBar, useValue: {open: vi.fn()}},
@@ -34,6 +36,7 @@ describe('Lista compacta de editores', () => {
     TestBed.overrideProvider(MatSnackBar, {useValue: {open: vi.fn()}});
     const fixture = TestBed.createComponent(AdminPermissionsComponent);
     vi.spyOn(fixture.debugElement.injector.get(MatDialog), 'open').mockImplementation(dialog.open as any);
+    fixture.componentInstance.selectedRole.set('EDITOR');
     fixture.detectChanges();
     return {fixture, component: fixture.componentInstance, service, dialog};
   }
@@ -44,6 +47,8 @@ describe('Lista compacta de editores', () => {
     expect(el.querySelectorAll('.editor-scope-note')).toHaveLength(1);
     expect(el.querySelector('.editor-role-details').open).toBe(false);
     expect(el.querySelector('.manage-observatorios').textContent).toContain('Gestionar observatorios');
+    expect(el.querySelectorAll('.role-card')).toHaveLength(4);
+    expect(Array.from(el.querySelectorAll('.role-card h3')).map((h:any)=>h.textContent)).toEqual(['Administrador','Supervisor','Editor','Suscriptor']);
   });
   it('conserva la búsqueda y permite gestionar editores sin observatorios asignados', () => {
     const {component, fixture, service} = setup();

@@ -11,7 +11,7 @@ describe('Apertura del panel administrativo según la sección',()=>{
   afterEach(()=>Object.defineProperty(window,'innerWidth',{value:originalWidth,configurable:true}));
   function setup(url:string,admin=true,editor=false){
     const events=new Subject<NavigationEnd>();
-    TestBed.configureTestingModule({providers:[{provide:Router,useValue:{url,events}},{provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>editor}},{provide:ThemeService,useValue:{}}]});
+    TestBed.configureTestingModule({providers:[{provide:Router,useValue:{url,events}},{provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>editor,isObservatoryAdmin:()=>false}},{provide:ThemeService,useValue:{}}]});
     const component=TestBed.runInInjectionContext(()=>new MainLayoutComponent());
     const sidenav={close:vi.fn(),toggle:vi.fn()};component.sidenav=sidenav as any;
     return {component,sidenav,go:(path:string)=>events.next(new NavigationEnd(1,path,path))};

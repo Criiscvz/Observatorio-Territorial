@@ -45,7 +45,7 @@ class UserModel extends Authenticatable
     public function departamentos(): BelongsToMany
     {
         return $this->belongsToMany(DepartamentoModel::class, 'usuario_departamento', 'user_id', 'departamento_id')
-            ->withPivot('rol')
+            ->withPivot('rol', 'puede_revisar', 'puede_agregar_editores')
             ->withTimestamps();
     }
 

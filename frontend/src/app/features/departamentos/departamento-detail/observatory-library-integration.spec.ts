@@ -21,7 +21,7 @@ describe('Biblioteca integrada en el observatorio', () => {
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Observatorio de la Salud',publico:true,datasets:[{id:'antiguo',nombre:'Datos antiguos'}]})}},
       {provide:DatasetService,useValue:{}},
       {provide:PublicacionService,useValue:{getAll:()=>of([publication]),canUpload:()=>of({can_upload:true}),openPdf}},
-      {provide:AuthService,useValue:{isAdmin:()=>!editor,isEditor:()=>editor,user:()=>({id:1}),hasRoleInDepartamento:()=>editor}},
+      {provide:AuthService,useValue:{isAdmin:()=>!editor,isEditor:()=>editor,canReviewObservatory:()=>!editor,user:()=>({id:1}),hasRoleInDepartamento:()=>editor}},
       {provide:PublicationViewerService,useValue:viewer},
       {provide:MatDialog,useValue:{}},{provide:MatSnackBar,useValue:{open:vi.fn()}},
     ]});

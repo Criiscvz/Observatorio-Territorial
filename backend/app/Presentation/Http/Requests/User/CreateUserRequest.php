@@ -26,7 +26,7 @@ class CreateUserRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'rol' => ['sometimes', 'string', 'in:ADMIN,USER,SUBSCRIBER,EDITOR'],
+            'rol' => ['sometimes', 'string', 'in:ADMIN,USER,SUBSCRIBER,EDITOR,ADMIN_OBSERVATORIO'],
             'is_active' => ['sometimes', 'boolean'],
             'telefono' => ['nullable', 'string', 'max:20'],
             'cargo' => ['nullable', 'string', 'max:100'],
@@ -44,7 +44,7 @@ class CreateUserRequest extends FormRequest
             'email.unique' => 'Este email ya está registrado',
             'password.required' => 'La contraseña es obligatoria',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres',
-            'rol.in' => 'El rol debe ser ADMIN, USER, SUBSCRIBER o EDITOR',
+            'rol.in' => 'El rol debe ser Administrador, Supervisor, Editor, Suscriptor o Usuario',
             'is_active.boolean' => 'El campo is_active debe ser verdadero o falso',
         ];
     }

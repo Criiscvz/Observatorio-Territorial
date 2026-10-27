@@ -20,7 +20,7 @@ describe('Accesos operativos a los formularios existentes', () => {
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Salud',datasets:[]})}},
       {provide:DatasetService,useValue:{}},
       {provide:PublicacionService,useValue:{getAll:()=>of(records),getInReview:()=>of(records.filter(x=>x.estado==='EN_REVISION')),canUpload:()=>of({can_upload:admin||editor})}},
-      {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>editor,user:()=>({id:1}),hasRoleInDepartamento:()=>editor}},
+      {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>editor,canReviewObservatory:()=>admin,user:()=>({id:1}),hasRoleInDepartamento:()=>editor}},
       {provide:TranslateService,useValue:{instant:(value:string)=>value}},
       {provide:MatDialog,useValue:{}},{provide:MatSnackBar,useValue:{}},
     ]});

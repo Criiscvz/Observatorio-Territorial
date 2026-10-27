@@ -41,6 +41,10 @@ class UserResource extends JsonResource
                     'descripcion' => $d->descripcion,
                     'publico' => $d->publico,
                     'rol' => $d->pivot->rol,
+                    'puede_revisar' => (bool) $d->pivot->puede_revisar,
+                    'puede_agregar_editores' => (bool) $d->pivot->puede_agregar_editores,
+                    'puede_revisar' => (bool) $d->pivot->puede_revisar,
+                    'puede_agregar_editores' => (bool) $d->pivot->puede_agregar_editores,
                     'assigned_at' => $d->pivot->created_at?->toISOString(),
                 ])
             ),

@@ -61,7 +61,7 @@ export class LoginComponent {
     this.authService.login(this.form.value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         // Redirigir según el rol del usuario
-        if (this.authService.isAdmin() || this.authService.isEditor()) {
+        if (this.authService.isAdmin() || this.authService.isEditor() || this.authService.isObservatoryAdmin()) {
           this.router.navigate(['/admin/dashboard']);
         } else {
           this.router.navigate(['/publico/departamentos']);

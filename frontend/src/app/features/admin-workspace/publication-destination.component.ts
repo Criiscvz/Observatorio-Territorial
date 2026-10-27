@@ -30,7 +30,9 @@ const optionalHttpUrl = (control: AbstractControl) => {
   styleUrl: './publication-destination.component.scss',
 })
 export class PublicationDestinationComponent implements OnInit {
-  readonly isAdmin = inject(AuthService).isAdmin;
+  readonly auth = inject(AuthService);
+  readonly isAdmin = this.auth.isAdmin;
+  canChooseStatus(): boolean { return this.auth.canReviewObservatory(this.destination()?.departamento.id); }
   private readonly departments = inject(DepartamentoService);
   private readonly publications = inject(PublicacionService);
   private readonly route = inject(ActivatedRoute);
@@ -87,6 +89,7 @@ export class PublicationDestinationComponent implements OnInit {
     this.loading.set(true); this.error.set(false);
     this.departments.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: items => {
+        items = this.auth.user()?.rol === 'ADMIN_OBSERVATORIO' ? items.filter(item => this.auth.canReviewObservatory(item.id)) : items;
         this.observatories.set(items); this.loading.set(false);
         if (!items.some(item => item.id === this.form.controls.departamento.value)) this.form.controls.departamento.setValue(items.length === 1 ? items[0].id : '');
       },
@@ -119,7 +122,7 @@ export class PublicationDestinationComponent implements OnInit {
   }
 
   resetEditor(): void {
-    this.publicationForm.reset({ titulo: '', fecha_publicacion: '', link_url: '', descripcion: '', fuente: '', estado: this.isAdmin() ? 'PUBLICACION' : 'EN_REVISION', solo_suscriptores: false });
+    this.publicationForm.reset({ titulo: '', fecha_publicacion: '', link_url: '', descripcion: '', fuente: '', estado: this.canChooseStatus() ? 'PUBLICACION' : 'EN_REVISION', solo_suscriptores: false });
     this.autores.clear(); this.autores.push(this.fb.nonNullable.control('', Validators.maxLength(255)));
     this.publicationForm.controls.link_url.setValidators([...(this.isReport ? [nonBlank] : []), optionalHttpUrl, Validators.maxLength(2048)]);
     this.publicationForm.controls.link_url.updateValueAndValidity();
@@ -214,8 +217,8 @@ export class PublicationDestinationComponent implements OnInit {
     const values = this.publicationForm.getRawValue();
     const data = new FormData();
     data.append('tipo', destination.tipo);
-    data.append('estado', this.isAdmin() ? values.estado : 'EN_REVISION');
-    data.append('solo_suscriptores', this.isAdmin() && values.solo_suscriptores ? '1' : '0');
+    data.append('estado', this.canChooseStatus() ? values.estado : 'EN_REVISION');
+    data.append('solo_suscriptores', this.canChooseStatus() && values.solo_suscriptores ? '1' : '0');
     data.append('titulo', values.titulo.trim()); data.append('fecha_publicacion', values.fecha_publicacion);
     for (const key of ['link_url', 'descripcion', 'fuente'] as const) if (values[key].trim()) data.append(key, values[key].trim());
     values.autores.map(value => value.trim()).filter(Boolean).forEach(value => data.append('autores[]', value));

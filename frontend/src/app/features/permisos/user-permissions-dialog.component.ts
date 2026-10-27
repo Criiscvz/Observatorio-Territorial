@@ -1,54 +1,46 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
-import { TranslateModule } from '@ngx-translate/core';
 import { PermisosService } from '@core/services/permisos.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { User, Departamento } from '@core/models';
 import { PermisoConfig } from '@core/models/permisos';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-user-permissions-dialog',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     MatDialogModule,
-    MatCheckboxModule,
-    MatFormFieldModule,
-    MatButtonModule,
     MatIconModule,
-    MatInputModule,
     MatProgressSpinnerModule,
-    MatDividerModule,
-    TranslateModule,
   ],
   templateUrl: './user-permissions-dialog.component.html',
   styleUrl: './user-permissions-dialog.component.scss',
 })
 export class UserPermissionsDialogComponent implements OnInit {
+  readonly auth = inject(AuthService);
   private readonly permisosService = inject(PermisosService);
   private readonly departamentoService = inject(DepartamentoService);
   private readonly dialogRef = inject(MatDialogRef<UserPermissionsDialogComponent>);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   readonly user = inject<User>(MAT_DIALOG_DATA);
+  readonly isObservatoryAdmin = this.user.rol === 'ADMIN_OBSERVATORIO';
+  readonly promotingEditor = this.user.rol === 'USER' && this.auth.user()?.rol === 'ADMIN_OBSERVATORIO';
+  readonly delegated = this.auth.user()?.rol === 'ADMIN_OBSERVATORIO';
+  readonly readOnly = this.delegated && !this.auth.user()?.departamentos?.some(dep => dep.puede_agregar_editores
+    && (this.user.rol === 'USER' || this.user.departamentos?.some(assigned => assigned.id === dep.id)));
+  permissionsReady = false;
+  capabilities: Record<string, { puede_revisar: boolean; puede_agregar_editores: boolean }> = {};
 
-  readonly editorPermissions = [
-    'Crear Artículos',
-    'Crear Reportes',
-    'Crear Libros',
-    'Enviar contenido a revisión',
-    'Ver sus envíos',
-    'Entrar al panel del editor',
-  ];
+  flags(id: string) {
+    return this.capabilities[id] ??= { puede_revisar: this.isObservatoryAdmin, puede_agregar_editores: false };
+  }
 
   departamentos: Departamento[] = [];
   filteredDepartamentosList: Departamento[] = [];
@@ -56,13 +48,19 @@ export class UserPermissionsDialogComponent implements OnInit {
   loadDepartamentosError = '';
   observatorioSearch = '';
   selectedDepartamentoIds: string[] = [];
+  private originalDepartamentoIds = new Set<string>();
+
+  isNewAssignment(id: string): boolean {
+    return !this.originalDepartamentoIds.has(id);
+  }
 
   ngOnInit(): void {
     this.loadingDepartamentos = true;
     this.loadDepartamentosError = '';
-    this.departamentoService.getAll().subscribe({
+    this.departamentoService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (deps) => {
-        this.departamentos = deps;
+        this.departamentos = this.auth.user()?.rol === 'ADMIN_OBSERVATORIO'
+          ? deps.filter(dep => this.auth.user()?.departamentos?.some(assignment => assignment.id === dep.id && (this.readOnly || assignment.puede_agregar_editores))) : deps;
         this.updateFilteredDepartamentos();
         this.loadingDepartamentos = false;
         this.loadAssignedObservatorios();
@@ -73,16 +71,19 @@ export class UserPermissionsDialogComponent implements OnInit {
         this.filteredDepartamentosList = [];
         this.loadDepartamentosError = 'No se pudieron cargar los Observatorios.';
         this.loadingDepartamentos = false;
-        this.loadAssignedObservatorios();
         this.cdr.detectChanges();
       },
     });
   }
 
   private loadAssignedObservatorios(): void {
-    this.permisosService.syncFromBackend(this.user.id).subscribe({
-      next: () => this.applyCurrentSelection(),
-      error: () => this.applyCurrentSelection(),
+    this.permisosService.syncFromBackend(this.user.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => { this.permissionsReady = true; this.applyCurrentSelection(); },
+      error: () => {
+        this.permissionsReady = false;
+        this.loadDepartamentosError = 'No se pudieron cargar los permisos actuales. Cierra y vuelve a abrir para reintentar.';
+        this.cdr.detectChanges();
+      },
     });
   }
 
@@ -92,11 +93,18 @@ export class UserPermissionsDialogComponent implements OnInit {
       .filter((permiso) => permiso.modulo === 'observatorios' && permiso.nivel !== 'ninguno');
 
     const allObservatorios = observatorioPermisos.some((permiso) => permiso.departamento_id === null);
+    this.capabilities = {};
+    observatorioPermisos.forEach(permission => {
+      if (permission.departamento_id) this.capabilities[permission.departamento_id] = {
+        puede_revisar: !!permission.puede_revisar, puede_agregar_editores: !!permission.puede_agregar_editores,
+      };
+    });
     this.selectedDepartamentoIds = allObservatorios
       ? this.departamentos.map((departamento) => departamento.id)
       : observatorioPermisos
           .map((permiso) => permiso.departamento_id)
-          .filter((id): id is string => !!id);
+          .filter((id): id is string => !!id && this.departamentos.some(dep => dep.id === id));
+    this.originalDepartamentoIds = new Set(this.selectedDepartamentoIds);
 
     this.cdr.detectChanges();
   }
@@ -125,25 +133,31 @@ export class UserPermissionsDialogComponent implements OnInit {
   }
 
   toggleDepartamento(departamentoId: string, checked: boolean): void {
+    if (this.readOnly || !this.permissionsReady || !this.departamentos.some(dep => dep.id === departamentoId)) return;
     this.selectedDepartamentoIds = checked
       ? Array.from(new Set([...this.selectedDepartamentoIds, departamentoId]))
       : this.selectedDepartamentoIds.filter((id) => id !== departamentoId);
   }
 
   selectAllDepartamentos(): void {
+    if (this.readOnly || !this.permissionsReady) return;
     this.selectedDepartamentoIds = this.departamentos.map((dep) => dep.id);
   }
 
   clearDepartamentos(): void {
+    if (this.readOnly || !this.permissionsReady) return;
     this.selectedDepartamentoIds = [];
   }
 
   save(): void {
+    if (this.readOnly || !this.permissionsReady || this.loadingDepartamentos || this.loadDepartamentosError
+      || (this.promotingEditor && (!this.selectedDepartamentoIds.length || this.user.is_active === false))) return;
     const result: PermisoConfig[] = this.selectedDepartamentoIds.length
       ? this.selectedDepartamentoIds.map((departamentoId) => ({
           modulo: 'observatorios',
           nivel: 'escritura',
           departamento_id: departamentoId,
+          ...(this.isObservatoryAdmin ? this.flags(departamentoId) : {}),
         }))
       : [
           {

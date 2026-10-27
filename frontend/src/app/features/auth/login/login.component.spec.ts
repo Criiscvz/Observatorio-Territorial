@@ -27,6 +27,7 @@ describe('LoginComponent', () => {
       login: vi.fn(),
       isAdmin: vi.fn().mockReturnValue(false),
       isEditor: vi.fn().mockReturnValue(false),
+      isObservatoryAdmin: vi.fn().mockReturnValue(false),
       setPendingVerificationEmail: vi.fn(),
       getGoogleAuthorizationUrl: vi.fn(),
     };

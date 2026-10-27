@@ -35,7 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/publicaciones/atlas-global/sharepoint/import-many', [ObservatorioPublicacionController::class, 'importManySharePointGlobalAtlas'])->middleware('role:ADMIN');
     Route::get('/publicaciones/atlas-global/{publicacion}', [ObservatorioPublicacionController::class, 'showGlobalAtlas'])->middleware('role:ADMIN');
     Route::get('/publicaciones/atlas/recientes', [ObservatorioPublicacionController::class, 'recentAtlasReports']);
-    Route::post('/{departamento}/publicaciones', [ObservatorioPublicacionController::class, 'store'])->middleware('role:ADMIN,EDITOR');
-    Route::patch('/publicaciones/{publicacion}', [ObservatorioPublicacionController::class, 'update'])->middleware('role:ADMIN,EDITOR');
-    Route::delete('/publicaciones/{publicacion}', [ObservatorioPublicacionController::class, 'destroy'])->middleware('role:ADMIN,EDITOR');
+    Route::post('/{departamento}/publicaciones', [ObservatorioPublicacionController::class, 'store'])->middleware('role:ADMIN,EDITOR,ADMIN_OBSERVATORIO,ADMIN_OBSERVATORIO');
+    Route::patch('/publicaciones/{publicacion}', [ObservatorioPublicacionController::class, 'update'])->middleware('role:ADMIN,EDITOR,ADMIN_OBSERVATORIO,ADMIN_OBSERVATORIO');
+    Route::delete('/publicaciones/{publicacion}', [ObservatorioPublicacionController::class, 'destroy'])->middleware('role:ADMIN,EDITOR,ADMIN_OBSERVATORIO,ADMIN_OBSERVATORIO');
 });

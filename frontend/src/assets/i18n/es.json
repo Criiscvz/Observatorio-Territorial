@@ -274,7 +274,8 @@
       "admin": "Administrador",
       "user": "Usuario normal",
       "subscriber": "Subscriptor",
-      "editor": "Editor"
+      "editor": "Editor",
+      "observatoryAdmin": "Supervisor"
     },
     "messages": {
       "updateSuccess": "Perfil actualizado correctamente",
@@ -679,7 +680,13 @@
       "logoutTitle": "¿Cerrar sesión?",
       "logoutMessage": "Tendrás que iniciar sesión de nuevo para acceder a tu cuenta.",
       "loggingOut": "Cerrando sesión…",
-      "roles": { "ADMIN": "Administrador", "EDITOR": "Editor", "USER": "Usuario", "SUBSCRIBER": "Suscriptor" }
+      "roles": {
+        "ADMIN": "Administrador",
+        "EDITOR": "Editor",
+        "USER": "Usuario",
+        "SUBSCRIBER": "Suscriptor",
+        "ADMIN_OBSERVATORIO": "Supervisor"
+      }
     },
     "home": {
       "hero": {

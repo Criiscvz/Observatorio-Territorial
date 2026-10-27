@@ -1,283 +1,123 @@
-import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal, DestroyRef } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatDivider } from '@angular/material/divider';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTableModule } from '@angular/material/table';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { RouterLink } from '@angular/router';
-import { User, UserRole } from '@core/models';
-import { UserService } from '@core/services/user.service';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { UserPermissionsDialogComponent } from '../../permisos/user-permissions-dialog.component';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Router } from '@angular/router';
+import { Subject, catchError, debounceTime, of, switchMap } from 'rxjs';
+import { User, UserRole } from '@core/models';
+import { USER_ROLE_OPTIONS, userRoleIcon, userRoleLabel } from '@core/models/user/user-role.presentation';
+import { AuthService } from '@core/services/auth.service';
+import { UserService } from '@core/services/user.service';
 import { PermisosService } from '@core/services/permisos.service';
+import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { UserPermissionsDialogComponent } from '../../permisos/user-permissions-dialog.component';
+import { UserEditDialogComponent, UserPasswordDialogComponent, UserRoleDialogComponent } from '../user-dialogs.component';
 
-@Component({
-  selector: 'app-usuario-list',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    RouterLink,
-    MatButtonModule,
-    MatCardModule,
-    MatDialogModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule,
-    MatMenuModule,
-    MatPaginatorModule,
-    MatProgressSpinnerModule,
-    MatSelectModule,
-    MatSnackBarModule,
-    MatTableModule,
-    MatTooltipModule,
-    MatDivider,
-    TranslateModule,
-  ],
-  templateUrl: './usuario-list.component.html',
-  styleUrl: './usuario-list.component.scss',
-})
+@Component({selector:'app-usuario-list',standalone:true,imports:[ReactiveFormsModule,MatDialogModule,MatIconModule,MatTooltipModule],
+  templateUrl:'./usuario-list.component.html',styleUrl:'./usuario-list.component.scss'})
 export class UsuarioListComponent implements OnInit {
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly userService = inject(UserService);
-  private readonly permisosService = inject(PermisosService);
-  private readonly snackBar = inject(MatSnackBar);
-  private readonly dialog = inject(MatDialog);
-  private readonly translate = inject(TranslateService);
+  readonly auth=inject(AuthService);
+  private readonly api=inject(UserService);
+  private readonly permissions=inject(PermisosService);
+  private readonly dialog=inject(MatDialog);
+  private readonly snackBar=inject(MatSnackBar);
+  private readonly router=inject(Router);
+  private readonly destroyRef=inject(DestroyRef);
+  private readonly requests=new Subject<number>();
+  readonly roles=USER_ROLE_OPTIONS;
+  readonly roleLabel=userRoleLabel;
+  readonly roleIcon=userRoleIcon;
+  readonly users=signal<User[]>([]);
+  readonly loading=signal(true);
+  readonly error=signal('');
+  readonly busyUserId=signal<number|null>(null);
+  readonly currentPage=signal(1);
+  readonly pageSize=signal(15);
+  readonly totalItems=signal(0);
+  readonly lastPage=signal(1);
+  readonly filters=inject(FormBuilder).nonNullable.group({search:[''],rol:['' as UserRole|'']});
+  private readonly dialogOptions={width:'660px',maxWidth:'calc(100vw - 24px)',maxHeight:'calc(100dvh - 32px)',panelClass:'user-management-dialog-panel',autoFocus:'.user-dialog-header button'};
+  get firstItem():number { return this.totalItems() ? (this.currentPage()-1)*this.pageSize()+1 : 0; }
+  get lastItem():number { return Math.min(this.currentPage()*this.pageSize(),this.totalItems()); }
 
-  displayedColumns = ['name', 'email', 'rol', 'is_active', 'created_at', 'actions'];
-  
-  users = signal<User[]>([]);
-  loading = signal(true);
-  
-  // Pagination
-  currentPage = signal(1);
-  totalItems = signal(0);
-  pageSize = signal(15);
-  lastPage = signal(1);
-
-  searchQuery = signal('');
-  private searchTimeout: any;
-
-  ngOnInit(): void {
+  ngOnInit():void {
+    this.requests.pipe(switchMap(page=>{
+      this.loading.set(true);this.error.set('');
+      return this.api.getUsers(this.pageSize(),page,this.filters.controls.search.value.trim()||undefined,undefined,
+        this.auth.isAdmin() ? this.filters.controls.rol.value||undefined : undefined).pipe(catchError(error=>{
+          this.error.set(error?.status===403?'No tienes permiso para consultar estos usuarios.':'No se pudieron cargar los usuarios. Inténtalo nuevamente.');this.users.set([]);return of(null);
+        }));
+    }),takeUntilDestroyed(this.destroyRef)).subscribe(response=>{
+      this.loading.set(false);if(!response)return;
+      if(response.meta.current_page>response.meta.last_page && response.meta.total>0){this.loadUsers(response.meta.last_page);return;}
+      this.users.set(response.data);this.currentPage.set(response.meta.total ? response.meta.current_page : 1);
+      this.totalItems.set(response.meta.total);this.lastPage.set(Math.max(1,response.meta.last_page));
+    });
+    this.filters.valueChanges.pipe(debounceTime(300),takeUntilDestroyed(this.destroyRef)).subscribe(()=>this.loadUsers(1));
     this.loadUsers();
   }
-
-  loadUsers(page = 1): void {
-    this.loading.set(true);
-    const search = this.searchQuery().trim();
-    this.userService.getUsers(this.pageSize(), page, search || undefined)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response) => {
-          this.users.set(response.data);
-          this.currentPage.set(response.meta.current_page);
-          this.totalItems.set(response.meta.total);
-          this.lastPage.set(response.meta.last_page);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.snackBar.open(
-            this.translate.instant('users.messages.loadError'),
-            this.translate.instant('common.buttons.close'),
-            { duration: 3000 }
-          );
-          this.loading.set(false);
-        },
+  loadUsers(page=1):void { this.requests.next(Math.max(1,page)); }
+  changePage(direction:number):void { if(!this.loading())this.loadUsers(Math.max(1,Math.min(this.currentPage()+direction,this.lastPage()))); }
+  changePageSize(value:string):void { const count=Number(value);if([15,25,50].includes(count)){this.pageSize.set(count);this.loadUsers(1);} }
+  initials(user:User):string { return user.name.trim().split(/\s+/).slice(0,2).map(name=>name[0]).join('').toUpperCase(); }
+  private savedUser(user:User,message:string):void {
+    this.snackBar.open(message,'Cerrar',{duration:3500});this.loadUsers(this.currentPage());
+    if(user.id===this.auth.user()?.id) this.auth.getCurrentUser().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next:current=>{if(current.rol!=='ADMIN')this.router.navigate([['EDITOR','ADMIN_OBSERVATORIO'].includes(current.rol)?'/admin/dashboard':'/publico/departamentos']);},error:()=>{},
+    });
+  }
+  openRoleDialog(user:User):void {
+    if(!this.auth.isAdmin()||this.busyUserId()!==null)return;
+    this.dialog.open(UserRoleDialogComponent,{...this.dialogOptions,data:user}).afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe((updated:User|undefined)=>{if(updated)this.savedUser(updated,`Rol actualizado a ${userRoleLabel(updated.rol)}.`);});
+  }
+  openUserDialog(user:User|null=null):void {
+    if(!this.auth.isAdmin()||this.busyUserId()!==null)return;
+    this.dialog.open(UserEditDialogComponent,{...this.dialogOptions,data:user}).afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe((updated:User|undefined)=>{if(updated)this.savedUser(updated,user?'Datos del usuario actualizados.':'Usuario creado correctamente.');});
+  }
+  openPasswordDialog(user:User):void {
+    if(!this.auth.isAdmin()||this.busyUserId()!==null)return;
+    this.dialog.open(UserPasswordDialogComponent,{...this.dialogOptions,width:'590px',data:user}).afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result=>{
+        if(!result)return;
+        if(result.reauthenticate){this.auth.clearAuthSilent();this.router.navigate(['/auth/login']);}
+        this.snackBar.open(result.reauthenticate?'Contraseña actualizada. Inicia sesión con tu nueva contraseña.':'Contraseña actualizada correctamente. El usuario ya puede utilizarla.','Cerrar',{duration:5000});
       });
   }
-
-  onPageChange(event: PageEvent): void {
-    this.pageSize.set(event.pageSize);
-    this.loadUsers(event.pageIndex + 1);
+  canManagePermissions(user:User):boolean {
+    return this.auth.isAdmin() ? ['EDITOR','ADMIN_OBSERVATORIO'].includes(user.rol)
+      : this.auth.user()?.rol==='ADMIN_OBSERVATORIO' && this.auth.canAssignEditors() && user.rol==='USER';
   }
-
-  onSearchChange(term: string): void {
-    this.searchQuery.set(term);
-    if (this.searchTimeout) {
-      clearTimeout(this.searchTimeout);
-    }
-    this.searchTimeout = setTimeout(() => {
-      this.loadUsers(1);
-    }, 400);
-  }
-
-  clearSearch(): void {
-    this.searchQuery.set('');
-    this.loadUsers(1);
-  }
-
-  toggleStatus(user: User): void {
-    const newStatus = !user.is_active;
-    const action = newStatus ? 'activar' : 'desactivar';
-    
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: this.translate.instant('users.confirmToggle.title'),
-        message: this.translate.instant('users.confirmToggle.message', { name: user.name, action }),
-        confirmText: this.translate.instant('common.buttons.confirm'),
-        cancelText: this.translate.instant('common.buttons.cancel'),
-      },
-    });
-
-    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
-      if (confirmed) {
-        this.userService.toggleUserStatus(user.id, newStatus).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-          next: () => {
-            this.snackBar.open(
-              this.translate.instant('users.messages.statusUpdated'),
-              this.translate.instant('common.buttons.close'),
-              { duration: 3000 }
-            );
-            this.loadUsers(this.currentPage());
-          },
-          error: () => {
-            this.snackBar.open(
-              this.translate.instant('users.messages.statusError'),
-              this.translate.instant('common.buttons.close'),
-              { duration: 3000 }
-            );
-          },
+  openPermissionsDialog(user:User):void {
+    if(!this.canManagePermissions(user)||this.busyUserId()!==null)return;
+    this.dialog.open(UserPermissionsDialogComponent,{width:'760px',maxWidth:'calc(100vw - 24px)',maxHeight:'calc(100dvh - 32px)',panelClass:'access-management-dialog-panel',data:user})
+      .afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result=>{
+        if(!result)return;this.busyUserId.set(user.id);
+        this.permissions.saveUserPermisos(user.id,result).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+          next:()=>{this.busyUserId.set(null);this.snackBar.open('Permisos guardados correctamente.','Cerrar',{duration:3500});this.loadUsers(this.currentPage());},
+          error:error=>{this.busyUserId.set(null);this.snackBar.open(error?.error?.message||'No se pudieron guardar los permisos.','Cerrar',{duration:4000});},
         });
-      }
-    });
-  }
-
-  changeRole(user: User, newRole: UserRole): void {
-    if (user.rol === newRole) return;
-
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: this.translate.instant('users.confirmRole.title'),
-        message: this.translate.instant('users.confirmRole.message', { name: user.name, role: newRole }),
-        confirmText: this.translate.instant('common.buttons.confirm'),
-        cancelText: this.translate.instant('common.buttons.cancel'),
-      },
-    });
-
-    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
-      if (confirmed) {
-        this.userService.updateUserRole(user.id, { rol: newRole }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-          next: () => {
-            this.snackBar.open(
-              this.translate.instant('users.messages.roleUpdated'),
-              this.translate.instant('common.buttons.close'),
-              { duration: 3000 }
-            );
-            this.loadUsers(this.currentPage());
-          },
-          error: () => {
-            this.snackBar.open(
-              this.translate.instant('users.messages.roleError'),
-              this.translate.instant('common.buttons.close'),
-              { duration: 3000 }
-            );
-          },
-        });
-      }
-    });
-  }
-
-  deleteUser(user: User): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: this.translate.instant('users.confirmDelete.title'),
-        message: this.translate.instant('users.confirmDelete.message', { name: user.name }),
-        confirmText: this.translate.instant('common.buttons.delete'),
-        cancelText: this.translate.instant('common.buttons.cancel'),
-        confirmColor: 'warn',
-      },
-    });
-
-    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
-      if (confirmed) {
-        this.userService.deleteUser(user.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-          next: () => {
-            this.snackBar.open(
-              this.translate.instant('users.messages.deleted'),
-              this.translate.instant('common.buttons.close'),
-              { duration: 3000 }
-            );
-            this.loadUsers(this.currentPage());
-          },
-          error: () => {
-            this.snackBar.open(
-              this.translate.instant('users.messages.deleteError'),
-              this.translate.instant('common.buttons.close'),
-              { duration: 3000 }
-            );
-          },
-        });
-      }
-    });
-  }
-
-  getRoleBadgeClass(rol: string): string {
-    switch (rol) {
-      case 'ADMIN': return 'badge-admin';
-      case 'EDITOR': return 'badge-editor';
-      case 'SUBSCRIBER': return 'badge-subscriber';
-      default: return 'badge-user';
-    }
-  }
-
-  getStatusBadgeClass(isActive: boolean): string {
-    return isActive ? 'badge-active' : 'badge-inactive';
-  }
-
-  formatDate(date: string | undefined): string {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString();
-  }
-
-  openPermissionsDialog(user: User): void {
-    const dialogRef = this.dialog.open(UserPermissionsDialogComponent, {
-      width: '450px',
-      data: user,
-    });
-
-    dialogRef.afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result) => {
-        if (result) {
-          this.permisosService
-            .saveUserPermisos(user.id, result)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-              next: (response) => {
-                if (response.user) {
-                  this.users.update((users) =>
-                    users.map((item) => (item.id === response.user!.id ? response.user! : item))
-                  );
-                }
-                this.snackBar.open(
-                  response.message || 'Permisos guardados correctamente para el usuario.',
-                  'Cerrar',
-                  { duration: 3000 }
-                );
-              },
-              error: () => {
-                this.snackBar.open(
-                  'No se pudieron guardar los permisos del usuario.',
-                  'Cerrar',
-                  { duration: 4000 }
-                );
-              },
-            });
-        }
       });
+  }
+  toggleStatus(user:User):void {
+    if(!this.auth.isAdmin()||user.id===this.auth.user()?.id||this.busyUserId()!==null)return;
+    const activate=!user.is_active;
+    this.confirm(user,{title:activate?'Activar usuario':'Desactivar usuario',
+      message:activate?`¿Permitir que ${user.name} vuelva a acceder a su cuenta?`:`¿Desactivar la cuenta de ${user.name}?`,
+      icon:activate?'check_circle':'block',confirmText:activate?'Activar':'Desactivar',confirmColor:activate?'primary':'warn',
+      confirmAction:()=>this.api.toggleUserStatus(user.id,activate)},activate?'Usuario activado.':'Usuario desactivado.');
+  }
+  deleteUser(user:User):void {
+    if(!this.auth.isAdmin()||user.id===this.auth.user()?.id||this.busyUserId()!==null)return;
+    this.confirm(user,{title:'Eliminar usuario',message:`¿Eliminar la cuenta de ${user.name}?`,icon:'delete_outline',confirmText:'Eliminar usuario',confirmColor:'warn',confirmAction:()=>this.api.deleteUser(user.id)},'Usuario eliminado.');
+  }
+  private confirm(user:User,data:ConfirmDialogData,success:string):void {
+    this.busyUserId.set(user.id);
+    this.dialog.open(ConfirmDialogComponent,{width:'450px',maxWidth:'calc(100vw - 24px)',panelClass:'app-confirm-dialog-panel',backdropClass:'app-confirm-dialog-backdrop',data:{...data,onError:(error:any)=>this.snackBar.open(error?.error?.message||'No se pudo completar la operación.','Cerrar',{duration:4000})}})
+      .afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(confirmed=>{this.busyUserId.set(null);if(confirmed){this.snackBar.open(success,'Cerrar',{duration:3000});this.loadUsers(this.currentPage());}});
   }
 }

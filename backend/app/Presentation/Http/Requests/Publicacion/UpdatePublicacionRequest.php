@@ -38,7 +38,7 @@ class UpdatePublicacionRequest extends FormRequest
 
         return [
             'estado' => [
-                Rule::requiredIf($this->user()?->rol === 'ADMIN'),
+                Rule::requiredIf(in_array($this->user()?->rol, ['ADMIN', 'ADMIN_OBSERVATORIO'], true)),
                 'nullable',
                 Rule::in(['PUBLICACION', 'EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO']),
             ],

@@ -11,7 +11,7 @@ import { PublicationDestinationComponent } from './publication-destination.compo
 
 describe('Espacio operativo del editor', () => {
   beforeEach(() => TestBed.configureTestingModule({providers:[provideRouter([]),
-    {provide:AuthService,useValue:{isAdmin:()=>false,isEditor:()=>true}},
+    {provide:AuthService,useValue:{isAdmin:()=>false,isEditor:()=>true,isObservatoryAdmin:()=>false,user:()=>({rol:'EDITOR'}),canReviewObservatory:()=>false}},
   ]}));
 
   it('usa los contadores del editor y la misma distribución del inicio administrativo',()=>{

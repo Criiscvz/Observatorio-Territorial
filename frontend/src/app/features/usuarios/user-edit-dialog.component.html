@@ -1,0 +1,25 @@
+<section class="user-dialog">
+  <header class="user-dialog-header"><div><span class="eyebrow">Gestión de usuarios</span><h2 mat-dialog-title>{{user ? 'Editar usuario' : 'Nuevo usuario'}}</h2><p>{{user ? 'Actualiza la información de esta cuenta.' : 'Agrega una cuenta a la plataforma.'}}</p></div><button class="icon-action" type="button" aria-label="Cerrar ventana" [disabled]="saving()" (click)="close()"><mat-icon>close</mat-icon></button></header>
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <mat-dialog-content class="user-dialog-body">
+      <fieldset class="user-fields" [disabled]="saving()">
+        <label class="user-field">Nombre completo *<input formControlName="name" autocomplete="name" maxlength="255"></label>
+        @if(form.controls.name.touched && form.controls.name.invalid){<p class="field-error" role="alert">Escribe el nombre completo (máximo 255 caracteres).</p>}
+        <label class="user-field">Correo electrónico *<input formControlName="email" type="email" autocomplete="email" maxlength="255"></label>
+        @if(form.controls.email.touched && form.controls.email.invalid){<p class="field-error" role="alert">Escribe un correo electrónico válido.</p>}
+        <div class="user-fields-grid"><label class="user-field">Cargo (opcional)<input formControlName="cargo" maxlength="100"></label><label class="user-field">Teléfono (opcional)<input formControlName="telefono" type="tel" autocomplete="tel" maxlength="20"></label></div>
+        <label class="user-field">Descripción (opcional)<textarea formControlName="bio" maxlength="500" rows="2"></textarea></label>
+        @if(!user){
+          <label class="user-field">Rol inicial<select formControlName="rol">@for(role of roles;track role.value){<option [value]="role.value">{{role.label}}</option>}</select></label>
+          <label class="user-field">Contraseña *<span class="password-input"><input formControlName="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password"><button class="icon-action" type="button" (click)="showPassword.set(!showPassword())" [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"><mat-icon>{{showPassword() ? 'visibility_off' : 'visibility'}}</mat-icon></button></span><small>Mínimo 8 caracteres.</small></label>
+          @if(form.controls.password.touched && form.controls.password.invalid){<p class="field-error" role="alert">{{form.controls.password.hasError('passwordTooLong') ? 'La contraseña es demasiado larga.' : 'Escribe una contraseña de al menos 8 caracteres.'}}</p>}
+          <label class="user-field">Confirmar contraseña *<input formControlName="confirmation" type="password" autocomplete="new-password"></label>
+          @if(form.controls.confirmation.touched && (form.hasError('mismatch') || form.controls.confirmation.invalid)){<p class="field-error" role="alert">Las contraseñas deben coincidir.</p>}
+        }
+        <label class="user-checkbox"><input type="checkbox" formControlName="is_active">Cuenta activa</label>
+      </fieldset>
+      @if(error()){<p class="dialog-error" role="alert">{{error()}}</p>}
+    </mat-dialog-content>
+    <footer class="user-dialog-footer"><small>* Obligatorio</small><div><button class="user-action" type="button" [disabled]="saving()" (click)="close()">Cancelar</button><button class="user-action primary" type="submit" [disabled]="saving()"><mat-icon>{{saving() ? 'hourglass_top' : 'check'}}</mat-icon>{{saving() ? 'Guardando…' : user ? 'Guardar cambios' : 'Crear usuario'}}</button></div></footer>
+  </form>
+</section>

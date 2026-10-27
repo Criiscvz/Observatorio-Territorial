@@ -18,6 +18,7 @@ import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { PermisosService } from '@core/services/permisos.service';
 import { UserService } from '@core/services/user.service';
+import { AuthService } from '@core/services/auth.service';
 import { User } from '@core/models';
 import {
   ModuloPermiso,
@@ -25,6 +26,7 @@ import {
   PermisoConfig,
 } from '@core/models/permisos';
 import { UserPermissionsDialogComponent } from './user-permissions-dialog.component';
+import { EditorPickerDialogComponent } from './editor-picker-dialog.component';
 
 @Component({
   selector: 'app-admin-permissions',
@@ -49,6 +51,22 @@ import { UserPermissionsDialogComponent } from './user-permissions-dialog.compon
   styleUrl: './admin-permissions.component.scss',
 })
 export class AdminPermissionsComponent implements OnInit {
+  readonly auth = inject(AuthService);
+  readonly selectedRole = signal<'EDITOR' | 'ADMIN_OBSERVATORIO'>(this.auth.user()?.rol === 'ADMIN_OBSERVATORIO' ? 'EDITOR' : 'ADMIN_OBSERVATORIO');
+  readonly roleTabs = [{ value: 'ADMIN_OBSERVATORIO' as const, label: 'Supervisor', icon: 'manage_accounts' },
+    { value: 'EDITOR' as const, label: 'Editor', icon: 'edit_note' }];
+  roleCount(role: string): number { return this.users().filter(user => user.rol === role).length; }
+  changeRoleTab(role: 'EDITOR' | 'ADMIN_OBSERVATORIO'): void {
+    this.selectedRole.set(role); this.resetConfirmationId.set(null);
+  }
+  roleTabKeydown(event: KeyboardEvent): void {
+    const buttons = Array.from((event.currentTarget as HTMLElement).parentElement!.querySelectorAll<HTMLButtonElement>('[role=tab]'));
+    const current = buttons.indexOf(event.currentTarget as HTMLButtonElement);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
+      : event.key === 'ArrowRight' ? (current + 1) % buttons.length : event.key === 'ArrowLeft' ? (current + buttons.length - 1) % buttons.length : -1;
+    if (next < 0) return;
+    event.preventDefault(); buttons[next].click(); buttons[next].focus();
+  }
   private readonly permisosService = inject(PermisosService);
   private readonly userService = inject(UserService);
   private readonly dialog = inject(MatDialog);
@@ -73,6 +91,11 @@ export class AdminPermissionsComponent implements OnInit {
       permissions: ['Todos los módulos', 'Aprobar y publicar', 'Asignar permisos'],
     },
     {
+      rol: 'ADMIN_OBSERVATORIO', label: 'Supervisor', icon: 'manage_accounts',
+      description: 'Administra únicamente sus observatorios asignados.', access: 'Dos permisos independientes por observatorio',
+      permissions: ['Edición y revisión', 'Agregar editores'],
+    },
+    {
       rol: 'EDITOR',
       label: 'Editor',
       icon: 'edit_note',
@@ -87,13 +110,6 @@ export class AdminPermissionsComponent implements OnInit {
       description: 'Puede ver contenido publicado marcado como solo para suscriptores.',
       access: 'Lectura suscriptor',
       permissions: ['Contenido publicado', 'Contenido solo suscriptores'],
-    },
-    {
-      rol: 'USER',
-      label: 'Usuario',
-      icon: 'person',
-      description: 'Acceso de lectura a contenido público publicado.',
-      access: 'Lectura pública',
     },
   ];
 
@@ -111,7 +127,7 @@ export class AdminPermissionsComponent implements OnInit {
         !term ||
         user.name?.toLowerCase().includes(term) ||
         user.email?.toLowerCase().includes(term);
-      return user.rol === 'EDITOR' && matchesTerm;
+      return user.rol === this.selectedRole() && matchesTerm;
     });
   });
 
@@ -122,7 +138,7 @@ export class AdminPermissionsComponent implements OnInit {
   loadUsers(): void {
     this.loadingUsers.set(true);
     this.userService
-      .getUsers(100, 1)
+      .getUsers(100, 1, undefined, 'permissions')
       .pipe(
         switchMap((first) => {
           const lastPage = first.meta.last_page;
@@ -131,7 +147,7 @@ export class AdminPermissionsComponent implements OnInit {
           }
           const requests = [of(first)];
           for (let page = 2; page <= lastPage; page++) {
-            requests.push(this.userService.getUsers(100, page));
+            requests.push(this.userService.getUsers(100, page, undefined, 'permissions'));
           }
           return forkJoin(requests);
         }),
@@ -143,7 +159,7 @@ export class AdminPermissionsComponent implements OnInit {
           this.users.set(all);
           this.loadingUsers.set(false);
 
-          const editors = all.filter((user) => user.rol === 'EDITOR');
+          const editors = all.filter((user) => ['EDITOR', 'ADMIN_OBSERVATORIO'].includes(user.rol));
           if (editors.length > 0) {
             forkJoin(editors.map((user) => this.permisosService.syncFromBackend(user.id)))
               .pipe(takeUntilDestroyed(this.destroyRef))
@@ -225,12 +241,30 @@ export class AdminPermissionsComponent implements OnInit {
 
   // ─── acciones ───
 
+  canManageUser(user: User): boolean {
+    return this.auth.isAdmin() || (this.auth.user()?.rol === 'ADMIN_OBSERVATORIO'
+      && !!this.auth.user()?.departamentos?.some(department => department.puede_agregar_editores
+        && (user.rol === 'USER' || user.departamentos?.some(assigned => assigned.id === department.id))));
+  }
+
+  addEditor(): void {
+    if (this.auth.user()?.rol !== 'ADMIN_OBSERVATORIO' || !this.auth.canAssignEditors() || this.savingUserId() !== null) return;
+    this.dialog.open(EditorPickerDialogComponent, {
+      width: '620px', maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 32px)',
+      panelClass: 'access-management-dialog-panel', autoFocus: false,
+    }).afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((user: User | undefined) => {
+      if (user) this.openPermissionsDialog(user);
+    });
+  }
+
   openPermissionsDialog(user: User): void {
     if (this.savingUserId() !== null) return;
     this.resetConfirmationId.set(null);
     const dialogRef = this.dialog.open(UserPermissionsDialogComponent, {
       width: '760px',
-      maxWidth: '95vw',
+      maxWidth: 'calc(100vw - 24px)',
+      maxHeight: 'calc(100dvh - 32px)',
+      panelClass: 'access-management-dialog-panel',
       autoFocus: false,
       data: user,
     });
@@ -261,6 +295,7 @@ export class AdminPermissionsComponent implements OnInit {
                   'Cerrar',
                   { duration: 3000 },
                 );
+                if (!this.auth.isAdmin()) this.loadUsers();
               },
               error: () => {
                 this.savingUserId.set(null);
@@ -277,7 +312,7 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   resetUserPermissions(user: User): void {
-    if (this.resetConfirmationId() !== user.id || this.savingUserId() !== null) return;
+    if (!this.canManageUser(user) || this.resetConfirmationId() !== user.id || this.savingUserId() !== null) return;
     this.savingUserId.set(user.id);
     this.saveStatus.set('');
     const emptyPermissions: PermisoConfig[] = [
@@ -303,6 +338,7 @@ export class AdminPermissionsComponent implements OnInit {
             'Cerrar',
             { duration: 3000 },
           );
+          if (!this.auth.isAdmin()) this.loadUsers();
         },
         error: () => {
           this.savingUserId.set(null);

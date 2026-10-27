@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
+import { AuthService } from './auth.service';
 import { Departamento } from '../models';
 export interface WorkspacePublication {
     id: string;
@@ -32,6 +33,8 @@ export interface WorkspacePage {
 @Injectable({ providedIn: 'root' })
 export class AdminWorkspaceService {
     private readonly api = inject(ApiService);
-    summary(editor = false) { return this.api.get<WorkspaceSummary>(editor ? '/editor/inicio' : '/admin/inicio'); }
-    publications(filters: Record<string, string | number>, editor = false) { return this.api.get<WorkspacePage>(editor ? '/editor/publicaciones' : '/admin/publicaciones', filters); }
+    private readonly auth = inject(AuthService);
+    private base(editor: boolean) { return this.auth.user()?.rol === 'ADMIN_OBSERVATORIO' ? '/observatorio-admin' : editor ? '/editor' : '/admin'; }
+    summary(editor = false) { return this.api.get<WorkspaceSummary>(`${this.base(editor)}/inicio`); }
+    publications(filters: Record<string, string | number>, editor = false) { return this.api.get<WorkspacePage>(`${this.base(editor)}/publicaciones`, filters); }
 }

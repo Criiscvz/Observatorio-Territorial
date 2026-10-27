@@ -95,6 +95,7 @@ class CsrfProtectionTest extends TestCase
             'upload Atlas' => ['POST', '/api/departamentos/publicaciones/atlas-global'],
             'update publication' => ['PATCH', $publication],
             'delete publication' => ['DELETE', $publication],
+            'admin password change' => ['PATCH', '/api/users/1/password'],
         ];
         $cases = [];
         foreach ($routes as $name => [$method, $path]) {

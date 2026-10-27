@@ -15,7 +15,8 @@ export const PUBLICATION_ICONS: Record<string, string> = { ARTICULO: 'article', 
 export const STATUS_LABELS: Record<string, string> = { EN_REVISION: 'En revisión', PUBLICACION: 'Publicado', SUSPENDIDO: 'Suspendido', ARCHIVADO: 'Archivado' };
 @Component({ selector: 'app-admin-home', standalone: true, imports: [RouterLink, MatIconModule], templateUrl: './admin-home.component.html', styleUrl: './workspace.scss' })
 export class AdminHomeComponent implements OnInit {
-    readonly isEditor = inject(AuthService).isEditor;
+    readonly auth = inject(AuthService);
+    readonly isEditor = this.auth.isEditor;
     private readonly service = inject(AdminWorkspaceService);
     private readonly destroyRef = inject(DestroyRef);
     readonly summary = signal<WorkspaceSummary | null>(null);
@@ -27,13 +28,14 @@ export class AdminHomeComponent implements OnInit {
     ngOnInit() { this.load(); }
     load() { this.loading.set(true); this.error.set(false); this.service.summary(this.isEditor()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({ next: value => { this.summary.set(value); this.loading.set(false); }, error: () => { this.error.set(true); this.loading.set(false); } }); }
 }
-@Component({ selector: 'app-workspace-entry', standalone: true, imports: [AdminHomeComponent, DashboardComponent], template: `@if(auth.isAdmin() || auth.isEditor()){<app-admin-home/>} @else {<app-dashboard/>}` })
+@Component({ selector: 'app-workspace-entry', standalone: true, imports: [AdminHomeComponent, DashboardComponent], template: `@if(auth.isAdmin() || auth.isEditor() || auth.isObservatoryAdmin()){<app-admin-home/>} @else {<app-dashboard/>}` })
 export class WorkspaceEntryComponent {
     readonly auth = inject(AuthService);
 }
 @Component({ selector: 'app-workspace-publications', standalone: true, imports: [RouterLink, MatIconModule, ReactiveFormsModule], templateUrl: './workspace-publications.component.html', styleUrl: './workspace.scss' })
 export class WorkspacePublicationsComponent implements OnInit {
-    readonly isEditor = inject(AuthService).isEditor;
+    readonly auth = inject(AuthService);
+    readonly isEditor = this.auth.isEditor;
     private readonly service = inject(AdminWorkspaceService);
     private readonly departments = inject(DepartamentoService);
     private readonly route = inject(ActivatedRoute);

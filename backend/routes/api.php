@@ -101,6 +101,15 @@ Route::prefix('editor')->middleware(['auth:sanctum', 'role:EDITOR'])->group(func
     Route::get('/inicio', [$controller, 'summary']);
     Route::get('/publicaciones', [$controller, 'indexPublications']);
 });
+Route::prefix('observatorio-admin')->middleware(['auth:sanctum', 'role:ADMIN_OBSERVATORIO'])->group(function () {
+    $workspace = \App\Presentation\Http\Controllers\Api\ObservatoryWorkspaceController::class;
+    $access = \App\Presentation\Http\Controllers\Api\ObservatoryAccessController::class;
+    Route::get('/inicio', [$workspace, 'summary']);
+    Route::get('/publicaciones', [$workspace, 'indexPublications']);
+    Route::get('/users', [$access, 'users']);
+    Route::get('/users/{user}/permisos', [$access, 'show']);
+    Route::put('/users/{user}/permisos', [$access, 'save']);
+});
 require __DIR__ . '/modules/atlas.php';
 
 // ============ PROFILE ============

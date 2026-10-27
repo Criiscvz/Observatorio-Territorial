@@ -1,0 +1,15 @@
+<section class="user-dialog">
+  <header class="user-dialog-header"><div><span class="eyebrow">Gestión de usuarios</span><h2 mat-dialog-title>Cambiar rol</h2><p>Selecciona el acceso que tendrá esta cuenta.</p></div><button class="icon-action" type="button" aria-label="Cerrar ventana" [disabled]="saving()" (click)="close()"><mat-icon>close</mat-icon></button></header>
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <mat-dialog-content class="user-dialog-body">
+      <div class="user-summary"><span class="avatar">{{user.name.charAt(0).toUpperCase()}}</span><div><strong>{{user.name}}</strong><small>{{user.email}}</small></div><span class="current-role">{{roleLabel(user.rol)}}</span></div>
+      <fieldset class="role-options" [disabled]="saving()"><legend>Selecciona el rol</legend>
+        @for(role of roles;track role.value){<label class="role-option" [class.selected]="selection === role.value"><input type="radio" formControlName="rol" [value]="role.value"><span class="role-icon"><mat-icon>{{role.icon}}</mat-icon></span><span><span class="role-label">{{role.label}} @if(user.rol === role.value){<small>Actual</small>}</span><span class="role-description">{{role.description}}</span></span></label>}
+      </fieldset>
+      @if(changesScope){<p class="dialog-note"><mat-icon>info_outline</mat-icon>Al cambiar desde o hacia Supervisor, tendrás que asignar sus observatorios y permisos nuevamente desde Permisos.</p>}
+      @else if(selection === 'EDITOR' || selection === 'ADMIN_OBSERVATORIO'){<p class="dialog-note"><mat-icon>account_balance</mat-icon>El acceso se limita a los observatorios asignados desde Permisos.</p>}
+      @if(error()){<p class="dialog-error" role="alert">{{error()}}</p>}
+    </mat-dialog-content>
+    <footer class="user-dialog-footer"><small>{{roleLabel(user.rol)}} @if(selection !== user.rol){→ {{roleLabel(selection)}}}@else{· Rol actual}</small><div><button class="user-action" type="button" [disabled]="saving()" (click)="close()">Cancelar</button><button class="user-action primary" type="submit" [disabled]="saving() || selection === user.rol"><mat-icon>{{saving() ? 'hourglass_top' : 'check'}}</mat-icon>{{saving() ? 'Guardando…' : 'Guardar rol'}}</button></div></footer>
+  </form>
+</section>

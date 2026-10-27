@@ -48,7 +48,7 @@ class DepartamentoController extends Controller
             $departamentos = $this->getDepartamentosUseCase->getAll();
         } else {
             $departamentos = $this->getDepartamentosUseCase->execute($user->id);
-            if ($user->rol === 'EDITOR') {
+            if (in_array($user->rol, ['EDITOR', 'ADMIN_OBSERVATORIO'], true)) {
                 $departamentos = $departamentos->filter(fn ($item) => in_array($item->userRole, ['ADMIN', 'EDITOR'], true))->values();
             }
         }
@@ -124,7 +124,7 @@ class DepartamentoController extends Controller
     )]
     public function show(Request $request, string $id): JsonResponse
     {
-        if ($request->user()->rol === 'EDITOR') {
+        if (in_array($request->user()->rol, ['EDITOR', 'ADMIN_OBSERVATORIO'], true)) {
             abort_unless($request->user()->departamentos()->where('departamentos.id', $id)
                 ->wherePivotIn('rol', ['ADMIN', 'EDITOR'])->exists(), 403, 'No tienes acceso a este observatorio.');
         }

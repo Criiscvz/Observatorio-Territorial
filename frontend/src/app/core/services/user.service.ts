@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import { AuthService } from './auth.service';
+import { UserRole } from '../models';
 import {
     CreateUserRequest,
     UpdateUserRequest,
@@ -19,17 +21,23 @@ export interface DeleteUserResponse {
   message: string;
 }
 
+export interface ChangeUserPasswordResponse { message: string; reauthenticate: boolean; }
+
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
   private readonly api = inject(ApiService);
+  private readonly auth = inject(AuthService);
 
   /**
    * Obtener lista de usuarios (solo admin)
    */
-  getUsers(perPage = 15, page = 1, search?: string): Observable<UsersListResponse> {
-    let url = `/users?per_page=${perPage}&page=${page}`;
+  getUsers(perPage = 15, page = 1, search?: string, purpose?: 'permissions', role?: UserRole): Observable<UsersListResponse> {
+    const scoped = this.auth.user()?.rol === 'ADMIN_OBSERVATORIO';
+    let url = `${scoped ? '/observatorio-admin/users' : '/users'}?per_page=${perPage}&page=${page}`;
+    if (scoped && purpose) url += `&purpose=${purpose}`;
+    if (!scoped && role) url += `&rol=${encodeURIComponent(role)}`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
     }
@@ -69,6 +77,12 @@ export class UserService {
    */
   updateUserRole(userId: number, data: UpdateUserRoleRequest): Observable<UpdateUserRoleResponse> {
     return this.api.patch<UpdateUserRoleResponse>(`/users/${userId}/role`, data);
+  }
+
+  changePassword(userId: number, password: string, confirmation: string): Observable<ChangeUserPasswordResponse> {
+    return this.api.patch<ChangeUserPasswordResponse>(`/users/${userId}/password`, {
+      password, password_confirmation: confirmation,
+    });
   }
 
   /**

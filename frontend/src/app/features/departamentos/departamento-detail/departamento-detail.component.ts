@@ -243,7 +243,7 @@ export class DepartamentoDetailComponent implements OnInit {
       ['ADMIN', 'EDITOR'].includes(String(departamento.user_role ?? '').toUpperCase()) ||
       this.authService.hasRoleInDepartamento(departamento.id, ['ADMIN', 'EDITOR']);
 
-    return this.isAdmin() || (this.isEditor() && hasObservatorioPermission);
+    return this.isAdmin() || this.authService.canReviewObservatory(this.departamento()?.id) || (this.isEditor() && hasObservatorioPermission);
   }
 
   get canUploadButtonGroup(): boolean {
@@ -251,7 +251,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   get canChoosePublicationStatus(): boolean {
-    return this.isAdmin();
+    return this.authService.canReviewObservatory(this.departamento()?.id);
   }
 
   get panelTitle(): string {
@@ -264,7 +264,7 @@ export class DepartamentoDetailComponent implements OnInit {
 
   canEditPublication(publicacion: ObservatorioPublicacion): boolean {
     const user = this.authService.user();
-    return this.isAdmin() || (this.isEditor() && !!user && publicacion.tipo !== 'ATLAS' && Number(publicacion.creado_por) === user.id);
+    return this.isAdmin() || (publicacion.tipo !== 'ATLAS' && this.authService.canReviewObservatory(publicacion.departamento_id)) || (this.isEditor() && !!user && publicacion.tipo !== 'ATLAS' && Number(publicacion.creado_por) === user.id);
   }
 
   canDeletePublication(publicacion: ObservatorioPublicacion): boolean {
@@ -368,7 +368,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   openPublicationForm(tipo: TipoPublicacion): void {
-    if (!this.canManagePublications || (this.isEditor() && tipo === 'ATLAS')) return;
+    if (!this.canManagePublications || (!this.isAdmin() && tipo === 'ATLAS')) return;
     this.closeAllObservationForms(tipo);
     this.configurePublicationValidators(tipo);
     this.showPublicationForm.set(true);
@@ -603,7 +603,7 @@ export class DepartamentoDetailComponent implements OnInit {
           this.loadReviewPublicaciones(departamento.id);
         } else this.finishOverlayClose();
         this.snackBar.open(
-          !this.isAdmin()
+          !this.canChoosePublicationStatus
             ? 'Contenido enviado a revisión.'
             : editing
             ? 'Publicación actualizada correctamente.'
@@ -742,8 +742,8 @@ export class DepartamentoDetailComponent implements OnInit {
 
   changeReviewStatus(publicacion: ObservatorioPublicacion, estado: EstadoPublicacion): void {
     if (this.changingReviewStatus() || this.savingPublication()) return;
-    if (!this.isAdmin()) {
-      this.snackBar.open('Solo ADMIN puede cambiar el estado de revisión.', 'Cerrar', {
+    if (!this.canChoosePublicationStatus) {
+      this.snackBar.open('No tienes permiso de edición y revisión en este observatorio.', 'Cerrar', {
         duration: 4000,
       });
       return;

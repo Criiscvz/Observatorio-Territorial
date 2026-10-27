@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Application\User\UseCases;
 
 use App\Application\User\DTOs\UpdateUserDTO;
+use App\Application\User\Services\UserPasswordSessions;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -29,7 +31,7 @@ class UpdateUserUseCase
             }
 
             // Buscar el usuario a modificar
-            $user = User::with('perfil')->find($dto->userId);
+            $user = User::with('perfil')->lockForUpdate()->find($dto->userId);
 
             if (!$user) {
                 throw new NotFoundHttpException('Usuario no encontrado');
@@ -50,10 +52,11 @@ class UpdateUserUseCase
 
             if ($dto->password !== null) {
                 $user->password = Hash::make($dto->password);
+                $user->remember_token = Str::random(60);
             }
 
             if ($dto->rol !== null) {
-                if (!in_array($dto->rol, ['ADMIN', 'USER', 'SUBSCRIBER', 'EDITOR'])) {
+                if (!in_array($dto->rol, ['ADMIN', 'USER', 'SUBSCRIBER', 'EDITOR', 'ADMIN_OBSERVATORIO'])) {
                     throw new \InvalidArgumentException('Rol inválido. Los roles permitidos son: ADMIN, USER, SUBSCRIBER, EDITOR');
                 }
                 $user->rol = $dto->rol;
@@ -64,6 +67,7 @@ class UpdateUserUseCase
             }
 
             $user->save();
+            if ($dto->password !== null) app(UserPasswordSessions::class)->revoke($user);
 
             // Actualizar perfil
             $perfilData = array_filter([

@@ -26,7 +26,7 @@ class PermisoController extends Controller
     public function show(int $userId): JsonResponse
     {
         $permisos = $this->getPermisosUseCase->execute($userId);
-        return response()->json($permisos->map(fn($p) => $p->toArray()));
+        return response()->json($this->withCapabilities($userId, $permisos->map(fn($p) => $p->toArray())->all()));
     }
 
     /**
@@ -35,7 +35,7 @@ class PermisoController extends Controller
     public function myPermissions(Request $request): JsonResponse
     {
         $permisos = $this->getPermisosUseCase->execute($request->user()->id);
-        return response()->json($permisos->map(fn($p) => $p->toArray()));
+        return response()->json($this->withCapabilities($request->user()->id, $permisos->map(fn($p) => $p->toArray())->all()));
     }
 
     /**
@@ -48,8 +48,18 @@ class PermisoController extends Controller
 
         return response()->json([
             'message' => 'Permisos guardados correctamente.',
-            'permisos' => array_map(fn($r) => $r->toArray(), $results),
+            'permisos' => $this->withCapabilities($userId, array_map(fn($r) => $r->toArray(), $results)),
             'user' => new UserResource($user),
         ]);
+    }
+
+    private function withCapabilities(int $userId, array $permissions): array
+    {
+        $assignments = User::findOrFail($userId)->departamentos()->get()->keyBy('id');
+        return array_map(function ($permission) use ($assignments) {
+            $pivot = $assignments->get($permission['departamento_id'] ?? '')?->pivot;
+            return [...$permission, 'puede_revisar' => (bool) $pivot?->puede_revisar,
+                'puede_agregar_editores' => (bool) $pivot?->puede_agregar_editores];
+        }, $permissions);
     }
 }

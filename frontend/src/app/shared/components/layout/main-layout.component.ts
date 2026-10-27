@@ -33,7 +33,7 @@ import { AuthService } from '@core/services/auth.service';
           (openedChange)="mobileOpen.set($event)"
         >
           @if(usesWorkspaceSidebar) {
-            <app-workspace-sidebar [editor]="auth.isEditor()" [collapsed]="!isMobile() && !sidenavOpen()" (navigate)="onNavigate($event)"/>
+            <app-workspace-sidebar [editor]="auth.isEditor()" [observatoryAdmin]="auth.isObservatoryAdmin()" [collapsed]="!isMobile() && !sidenavOpen()" (navigate)="onNavigate($event)"/>
           } @else {
             <app-sidebar (navigate)="onNavigate()"></app-sidebar>
           }
@@ -128,7 +128,7 @@ export class MainLayoutComponent {
   sidenavOpen = signal(true);
   isMobile = signal(false);
   readonly mobileOpen = signal(false);
-  get usesWorkspaceSidebar(): boolean { return this.auth.isAdmin() || this.auth.isEditor(); }
+  get usesWorkspaceSidebar(): boolean { return this.auth.isAdmin() || this.auth.isEditor() || this.auth.isObservatoryAdmin(); }
 
   constructor() {
     this.checkScreenSize();

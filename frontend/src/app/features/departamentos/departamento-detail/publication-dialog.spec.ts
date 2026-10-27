@@ -34,7 +34,7 @@ describe('Ventana central de revisión y edición', () => {
       {provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:convertToParamMap({})},params:of({id:'salud'}),queryParamMap:of(convertToParamMap({}))}},
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Observatorio de la Salud',publico:true,datasets:[]})}},
       {provide:DatasetService,useValue:{}},{provide:PublicacionService,useValue:service},
-      {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>!admin,user:()=>({id:1}),hasRoleInDepartamento:()=>true}},
+      {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>!admin,canReviewObservatory:()=>admin,user:()=>({id:1}),hasRoleInDepartamento:()=>true}},
       {provide:MatSnackBar,useValue:{open:vi.fn()}},
     ]});
     const fixture=TestBed.createComponent(DepartamentoDetailComponent);fixture.detectChanges();await fixture.whenStable();

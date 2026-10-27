@@ -113,7 +113,7 @@ class ObservatorioPublicacionController extends Controller
             ->where('users.id', $user->id)
             ->first()?->pivot?->rol;
         $hasPermission = in_array($departamentoRole, ['ADMIN', 'EDITOR'], true);
-        $canUpload = $user->rol === 'ADMIN' || ($user->rol === 'EDITOR' && $hasPermission);
+        $canUpload = $user->canReviewObservatory($departamento->id) || ($user->rol === 'EDITOR' && $hasPermission);
 
         return response()->json([
             'can_upload' => $canUpload,
@@ -127,7 +127,7 @@ class ObservatorioPublicacionController extends Controller
     {
         $this->ensureCanManage($request, $departamento);
         $data = $request->validated();
-        $estado = $request->user()->rol === 'ADMIN' ? $data['estado'] : self::ESTADO_EN_REVISION;
+        $estado = $request->user()->canReviewObservatory($departamento->id) ? $data['estado'] : self::ESTADO_EN_REVISION;
         $file = $request->file('archivo');
         $path = $file
             ? $this->storePdf($file, 'publicaciones/'.$departamento->id)
@@ -146,7 +146,7 @@ class ObservatorioPublicacionController extends Controller
                     'creado_por' => $request->user()->id,
                     'tipo' => $data['tipo'],
                     'estado' => $estado,
-                    'solo_suscriptores' => $request->user()->rol === 'ADMIN' && $request->boolean('solo_suscriptores'),
+                    'solo_suscriptores' => $request->user()->canReviewObservatory($departamento->id) && $request->boolean('solo_suscriptores'),
                     'codigo' => $this->codePrefix($data['tipo']).str_pad((string) $number, 4, '0', STR_PAD_LEFT),
                     ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
@@ -192,7 +192,7 @@ class ObservatorioPublicacionController extends Controller
                     'departamento_id' => null,
                     'creado_por' => $request->user()->id,
                     'tipo' => 'ATLAS',
-                    'estado' => $request->user()->rol === 'ADMIN' ? $data['estado'] : self::ESTADO_EN_REVISION,
+                    'estado' => $data['estado'],
                     'solo_suscriptores' => $request->boolean('solo_suscriptores'),
                     'codigo' => 'ATL-'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
                     ...array_intersect_key($data, ['atlas_categoria_id' => true]),
@@ -312,12 +312,12 @@ class ObservatorioPublicacionController extends Controller
             abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para gestionar Atlas global.');
         }
         abort_unless(
-            $request->user()->rol === 'ADMIN' || (int) $publicacion->creado_por === (int) $request->user()->id,
+            $request->user()->canReviewObservatory($publicacion->departamento_id) || (int) $publicacion->creado_por === (int) $request->user()->id,
             403,
             'No puedes editar publicaciones de otros usuarios.'
         );
         $data = $request->validated();
-        $isAdmin = $request->user()->rol === 'ADMIN';
+        $isAdmin = $request->user()->canReviewObservatory($publicacion->departamento_id);
         $newFile = $request->file('archivo');
         $oldPath = $publicacion->archivo_pdf;
         $newPath = null;
@@ -445,7 +445,7 @@ class ObservatorioPublicacionController extends Controller
 
         $user = $request->user();
         abort_unless(
-            $user->rol === 'ADMIN' || ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id),
+            $user->canReviewObservatory($publicacion->departamento_id) || ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id),
             403,
             'No tienes permiso para eliminar esta publicación.'
         );
@@ -954,6 +954,10 @@ class ObservatorioPublicacionController extends Controller
     private function ensureCanView(Request $request, Departamento $departamento): void
     {
         $user = $request->user('sanctum') ?: $request->user();
+        if ($user?->isObservatoryAdmin()) {
+            abort_unless(in_array($departamento->id, $user->observatoryIds(), true), 403, 'Observatorio fuera de tu alcance.');
+            return;
+        }
         $hasAccess = ($user?->rol === 'ADMIN')
             || $departamento->publico
             || ($user && $departamento->usuarios()->where('users.id', $user->id)->exists());
@@ -963,6 +967,10 @@ class ObservatorioPublicacionController extends Controller
     private function applyVisibilityFilter($query, Request $request): void
     {
         $user = $request->user();
+        if ($user->isObservatoryAdmin()) {
+            $query->whereIn('departamento_id', $user->observatoryIds())->whereIn('tipo', ['ARTICULO', 'REPORTE', 'LIBRO']);
+            return;
+        }
         if ($user->rol === 'ADMIN') {
             return;
         }
@@ -988,6 +996,10 @@ class ObservatorioPublicacionController extends Controller
     {
         $user = $request->user('sanctum') ?: $request->user();
         if ($user?->rol === 'ADMIN') {
+            return;
+        }
+        if ($user?->isObservatoryAdmin() && $request->query('context') === 'management') {
+            abort_unless($publicacion->tipo !== 'ATLAS' && in_array($publicacion->departamento_id, $user->observatoryIds(), true), 403);
             return;
         }
 
@@ -1017,6 +1029,10 @@ class ObservatorioPublicacionController extends Controller
             return;
         }
 
+        if ($user->isObservatoryAdmin()) {
+            abort_unless($user->canReviewObservatory($departamento->id), 403, 'No tienes permiso de edición y revisión en este observatorio.');
+            return;
+        }
         abort_unless($user->rol === 'EDITOR', 403, 'No tienes permisos para gestionar publicaciones.');
         abort_unless(
             $departamento->usuarios()

@@ -44,4 +44,4 @@ describe('Lista editorial de publicaciones',()=>{
   });
 });
 
-beforeEach(() => TestBed.configureTestingModule({providers:[{provide:AuthService,useValue:{isAdmin:()=>true,isEditor:()=>false}}]}));
+beforeEach(() => TestBed.configureTestingModule({providers:[{provide:AuthService,useValue:{isAdmin:()=>true,isEditor:()=>false,isObservatoryAdmin:()=>false,user:()=>({rol:'ADMIN'}),canReviewObservatory:()=>true}}]}));

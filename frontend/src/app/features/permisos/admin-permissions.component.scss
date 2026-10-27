@@ -1,3 +1,5 @@
+@use '../../shared/styles/selection-tabs' as selection;
+
 .page-container {
   max-width: 1280px;
   margin: 0 auto;
@@ -109,7 +111,7 @@
 
 .role-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-height: 150px;
   padding: 16px;
@@ -138,6 +140,7 @@
   gap: 8px;
   align-items: flex-start;
   margin-bottom: 8px;
+  overflow-wrap: anywhere;
 }
 
 .role-card h3 {
@@ -300,6 +303,7 @@
 
 .editor-scope-note mat-icon { color: var(--primary-600); flex-shrink: 0; }
 .users-toolbar { grid-template-columns: minmax(0, 1fr); }
+.users-toolbar:has(.add-editor) { grid-template-columns: minmax(0, 1fr) auto; }
 .editor-search { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); color: var(--text-secondary); }
 .editor-search mat-icon { flex-shrink: 0; }
 .editor-search input { width: 100%; min-width: 0; min-height: 44px; border: 0; background: transparent; color: var(--text-primary); font: inherit; font-size: .875rem; }
@@ -350,6 +354,7 @@
 }
 @media (min-width: 761px) and (max-width: 1100px) { .roles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
+  .users-toolbar:has(.add-editor) { grid-template-columns: minmax(0, 1fr); }
   .page-container { padding: 16px; }
   .page-header { grid-template-columns: 1fr; }
   .roles-grid { grid-template-columns: 1fr; }
@@ -370,3 +375,17 @@
   .editor-role-details summary mat-icon { flex-shrink: 0; }
 }
 @media (pointer: coarse) { .editor-action, .editor-role-details summary { min-height: 44px; } }
+.role-tabs {
+  @include selection.navigation;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  span { padding: 2px 7px; border-radius: 6px; background: var(--hover-bg); }
+}
+
+.badge-admin_observatorio { color: var(--primary-700); background: var(--tab-active-bg); border-color: var(--tab-active-border); }
+@media(max-width: 600px) {
+  .editor-identity { flex-wrap: wrap; }
+  .editor-identity .role-badge { white-space: normal; max-width: 100%; }
+}

@@ -22,7 +22,7 @@ export class GoogleCallbackComponent {
     this.router.navigate([], { replaceUrl: true, queryParams: {} });
     if (!code) { this.router.navigate(['/auth/login'], { queryParams: { google_error: 'failed' } }); return; }
     this.auth.exchangeGoogleCode(code).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => this.router.navigate([this.auth.isAdmin() || this.auth.isEditor() ? '/admin/dashboard' : '/publico/departamentos']),
+      next: () => this.router.navigate([this.auth.isAdmin() || this.auth.isEditor() || this.auth.isObservatoryAdmin() ? '/admin/dashboard' : '/publico/departamentos']),
       error: () => this.router.navigate(['/auth/login'], { queryParams: { google_error: 'failed' } }),
     });
   }

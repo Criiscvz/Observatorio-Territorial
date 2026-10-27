@@ -1,2 +1,2 @@
 // Tipos de rol global
-export type UserRole = 'ADMIN' | 'USER' | 'SUBSCRIBER' | 'EDITOR';
+export type UserRole = 'ADMIN' | 'USER' | 'SUBSCRIBER' | 'EDITOR' | 'ADMIN_OBSERVATORIO';

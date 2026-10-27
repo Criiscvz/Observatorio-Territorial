@@ -8,4 +8,6 @@ export interface DepartamentoConRol {
   publico?: boolean;
   rol: DepartamentoRole; // Rol del usuario en este departamento
   assigned_at?: string | null;
+  puede_revisar?: boolean;
+  puede_agregar_editores?: boolean;
 }

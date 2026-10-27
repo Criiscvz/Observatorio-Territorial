@@ -17,12 +17,14 @@ class PublicacionResource extends JsonResource
         $isEditorOwner = $isManagementRequest
             && $user?->rol === 'EDITOR'
             && (int) $this->creado_por === (int) $user->id;
-        $canViewSubscriberContent = ! $isSubscriberContent
+        $isScopedManager = $isManagementRequest && $user?->isObservatoryAdmin() && $this->tipo !== 'ATLAS'
+            && in_array($this->departamento_id, $user->observatoryIds(), true);
+        $canViewSubscriberContent = $isScopedManager || ! $isSubscriberContent
             || ($user && in_array($user->rol, ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true))
             || $isEditorOwner;
         $isLocked = $isSubscriberContent && ! $canViewSubscriberContent;
         $downloadUrl = "/api/departamentos/publicaciones/{$this->id}/download";
-        if ($isEditorOwner) {
+        if ($isEditorOwner || $isScopedManager) {
             $downloadUrl .= '?context=management';
         }
 

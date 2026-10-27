@@ -42,6 +42,12 @@ php artisan config:cache
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     echo "Running pending database migrations"
     php artisan migrate --force
+else
+    # This release reads the delegated capability columns during authentication.
+    # Apply its additive migration before serving traffic, even when the general
+    # migration switch is off. Laravel records it once; later boots are a no-op.
+    echo "Ensuring supervisor access schema is current"
+    php artisan migrate --force --path=database/migrations/2026_10_27_000001_add_observatory_administrator.php
 fi
 
 php artisan route:cache

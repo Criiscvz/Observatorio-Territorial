@@ -37,7 +37,7 @@ export const guestGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   const redirectAuthenticatedUser = (): false => {
-    if (authService.isAdmin() || authService.isEditor()) {
+    if (authService.isAdmin() || authService.isEditor() || authService.isObservatoryAdmin()) {
       router.navigate(['/admin/dashboard']);
     } else {
       router.navigate(['/publico/departamentos']);

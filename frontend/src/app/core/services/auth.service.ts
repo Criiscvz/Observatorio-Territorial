@@ -43,6 +43,17 @@ export class AuthService {
   readonly isAdmin = computed(() => this.userSignal()?.rol === 'ADMIN');
   readonly isUser = computed(() => this.userSignal()?.rol === 'USER');
   readonly isEditor = computed(() => this.userSignal()?.rol === 'EDITOR');
+  readonly isObservatoryAdmin = computed(() => this.userSignal()?.rol === 'ADMIN_OBSERVATORIO');
+  readonly hasWorkspace = computed(() => this.isAdmin() || this.isEditor() || this.isObservatoryAdmin());
+
+  canReviewObservatory(id?: string | null): boolean {
+    return this.isAdmin() || (this.isObservatoryAdmin() && !!this.user()?.departamentos?.some(
+      department => (!id || department.id === id) && department.puede_revisar));
+  }
+
+  canAssignEditors(): boolean {
+    return this.isAdmin() || (this.isObservatoryAdmin() && !!this.user()?.departamentos?.some(department => department.puede_agregar_editores));
+  }
   readonly isSubscriber = computed(() => this.userSignal()?.rol === 'SUBSCRIBER');
   readonly userRole = computed(() => this.userSignal()?.rol ?? null);
 
@@ -234,7 +245,7 @@ export class AuthService {
     if (normalized === 'SUSCRIPTOR' || normalized === 'SUBSCRIPTOR') {
       return 'SUBSCRIBER';
     }
-    if (['ADMIN', 'USER', 'SUBSCRIBER', 'EDITOR'].includes(normalized)) {
+    if (['ADMIN', 'USER', 'SUBSCRIBER', 'EDITOR', 'ADMIN_OBSERVATORIO'].includes(normalized)) {
       return normalized as UserRole;
     }
     return 'USER';

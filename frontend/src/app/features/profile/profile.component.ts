@@ -65,8 +65,8 @@ export class ProfileComponent implements OnInit {
   readonly removeAvatarPending = signal(false);
   private pendingAvatar: File | null = null;
   private savedData = '';
-  readonly backDestination = computed(() => ['ADMIN', 'EDITOR'].includes(this.user()?.rol ?? '') ? '/admin/dashboard' : '/');
-  readonly hasWorkspace = computed(() => ['ADMIN', 'EDITOR'].includes(this.user()?.rol ?? ''));
+  readonly backDestination = computed(() => ['ADMIN', 'EDITOR', 'ADMIN_OBSERVATORIO'].includes(this.user()?.rol ?? '') ? '/admin/dashboard' : '/');
+  readonly hasWorkspace = computed(() => ['ADMIN', 'EDITOR', 'ADMIN_OBSERVATORIO'].includes(this.user()?.rol ?? ''));
   get hasChanges(): boolean {
     return !!this.profileForm && (JSON.stringify(this.profileData()) !== this.savedData || !!this.pendingAvatar || this.removeAvatarPending());
   }
@@ -256,6 +256,7 @@ export class ProfileComponent implements OnInit {
   getRoleLabel(): string {
     const roleLabels: Record<string, string> = {
       ADMIN: 'profile.roles.admin',
+      ADMIN_OBSERVATORIO: 'profile.roles.observatoryAdmin',
       EDITOR: 'profile.roles.editor',
       SUBSCRIBER: 'profile.roles.subscriber',
       USER: 'profile.roles.user',
@@ -265,8 +266,10 @@ export class ProfileComponent implements OnInit {
   }
 
   getObservatorioRoleLabel(role?: string | null): string {
+    if(this.user()?.rol === 'ADMIN_OBSERVATORIO' && role === 'ADMIN') return 'Supervisor';
     const labels: Record<string, string> = {
       ADMIN: 'Administrador',
+      ADMIN_OBSERVATORIO: 'Supervisor',
       EDITOR: 'Editor',
       LECTOR: 'Lector',
     };

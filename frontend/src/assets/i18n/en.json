@@ -274,7 +274,8 @@
       "admin": "Administrator",
       "user": "Regular user",
       "subscriber": "Subscriber",
-      "editor": "Editor"
+      "editor": "Editor",
+      "observatoryAdmin": "Supervisor"
     },
     "messages": {
       "updateSuccess": "Profile updated successfully",
@@ -679,7 +680,13 @@
       "logoutTitle": "Sign out?",
       "logoutMessage": "You will need to sign in again to access your account.",
       "loggingOut": "Signing out…",
-      "roles": { "ADMIN": "Administrator", "EDITOR": "Editor", "USER": "User", "SUBSCRIBER": "Subscriber" }
+      "roles": {
+        "ADMIN": "Administrator",
+        "EDITOR": "Editor",
+        "USER": "User",
+        "SUBSCRIBER": "Subscriber",
+        "ADMIN_OBSERVATORIO": "Supervisor"
+      }
     },
     "home": {
       "hero": {

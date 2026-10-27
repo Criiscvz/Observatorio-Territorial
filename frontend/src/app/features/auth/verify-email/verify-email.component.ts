@@ -46,7 +46,7 @@ export class VerifyEmailComponent {
     this.auth.verifyEmail(this.email(), this.form.controls.code.value).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.success.set('Correo verificado correctamente.');
-        this.router.navigate([this.auth.isAdmin() || this.auth.isEditor() ? '/admin/dashboard' : '/publico/departamentos']);
+        this.router.navigate([this.auth.isAdmin() || this.auth.isEditor() || this.auth.isObservatoryAdmin() ? '/admin/dashboard' : '/publico/departamentos']);
       },
       error: (err) => {
         this.loading.set(false);

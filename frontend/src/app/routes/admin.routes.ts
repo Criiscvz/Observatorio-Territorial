@@ -16,13 +16,13 @@ export const ADMIN_ROUTES: Routes = [
     title: 'Dashboard - Observatorio',
   },
 
-  {path:'publicaciones/nueva',canActivate:[roleGuard('ADMIN','EDITOR')],canDeactivate:[publicationDraftGuard],loadComponent:()=>import('../features/admin-workspace/publication-destination.component').then(m=>m.PublicationDestinationComponent),title:'Nueva publicación - Observatorio'},
-  {path:'publicaciones',canActivate:[roleGuard('ADMIN','EDITOR')],loadComponent:()=>import('../features/admin-workspace/admin-workspace.component').then(m=>m.WorkspacePublicationsComponent),title:'Publicaciones - Observatorio'},
+  {path:'publicaciones/nueva',canActivate:[roleGuard('ADMIN','EDITOR','ADMIN_OBSERVATORIO')],canDeactivate:[publicationDraftGuard],loadComponent:()=>import('../features/admin-workspace/publication-destination.component').then(m=>m.PublicationDestinationComponent),title:'Nueva publicación - Observatorio'},
+  {path:'publicaciones',canActivate:[roleGuard('ADMIN','EDITOR','ADMIN_OBSERVATORIO')],loadComponent:()=>import('../features/admin-workspace/admin-workspace.component').then(m=>m.WorkspacePublicationsComponent),title:'Publicaciones - Observatorio'},
   {path:'configuracion',canActivate:[adminGuard],loadComponent:()=>import('../features/admin-workspace/admin-workspace.component').then(m=>m.SiteSettingsComponent),title:'Configuración del sitio - Observatorio'},
   // Departamentos
   {
     path: 'departamentos',
-    canActivate: [roleGuard('ADMIN','EDITOR')],
+    canActivate: [roleGuard('ADMIN','EDITOR','ADMIN_OBSERVATORIO')],
     loadComponent: () =>
       import('../features/departamentos/departamento-list/departamento-list.component').then(
         (m) => m.DepartamentoListComponent,
@@ -123,11 +123,11 @@ export const ADMIN_ROUTES: Routes = [
   // Usuarios (solo admin)
   {
     path: 'usuarios',
+    canActivate: [roleGuard('ADMIN', 'ADMIN_OBSERVATORIO')],
     loadComponent: () =>
       import('../features/usuarios/usuario-list/usuario-list.component').then(
         (m) => m.UsuarioListComponent,
       ),
-    canActivate: [adminGuard],
     title: 'Usuarios - Observatorio',
   },
   {
@@ -154,7 +154,7 @@ export const ADMIN_ROUTES: Routes = [
       import('../features/permisos/admin-permissions.component').then(
         (m) => m.AdminPermissionsComponent,
       ),
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('ADMIN', 'ADMIN_OBSERVATORIO')],
     title: 'Permisos de Roles - Observatorio',
   },
 ];

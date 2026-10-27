@@ -28,7 +28,7 @@ class User extends Authenticatable
         // Proteger la asignación de los roles ADMIN/EDITOR al crear usuarios
         static::creating(function (User $user) {
             // Si se intenta crear un usuario con rol ADMIN o EDITOR
-            if (in_array($user->rol, ['ADMIN', 'EDITOR'])) {
+            if (in_array($user->rol, ['ADMIN', 'EDITOR', 'ADMIN_OBSERVATORIO'])) {
                 // Verificar si hay un usuario autenticado que sea ADMIN
                 $currentUser = auth()->user();
 
@@ -44,13 +44,18 @@ class User extends Authenticatable
         // Proteger la actualización del rol a ADMIN o EDITOR
         static::updating(function (User $user) {
             // Si se intenta cambiar el rol a ADMIN o EDITOR
-            if ($user->isDirty('rol') && in_array($user->rol, ['ADMIN', 'EDITOR'])) {
+            if ($user->isDirty('rol') && in_array($user->rol, ['ADMIN', 'EDITOR', 'ADMIN_OBSERVATORIO'])) {
                 $currentUser = auth()->user();
 
                 // Solo permitir si el usuario actual es admin
                 if (!$currentUser || !$currentUser->isAdmin()) {
                     $user->rol = $user->getOriginal('rol');
                 }
+            }
+            if ($user->isDirty('rol') && ($user->rol === 'ADMIN_OBSERVATORIO' || $user->getOriginal('rol') === 'ADMIN_OBSERVATORIO')) {
+                // Entering/leaving this role requires explicit new scope assignments.
+                $user->departamentos()->detach();
+                $user->permisos()->delete();
             }
         });
     }
@@ -109,7 +114,7 @@ class User extends Authenticatable
     public function departamentos(): BelongsToMany
     {
         return $this->belongsToMany(Departamento::class, 'usuario_departamento')
-            ->withPivot('rol')
+            ->withPivot('rol', 'puede_revisar', 'puede_agregar_editores')
             ->withTimestamps();
     }
 
@@ -183,6 +188,28 @@ class User extends Authenticatable
     public function isEditor(): bool
     {
         return $this->rol === 'EDITOR';
+    }
+
+    public function isObservatoryAdmin(): bool
+    {
+        return $this->rol === 'ADMIN_OBSERVATORIO';
+    }
+
+    /** Query every time: revocations must also affect an already signed-in session. */
+    public function observatoryIds(?string $permission = null): array
+    {
+        if ($permission !== null && ! in_array($permission, ['puede_revisar', 'puede_agregar_editores'], true)) {
+            throw new \InvalidArgumentException('Permiso de observatorio inválido.');
+        }
+        $query = $this->departamentos();
+        if ($permission !== null) $query->wherePivot($permission, true);
+        return $query->pluck('departamentos.id')->all();
+    }
+
+    public function canReviewObservatory(?string $id): bool
+    {
+        return $this->isAdmin() || ($this->isObservatoryAdmin() && $id !== null
+            && in_array($id, $this->observatoryIds('puede_revisar'), true));
     }
 
     /**

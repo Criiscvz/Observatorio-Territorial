@@ -36,6 +36,10 @@ final readonly class AuthResponseDTO
                 'nombre' => $d->nombre,
                 'codigo_interno' => $d->codigo_interno,
                 'rol' => $d->pivot->rol,
+                    'puede_revisar' => (bool) $d->pivot->puede_revisar,
+                    'puede_agregar_editores' => (bool) $d->pivot->puede_agregar_editores,
+                    'puede_revisar' => (bool) $d->pivot->puede_revisar,
+                    'puede_agregar_editores' => (bool) $d->pivot->puede_agregar_editores,
             ])->toArray(),
         );
     }
