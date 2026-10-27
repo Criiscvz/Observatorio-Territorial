@@ -4,12 +4,7 @@
 .directory-heading { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; margin-bottom: 1.75rem; }
 .directory-heading h1 { margin: 0 0 .75rem; font-size: clamp(1.65rem, 3vw, 2rem); color: var(--text-primary); line-height: 1.25; letter-spacing: -.025em; font-weight: 750; }
 .directory-heading > div > p:last-child { max-width: 720px; margin: 0; color: var(--text-secondary); line-height: 1.7; }
-.directory-tools { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1rem; }
-.public-search { max-width: none; background: var(--card-bg); }
-.available-filter { display: inline-flex; align-items: center; gap: .6rem; color: var(--text-secondary); font-size: .8rem; min-height: 44px; flex-shrink: 0; cursor: pointer; }
-.available-filter input { width: 17px; height: 17px; accent-color: #4f46e5; }
-.directory-count { display: flex; gap: .4rem; flex-wrap: wrap; margin: 0 0 1rem; font-size: .8rem; color: var(--text-secondary); }
-.directory-count strong { color: var(--text-primary); font-weight: 550; }
+.directory-tools { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
 .directory-list { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; overflow: hidden; }
 .directory-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 1.2rem; align-items: center; padding: 1.3rem; }
 .directory-row + .directory-row { border-top: 1px solid var(--card-border); }
@@ -88,8 +83,6 @@
 @media (max-width: 680px) {
   .atlas-directory { padding: 1.8rem 1rem; }
   .directory-heading { align-items: flex-start; gap: .75rem; }
-  .directory-tools { flex-wrap: wrap; gap: .5rem; }
-  .public-search { flex-basis: 100%; }
   .directory-row { grid-template-columns: 36px minmax(0, 1fr); gap: .7rem; padding: 1rem; }
   .category-icon { width: 36px; height: 40px; align-self: start; }
   .category-icon mat-icon { width: 22px; height: 22px; font-size: 22px; }
@@ -102,6 +95,8 @@
   .atlas-category-library .public-pagination { padding: 16px; }
 }
 @media (max-width: 560px) {
+  .directory-tools { flex-wrap: wrap; gap: .7rem; }
+  .public-search { flex-basis: 100%; max-width: none; }
   .atlas-library-row { padding: 1.2rem 1rem; grid-template-columns: minmax(0, 1fr); }
   .publication-copy { grid-column: 1; grid-row: 1; }
   .publication-date { grid-column: 1; grid-row: 2; text-align: left; padding-left: 49px; margin-top: -.3rem; font-size: .72rem; }

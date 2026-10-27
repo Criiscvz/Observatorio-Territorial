@@ -53,10 +53,7 @@
       <mat-icon aria-hidden="true">search</mat-icon>
       <input type="search" aria-label="Buscar categoría o tema de Atlas" placeholder="Buscar categoría o tema…" [value]="query()" (input)="search($any($event.target).value)">
     </label>
-    <label class="available-filter">
-      <input type="checkbox" [checked]="onlyAvailable()" (change)="filterAvailable($any($event.target).checked)">
-      Solo Atlas disponibles
-    </label>
+    <span class="result-count" aria-live="polite">{{ filtered().length }} {{ filtered().length === 1 ? 'categoría' : 'categorías' }}</span>
   </div>
 
   @if (loading()) {
@@ -68,7 +65,6 @@
       <button class="public-button" type="button" (click)="loadData()"><mat-icon>refresh</mat-icon>Reintentar</button>
     </div>
   } @else {
-    <p class="directory-count" role="status"><strong>{{ filtered().length }} {{ filtered().length === 1 ? 'categoría' : 'categorías' }}</strong><span>· {{ availableCount() }} Atlas {{ availableCount() === 1 ? 'disponible' : 'disponibles' }}</span></p>
     <div class="directory-list">
       @for (entry of visible(); track entry.id) {
         <article class="directory-row">
@@ -88,7 +84,7 @@
         <div class="directory-empty">
           <mat-icon>{{ entries().length ? 'search_off' : 'map' }}</mat-icon>
           <h2>{{ entries().length ? 'No encontramos categorías' : 'Aún no hay categorías públicas' }}</h2>
-          <p>{{ entries().length ? 'Prueba con otro tema o desactiva «Solo Atlas disponibles».' : 'Los Atlas estarán disponibles aquí cuando se publiquen.' }}</p>
+          <p>{{ entries().length ? 'Prueba con otro nombre o tema.' : 'Los Atlas estarán disponibles aquí cuando se publiquen.' }}</p>
         </div>
       }
     </div>

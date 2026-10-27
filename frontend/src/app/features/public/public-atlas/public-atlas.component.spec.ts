@@ -72,7 +72,7 @@ describe('Directorio público compacto de Atlas', () => {
     external.mockRestore();
   });
 
-  it('pagina sin exceder los límites y reinicia la página al buscar o filtrar', () => {
+  it('pagina sin exceder los límites y reinicia la página al buscar', () => {
     component.changePage(1); fixture.detectChanges();
     expect(rows()).toHaveLength(2);
     expect(element().textContent).toContain('6–7 de 7 categorías');
@@ -80,7 +80,7 @@ describe('Directorio público compacto de Atlas', () => {
     const input = element().querySelector('input[type=search]') as HTMLInputElement;
     input.value = 'ATENCION MEDICA'; input.dispatchEvent(new Event('input')); fixture.detectChanges();
     expect(component.currentPage()).toBe(0); expect(rows()).toHaveLength(1);
-    component.search(''); component.changePage(1); component.filterAvailable(true); fixture.detectChanges();
+    component.search(''); component.changePage(1); component.search('salud'); fixture.detectChanges();
     expect(component.currentPage()).toBe(0); expect(rows()).toHaveLength(1);
     component.changePage(-1); expect(component.currentPage()).toBe(0);
   });
@@ -114,7 +114,6 @@ describe('Directorio público compacto de Atlas', () => {
     expect(element().querySelector<HTMLButtonElement>('.atlas-library-row .view-atlas')!.disabled).toBe(true);
     component.openAtlas(publication(extra));
     expect(viewer.open).not.toHaveBeenCalled();
-    component.filterAvailable(true); expect(component.filtered()).toEqual([]);
   });
 
   it('refresca selecciones y categorías sin perder filtros ni abrir una selección obsoleta', () => {
@@ -134,7 +133,7 @@ describe('Directorio público compacto de Atlas', () => {
     expect(element().querySelector('[role=alert]')?.textContent).toContain('No se pudo cargar');
     publications.getPublicAtlas.mockReturnValue(of([publication()]));
     (element().querySelector('[role=alert] button') as HTMLButtonElement).click(); fixture.detectChanges();
-    expect(component.loadError()).toBe(false); expect(component.availableCount()).toBe(1);
+    expect(component.loadError()).toBe(false); expect(component.entries()[0].available).toBe(true);
   });
 
   it('evita cargas duplicadas y cancela la petición al salir', () => {

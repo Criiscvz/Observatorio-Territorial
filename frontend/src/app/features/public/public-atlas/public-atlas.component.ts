@@ -40,7 +40,6 @@ export class PublicAtlasComponent implements OnInit {
   readonly categorias = signal<AtlasCategoria[]>([]);
   readonly atlas = signal<ObservatorioPublicacion[]>([]);
   readonly query = signal('');
-  readonly onlyAvailable = signal(false);
   readonly page = signal(0);
   readonly selectedCategoryId = signal<string | null>(null);
   readonly libraryQuery = signal('');
@@ -57,10 +56,9 @@ export class PublicAtlasComponent implements OnInit {
   });
   readonly filtered = computed(() => {
     const query = this.normalize(this.query());
-    return this.entries().filter(entry => (!this.onlyAvailable() || entry.available) &&
+    return this.entries().filter(entry =>
       this.normalize([entry.nombre, entry.descripcion, ...entry.publications.flatMap(item => [item.titulo,item.fuente])].join(' ')).includes(query));
   });
-  readonly availableCount = computed(() => this.filtered().reduce((total, entry) => total + entry.publications.filter(item => this.canRead(item)).length, 0));
   readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize)));
   readonly currentPage = computed(() => Math.min(this.page(), this.pageCount() - 1));
   readonly visible = computed(() => this.filtered().slice(this.currentPage() * this.pageSize, (this.currentPage() + 1) * this.pageSize));
@@ -106,7 +104,6 @@ export class PublicAtlasComponent implements OnInit {
   }
 
   search(value: string): void { this.query.set(value); this.page.set(0); }
-  filterAvailable(value: boolean): void { this.onlyAvailable.set(value); this.page.set(0); }
   changePage(delta: number): void {
     this.page.set(Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1)));
   }
