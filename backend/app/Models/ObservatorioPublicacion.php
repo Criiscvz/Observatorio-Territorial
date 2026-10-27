@@ -39,17 +39,6 @@ class ObservatorioPublicacion extends Model
             ->orWhereHas('atlasCategoria', fn (Builder $category) => $category->where('publico', true)));
     }
 
-    public function scopeSelectedForAtlasPortal(Builder $query): Builder
-    {
-        return $query->where(function (Builder $q) {
-            // Preserve uncategorized legacy PDFs; new links require an explicit selection.
-            $q->where(fn (Builder $legacy) => $legacy->whereNull('atlas_categoria_id')->whereNull('link_url'))
-                ->orWhereHas('atlasCategoria', function (Builder $category) {
-                    $category->whereColumn('atlas_categorias.publicacion_destacada_id', 'observatorio_publicaciones.id');
-                });
-        });
-    }
-
     public function departamento(): BelongsTo
     {
         return $this->belongsTo(Departamento::class, 'departamento_id');

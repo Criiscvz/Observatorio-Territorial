@@ -40,7 +40,7 @@ class AtlasEnlaceTest extends TestCase
     private function payload(array $extra = []): array
     {
         return array_merge(['titulo' => 'Atlas territorial', 'link_url' => 'https://example.test/atlas',
-            'fecha_publicacion' => '2026-10-20', 'fuente' => 'ULEAM', 'descripcion' => 'Consulta territorial', 'mostrar_en_portal' => true], $extra);
+            'fecha_publicacion' => '2026-10-20', 'fuente' => 'ULEAM', 'descripcion' => 'Consulta territorial'], $extra);
     }
 
     private function create(AtlasCategoria $category, array $extra = []): string
@@ -49,39 +49,64 @@ class AtlasEnlaceTest extends TestCase
             ->assertCreated()->assertJsonPath('data.tipo', 'ATLAS')->assertJsonPath('data.departamento_id', null)->json('data.id');
     }
 
-    public function test_creation_persists_a_link_without_pdf_and_selection_survives_readback(): void
+    public function test_creation_persists_a_link_without_pdf_or_portal_selection(): void
     {
         $category = $this->category();
         $id = $this->create($category);
-        $this->assertSame($id, $category->fresh()->publicacion_destacada_id);
+        $this->assertNull($category->fresh()->publicacion_destacada_id);
         $row = ObservatorioPublicacion::findOrFail($id);
         $this->assertSame('https://example.test/atlas', $row->link_url);
         $this->assertNull($row->archivo_pdf);
         $this->getJson('/api/departamentos/publicaciones/atlas-global')->assertOk()->assertJsonFragment(['id' => $id]);
-        $this->getJson('/api/atlas/categorias')->assertOk()->assertJsonFragment(['publicacion_destacada_id' => $id]);
+        $this->getJson('/api/atlas/categorias')->assertOk()->assertJsonFragment(['id' => $category->id]);
         $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.link_url', $row->link_url);
     }
 
-    public function test_only_selected_link_is_public_and_previous_records_are_preserved(): void
+    public function test_all_published_links_are_public_regardless_of_legacy_selection(): void
     {
         $category = $this->category();
         $first = $this->create($category);
         $second = $this->create($category, ['titulo' => 'Segundo', 'mostrar_en_portal' => false]);
-        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $first);
-        $this->putJson("/api/atlas/categorias/{$category->id}/seleccion", ['publicacion_id' => $second])->assertOk();
-        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $second);
+        AtlasCategoria::whereKey($category->id)->update(['publicacion_destacada_id' => $first]);
+        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(2, 'data')->assertJsonFragment(['id' => $first])->assertJsonFragment(['id' => $second]);
         $this->assertDatabaseCount('observatorio_publicaciones', 2);
-        $this->assertSame($second, $category->fresh()->publicacion_destacada_id);
+        $this->assertSame($first, $category->fresh()->publicacion_destacada_id);
     }
 
-    public function test_selection_cannot_cross_categories_or_expose_private_categories(): void
+    public function test_category_filter_and_visibility_remain_enforced(): void
     {
         $first = $this->category(); $private = $this->category(false);
         $id = $this->create($private);
-        $this->putJson("/api/atlas/categorias/{$first->id}/seleccion", ['publicacion_id' => $id])->assertNotFound();
+        $this->getJson("/api/publico/atlas?categoria_id={$first->id}")->assertOk()->assertJsonCount(0, 'data');
         $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(0, 'data');
         $private->update(['publico' => true]);
         $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(1, 'data');
+    }
+
+    public function test_public_library_excludes_drafts_archived_suspended_and_private_categories_and_keeps_restricted_urls_hidden(): void
+    {
+        $category = $this->category();
+        $first = $this->create($category);
+        $second = $this->create($category, ['titulo' => 'Atlas adicional']);
+        foreach (['EN_REVISION', 'ARCHIVADO', 'SUSPENDIDO'] as $state) {
+            $id = $this->create($category, ['titulo' => $state]);
+            ObservatorioPublicacion::whereKey($id)->update(['estado' => $state]);
+        }
+        $restricted = $this->create($category);
+        ObservatorioPublicacion::whereKey($restricted)->update(['solo_suscriptores' => true]);
+        $this->create($this->category(false));
+        // A persisted selection from an earlier release must not hide sibling files.
+        AtlasCategoria::whereKey($category->id)->update(['publicacion_destacada_id' => $first]);
+        $this->app['auth']->forgetGuards();
+        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(3, 'data')
+            ->assertJsonFragment(['id' => $first])->assertJsonFragment(['id' => $second]);
+        $rows = $this->getJson('/api/publico/atlas')->assertOk()->json('data');
+        $locked = collect($rows)->firstWhere('id', $restricted);
+        $this->assertTrue($locked['bloqueado']);
+        $this->assertNull($locked['link_url']);
+        $this->assertNull($locked['download_url']);
+        $category->update(['publico' => false]);
+        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(0, 'data');
     }
 
     public function test_validation_rejects_unsafe_urls_blank_title_and_invalid_dates_without_creating_rows(): void
@@ -102,22 +127,22 @@ class AtlasEnlaceTest extends TestCase
         ObservatorioPublicacion::whereKey($id)->update(['archivo_pdf' => 'atlas/original.pdf']);
         $this->patchJson("/api/atlas/enlaces/{$id}", $this->payload(['atlas_categoria_id' => $target->id, 'titulo' => 'Editado']))->assertOk();
         $this->assertNull($category->fresh()->publicacion_destacada_id);
-        $this->assertSame($id, $target->fresh()->publicacion_destacada_id);
+        $this->assertNull($target->fresh()->publicacion_destacada_id);
+        $this->getJson("/api/publico/atlas?categoria_id={$target->id}")->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $id);
         $this->assertSame('atlas/original.pdf', ObservatorioPublicacion::find($id)->archivo_pdf);
         Storage::disk('local')->assertExists('atlas/original.pdf');
     }
 
-    public function test_unselecting_or_deleting_the_selected_link_does_not_publish_other_links(): void
+    public function test_deleting_one_link_keeps_the_other_published_links_visible(): void
     {
         $category = $this->category();
         $id = $this->create($category);
-        $this->create($category, ['mostrar_en_portal' => false]);
+        $second = $this->create($category, ['mostrar_en_portal' => false]);
         $this->patchJson("/api/atlas/enlaces/{$id}", $this->payload(['atlas_categoria_id' => $category->id, 'mostrar_en_portal' => false]))->assertOk();
-        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(0, 'data');
-        $this->putJson("/api/atlas/categorias/{$category->id}/seleccion", ['publicacion_id' => $id])->assertOk();
+        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(2, 'data');
         $this->deleteJson("/api/departamentos/publicaciones/{$id}")->assertOk();
         $this->assertNull($category->fresh()->publicacion_destacada_id);
-        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/publico/atlas')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $second);
     }
 
     public function test_permissions_and_deleted_category_are_enforced(): void
@@ -126,7 +151,6 @@ class AtlasEnlaceTest extends TestCase
         Sanctum::actingAs((new User())->forceFill(['id' => auth()->id(), 'rol' => 'EDITOR', 'is_active' => true]));
         $this->postJson("/api/atlas/categorias/{$category->id}/enlaces", $this->payload())->assertForbidden();
         $this->patchJson("/api/atlas/enlaces/{$id}", $this->payload(['atlas_categoria_id' => $category->id]))->assertForbidden();
-        $this->putJson("/api/atlas/categorias/{$category->id}/seleccion", ['publicacion_id' => $id])->assertForbidden();
         Sanctum::actingAs(User::factory()->create(['rol' => 'ADMIN']));
         $empty = $this->category(); $empty->delete();
         $this->postJson("/api/atlas/categorias/{$empty->id}/enlaces", $this->payload())->assertNotFound();

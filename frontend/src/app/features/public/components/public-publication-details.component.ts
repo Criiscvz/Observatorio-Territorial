@@ -13,15 +13,18 @@ import { PublicationViewerService, ReaderMode } from './publication-viewer.servi
   styleUrl: './public-publication-details.component.scss',
 })
 export class PublicPublicationDetailsComponent {
-  readonly data = inject<{item: PublicLibraryPublication; departmentName: string}>(MAT_DIALOG_DATA);
+  readonly data = inject<{item: PublicLibraryPublication; departmentName: string; context?: 'atlas'}>(MAT_DIALOG_DATA);
   private readonly viewer = inject(PublicationViewerService);
   readonly hasPdf = hasPublicPdf;
   readonly item = this.data.item;
-  readonly typeLabel = {ARTICULO: 'Artículo', REPORTE: 'Reporte Power BI', LIBRO: 'Libro PDF'}[this.item.type];
+  readonly typeLabel = this.data.context === 'atlas' ? 'Atlas' : {ARTICULO: 'Artículo', REPORTE: 'Reporte Power BI', LIBRO: 'Libro PDF'}[this.item.type];
 
   openPdf(): void {
     if (!this.hasPdf(this.item)) return;
     this.openViewer('pdf');
   }
-  openViewer(mode: ReaderMode): void { this.viewer.open(this.item, this.data.departmentName, mode); }
+  openViewer(mode: ReaderMode): void {
+    if (this.data.context) this.viewer.open(this.item, this.data.departmentName, mode, this.data.context);
+    else this.viewer.open(this.item, this.data.departmentName, mode);
+  }
 }

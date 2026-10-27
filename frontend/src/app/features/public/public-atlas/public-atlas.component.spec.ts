@@ -1,11 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PLATFORM_ID } from '@angular/core';
+import { ViewportScroller } from '@angular/common';
+import { MatDialog } from '@angular/material/dialog';
 import { of, Subject, throwError } from 'rxjs';
 import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
 import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { PublicationViewerService } from '../components/publication-viewer.service';
 import { PublicAtlasComponent } from './public-atlas.component';
+import { PublicPublicationDetailsComponent } from '../components/public-publication-details.component';
 
 describe('Directorio público compacto de Atlas', () => {
   const category: AtlasCategoria = {id: 'salud', nombre: 'Salud', descripcion: 'Descripción territorial', publico: true, icono: 'home', publicacion_destacada_id: 'selected'};
@@ -22,6 +25,7 @@ describe('Directorio público compacto de Atlas', () => {
   let categories: {list: ReturnType<typeof vi.fn>};
   let publications: {getPublicAtlas: ReturnType<typeof vi.fn>};
   let viewer: {open: ReturnType<typeof vi.fn>};
+  let dialog: {open: ReturnType<typeof vi.fn>};
   const element = () => fixture.nativeElement as HTMLElement;
   const rows = () => element().querySelectorAll('.directory-row');
 
@@ -29,10 +33,13 @@ describe('Directorio público compacto de Atlas', () => {
     categories = {list: vi.fn(() => of([category, ...Array.from({length: 6}, (_, n) => ({id: `empty-${n}`, nombre: `Categoría ${n}`, descripcion: null, publico: true}))]))};
     publications = {getPublicAtlas: vi.fn(() => of([publication()]))};
     viewer = {open: vi.fn()};
+    dialog = {open: vi.fn()};
     TestBed.configureTestingModule({providers: [
       {provide: AtlasCategoriaService, useValue: categories},
       {provide: PublicacionService, useValue: publications},
       {provide: PublicationViewerService, useValue: viewer},
+      {provide: MatDialog, useValue: dialog},
+      {provide: ViewportScroller, useValue: {scrollToPosition: vi.fn()}},
     ]});
     fixture = TestBed.createComponent(PublicAtlasComponent);
     component = fixture.componentInstance;
@@ -42,19 +49,21 @@ describe('Directorio público compacto de Atlas', () => {
   it('muestra cinco categorías por página, icono guardado y disponibilidad real con sus metadatos', () => {
     expect(categories.list).toHaveBeenCalledWith(true);
     expect(rows()).toHaveLength(5);
-    expect(rows()[0].textContent).toContain('Indicadores de atención médica');
-    expect(rows()[0].textContent).toContain('Atlas disponible');
-    expect(rows()[0].textContent).toContain('21/10/2026');
-    expect(rows()[0].textContent).toContain('Fuente: ULEAM');
+    expect(rows()[0].textContent).toContain('Descripción territorial');
+    expect(rows()[0].textContent).toContain('1 publicación');
     expect(rows()[0].querySelector('.category-icon')?.textContent).toContain('home');
-    expect((rows()[1].querySelector('.view-atlas') as HTMLButtonElement).disabled).toBe(true);
+    expect((rows()[1].querySelector('.explore-category') as HTMLButtonElement).disabled).toBe(false);
+    expect(rows()[0].querySelector('button')?.textContent).toContain('Explorar');
     expect(element().textContent).not.toContain('Ver PDF');
     expect(element().textContent).not.toContain('Importar');
   });
 
   it('Ver Atlas abre el visor integrado con contexto Atlas y no abre pestañas ni descarga PDF', () => {
     const external = vi.spyOn(window, 'open').mockImplementation(() => null);
-    (rows()[0].querySelector('.view-atlas') as HTMLButtonElement).click();
+    (rows()[0].querySelector('.explore-category') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(viewer.open).not.toHaveBeenCalled();
+    element().querySelector<HTMLButtonElement>('.atlas-library-row .view-atlas')!.click();
     expect(viewer.open).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
       id: 'selected', title: 'Indicadores de atención médica', reportUrl: 'https://app.powerbi.com/view?r=atlas-publico',
       locked: false, download_url: null, sharepoint_url: null,
@@ -84,31 +93,32 @@ describe('Directorio público compacto de Atlas', () => {
     expect(element().textContent).toContain('Aún no hay categorías públicas');
   });
 
-  it('usa solo el registro seleccionado en su categoría, preservando fuera de la vista enlaces anteriores y PDF antiguos', () => {
+  it('muestra todos los Atlas publicados de su categoría, independientemente de la selección anterior', () => {
     component.atlas.set([publication({id: 'previous', titulo: 'Anterior'}), publication(), publication({id: 'legacy', atlas_categoria: null, link_url: null, download_url: '/api/legacy.pdf'})]);
-    expect(component.entries()[0].publication?.id).toBe('selected');
+    expect(component.entries()[0].publications.map(item=>item.id)).toEqual(['previous','selected']);
     component.categorias.set([{...category, publicacion_destacada_id: 'previous'}, {id: 'other', nombre: 'Otra', descripcion: null, publicacion_destacada_id: 'selected'}]);
-    expect(component.entries()[0].publication?.id).toBe('previous');
+    expect(component.entries()[0].publications).toHaveLength(2);
     expect(component.entries()[1].available).toBe(false);
     component.categorias.set([{...category, publicacion_destacada_id: null}]);
-    expect(component.entries()[0].publication).toBeNull();
+    expect(component.entries()[0].publications).toHaveLength(2);
   });
 
   it.each([
     {link_url: 'javascript:alert(1)'}, {link_url: 'https://example.test/atlas'},
     {link_url: 'https://app.powerbi.com.evil.test/view?r=x'}, {link_url: null},
-    {bloqueado: true}, {solo_suscriptores: true},
+    {bloqueado: true}, {solo_suscriptores: true,bloqueado:true},
   ])('no integra enlaces incompatibles ni contenido restringido: %j', extra => {
     component.atlas.set([publication(extra)]); fixture.detectChanges();
     expect(component.entries()[0].available).toBe(false);
-    expect((rows()[0].querySelector('.view-atlas') as HTMLButtonElement).disabled).toBe(true);
-    component.openAtlas(component.entries()[0]);
+    component.openCategory(component.entries()[0]);fixture.detectChanges();
+    expect(element().querySelector<HTMLButtonElement>('.atlas-library-row .view-atlas')!.disabled).toBe(true);
+    component.openAtlas(publication(extra));
     expect(viewer.open).not.toHaveBeenCalled();
     component.filterAvailable(true); expect(component.filtered()).toEqual([]);
   });
 
   it('refresca selecciones y categorías sin perder filtros ni abrir una selección obsoleta', () => {
-    const old = component.entries()[0];
+    const old = component.entries()[0].publications[0];
     categories.list.mockReturnValue(of([{...category, publicacion_destacada_id: null}]));
     publications.getPublicAtlas.mockReturnValue(of([]));
     component.search('salud'); component.loadData(); component.openAtlas(old);
@@ -147,5 +157,54 @@ describe('Directorio público compacto de Atlas', () => {
     publications.getPublicAtlas.mockClear();
     const server = TestBed.createComponent(PublicAtlasComponent); server.detectChanges();
     expect(publications.getPublicAtlas).not.toHaveBeenCalled(); server.destroy();
+  });
+  it('pagina veinte archivos, busca y regresa al directorio sin perder su filtro',()=>{
+    component.atlas.set(Array.from({length:25},(_,i)=>publication({id:'atlas-'+i,titulo:'Atlas '+i,codigo:'ATL-'+i})));
+    component.search('salud');component.openCategory(component.entries()[0]);fixture.detectChanges();
+    expect(element().querySelectorAll('.atlas-library-row')).toHaveLength(20);
+    component.changeLibraryPage(1);fixture.detectChanges();expect(element().querySelectorAll('.atlas-library-row')).toHaveLength(5);
+    expect(element().textContent).toContain('21–25 de 25 publicaciones');
+    component.searchLibrary('ATL-24');fixture.detectChanges();expect(component.currentLibraryPage()).toBe(0);
+    expect(element().querySelectorAll('.atlas-library-row')).toHaveLength(1);
+    element().querySelector<HTMLButtonElement>('.atlas-library-back')!.click();fixture.detectChanges();
+    expect(component.query()).toBe('salud');expect(rows()).toHaveLength(1);
+  });
+  it('mantiene el visor de PDF y respeta el acceso resuelto por el servidor',()=>{
+    const pdf=publication({id:'pdf',solo_suscriptores:true,bloqueado:false,link_url:null,download_url:'/api/departamentos/publicaciones/pdf/download'});
+    component.atlas.set([pdf]);component.openCategory(component.entries()[0]);fixture.detectChanges();
+    element().querySelector<HTMLButtonElement>('.atlas-library-row .view-atlas')!.click();
+    expect(viewer.open).toHaveBeenCalledWith(expect.objectContaining({id:'pdf',download_url:pdf.download_url,locked:false}),'Salud','pdf','atlas');
+    component.atlas.set([publication({id:'draft',estado:'EN_REVISION'})]);expect(component.entries()[0].publications).toHaveLength(0);
+  });
+
+  it('presenta filas como Observatorios, con fecha, autor, recursos y detalles del Atlas actual', () => {
+    component.atlas.set([publication({autores: ['Ana López', 'Luis Vera']})]);
+    component.openCategory(component.entries()[0]); fixture.detectChanges();
+    expect(element().querySelector('.library-columns')?.textContent).toContain('Recursos disponibles');
+    expect(element().querySelectorAll('h1')).toHaveLength(1);
+    const row = element().querySelector('.atlas-library-row')!;
+    expect(row.querySelector('.publication-code')?.textContent).toContain('ATL-0010');
+    expect(row.querySelector('.publication-authors')?.textContent).toContain('Ana López, Luis Vera');
+    expect(row.querySelector('.publication-date')?.textContent).toContain('20/10/2026');
+    expect(row.querySelectorAll('.publication-resources .available')).toHaveLength(2);
+    (row.querySelector('.details-button') as HTMLButtonElement).click();
+    expect(dialog.open).toHaveBeenCalledExactlyOnceWith(PublicPublicationDetailsComponent, expect.objectContaining({
+      data: {item: expect.objectContaining({id:'selected', authors:'Ana López, Luis Vera', reportUrl:'https://app.powerbi.com/view?r=atlas-publico'}), departmentName:'Salud', context:'atlas'},
+    }));
+    expect(viewer.open).not.toHaveBeenCalled();
+    component.searchLibrary('ANA LOPEZ'); fixture.detectChanges();
+    expect(element().querySelectorAll('.atlas-library-row')).toHaveLength(1);
+  });
+
+  it('distingue recursos ausentes y evita abrir detalles restringidos u obsoletos', () => {
+    const old=publication({link_url:null,fuente:' '});
+    component.atlas.set([old]);component.openCategory(component.entries()[0]);fixture.detectChanges();
+    expect(element().querySelector('.publication-resources')?.textContent).toContain('Recurso no disponible');
+    expect(element().querySelector('.publication-resources')?.textContent).toContain('Sin fuente');
+    expect(element().querySelector('.publication-resources .available')).toBeNull();
+    const locked=publication({bloqueado:true});component.atlas.set([locked]);fixture.detectChanges();
+    expect(element().querySelector<HTMLButtonElement>('.details-button')!.disabled).toBe(true);
+    component.openDetails(locked);expect(dialog.open).not.toHaveBeenCalled();
+    component.atlas.set([]);component.openDetails(old);expect(dialog.open).not.toHaveBeenCalled();
   });
 });

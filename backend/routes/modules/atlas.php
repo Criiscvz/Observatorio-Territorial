@@ -11,6 +11,5 @@ Route::prefix('atlas/categorias')->middleware(['auth:sanctum', 'role:ADMIN'])->g
     Route::put('/{categoria}', [AtlasCategoriaController::class, 'update']);
     Route::delete('/{categoria}', [AtlasCategoriaController::class, 'destroy']);
     Route::post('/{categoria}/enlaces', [AtlasEnlaceController::class, 'store']);
-    Route::put('/{categoria}/seleccion', [AtlasEnlaceController::class, 'select']);
 });
 Route::patch('/atlas/enlaces/{publicacion}', [AtlasEnlaceController::class, 'update'])->middleware(['auth:sanctum', 'role:ADMIN']);

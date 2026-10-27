@@ -137,7 +137,6 @@ class PublicController extends Controller
             ->where('estado', 'PUBLICACION')
             ->whereNull('departamento_id')
             ->inPublicAtlasCategories()
-            ->selectedForAtlasPortal()
             ->latest('fecha_publicacion');
 
         return PublicacionResource::collection($query->get());

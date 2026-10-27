@@ -61,7 +61,6 @@ export class AtlasWorkspaceComponent implements OnInit {
   readonly visibleItems = computed(() => this.filteredItems().slice(this.currentPage()*20, (this.currentPage()+1)*20));
   readonly rangeStart = computed(() => this.total() ? this.currentPage()*this.pageSize()+1 : 0);
   readonly rangeEnd = computed(() => Math.min((this.currentPage()+1)*this.pageSize(),this.total()));
-  readonly selected = computed(() => this.categoryItems().find(p => p.id === this.category()?.publicacion_destacada_id));
   readonly icon = atlasCategoryPresentation;
   readonly availableIcons = ATLAS_CATEGORY_ICONS;
   readonly editorMode = signal<'category'|'link'>('link');
@@ -77,7 +76,7 @@ export class AtlasWorkspaceComponent implements OnInit {
     titulo:['',[Validators.required,Validators.pattern(/\S/),Validators.maxLength(255)]],
     atlas_categoria_id:['',Validators.required],fecha_publicacion:['',[Validators.required,Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
     link_url:['',[Validators.required,atlasHttpUrl,Validators.maxLength(2048)]],
-    fuente:['',Validators.maxLength(255)],descripcion:['',Validators.maxLength(3000)],mostrar_en_portal:[false],
+    fuente:['',Validators.maxLength(255)],descripcion:['',Validators.maxLength(3000)],
   });
   get form() { return this.editorMode() === 'category' ? this.categoryForm : this.linkForm; }
 
@@ -103,9 +102,6 @@ export class AtlasWorkspaceComponent implements OnInit {
   updateSearch(value:string) { this.search.set(value);this.page.set(0); }
   changePage(delta:number) { this.page.set(Math.max(0,Math.min(this.currentPage()+delta,this.pageCount()-1))); }
   count(category:AtlasCategoria) { return this.publications().filter(p=>p.atlas_categoria_id===category.id).length; }
-  selectedFor(category:AtlasCategoria) { return this.publications().some(p=>p.id===category.publicacion_destacada_id&&this.canSelect(p)); }
-  isSelected(item:ObservatorioPublicacion) { return this.categories().some(c=>c.id===item.atlas_categoria_id&&c.publicacion_destacada_id===item.id); }
-  canSelect(item:ObservatorioPublicacion) { return item.estado==='PUBLICACION'&&!item.solo_suscriptores&&!!(item.link_url||item.download_url||item.sharepoint_url); }
   safeUrl(value?:string|null):string|null { if(!value)return null;try { return ['http:','https:'].includes(new URL(value).protocol) ? value : null; }catch{return null;} }
   openAtlas(item:ObservatorioPublicacion) {
     const url=this.safeUrl(item.link_url);
@@ -122,8 +118,7 @@ export class AtlasWorkspaceComponent implements OnInit {
     this.editorMode.set('link');this.editingLink.set(item||null);
     const today=new Date(); const localDate=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
     this.linkForm.reset({titulo:item?.titulo||'',atlas_categoria_id:item?.atlas_categoria_id||this.category()?.id||'',
-      fecha_publicacion:item?.fecha_publicacion?.slice(0,10)||localDate,link_url:item?.link_url||'',fuente:item?.fuente||'',descripcion:item?.descripcion||'',
-      mostrar_en_portal:item?this.isSelected(item):!!this.category()&&!this.selected(),});this.openEditor();
+      fecha_publicacion:item?.fecha_publicacion?.slice(0,10)||localDate,link_url:item?.link_url||'',fuente:item?.fuente||'',descripcion:item?.descripcion||''});this.openEditor();
   }
   private openEditor() {
     if(this.editorRef)return;
@@ -146,16 +141,11 @@ export class AtlasWorkspaceComponent implements OnInit {
       error:error=>{this.saving.set(false);this.formError.set(this.message(error));},
     });
   }
-  select(item:ObservatorioPublicacion) {
-    if(!item.atlas_categoria_id||!this.canSelect(item)||this.busy())return;
-    const category=this.categories().find(c=>c.id===item.atlas_categoria_id)!;
-    this.confirm({title:'Mostrar Atlas en el portal',message:`«${item.titulo}» será el Atlas seleccionado de «${category.nombre}». El anterior se conservará en la biblioteca.${category.publico?'':' Se mostrará cuando la categoría sea pública.'}`,confirmText:'Mostrar en el portal',icon:'check_circle',confirmAction:()=>this.linkService.select(category.id,item.id).pipe(tap(response=>{this.categories.update(items=>items.map(c=>c.id===category.id?response.data:c));this.snackbar.open(response.message,'Cerrar',{duration:3500});}))});
-  }
   deleteCategory(item:AtlasCategoria) {
     this.confirm({title:'Eliminar categoría',message:`¿Eliminar «${item.nombre}»? Si tiene Atlas asociados, primero debes reasignarlos o eliminarlos.`,confirmText:'Eliminar categoría',confirmColor:'warn',icon:'delete_outline',confirmAction:()=>this.categoryService.delete(item.id).pipe(tap(()=>{if(this.categoryId()===item.id)this.router.navigate(['/admin/atlas']);this.load();}))});
   }
   deleteLink(item:ObservatorioPublicacion) {
-    this.confirm({title:'Eliminar Atlas',message:`¿Eliminar permanentemente «${item.titulo}»?${this.isSelected(item)?' La categoría quedará sin Atlas seleccionado.':''}${item.download_url?' También se eliminará el PDF almacenado en la plataforma.':''} El sitio externo no se eliminará.`,confirmText:'Eliminar Atlas',confirmColor:'warn',icon:'delete_outline',confirmAction:()=>this.publicationService.delete(item.id).pipe(tap(()=>this.load()))});
+    this.confirm({title:'Eliminar Atlas',message:`¿Eliminar permanentemente «${item.titulo}»?${item.download_url?' También se eliminará el PDF almacenado en la plataforma.':''} El sitio externo no se eliminará.`,confirmText:'Eliminar Atlas',confirmColor:'warn',icon:'delete_outline',confirmAction:()=>this.publicationService.delete(item.id).pipe(tap(()=>this.load()))});
   }
   private confirm(data:ConfirmDialogData) {
     if(this.busy()||this.saving())return;this.busy.set(true);
