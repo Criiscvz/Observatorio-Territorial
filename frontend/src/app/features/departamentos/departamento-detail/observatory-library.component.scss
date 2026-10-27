@@ -1,12 +1,12 @@
+@use '../../../shared/styles/selection-tabs' as tabs;
+
 :host { display:block; min-width:0; --library-accent:var(--primary-700); --library-success:#166534; --library-warning:#854d0e; }
 :host-context(.dark) { --library-accent:var(--primary-300); --library-success:#86efac; --library-warning:#fde68a; }
 .library { container-type:inline-size; background:var(--card-bg); border:1px solid var(--border-color); border-radius:14px; color:var(--text-primary); min-width:0; }
 .library-heading { padding:18px 20px 14px; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
 .library-heading h2 { font-size:1.1rem; font-weight:650; margin:0; }
 .library-heading>span,.library-total { color:var(--text-secondary); font-size:.8rem; }
-.library-tabs { display:flex; gap:8px; padding:0 16px; border-bottom:1px solid var(--border-color); }
-.library-tabs button { display:flex; align-items:center; gap:7px; padding:12px; color:var(--text-secondary); background:none; border:0; border-bottom:2px solid transparent; cursor:pointer; font:inherit; font-size:.85rem; }
-.library-tabs button[aria-selected=true] { color:var(--library-accent); border-bottom-color:var(--library-accent); font-weight:600; }
+.library-tabs { @include tabs.navigation('.tab-total'); padding:8px 16px; border-bottom:1px solid var(--border-color); }
 .tab-total { font-size:.75rem; padding:1px 6px; border-radius:5px; background:var(--bg-tertiary); }
 mat-icon { width:18px; height:18px; font-size:18px; flex-shrink:0; color:inherit; }
 .library-toolbar { display:flex; gap:16px; align-items:center; padding:16px 20px; }

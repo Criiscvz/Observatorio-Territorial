@@ -1,5 +1,5 @@
 <header class="workspace-header">
-  <div><span class="eyebrow">Crear contenido</span><h1>Nueva publicación</h1><p class="subtitle">Selecciona el tipo de contenido y el observatorio donde se publicará.</p></div>
+  <div><span class="eyebrow">Crear contenido</span><h1>Nueva publicación</h1><p class="subtitle">Selecciona el observatorio y el tipo de contenido que se publicará.</p></div>
   <a class="action" routerLink="/admin/dashboard"><mat-icon>arrow_back</mat-icon>Volver al inicio</a>
 </header>
 @if(error()) { <div class="feedback error" role="alert">No se pudieron cargar los observatorios. <button class="text-action" (click)="load()">Reintentar</button></div> }
@@ -7,10 +7,10 @@
   <form class="panel destination-form" [formGroup]="form" (ngSubmit)="openForm()">
     <div class="panel-heading"><h2>Destino de la publicación</h2><p>{{destination() ? 'Destino del formulario abierto' : 'Define dónde se guardará el contenido.'}}</p></div>
     <div class="destination-fields">
-      <label>Tipo de publicación<select formControlName="tipo"><option value="ARTICULO">Artículo</option><option value="LIBRO">Libro PDF</option><option value="REPORTE">Reporte Power BI</option></select></label>
       <label>Observatorio *<select formControlName="departamento" [attr.aria-invalid]="form.controls.departamento.touched && form.controls.departamento.invalid"><option value="">{{loading() ? 'Cargando observatorios…' : 'Selecciona un observatorio'}}</option>@for(item of observatories();track item.id) { <option [value]="item.id">{{item.nombre}}</option> }</select>
         @if(form.controls.departamento.touched && form.controls.departamento.invalid) { <small class="field-error" role="alert">Selecciona un observatorio válido.</small> }
       </label>
+      <label>Tipo de publicación<select formControlName="tipo"><option value="ARTICULO">Artículo</option><option value="LIBRO">Libro PDF</option><option value="REPORTE">Reporte Power BI</option></select></label>
       @if(!isAdmin()) { <p class="destination-hint"><mat-icon>verified_user</mat-icon>Solo puedes elegir tus observatorios asignados.</p> }
       @if(!loading() && !error() && !observatories().length) { <p class="subtitle full">@if(isAdmin()){Primero debes <a routerLink="/admin/departamentos/nuevo">crear un observatorio</a>.}@else{No tienes observatorios asignados. Solicita la asignación a un administrador.}</p> }
     </div>

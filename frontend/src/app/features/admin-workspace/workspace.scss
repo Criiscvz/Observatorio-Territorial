@@ -1,3 +1,5 @@
+@use '../../shared/styles/selection-tabs' as tabs;
+
 :host {display:block; color:var(--text-primary);}
 * {box-sizing:border-box;}
 h1,h2,h3,p {margin:0;}
@@ -60,9 +62,7 @@ mat-icon {flex-shrink:0; font-size:20px; width:20px; height:20px;}
 input,select {width:100%; min-width:0; padding:.75rem; border:1px solid var(--border-color); border-radius:10px; background:var(--bg-primary); color:var(--text-primary); font:inherit; font-size:.85rem;}
 label {display:flex; flex-direction:column; gap:.5rem; font-size:.85rem; font-weight:500;}
 label small {font-weight:400; color:var(--text-secondary); font-size:.75rem;}
-.tabs {display:flex; flex-wrap:wrap; gap:1.2rem; padding:0 1.25rem; border-bottom:1px solid var(--border-color);}
-.tabs button {background:none; color:var(--text-secondary); border:0; border-bottom:2px solid transparent; padding:.85rem 0; cursor:pointer; font:inherit; font-size:.85rem;}
-.tabs button.active {border-bottom-color:var(--primary-500); color:var(--primary-500);}
+.tabs {@include tabs.navigation; padding:.5rem 1.25rem; border-bottom:1px solid var(--border-color);}
 table {width:100%; border-collapse:collapse; table-layout:fixed;}
 th {text-align:left; font-weight:500; font-size:.75rem; color:var(--text-secondary); background:var(--bg-tertiary); padding:.75rem 1rem;}
 td {padding:1rem; border-bottom:1px solid var(--border-color); font-size:.85rem; overflow-wrap:anywhere;}

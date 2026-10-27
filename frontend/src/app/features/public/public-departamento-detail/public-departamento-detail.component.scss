@@ -1,4 +1,5 @@
 @use '../components/public-observatory-shared';
+@use '../../../shared/styles/selection-tabs' as tabs;
 .public-observatory { max-width: 1200px; margin: auto; padding: 2rem 2rem 2.5rem; }
 .back-button { margin-bottom: 1.5rem; }
 .observatory-heading { display: flex; align-items: flex-start; gap: 1.1rem; margin-bottom: 1.8rem; }
@@ -11,9 +12,7 @@
 .library-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.2rem 1.4rem .5rem; }
 .library-heading h2 { margin: 0; font-size: 1.1rem; color: var(--text-primary); font-weight: 700; }
 .library-heading>span { color: var(--text-secondary); font-size: .75rem; }
-.library-tabs { display: flex; gap: 1.5rem; padding: 0 1.4rem; border-bottom: 1px solid var(--card-border); }
-.library-tabs>button { display: inline-flex; align-items: center; gap: .5rem; padding: 1rem 0 .9rem; border: 0; border-bottom: 2px solid transparent; color: var(--text-secondary); background: transparent; font: inherit; font-size: .85rem; cursor: pointer; }
-.library-tabs>button[aria-selected=true] { border-bottom-color: var(--public-accent); color: var(--public-accent); font-weight: 700; }
+.library-tabs { @include tabs.navigation('> span'); padding: .5rem 1.4rem; border-bottom: 1px solid var(--card-border); }
 .library-tabs mat-icon { width: 18px; height: 18px; font-size: 18px; }
 .library-tabs>button>span { min-width: 22px; padding: .1rem .3rem; border-radius: 6px; background: var(--public-tint); color: var(--public-accent); font-size: .7rem; }
 .library-tools { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.4rem; }

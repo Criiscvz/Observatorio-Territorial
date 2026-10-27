@@ -1,3 +1,5 @@
+@use '../../../shared/styles/selection-tabs' as tabs;
+
 .publication-dialog { --dialog-accent:var(--publication-dialog-accent,var(--primary-700)); box-sizing:border-box; background:var(--card-bg); color:var(--text-primary); width:100%; height:100%; min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr); flex:none; overflow:hidden; border:1px solid var(--border-color); border-radius:16px; font-size:.875rem; }
 .publication-dialog.editor-open { grid-template-rows:auto auto auto minmax(0,1fr); }
 .publication-dialog * { box-sizing:border-box; }
@@ -11,9 +13,7 @@
 .dialog-back { display:inline-flex; align-items:center; gap:6px; background:none; border:0; color:var(--dialog-accent); padding:0; margin-bottom:10px; font:inherit; font-size:.8rem; cursor:pointer; }
 .editor-context { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding:12px 24px; color:var(--text-secondary); background:var(--bg-primary); font-size:.8rem; flex-shrink:0; }
 .editor-context strong { color:var(--text-primary); font-weight:600; }
-.editor-steps { display:flex; gap:22px; padding:16px 24px 0; border-bottom:1px solid var(--border-color); flex-shrink:0; }
-.editor-steps button { display:flex; align-items:center; gap:7px; border:0; border-bottom:2px solid transparent; color:var(--text-secondary); background:none; padding:0 0 12px; font:inherit; font-size:.8rem; cursor:pointer; }
-.editor-steps button[aria-current=step] { color:var(--dialog-accent); border-bottom-color:var(--dialog-accent); }
+.editor-steps { @include tabs.navigation('span'); padding:10px 24px; border-bottom:1px solid var(--border-color); flex-shrink:0; }
 .editor-steps button span { display:grid; place-items:center; width:22px; height:22px; border-radius:50%; background:var(--bg-tertiary); }
 .dialog-form { display:grid; grid-template-rows:auto minmax(0,1fr) auto; min-width:0; min-height:0; overflow:hidden; }
 .editor-scroll { min-height:0; overflow-y:scroll; overflow-x:hidden; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-width:auto; scrollbar-color:var(--text-secondary) var(--bg-primary); }

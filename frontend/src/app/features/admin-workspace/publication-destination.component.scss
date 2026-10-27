@@ -1,3 +1,5 @@
+@use '../../shared/styles/selection-tabs' as tabs;
+
 :host { display:block; min-width:0; color:var(--text-primary); container:publication-page / inline-size; }
 * { box-sizing:border-box; }
 [hidden] { display:none!important; }
@@ -42,9 +44,7 @@ small { color:var(--text-secondary);font-size:.72rem;font-weight:400; }
 .editor-heading { display:flex;justify-content:space-between;gap:1rem;padding:1.1rem 1.25rem;border-bottom:1px solid var(--border-color); }
 .editor-heading p { color:var(--text-secondary);font-size:.8rem;margin-top:.4rem;overflow-wrap:anywhere; }
 .icon-action { display:inline-flex;justify-content:center;align-items:center;flex-shrink:0;width:36px;height:36px;border:0;border-radius:10px;color:var(--text-secondary);background:var(--hover-bg);cursor:pointer; }
-.steps { display:flex;flex-wrap:wrap;gap:1rem;padding:1rem 1.25rem 0; }
-.steps button { display:flex;align-items:center;gap:.5rem;border:0;border-bottom:2px solid transparent;background:none;color:var(--text-secondary);padding:0 0 .6rem;font-size:.8rem;font-weight:500;font-family:inherit;cursor:pointer; }
-.steps button[aria-current=step] { color:var(--primary-500);border-bottom-color:var(--primary-500); }
+.steps { @include tabs.navigation('span'); padding:.75rem 1.25rem;border-bottom:1px solid var(--border-color); }
 .steps span { display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:var(--hover-bg); }
 fieldset { margin:0;padding:0;border:0;min-width:0; }
 .editor-fields { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;padding:1.1rem 1.25rem 1.25rem; }
@@ -82,7 +82,7 @@ fieldset { margin:0;padding:0;border:0;min-width:0; }
   .editor-open .form-footer .action { width:auto; }
   .editor-heading,.panel-heading,.editor-footer { padding:1rem; }
   .destination-import { padding:0 1rem 1rem; }
-  .steps { padding:1rem 1rem 0; }
+  .steps { padding:.75rem 1rem; }
   input,select,textarea { font-size:16px; }
   .editor-footer > div { width:100%; }
   .editor-footer .primary { flex:1; }

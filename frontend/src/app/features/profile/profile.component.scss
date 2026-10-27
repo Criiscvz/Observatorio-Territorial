@@ -1,3 +1,5 @@
+@use '../../shared/styles/selection-tabs' as tabs;
+
 :host { display: block; min-height: 100dvh; background: var(--bg-primary); color: var(--text-primary); --profile-accent: var(--primary-700); --profile-tint: var(--primary-50); }
 :host-context(.dark) { --profile-accent: #c7d2fe; --profile-tint: #293153; }
 [hidden] { display: none !important; }
@@ -48,9 +50,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--primary-400); o
 .editing-label { padding: 6px 10px; color: var(--profile-accent); border-radius: 8px; background: var(--profile-tint); }
 .photo-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; }
 .photo-remove { background: transparent; border: 0; padding: 6px; color: var(--text-secondary); text-decoration: underline; font: inherit; font-size: 12px; cursor: pointer; }
-.profile-tabs { display: flex; gap: 28px; padding-inline: 24px; border-bottom: 1px solid var(--border-color); }
-.profile-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 54px; padding: 12px 0; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--text-secondary); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.profile-tabs button[aria-selected='true'] { color: var(--profile-accent); border-bottom-color: var(--profile-accent); }
+.profile-tabs { @include tabs.navigation; padding: 8px 24px; border-bottom: 1px solid var(--border-color); }
 .profile-tabs mat-icon { width: 18px; height: 18px; font-size: 18px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 22px 24px 0; }
 .section-heading h2 { margin: 0; color: var(--text-primary); font-size: 16px; font-weight: 700; }

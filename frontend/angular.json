@@ -53,6 +53,7 @@
               "src/fonts.css",
               "src/material-theme.scss",
               "src/styles.css",
+              "src/selection-tabs.css",
               "src/publication-library.css"
             ],
             "server": "src/main.server.ts",
