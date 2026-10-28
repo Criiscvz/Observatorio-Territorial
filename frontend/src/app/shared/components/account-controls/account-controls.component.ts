@@ -7,6 +7,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { finalize } from 'rxjs';
 import { AuthService } from '@core/services/auth.service';
+import { userRoleLabel } from '@core/models/user/user-role.presentation';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/confirm-dialog.component';
 
 @Component({
@@ -24,7 +25,9 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../confirm-dialog/con
           </span>
           <span class="account-copy">
             <strong [matTooltip]="user.name">{{ user.name }}</strong>
-            <span>{{ roleKey() | translate }}</span>
+            @let translatedRole = roleKey() | translate;
+            @let visibleRole = translatedRole && translatedRole !== roleKey() ? translatedRole : fallbackRoleLabel();
+            <span class="account-role" [matTooltip]="visibleRole">{{ visibleRole }}</span>
           </span>
         </div>
         <a class="account-icon account-settings nav-account" routerLink="/perfil" routerLinkActive="is-active" ariaCurrentWhenActive="page"
@@ -47,6 +50,7 @@ export class AccountControlsComponent {
   private readonly destroyRef = inject(DestroyRef);
   readonly logoutPending = signal(false);
   readonly roleKey = computed(() => `public.header.roles.${this.auth.user()?.rol ?? 'USER'}`);
+  readonly fallbackRoleLabel = computed(() => userRoleLabel(this.auth.user()?.rol ?? 'USER'));
 
   requestLogout(): void {
     if (this.logoutPending() || !this.auth.isAuthenticated()) return;

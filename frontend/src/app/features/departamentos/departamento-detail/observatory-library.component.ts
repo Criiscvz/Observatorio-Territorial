@@ -2,7 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
+import { ObservatorioPublicacion, requiresReviewObservation } from '@core/models/publicacion/publicacion.interface';
 
 export type LibraryType = 'ARTICULO' | 'REPORTE' | 'LIBRO';
 
@@ -14,6 +14,7 @@ export type LibraryType = 'ARTICULO' | 'REPORTE' | 'LIBRO';
   styleUrl: './observatory-library.component.scss',
 })
 export class ObservatoryLibraryComponent {
+  readonly hasReviewObservation = (item: ObservatorioPublicacion) => requiresReviewObservation(item.estado);
   readonly publications = input<ObservatorioPublicacion[]>([]);
   readonly loading = input(false);
   readonly canEdit = input<(item: ObservatorioPublicacion) => boolean>(() => false);
@@ -36,7 +37,7 @@ export class ObservatoryLibraryComponent {
   readonly filtered = computed(() => {
     const query = this.normalize(this.query());
     return this.typeItems().filter(item => !query || this.normalize([
-      item.titulo, item.codigo, item.fuente, this.authors(item), item.creador?.name,
+      item.titulo, item.codigo, item.fuente, this.authors(item), item.creador?.name, item.observacion_revision, this.stateLabel(item),
     ].join(' ')).includes(query));
   });
   readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize)));
@@ -68,10 +69,10 @@ export class ObservatoryLibraryComponent {
     return (Array.isArray(item.autores) ? item.autores.join(', ') : item.autores) || 'No especificados';
   }
   stateLabel(item: ObservatorioPublicacion): string {
-    return {PUBLICACION: 'Publicado', EN_REVISION: 'En revisión', SUSPENDIDO: 'Suspendido', ARCHIVADO: 'Archivado'}[item.estado] || 'Sin estado';
+    return {PUBLICACION: 'Publicado', EN_REVISION: 'En revisión', SUSPENDIDO: 'Suspendido', ARCHIVADO: 'Archivado', RECHAZADO: 'Rechazado'}[item.estado] || 'Sin estado';
   }
   stateIcon(item: ObservatorioPublicacion): string {
-    return {PUBLICACION: 'check_circle', EN_REVISION: 'schedule', SUSPENDIDO: 'pause_circle', ARCHIVADO: 'archive'}[item.estado] || 'help_outline';
+    return {PUBLICACION: 'check_circle', EN_REVISION: 'schedule', SUSPENDIDO: 'pause_circle', ARCHIVADO: 'archive', RECHAZADO: 'cancel'}[item.estado] || 'help_outline';
   }
   private normalize(value: string): string { return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim(); }
 }

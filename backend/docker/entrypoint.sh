@@ -48,6 +48,9 @@ else
     # migration switch is off. Laravel records it once; later boots are a no-op.
     echo "Ensuring supervisor access schema is current"
     php artisan migrate --force --path=database/migrations/2026_10_27_000001_add_observatory_administrator.php
+    # Publication responses and review forms read these additive columns.
+    # Ensure they exist before the new code starts accepting requests.
+    php artisan migrate --force --path=database/migrations/2026_10_28_000001_add_review_observation_to_publications.php
 fi
 
 php artisan route:cache

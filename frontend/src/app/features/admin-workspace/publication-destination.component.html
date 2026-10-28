@@ -31,7 +31,16 @@
   </form>
   @if(destination(); as target) {
     <section class="panel editor" id="publication-editor" #editor aria-labelledby="editor-title">
-      <header class="editor-heading"><div><span class="eyebrow">{{savedPublication() ? 'Guardado' : 'Completar publicación'}}</span><h2 id="editor-title">{{destinationLabel}}</h2><p>{{target.departamento.nombre}}</p></div><button class="icon-action" type="button" (click)="requestClose()" [disabled]="saving() || importing()" aria-label="Cerrar formulario"><mat-icon>close</mat-icon></button></header>
+      <header class="editor-heading">
+        <div class="editor-destination">
+          <span class="destination-confirmed"><mat-icon aria-hidden="true">check_circle_outline</mat-icon>{{savedPublication() ? 'Publicación guardada en este observatorio' : 'Publicarás en este observatorio'}}</span>
+          <div class="destination-identity">
+            <span class="destination-symbol"><mat-icon aria-hidden="true">account_balance</mat-icon></span>
+            <div class="destination-copy"><h2 id="editor-title">{{target.departamento.nombre}}</h2><p class="destination-type"><mat-icon aria-hidden="true">{{isReport ? 'bar_chart' : target.tipo === 'LIBRO' ? 'menu_book' : 'article'}}</mat-icon>{{destinationLabel}}</p></div>
+          </div>
+        </div>
+        <button class="icon-action" type="button" (click)="requestClose()" [disabled]="saving() || importing()" aria-label="Cerrar formulario"><mat-icon>close</mat-icon></button>
+      </header>
       @if(confirmClose()) { <div class="discard-confirmation" role="alert"><strong>¿Descartar los cambios sin guardar?</strong><p>Los datos del formulario se perderán.</p><div><button type="button" class="action" (click)="confirmClose.set(false)">Seguir editando</button><button type="button" class="action" (click)="closeForm()">Descartar y cerrar</button></div></div> }
       @if(savedPublication(); as saved) {
         <div class="success" role="status" aria-live="polite"><mat-icon>task_alt</mat-icon><h3>{{canChooseStatus() ? 'Publicación guardada correctamente' : 'Publicación enviada a revisión'}}</h3><strong>{{saved.titulo}}</strong><p>Código: {{saved.codigo}}</p><p>El contenido está guardado en {{target.departamento.nombre}}.</p><div class="success-actions"><a class="action" [routerLink]="['/admin/departamentos',target.departamento.id]">Ver en el observatorio<mat-icon>arrow_outward</mat-icon></a><button class="action primary" type="button" (click)="createAnother()"><mat-icon>add</mat-icon>Crear otra publicación</button></div></div>
@@ -58,8 +67,8 @@
                 <p class="field-error" id="pdf-error" role="alert">{{fileError() || fieldErrors()['archivo']}}</p>
               </div>
               @if(canChooseStatus()) {
-              <label class="full">Estado *<select name="estado" formControlName="estado" [attr.aria-invalid]="!!fieldError('estado')" aria-describedby="state-error"><option value="PUBLICACION">Publicación</option><option value="EN_REVISION">En revisión</option><option value="SUSPENDIDO">Suspendido</option><option value="ARCHIVADO">Archivado</option></select><small id="state-error" class="field-error">{{fieldError('estado')}}</small></label>
-              <div class="full"><label class="checkbox"><input type="checkbox" formControlName="solo_suscriptores">Solo para suscriptores</label><p class="access-hint">El administrador conserva el acceso. La privacidad del observatorio también se respeta.</p><p class="field-error">{{fieldError('solo_suscriptores')}}</p></div>
+              <label class="full">Estado *<select name="estado" formControlName="estado" [attr.aria-invalid]="!!fieldError('estado')" aria-describedby="state-error"><option value="PUBLICACION">Publicación</option><option value="EN_REVISION">En revisión</option><option value="SUSPENDIDO">Suspendido</option><option value="ARCHIVADO">Archivado</option><option value="RECHAZADO">Rechazado</option></select><small id="state-error" class="field-error">{{fieldError('estado')}}</small></label>
+              @if(needsReviewObservation){<label class="full">Motivo de la decisión *<textarea name="observacion_revision" formControlName="observacion_revision" rows="3" maxlength="2000" placeholder="Explica al editor el motivo de esta decisión." [attr.aria-invalid]="!!fieldError('observacion_revision')"></textarea><small>Visible en la biblioteca del editor. Máximo 2000 caracteres.</small><small class="field-error" role="alert">{{fieldError('observacion_revision')}}</small>@if(publicationForm.controls.estado.value === 'RECHAZADO') {<small>El editor solo podrá consultar esta publicación; no podrá editarla ni eliminarla.</small>}</label>}<div class="full"><label class="checkbox"><input type="checkbox" formControlName="solo_suscriptores">Solo para suscriptores</label><p class="access-hint">El administrador conserva el acceso. La privacidad del observatorio también se respeta.</p><p class="field-error">{{fieldError('solo_suscriptores')}}</p></div>
               } @else {
                 <div class="full feedback" role="note"><strong>Se enviará a revisión</strong><p>El administrador revisará tu publicación antes de publicarla.</p></div>
               }

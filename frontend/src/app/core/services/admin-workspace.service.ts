@@ -9,6 +9,8 @@ export interface WorkspacePublication {
     titulo: string;
     tipo: string;
     estado: string;
+    observacion_revision?: string | null;
+    fecha_revision?: string | null;
     codigo: string;
     fecha_publicacion: string;
 }

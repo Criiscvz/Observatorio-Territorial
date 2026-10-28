@@ -38,7 +38,7 @@ class ObservatorioPublicacionController extends Controller
     {
         $filters = $request->validate([
             'tipo' => ['nullable', 'in:ARTICULO,REPORTE,LIBRO,ATLAS'],
-            'estado' => ['nullable', 'in:PUBLICACION,EN_REVISION,SUSPENDIDO,ARCHIVADO'],
+            'estado' => ['nullable', 'in:'.implode(',', ObservatorioPublicacion::ESTADOS)],
         ]);
 
         return $this->list($request, $departamento, $filters['tipo'] ?? null, $filters['estado'] ?? null);
@@ -146,6 +146,7 @@ class ObservatorioPublicacionController extends Controller
                     'creado_por' => $request->user()->id,
                     'tipo' => $data['tipo'],
                     'estado' => $estado,
+                    ...$this->reviewObservation($data, $estado),
                     'solo_suscriptores' => $request->user()->canReviewObservatory($departamento->id) && $request->boolean('solo_suscriptores'),
                     'codigo' => $this->codePrefix($data['tipo']).str_pad((string) $number, 4, '0', STR_PAD_LEFT),
                     ...array_intersect_key($data, ['atlas_categoria_id' => true]),
@@ -318,6 +319,7 @@ class ObservatorioPublicacionController extends Controller
         );
         $data = $request->validated();
         $isAdmin = $request->user()->canReviewObservatory($publicacion->departamento_id);
+        $this->ensureNotRejectedForEditor($request, $publicacion);
         $newFile = $request->file('archivo');
         $oldPath = $publicacion->archivo_pdf;
         $newPath = null;
@@ -330,10 +332,14 @@ class ObservatorioPublicacionController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, $isAdmin) {
+            DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, $isAdmin, &$oldPath) {
+                $publicacion = ObservatorioPublicacion::whereKey($publicacion->id)->lockForUpdate()->firstOrFail();
+                $this->ensureNotRejectedForEditor($request, $publicacion);
+                $oldPath = $publicacion->archivo_pdf;
                 $this->lockAtlasCategory($data);
                 $publicacion->update([
                     'estado' => $isAdmin ? $data['estado'] : $publicacion->estado,
+                    ...($isAdmin ? $this->reviewObservation($data, $data['estado'], $publicacion) : []),
                     'solo_suscriptores' => $isAdmin ? $request->boolean('solo_suscriptores') : $publicacion->solo_suscriptores,
                     ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
@@ -415,6 +421,21 @@ class ObservatorioPublicacionController extends Controller
         return $path;
     }
 
+    private function ensureNotRejectedForEditor(Request $request, ObservatorioPublicacion $publicacion): void
+    {
+        abort_if($request->user()->rol === 'EDITOR' && $publicacion->estado === 'RECHAZADO', 403,
+            'Esta publicación fue rechazada. Solo puedes consultarla en la biblioteca.');
+    }
+
+    private function reviewObservation(array $data, string $estado, ?ObservatorioPublicacion $publication = null): array
+    {
+        $reason = in_array($estado, ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true)
+            ? trim($data['observacion_revision'] ?? '') : '';
+        $sameDecision = $publication && $publication->estado === $estado && $publication->observacion_revision === $reason;
+        return ['observacion_revision' => $reason !== '' ? $reason : null,
+            'fecha_revision' => $reason !== '' ? ($sameDecision ? ($publication->fecha_revision ?? now()) : now()) : null];
+    }
+
     private function copySharePointPdf(array $file, ?Departamento $departamento): string
     {
         if ((int) ($file['size'] ?? 0) > 20 * 1024 * 1024) throw new RuntimeException('El PDF supera el máximo de 20 MB.');
@@ -444,15 +465,17 @@ class ObservatorioPublicacionController extends Controller
         }
 
         $user = $request->user();
+        $this->ensureNotRejectedForEditor($request, $publicacion);
         abort_unless(
             $user->canReviewObservatory($publicacion->departamento_id) || ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id),
             403,
             'No tienes permiso para eliminar esta publicación.'
         );
 
-        $filePath = $publicacion->archivo_pdf;
-
-        DB::transaction(function () use ($publicacion, $filePath) {
+        DB::transaction(function () use ($request, $publicacion) {
+            $publicacion = ObservatorioPublicacion::whereKey($publicacion->id)->lockForUpdate()->firstOrFail();
+            $this->ensureNotRejectedForEditor($request, $publicacion);
+            $filePath = $publicacion->archivo_pdf;
             if ($filePath) {
                 $disk = Storage::disk(config('filesystems.default'));
                 abort_if($disk->exists($filePath) && ! $disk->delete($filePath), 503,

@@ -14,6 +14,21 @@ describe('Biblioteca compacta por pestañas', () => {
     fixture.componentRef.setInput('publications', items); fixture.detectChanges();
     return {fixture, component: fixture.componentInstance, element: fixture.nativeElement as HTMLElement};
   }
+  it.each(['SUSPENDIDO','ARCHIVADO','RECHAZADO'] as const)('muestra el estado %s y su motivo completo sin perder acceso al visor',estado=>{
+    const reason='Completar las referencias.\n<script>no ejecutar</script> '+ 'Explicación. '.repeat(80);
+    const item=article(1,{estado,observacion_revision:reason,fecha_revision:'2026-10-28T10:00:00Z'});
+    const {component,fixture,element}=setup([item]);
+    expect(element.querySelector('.review-note-preview')?.textContent).toContain('Completar las referencias.');
+    expect(element.querySelector('.state')?.textContent).toContain(component.stateLabel(item));
+    expect(element.querySelector('[aria-label^="Editar "]')).toBeNull();
+    expect(element.querySelector('[aria-label^="Eliminar "]')).toBeNull();
+    component.toggle(item);fixture.detectChanges();
+    expect(element.querySelector('.review-observation dd')?.textContent).toBe(reason);
+    expect(element.querySelector('.review-observation script')).toBeNull();
+    expect(element.querySelector<HTMLButtonElement>('.resource-actions button')!.disabled).toBe(false);
+    if(estado==='RECHAZADO')expect(element.textContent).toContain('Solo consulta');
+    component.search('referencias');expect(component.filtered()).toHaveLength(1);
+  });
   it('pagina las publicaciones reales de 20 en 20 sin perder filas y mantiene los detalles cerrados', () => {
     const {component, fixture, element} = setup(Array.from({length:47}, (_,i) => article(i)));
     expect(element.querySelectorAll('.library-row')).toHaveLength(20);

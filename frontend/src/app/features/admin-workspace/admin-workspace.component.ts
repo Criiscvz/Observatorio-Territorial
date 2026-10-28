@@ -5,14 +5,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, of, Subject, switchMap, debounceTime } from 'rxjs';
 import { AuthService } from '@core/services/auth.service';
-import { AdminWorkspaceService, WorkspacePage, WorkspaceSummary } from '@core/services/admin-workspace.service';
+import { AdminWorkspaceService, WorkspacePage, WorkspaceSummary, WorkspacePublication } from '@core/services/admin-workspace.service';
 import { SiteSettingsService } from '@core/services/site-settings.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { Departamento } from '@core/models';
 import { DashboardComponent } from '../dashboard/dashboard.component';
 export const PUBLICATION_LABELS: Record<string, string> = { ARTICULO: 'Artículo', REPORTE: 'Reporte Power BI', LIBRO: 'Libro PDF' };
 export const PUBLICATION_ICONS: Record<string, string> = { ARTICULO: 'article', REPORTE: 'bar_chart', LIBRO: 'menu_book' };
-export const STATUS_LABELS: Record<string, string> = { EN_REVISION: 'En revisión', PUBLICACION: 'Publicado', SUSPENDIDO: 'Suspendido', ARCHIVADO: 'Archivado' };
+export const STATUS_LABELS: Record<string, string> = { EN_REVISION: 'En revisión', PUBLICACION: 'Publicado', SUSPENDIDO: 'Suspendido', ARCHIVADO: 'Archivado', RECHAZADO: 'Rechazado' };
 @Component({ selector: 'app-admin-home', standalone: true, imports: [RouterLink, MatIconModule], templateUrl: './admin-home.component.html', styleUrl: './workspace.scss' })
 export class AdminHomeComponent implements OnInit {
     readonly auth = inject(AuthService);
@@ -51,7 +51,11 @@ export class WorkspacePublicationsComponent implements OnInit {
     readonly page = signal(1);
     readonly types = PUBLICATION_LABELS;
     readonly statuses = STATUS_LABELS;
-    readonly tabs = [{ value: '', label: 'Todas' }, { value: 'EN_REVISION', label: 'En revisión' }, { value: 'PUBLICACION', label: 'Publicadas' }, { value: 'ARCHIVADO', label: 'Archivadas' }];
+    readonly tabs = [{ value: '', label: 'Todas' }, { value: 'EN_REVISION', label: 'En revisión' }, { value: 'PUBLICACION', label: 'Publicadas' }, { value: 'SUSPENDIDO', label: 'Suspendidas' }, { value: 'ARCHIVADO', label: 'Archivadas' }, { value: 'RECHAZADO', label: 'Rechazadas' }];
+    canEditItem(item: WorkspacePublication): boolean {
+        return !(this.isEditor() && item.estado === 'RECHAZADO')
+            && (!this.auth.isObservatoryAdmin() || this.auth.canReviewObservatory(item.departamento_id));
+    }
     ngOnInit() {
         this.requests.pipe(switchMap(() => { this.loading.set(true); this.error.set(false); return this.service.publications({ ...this.form.getRawValue(), estado: this.status(), page: this.page() }, this.isEditor()).pipe(catchError(() => { this.error.set(true); return of(null); })); }), takeUntilDestroyed(this.destroyRef)).subscribe(value => { this.items.set(value); this.loading.set(false); });
         this.form.valueChanges.pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef)).subscribe(() => { this.page.set(1); this.load(); });

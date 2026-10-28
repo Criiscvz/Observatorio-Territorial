@@ -21,7 +21,7 @@ describe('Ventana central de revisión y edición', () => {
     estado:'EN_REVISION', solo_suscriptores:false, descripcion:'Descripción actual', fuente:'ULEAM', autores:['Ana Pérez'],
     link_url:'https://app.powerbi.com/view?r=ejemplo', download_url:'/api/publicaciones/'+id+'/download', nombre_archivo_original:'diabetes.pdf', created_at:'',updated_at:'',...extra,
   });
-  async function setup(admin=true) {
+  async function setup(admin=true, supervisor=false) {
     let items=[publication(),publication('art-2',{tipo:'ARTICULO',codigo:'ART-0002',titulo:'Atención primaria'})];
     const service={
       getAll:vi.fn(()=>of(items)),getInReview:vi.fn(()=>of(items.filter(x=>x.estado==='EN_REVISION'))),
@@ -39,7 +39,7 @@ describe('Ventana central de revisión y edición', () => {
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Observatorio de la Salud',publico:true,datasets:[]})}},
       {provide:DatasetService,useValue:{}},{provide:PublicacionService,useValue:service},
       {provide:PdfEngineService,useValue:engine},
-      {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>!admin,canReviewObservatory:()=>admin,user:()=>({id:1}),hasRoleInDepartamento:()=>true}},
+      {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>!admin && !supervisor,canReviewObservatory:()=>admin || supervisor,user:()=>({id:1}),hasRoleInDepartamento:()=>true}},
       {provide:MatSnackBar,useValue:{open:vi.fn()}},
     ]});
     const fixture=TestBed.createComponent(DepartamentoDetailComponent);fixture.detectChanges();await fixture.whenStable();
@@ -210,5 +210,34 @@ describe('Ventana central de revisión y edición', () => {
     component.changeReviewStatus(publication(),'PUBLICACION');expect(service.update).not.toHaveBeenCalled();
   });
 
+  it.each(['SUSPENDIDO','ARCHIVADO','RECHAZADO'] as const)('exige y envía observación para %s sin ocultar el campo en el segundo paso', async estado => {
+    const {component,service,overlay,edit,click,change,refresh}=await setup();
+    await edit();await click('.dialog-footer button[type=submit]');
+    component.publicationForm.controls.estado.setValue(estado);await refresh();
+    expect(overlay().querySelector('[name=observacion_revision]')).toBeTruthy();
+    await click('.dialog-footer button[type=submit]');
+    expect(component.editorStep()).toBe(2);expect(service.update).not.toHaveBeenCalled();
+    expect(overlay().textContent).toContain('Este campo es obligatorio.');
+    await change('observacion_revision','Completa las referencias y la metodología.');
+    await click('.dialog-footer button[type=submit]');
+    const payload=service.update.mock.calls[0][1];
+    expect(payload.get('estado')).toBe(estado);
+    expect(payload.get('observacion_revision')).toBe('Completa las referencias y la metodología.');
+  });
+  it.each(['SUSPENDIDO','ARCHIVADO','RECHAZADO'] as const)('la acción rápida %s abre el formulario y pide motivo antes de guardar',async estado=>{
+    const {component,service,review,refresh,overlay}=await setup(false,true);
+    await review();component.changeReviewStatus(component.selectedReview()!,estado);await refresh();
+    expect(component.editorStep()).toBe(2);expect(service.update).not.toHaveBeenCalled();
+    expect(overlay().querySelector('[name=observacion_revision]')).toBeTruthy();
+    expect(component.publicationForm.controls.estado.value).toBe(estado);
+  });
+  it('el editor no puede abrir edición ni guardar o eliminar una publicación rechazada',async()=>{
+    const {component,service,refresh,overlay}=await setup(false);
+    const rejected=publication('rejected',{estado:'RECHAZADO',observacion_revision:'No cumple los requisitos.'});
+    expect(component.canEditPublication(rejected)).toBe(false);expect(component.canDeletePublication(rejected)).toBe(false);
+    component.editPublication(rejected);await refresh();expect(overlay()).toBeNull();
+    component.editingPublication.set(rejected);component.savePublication();expect(service.update).not.toHaveBeenCalled();
+    expect(component.canEditPublication(publication('suspended',{estado:'SUSPENDIDO'}))).toBe(true);
+  });
   afterEach(()=>{TestBed.inject(MatDialog).closeAll();});
 });

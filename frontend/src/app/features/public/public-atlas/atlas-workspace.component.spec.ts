@@ -8,6 +8,7 @@ import { AtlasEnlaceService } from '@core/services/atlas-enlace.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { AtlasWorkspaceComponent, atlasHttpUrl } from './atlas-workspace.component';
 import { FormControl } from '@angular/forms';
+import { PublicationViewerService } from '../components/publication-viewer.service';
 
 describe('Gestión de Atlas por categorías',()=>{
   const categories=Array.from({length:12},(_,i)=>({id:`c${i+1}`,nombre:`Categoría ${i+1}`,descripcion:'Información territorial',publico:i!==1,publicacion_destacada_id:i===0?'p1':null}));
@@ -16,9 +17,11 @@ describe('Gestión de Atlas por categorías',()=>{
     const links={save:vi.fn((_data?:unknown,_id?:string)=>of({...publications[0]}))};
     const categoryService={list:vi.fn(()=>of(categories)),save:vi.fn(()=>of({data:categories[0],message:'Guardada'})),delete:vi.fn(()=>of({message:'Eliminada'}))};
     const pubService={getGlobalAtlas:vi.fn(()=>of(items)),openPdf:vi.fn(()=>of(true)),delete:vi.fn(()=>of({message:'Eliminado'}))};
-    TestBed.configureTestingModule({providers:[provideRouter([]),{provide:ActivatedRoute,useValue:{paramMap:of(convertToParamMap(category?{categoria:category}:{})),queryParamMap:of(convertToParamMap({})),snapshot:{queryParamMap:convertToParamMap({}),url:[]}}},{provide:AtlasCategoriaService,useValue:categoryService},{provide:AtlasEnlaceService,useValue:links},{provide:PublicacionService,useValue:pubService},{provide:MatSnackBar,useValue:{open:vi.fn()}}]});
+    const viewer={open:vi.fn()};const snackbar={open:vi.fn()};
+    TestBed.configureTestingModule({providers:[provideRouter([]),{provide:ActivatedRoute,useValue:{paramMap:of(convertToParamMap(category?{categoria:category}:{})),queryParamMap:of(convertToParamMap({})),snapshot:{queryParamMap:convertToParamMap({}),url:[]}}},{provide:AtlasCategoriaService,useValue:categoryService},{provide:AtlasEnlaceService,useValue:links},{provide:PublicacionService,useValue:pubService},{provide:MatSnackBar,useValue:snackbar},{provide:PublicationViewerService,useValue:viewer}]});
+    TestBed.overrideComponent(AtlasWorkspaceComponent,{add:{providers:[{provide:MatSnackBar,useValue:snackbar}]}});
     const fixture=TestBed.createComponent(AtlasWorkspaceComponent);fixture.detectChanges();
-    return {fixture,component:fixture.componentInstance,links,categoryService,pubService,overlay:TestBed.inject(OverlayContainer).getContainerElement()};
+    return {fixture,component:fixture.componentInstance,links,categoryService,pubService,viewer,snackbar,overlay:TestBed.inject(OverlayContainer).getContainerElement()};
   }
   it('pagina categorías de diez en diez y mantiene gestionar, editar, eliminar y visibilidad',()=>{
     const {fixture,component}=setup();
@@ -65,10 +68,30 @@ describe('Gestión de Atlas por categorías',()=>{
     expect(overlay.querySelector('mat-dialog-content .atlas-editor-footer')).toBeNull();expect(overlay.querySelector('.atlas-editor-footer')).not.toBeNull();
     component.linkForm.markAsDirty();component.closeEditor();fixture.detectChanges();expect(overlay.textContent).toContain('Hay cambios sin guardar');
   });
-  it('abre los enlaces seguros y mantiene el acceso a los PDF conservados',()=>{
-    const {component,pubService}=setup('c1');const open=vi.spyOn(window,'open').mockImplementation(()=>null);
-    component.openAtlas(publications[0] as any);expect(open).toHaveBeenCalledWith(publications[0].link_url,'_blank','noopener,noreferrer');
-    component.openAtlas({...publications[0],link_url:null,download_url:'/api/pdf'} as any);expect(pubService.openPdf).toHaveBeenCalled();
-    expect(atlasHttpUrl(new FormControl('ftp://example.test'))).toEqual({httpUrl:true});open.mockRestore();
+  it('Ver Atlas abre el visor superpuesto de Power BI con su categoría y ficha, sin abrir otra pestaña',()=>{
+    const item={...publications[0],link_url:'https://app.powerbi.com/view?r=atlas-prueba',descripcion:'Indicadores de ambiente',autores:['Ana','Luis']};
+    const {fixture,viewer,pubService}=setup('c1',[item]);const open=vi.spyOn(window,'open').mockImplementation(()=>null);
+    fixture.nativeElement.querySelector('button[aria-label="Ver Atlas Atlas 1"]').click();
+    expect(viewer.open).toHaveBeenCalledWith(expect.objectContaining({id:'p1',title:'Atlas 1',code:'ATL-1',reportUrl:item.link_url,description:item.descripcion,authors:'Ana, Luis',source:'ULEAM',locked:false}),'Categoría 1','report','atlas');
+    expect(open).not.toHaveBeenCalled();expect(pubService.openPdf).not.toHaveBeenCalled();open.mockRestore();
+  });
+  it('abre PDF conservados en el mismo visor sin perder el contexto de gestión',()=>{
+    const item={...publications[0],link_url:null,download_url:'/api/departamentos/publicaciones/p1/download?context=management'};
+    const {component,viewer,pubService}=setup('c1',[item]);component.openAtlas(item as any);
+    expect(viewer.open).toHaveBeenCalledWith(expect.objectContaining({download_url:item.download_url,reportUrl:null}),'Categoría 1','pdf','atlas');
+    expect(pubService.openPdf).not.toHaveBeenCalled();
+  });
+  it.each(['javascript:alert(1)','https://app.powerbi.com.evil.test/view?r=x','https://example.test/atlas'])('avisa cuando el enlace no se puede visualizar: %s',link_url=>{
+    const item={...publications[0],link_url};const {component,viewer,snackbar}=setup('c1',[item]);component.openAtlas(item as any);
+    expect(viewer.open).not.toHaveBeenCalled();expect(snackbar.open).toHaveBeenCalledWith(expect.stringContaining('Power BI'),'Cerrar',expect.anything());
+  });
+  it('respeta el acceso y los datos vigentes aunque el botón conserve un objeto anterior',()=>{
+    const item={...publications[0],link_url:'https://app.powerbi.com/view?r=actual'};
+    const {component,viewer}=setup('c1',[item]);
+    component.publications.set([{...item,bloqueado:true}] as any);component.openAtlas(item as any);expect(viewer.open).not.toHaveBeenCalled();
+    component.publications.set([{...item,atlas_categoria_id:'c2'}] as any);component.openAtlas(item as any);expect(viewer.open).not.toHaveBeenCalled();
+    component.publications.set([{...item,titulo:'Título actualizado'}] as any);component.openAtlas(item as any);
+    expect(viewer.open).toHaveBeenCalledWith(expect.objectContaining({title:'Título actualizado'}),'Categoría 1','report','atlas');
+    expect(atlasHttpUrl(new FormControl('ftp://example.test'))).toEqual({httpUrl:true});
   });
 });

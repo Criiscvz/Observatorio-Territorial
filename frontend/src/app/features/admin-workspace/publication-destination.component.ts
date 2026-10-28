@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, finalize, map, shareReplay, take } from 'rxjs';
 import { Departamento } from '@core/models';
-import { EstadoPublicacion, ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
+import { EstadoPublicacion, ObservatorioPublicacion, requiresReviewObservation } from '@core/models/publicacion/publicacion.interface';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { AuthService } from '@core/services/auth.service';
 import { PublicacionService, SharePointImportTarget } from '@core/services/publicacion.service';
@@ -52,7 +52,8 @@ export class PublicationDestinationComponent implements OnInit {
     descripcion: ['', Validators.maxLength(3000)],
     fuente: ['', Validators.maxLength(255)],
     autores: this.fb.nonNullable.array([this.fb.nonNullable.control('', Validators.maxLength(255))]),
-    estado: ['PUBLICACION' as EstadoPublicacion, [Validators.required, Validators.pattern(/^(PUBLICACION|EN_REVISION|SUSPENDIDO|ARCHIVADO)$/)]],
+    estado: ['PUBLICACION' as EstadoPublicacion, [Validators.required, Validators.pattern(/^(PUBLICACION|EN_REVISION|SUSPENDIDO|ARCHIVADO|RECHAZADO)$/)]],
+    observacion_revision: ['', Validators.maxLength(2000)],
     solo_suscriptores: [false],
   });
   readonly observatories = signal<Departamento[]>([]);
@@ -72,6 +73,12 @@ export class PublicationDestinationComponent implements OnInit {
   readonly importFailed = signal(false);
   readonly importing = signal(false);
   get autores() { return this.publicationForm.controls.autores; }
+  get needsReviewObservation() { return this.canChooseStatus() && requiresReviewObservation(this.publicationForm.controls.estado.value); }
+  private configureReviewObservation(): void {
+    const control = this.publicationForm.controls.observacion_revision;
+    control.setValidators([Validators.maxLength(2000), ...(this.needsReviewObservation ? [nonBlank] : [])]);
+    control.updateValueAndValidity({emitEvent:false});
+  }
   get isReport() { return this.destination()?.tipo === 'REPORTE'; }
   get destinationLabel() { const value = this.destination(); return value ? this.types[value.tipo] : ''; }
 
@@ -80,7 +87,7 @@ export class PublicationDestinationComponent implements OnInit {
     if (tipo && ['ARTICULO', 'LIBRO', 'REPORTE'].includes(tipo)) this.form.controls.tipo.setValue(tipo);
     const departamento = this.route.snapshot.queryParamMap.get('departamento');
     if (departamento) this.form.controls.departamento.setValue(departamento);
-    this.publicationForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.fieldErrors.set({}));
+    this.publicationForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => { this.fieldErrors.set({}); this.configureReviewObservation(); });
     this.load();
   }
 
@@ -218,6 +225,7 @@ export class PublicationDestinationComponent implements OnInit {
     const data = new FormData();
     data.append('tipo', destination.tipo);
     data.append('estado', this.canChooseStatus() ? values.estado : 'EN_REVISION');
+    if (this.needsReviewObservation) data.append('observacion_revision', values.observacion_revision.trim());
     data.append('solo_suscriptores', this.canChooseStatus() && values.solo_suscriptores ? '1' : '0');
     data.append('titulo', values.titulo.trim()); data.append('fecha_publicacion', values.fecha_publicacion);
     for (const key of ['link_url', 'descripcion', 'fuente'] as const) if (values[key].trim()) data.append(key, values[key].trim());
@@ -233,7 +241,7 @@ export class PublicationDestinationComponent implements OnInit {
         const errors: Record<string, string> = {};
         for (const [key, messages] of Object.entries(error?.error?.errors || {})) errors[key] = String(Array.isArray(messages) ? messages[0] : messages);
         this.fieldErrors.set(errors);
-        if (Object.keys(errors).some(key => !['archivo', 'estado', 'solo_suscriptores'].includes(key))) this.step.set(1);
+        if (Object.keys(errors).some(key => !['archivo', 'estado', 'solo_suscriptores', 'observacion_revision'].includes(key))) this.step.set(1);
         this.serverError.set(Object.keys(errors).length ? 'Revisa los campos indicados. Tus datos se conservan.' : 'No se pudo guardar la publicación. Tus datos se conservan; puedes reintentar.');
       },
     });

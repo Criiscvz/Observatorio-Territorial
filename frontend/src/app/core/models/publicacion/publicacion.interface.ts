@@ -1,5 +1,6 @@
 export type TipoPublicacion = 'ARTICULO' | 'REPORTE' | 'LIBRO' | 'ATLAS';
-export type EstadoPublicacion = 'PUBLICACION' | 'EN_REVISION' | 'SUSPENDIDO' | 'ARCHIVADO';
+export type EstadoPublicacion = 'PUBLICACION' | 'EN_REVISION' | 'SUSPENDIDO' | 'ARCHIVADO' | 'RECHAZADO';
+export const requiresReviewObservation = (estado: EstadoPublicacion): boolean => ['SUSPENDIDO', 'ARCHIVADO', 'RECHAZADO'].includes(estado);
 
 export interface ObservatorioPublicacion {
   atlas_categoria_id?: string | null;
@@ -21,6 +22,8 @@ export interface ObservatorioPublicacion {
   } | null;
   tipo: TipoPublicacion;
   estado: EstadoPublicacion;
+  observacion_revision?: string | null;
+  fecha_revision?: string | null;
   solo_suscriptores: boolean;
   bloqueado?: boolean;
   codigo: string;

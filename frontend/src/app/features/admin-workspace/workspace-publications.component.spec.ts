@@ -42,6 +42,16 @@ describe('Lista editorial de publicaciones',()=>{
     expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull();component.load();fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('table')).not.toBeNull();
   });
+  it('muestra motivo y biblioteca en lugar de editar para el editor de una publicación rechazada',()=>{
+    const {component,fixture}=setup();vi.spyOn(component,'isEditor').mockReturnValue(true);
+    component.items.set({data:[{...records[0],estado:'RECHAZADO',observacion_revision:'No cumple los requisitos.'}],meta:{total:1,from:1,to:1,current_page:1,last_page:1,per_page:20}});
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Rechazado');
+    expect(fixture.nativeElement.textContent).toContain('No cumple los requisitos.');
+    expect(fixture.nativeElement.querySelector('.btn-publication-edit')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Ver biblioteca');
+    expect(component.tabs.map(tab=>tab.value)).toContain('RECHAZADO');
+  });
 });
 
 beforeEach(() => TestBed.configureTestingModule({providers:[{provide:AuthService,useValue:{isAdmin:()=>true,isEditor:()=>false,isObservatoryAdmin:()=>false,user:()=>({rol:'ADMIN'}),canReviewObservatory:()=>true}}]}));

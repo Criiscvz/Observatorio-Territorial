@@ -40,6 +40,8 @@ class AdminWorkspaceController extends Controller
         return ['id' => $item->id, 'departamento_id' => $item->departamento_id,
             'departamento_nombre' => $item->departamento?->nombre, 'titulo' => $item->titulo,
             'tipo' => $item->tipo, 'estado' => $item->estado, 'codigo' => $item->codigo,
+            'observacion_revision' => $item->observacion_revision,
+            'fecha_revision' => $item->fecha_revision?->toIso8601String(),
             'fecha_publicacion' => $item->fecha_publicacion?->format('Y-m-d')];
     }
 
@@ -60,7 +62,7 @@ class AdminWorkspaceController extends Controller
     public function indexPublications(Request $request): JsonResponse
     {
         $filters = $request->validate([
-            'estado' => ['nullable', 'in:PUBLICACION,EN_REVISION,SUSPENDIDO,ARCHIVADO'],
+            'estado' => ['nullable', 'in:'.implode(',', ObservatorioPublicacion::ESTADOS)],
             'tipo' => ['nullable', 'in:ARTICULO,REPORTE,LIBRO'],
             'departamento_id' => ['nullable', 'uuid'], 'q' => ['nullable', 'string', 'max:255'],
             'page' => ['nullable', 'integer', 'min:1'],

@@ -55,6 +55,17 @@ describe('Creación de artículos, libros y reportes en el panel', () => {
     fill();component.publicationForm.patchValue({ descripcion: 'x'.repeat(3001), fuente: 'x'.repeat(256), link_url: 'javascript:alert(1)' });component.submit();
     expect(component.step()).toBe(1);expect(component.fieldError('descripcion')).toContain('3000');expect(publications.create).not.toHaveBeenCalled();
   });
+  it.each(['SUSPENDIDO','ARCHIVADO','RECHAZADO'] as const)('pide y guarda el motivo al crear una publicación %s',estado=>{
+    const {component,fixture,open,fill,publications}=setup('REPORTE');open();fill();component.submit();
+    component.publicationForm.controls.estado.setValue(estado);fixture.detectChanges();component.submit();
+    expect(component.step()).toBe(2);expect(publications.create).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('[name=observacion_revision]')).toBeTruthy();
+    component.publicationForm.controls.observacion_revision.setValue('x'.repeat(2001));component.submit();
+    expect(publications.create).not.toHaveBeenCalled();
+    component.publicationForm.controls.observacion_revision.setValue('  Revisar la información de respaldo.  ');component.submit();
+    const [,data]=publications.create.mock.calls[0] as any;
+    expect(data.get('estado')).toBe(estado);expect(data.get('observacion_revision')).toBe('Revisar la información de respaldo.');
+  });
   it.each(['ARTICULO', 'LIBRO'])('%s exige PDF, guarda metadatos opcionales y autores en el destino correcto', tipo => {
     const {component, open, fill, publications} = setup(tipo);open();fill();component.submit();component.submit();expect(publications.create).not.toHaveBeenCalled();expect(component.fileError()).toBeTruthy();
     component.autores.at(0).setValue(' Ana ');component.addAuthor();component.autores.at(1).setValue('Luis');component.addAuthor();

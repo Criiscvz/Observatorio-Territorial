@@ -14,6 +14,9 @@ import { PublicacionService } from '@core/services/publicacion.service';
 import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { ATLAS_CATEGORY_ICONS, atlasCategoryPresentation } from '@core/utils/atlas-category-presentation';
 import { ConfirmDialogComponent, ConfirmDialogData } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { publicHttpUrl } from '../components/public-library-publication';
+import { powerBiEmbedUrl } from '../components/publication-viewer.component';
+import { PublicationViewerService } from '../components/publication-viewer.service';
 
 export function atlasHttpUrl(control: AbstractControl) {
   try { return ['https:', 'http:'].includes(new URL(String(control.value).trim()).protocol) ? null : {httpUrl:true}; }
@@ -28,6 +31,7 @@ export function atlasHttpUrl(control: AbstractControl) {
 export class AtlasWorkspaceComponent implements OnInit {
   private readonly categoryService = inject(AtlasCategoriaService);
   private readonly publicationService = inject(PublicacionService);
+  private readonly viewer = inject(PublicationViewerService);
   private readonly linkService = inject(AtlasEnlaceService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -102,11 +106,23 @@ export class AtlasWorkspaceComponent implements OnInit {
   updateSearch(value:string) { this.search.set(value);this.page.set(0); }
   changePage(delta:number) { this.page.set(Math.max(0,Math.min(this.currentPage()+delta,this.pageCount()-1))); }
   count(category:AtlasCategoria) { return this.publications().filter(p=>p.atlas_categoria_id===category.id).length; }
-  safeUrl(value?:string|null):string|null { if(!value)return null;try { return ['http:','https:'].includes(new URL(value).protocol) ? value : null; }catch{return null;} }
   openAtlas(item:ObservatorioPublicacion) {
-    const url=this.safeUrl(item.link_url);
-    if(url) window.open(url,'_blank','noopener,noreferrer');
-    else this.publicationService.openPdf(item).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(opened=>{if(!opened)this.snackbar.open('Este Atlas no tiene un enlace o archivo disponible.','Cerrar',{duration:4500});});
+    const current=this.categoryItems().find(publication=>publication.id===item.id);
+    if(!current || current.bloqueado)return;
+    const reportUrl=powerBiEmbedUrl(current.link_url || null);
+    if(!reportUrl && !current.download_url && !current.sharepoint_url) {
+      this.snackbar.open('Este Atlas necesita un enlace público válido de Power BI para abrirse en el visor.','Cerrar',{duration:5000});
+      return;
+    }
+    const category=this.categories().find(category=>category.id===current.atlas_categoria_id);
+    this.viewer.open({
+      id:current.id,type:'REPORTE',title:current.titulo,code:current.codigo || 'Atlas',
+      date:current.fecha_publicacion || null,
+      authors:(Array.isArray(current.autores) ? current.autores.filter(Boolean).join(', ') : current.autores) || '',
+      description:current.descripcion || category?.descripcion || '',source:current.fuente || '',
+      sourceUrl:publicHttpUrl(current.fuente),reportUrl,
+      download_url:current.download_url || null,sharepoint_url:current.sharepoint_url || null,locked:false,
+    },category?.nombre || 'Sin categoría',reportUrl ? 'report' : 'pdf','atlas');
   }
   openCategory(item?:AtlasCategoria) {
     if(this.saving()||this.busy())return;

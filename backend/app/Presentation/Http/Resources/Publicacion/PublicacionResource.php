@@ -47,6 +47,10 @@ class PublicacionResource extends JsonResource
             ] : []),
             'tipo' => $this->tipo,
             'estado' => $this->estado,
+            ...($isManagementRequest ? [
+                'observacion_revision' => $this->observacion_revision,
+                'fecha_revision' => $this->fecha_revision?->toIso8601String(),
+            ] : []),
             'solo_suscriptores' => (bool) $this->solo_suscriptores,
             'bloqueado' => $isLocked,
             'codigo' => $this->codigo,

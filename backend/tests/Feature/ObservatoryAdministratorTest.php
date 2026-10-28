@@ -54,6 +54,7 @@ class ObservatoryAdministratorTest extends TestCase
     private function payload(string $state = 'PUBLICACION'): array
     {
         return ['titulo' => 'Revisado', 'fecha_publicacion' => '2026-10-27', 'estado' => $state,
+            ... (in_array($state, ['SUSPENDIDO', 'ARCHIVADO', 'RECHAZADO'], true) ? ['observacion_revision' => 'Motivo de la revisión.'] : []),
             'solo_suscriptores' => true, 'link_url' => 'https://app.powerbi.com/view?r=test'];
     }
 

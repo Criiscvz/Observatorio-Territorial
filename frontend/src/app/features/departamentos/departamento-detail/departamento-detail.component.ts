@@ -13,6 +13,7 @@ import {
   ObservatorioPublicacion,
   EstadoPublicacion,
   TipoPublicacion,
+  requiresReviewObservation,
 } from '@core/models/publicacion/publicacion.interface';
 import { AuthService } from '@core/services/auth.service';
 import { DatasetService } from '@core/services/dataset.service';
@@ -151,7 +152,23 @@ export class DepartamentoDetailComponent implements OnInit {
 
   continuePublication(): void {
     this.publicationForm.markAllAsTouched();
-    if (this.publicationForm.valid) this.editorStep.set(2);
+    if (this.informationValid()) this.editorStep.set(2);
+  }
+
+  private informationValid(): boolean {
+    return ['titulo', 'fecha_publicacion', 'link_url', 'descripcion', 'autores', 'fuente']
+      .every(name => this.publicationForm.get(name)?.valid);
+  }
+
+  get needsReviewObservation(): boolean {
+    return this.canChoosePublicationStatus && requiresReviewObservation(this.publicationForm.controls.estado.value);
+  }
+
+  private configureReviewObservation(): void {
+    const control = this.publicationForm.controls.observacion_revision;
+    control.setValidators([Validators.maxLength(2000), ...(this.needsReviewObservation
+      ? [Validators.required, (field: AbstractControl) => String(field.value ?? '').trim() ? null : {required:true}] : [])]);
+    control.updateValueAndValidity({emitEvent:false});
   }
 
   submitPublication(): void {
@@ -159,7 +176,7 @@ export class DepartamentoDetailComponent implements OnInit {
     else this.savePublication();
   }
 
-  publicationFieldError(name: 'titulo' | 'fecha_publicacion' | 'link_url' | 'descripcion' | 'fuente'): string {
+  publicationFieldError(name: 'titulo' | 'fecha_publicacion' | 'link_url' | 'descripcion' | 'fuente' | 'observacion_revision'): string {
     const control = this.publicationForm.controls[name];
     if (!control.touched || !control.invalid) return '';
     if (control.hasError('required')) return 'Este campo es obligatorio.';
@@ -185,6 +202,7 @@ export class DepartamentoDetailComponent implements OnInit {
   readonly publicationForm = this.fb.nonNullable.group({
     tipo: ['ARTICULO' as TipoPublicacion, Validators.required],
     estado: ['PUBLICACION' as EstadoPublicacion, Validators.required],
+    observacion_revision: ['', Validators.maxLength(2000)],
     solo_suscriptores: [false],
     titulo: ['', [Validators.required, (control: AbstractControl) => String(control.value ?? '').trim() ? null : {required:true}, Validators.maxLength(255)]],
     fecha_publicacion: ['', [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
@@ -263,6 +281,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   canEditPublication(publicacion: ObservatorioPublicacion): boolean {
+    if (this.isEditor() && publicacion.estado === 'RECHAZADO') return false;
     const user = this.authService.user();
     return this.isAdmin() || (publicacion.tipo !== 'ATLAS' && this.authService.canReviewObservatory(publicacion.departamento_id)) || (this.isEditor() && !!user && publicacion.tipo !== 'ATLAS' && Number(publicacion.creado_por) === user.id);
   }
@@ -317,6 +336,8 @@ export class DepartamentoDetailComponent implements OnInit {
         this.fileError.set('');
       });
     this.configurePublicationValidators(this.publicationForm.controls.tipo.value);
+    this.publicationForm.controls.estado.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.configureReviewObservation());
   }
 
   loadDepartamento(id: string): void {
@@ -459,6 +480,7 @@ export class DepartamentoDetailComponent implements OnInit {
     this.publicationForm.reset({
       tipo: publicacion.tipo,
       estado: publicacion.estado ?? 'PUBLICACION',
+      observacion_revision: publicacion.observacion_revision ?? '',
       solo_suscriptores: !!publicacion.solo_suscriptores,
       titulo: publicacion.titulo,
       fecha_publicacion: publicacion.fecha_publicacion,
@@ -468,6 +490,7 @@ export class DepartamentoDetailComponent implements OnInit {
     });
     this.setAutores(publicacion.autores);
     this.configurePublicationValidators(publicacion.tipo);
+    this.configureReviewObservation();
     this.selectedFile.set(null);
     this.isDraggingFile.set(false);
     this.fileError.set('');
@@ -561,11 +584,13 @@ export class DepartamentoDetailComponent implements OnInit {
     if (this.savingPublication() || this.changingReviewStatus() || !this.canManagePublications) return;
     this.publicationForm.markAllAsTouched();
     const editing = this.editingPublication();
+    if (editing && !this.canEditPublication(editing)) return;
+    this.configureReviewObservation();
     const requiresPdf = this.isArticulo || this.isLibro || this.tipo === 'ATLAS';
     if (!editing && requiresPdf && !this.selectedFile()) {
       this.fileError.set('Debe seleccionar un archivo PDF.');
     }
-    if (this.publicationForm.invalid) { this.editorStep.set(1); return; }
+    if (this.publicationForm.invalid) { this.editorStep.set(this.informationValid() ? 2 : 1); return; }
     if (this.fileError() || (!editing && requiresPdf && !this.selectedFile())) { this.editorStep.set(2); return; }
 
     const departamento = this.departamento();
@@ -573,6 +598,7 @@ export class DepartamentoDetailComponent implements OnInit {
     const formData = new FormData();
     const values = this.publicationForm.getRawValue();
     Object.entries(values).forEach(([key, value]) => {
+      if (key === 'observacion_revision' && (!this.needsReviewObservation || !this.canChoosePublicationStatus)) return;
       if (key === 'autores') {
         (value as string[])
           .map((autor) => autor.trim())
@@ -621,7 +647,7 @@ export class DepartamentoDetailComponent implements OnInit {
             ? first
             : error?.error?.message || 'No se pudo guardar la publicación.',
         );
-        if (errors && Object.keys(errors).some(key => key !== 'archivo')) this.editorStep.set(1);
+        if (errors) this.editorStep.set(Object.keys(errors).some(key => !['archivo', 'estado', 'solo_suscriptores', 'observacion_revision'].includes(key)) ? 1 : 2);
       },
     });
   }
@@ -779,6 +805,13 @@ export class DepartamentoDetailComponent implements OnInit {
       this.snackBar.open('No tienes permiso de edición y revisión en este observatorio.', 'Cerrar', {
         duration: 4000,
       });
+      return;
+    }
+
+    if (requiresReviewObservation(estado)) {
+      this.editPublication(publicacion);
+      this.publicationForm.controls.estado.setValue(estado);
+      this.editorStep.set(2);
       return;
     }
 
@@ -950,6 +983,8 @@ export class DepartamentoDetailComponent implements OnInit {
         return 'En revisión';
       case 'ARCHIVADO':
         return 'Archivado';
+      case 'RECHAZADO':
+        return 'Rechazado';
       default:
         return 'Publicación';
     }
@@ -967,6 +1002,8 @@ export class DepartamentoDetailComponent implements OnInit {
         return 'schedule';
       case 'ARCHIVADO':
         return 'archive';
+      case 'RECHAZADO':
+        return 'cancel';
       default:
         return 'visibility';
     }
@@ -1135,6 +1172,7 @@ export class DepartamentoDetailComponent implements OnInit {
     this.publicationForm.reset({
       tipo,
       estado: 'PUBLICACION',
+      observacion_revision: '',
       solo_suscriptores: false,
       titulo: '',
       fecha_publicacion: '',
