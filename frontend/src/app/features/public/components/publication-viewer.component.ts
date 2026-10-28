@@ -154,7 +154,7 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
       this.rendering.set(true);
       const canvas = this.paper.nativeElement;
       const natural = pdfPage.getViewport({scale: 1});
-      const width = Math.max(100, this.area.nativeElement.clientWidth - (this.fullscreen() ? 0 : 32));
+      const width = Math.max(100, this.area.nativeElement.clientWidth - (this.fullscreen() ? 24 : 32));
       const scale = this.zoom() === 'fit' ? width / natural.width : Number(this.zoom()) / 100;
       const viewport = pdfPage.getViewport({scale});
       const ratio = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(16_000_000 / (viewport.width * viewport.height)));

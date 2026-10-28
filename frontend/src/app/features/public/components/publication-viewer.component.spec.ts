@@ -52,14 +52,14 @@ describe('Visor superpuesto de publicaciones', () => {
     await component.render();
     const canvas=element.querySelector('canvas')!;
     expect(element.querySelector('#reader-info')).toBeNull();
-    expect(parseFloat(canvas.style.width)).toBe(width);
+    expect(parseFloat(canvas.style.width)).toBe(width-24);
     component.go(2);await component.render();
     expect(component.page()).toBe(2);
-    expect(parseFloat(canvas.style.width)).toBe(width);
+    expect(parseFloat(canvas.style.width)).toBe(width-24);
     component.setZoom('125');await component.render();
     expect(parseFloat(canvas.style.width)).toBe(750);
     component.setZoom('fit');await component.render();
-    expect(parseFloat(canvas.style.width)).toBe(width);
+    expect(parseFloat(canvas.style.width)).toBe(width-24);
     expect(canvas.width*canvas.height).toBeLessThanOrEqual(16_000_000);
     expect(area.tabIndex).toBe(0);
     await component.leaveFullscreen();fixture.detectChanges();await component.render();
