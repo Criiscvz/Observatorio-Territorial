@@ -9,13 +9,13 @@ import { powerBiEmbedUrl, PublicationViewerComponent } from './publication-viewe
 import { toPublicLibraryItem } from './public-library-publication';
 
 describe('Visor superpuesto de publicaciones', () => {
-  function setup(options: {mobile?:boolean; status?:number; mode?:'pdf'|'report'; report?:string; pending?:Subject<ArrayBuffer>; locked?:boolean; context?:'atlas'; localPdf?:File} = {}) {
-    const item=toPublicLibraryItem({id:'lib',tipo:'LIBRO',titulo:'Libro real',autores:['Ana'],codigo:'LIB-1',download_url:'/api/departamentos/publicaciones/lib/download',bloqueado:options.locked} as any,'LIBRO',true);
+  function setup(options: {mobile?:boolean; status?:number; mode?:'pdf'|'report'; report?:string; pending?:Subject<ArrayBuffer>; locked?:boolean; context?:'atlas'; localPdf?:File; description?:string; emptyOutline?:boolean; outlineFailure?:boolean} = {}) {
+    const item=toPublicLibraryItem({id:'lib',tipo:'LIBRO',titulo:'Libro real',autores:['Ana'],codigo:'LIB-1',descripcion:options.description,fecha_publicacion:'2026-10-20',fuente:'ULEAM',download_url:'/api/departamentos/publicaciones/lib/download',bloqueado:options.locked} as any,'LIBRO',true);
     if(options.report) item.reportUrl=options.report;
     if(options.localPdf){item.download_url=null;item.sharepoint_url=null;}
     const loadPdf=vi.fn(() => options.pending || (options.status ? throwError(() => new HttpErrorResponse({status:options.status})) : of(new ArrayBuffer(8))));
     const render=vi.fn(() => ({promise:Promise.resolve(),cancel:vi.fn()}));
-    const pdf={numPages:3,getPage:vi.fn(async () => ({getViewport:({scale}:any)=>({width:600*scale,height:800*scale}),render})),getOutline:vi.fn(async()=>[{title:'Contenido',dest:[1],items:[]}])};
+    const pdf={numPages:3,getPage:vi.fn(async () => ({getViewport:({scale}:any)=>({width:600*scale,height:800*scale}),render})),getOutline:vi.fn(async()=>{if(options.outlineFailure)throw new Error('Unreadable outline');return options.emptyOutline?null:[{title:'Contenido',dest:[1],items:[]}];})};
     const task={promise:Promise.resolve(pdf),destroy:vi.fn(async()=>undefined)};
     const engine={open:vi.fn(async()=>task)}; const ref={updateSize:vi.fn(),close:vi.fn(),addPanelClass:vi.fn(),removePanelClass:vi.fn(),disableClose:false};
     TestBed.configureTestingModule({providers:[{provide:MAT_DIALOG_DATA,useValue:{item,departmentName:'Salud',mode:options.mode||'pdf',context:options.context,localPdf:options.localPdf}},
@@ -36,9 +36,65 @@ describe('Visor superpuesto de publicaciones', () => {
     await vi.waitFor(()=>expect(component.outline()).toEqual([{title:'Contenido',page:2}]));
     fixture.destroy(); expect(task.destroy).toHaveBeenCalled();
   });
-  it('usa pantalla completa en móvil y conserva la ficha plegada para dar espacio al documento',()=>{
-    const {component,ref}=setup({mobile:true}); expect(ref.updateSize).toHaveBeenCalledWith('100vw','100dvh');
-    expect(component.info()).toBe(false); component.toggleInfo(); expect(component.info()).toBe(true);
+  it('usa toda la ventana móvil con ficha e índice abiertos y sin un botón para desplegarlos',()=>{
+    const {element,ref}=setup({mobile:true}); expect(ref.updateSize).toHaveBeenCalledWith('100vw','100dvh');
+    expect(element.querySelector('#reader-info')).toBeTruthy();
+    expect(element.querySelector('.reader-index')).toBeTruthy();
+    expect(element.querySelector('[aria-label="Ficha e índice"]')).toBeNull();
+  });
+  it.each([390, 1366, 1920])('ajusta el PDF al ancho disponible de %s px al navegar en pantalla completa', async width => {
+    const {component,fixture,element}=setup({mobile:width<680});
+    await vi.waitFor(()=>expect(component.total()).toBe(3));
+    const area=element.querySelector<HTMLElement>('.reader-document')!;
+    Object.defineProperty(area,'clientWidth',{configurable:true,value:width});
+    nativeFullscreen(element);
+    await component.toggleFullscreen();fixture.detectChanges();
+    await component.render();
+    const canvas=element.querySelector('canvas')!;
+    expect(element.querySelector('#reader-info')).toBeNull();
+    expect(parseFloat(canvas.style.width)).toBe(width);
+    component.go(2);await component.render();
+    expect(component.page()).toBe(2);
+    expect(parseFloat(canvas.style.width)).toBe(width);
+    component.setZoom('125');await component.render();
+    expect(parseFloat(canvas.style.width)).toBe(750);
+    component.setZoom('fit');await component.render();
+    expect(parseFloat(canvas.style.width)).toBe(width);
+    expect(canvas.width*canvas.height).toBeLessThanOrEqual(16_000_000);
+    expect(area.tabIndex).toBe(0);
+    await component.leaveFullscreen();fixture.detectChanges();await component.render();
+    expect(parseFloat(canvas.style.width)).toBe(width-32);
+  });
+  it('muestra primero la descripción completa y los metadatos que llegan del formulario', () => {
+    const description='Objetivos y metodología del estudio.\n'+ 'Resultados y recomendaciones del observatorio. '.repeat(25);
+    const {element,component}=setup({description});
+    expect(element.querySelector('.reader-description p')?.textContent).toBe(description.trim());
+    expect(element.querySelector('.reader-description')!.compareDocumentPosition(element.querySelector('.reader-metadata')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const values=Array.from(element.querySelectorAll('.reader-metadata dd')).map(el=>el.textContent?.trim());
+    expect(values).toEqual(['Salud','Ana','20/10/2026','ULEAM']);
+    component.selectMode('report');
+    expect(element.querySelector('#reader-info')).toBeTruthy();
+  });
+  it('explica la ausencia de descripción y usa el índice real para ir a otra página', async () => {
+    const {fixture,element,component}=setup();
+    await vi.waitFor(()=>expect(component.outline()).toHaveLength(1));fixture.detectChanges();
+    expect(element.querySelector('.reader-description p')?.textContent).toContain('Sin descripción registrada.');
+    element.querySelector<HTMLButtonElement>('.reader-index li button')!.click();fixture.detectChanges();
+    expect(component.page()).toBe(2);
+    expect(element.querySelector('.reader-index [aria-current="page"]')?.textContent).toContain('Contenido');
+  });
+  it('no inventa un índice si el PDF no tiene marcadores', async () => {
+    const {fixture,component,element,pdf}=setup({emptyOutline:true});
+    await vi.waitFor(()=>{expect(pdf.getOutline).toHaveBeenCalled();expect(component.outlineLoading()).toBe(false);});fixture.detectChanges();
+    expect(component.outline()).toEqual([]);
+    expect(element.querySelector('.reader-index')?.textContent).toContain('no incluye marcadores');
+    expect(element.querySelector('.reader-index ol')).toBeNull();
+  });
+  it('distingue un índice ausente de un fallo de lectura sin impedir leer el PDF', async () => {
+    const {fixture,component,element}=setup({outlineFailure:true});
+    await vi.waitFor(()=>expect(component.outlineError()).toBe(true));fixture.detectChanges();
+    expect(component.total()).toBe(3);expect(component.error()).toBe('');
+    expect(element.querySelector('.reader-index')?.textContent).toContain('No se pudo cargar el índice');
   });
   it.each([403,404,409,500])('presenta el error HTTP %s con reintento y no intenta renderizar el archivo',async(status)=>{
     const {component,fixture,element,engine}=setup({status}); await vi.waitFor(()=>expect(component.error()).not.toBe('')); fixture.detectChanges();
@@ -83,7 +139,7 @@ describe('Visor superpuesto de publicaciones', () => {
     expect(element.textContent).toContain('Atlas interactivo');
     expect(element.textContent).not.toContain('Reporte Power BI');
     expect(element.querySelector('[aria-label="Pantalla completa"]')).toBeTruthy();
-    component.toggleInfo(); fixture.detectChanges();
+    fixture.detectChanges();
     expect(element.querySelector('#reader-info')?.textContent).toContain('Categoría');
     expect(loadPdf).not.toHaveBeenCalled();
   });
@@ -105,35 +161,47 @@ describe('Visor superpuesto de publicaciones', () => {
   it('amplía el PDF, conserva página y zoom, y restaura el visor al salir',async()=>{
     const {component,fixture,element,ref}=setup(); const native=nativeFullscreen(element);
     await vi.waitFor(()=>expect(component.total()).toBe(3));
-    component.go(2);component.setZoom('125');component.toggleInfo();
+    component.go(2);component.setZoom('125');
+    const canvas=element.querySelector('canvas');
     await component.toggleFullscreen();fixture.detectChanges();
     expect(native.enter).toHaveBeenCalledOnce();expect(component.fullscreen()).toBe(true);
     expect(element.classList.contains('reader-fullscreen')).toBe(true);
     expect(ref.addPanelClass).toHaveBeenCalledWith('publication-reader-expanded');expect(ref.disableClose).toBe(true);
     expect(ref.updateSize).toHaveBeenLastCalledWith('100vw','100dvh');
     expect(element.querySelector('[aria-label="Salir de pantalla completa"]')).toBeTruthy();
+    expect(element.querySelector('#reader-info')).toBeNull();
+    expect(element.querySelector('canvas')).toBe(canvas);
     await component.leaveFullscreen();fixture.detectChanges();
     expect(native.exit).toHaveBeenCalledOnce();expect(component.fullscreen()).toBe(false);
     expect(ref.updateSize).toHaveBeenLastCalledWith('calc(100vw - 40px)','calc(100dvh - 32px)');
-    expect(ref.disableClose).toBe(false);expect(component.page()).toBe(2);expect(component.zoom()).toBe('125');expect(component.info()).toBe(true);
+    expect(ref.disableClose).toBe(false);expect(component.page()).toBe(2);expect(component.zoom()).toBe('125');expect(element.querySelector('#reader-info')).toBeTruthy();
+    expect(element.querySelector('canvas')).toBe(canvas);
+    expect(element.querySelector('.reader-index')).toBeTruthy();
   });
   it('usa toda la ventana cuando el navegador rechaza pantalla completa y Escape regresa al visor',async()=>{
-    const {component,element,ref}=setup({mode:'report',report:'https://app.powerbi.com/view?r=publico'});
+    const {component,fixture,element,ref}=setup({mode:'report',report:'https://app.powerbi.com/view?r=publico'});
     element.requestFullscreen=vi.fn(async()=>{throw new Error('Unavailable');});
     await component.toggleFullscreen();expect(component.fullscreen()).toBe(true);
+    fixture.detectChanges();expect(element.querySelector('#reader-info')).toBeNull();
     const event=new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true});document.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);expect(component.fullscreen()).toBe(false);expect(ref.close).not.toHaveBeenCalled();
+    fixture.detectChanges();expect(element.querySelector('#reader-info')).toBeTruthy();
   });
   it('responde a la salida nativa por Escape sin cerrar la biblioteca ni recargar Power BI',async()=>{
     const {component,fixture,element,ref}=setup({mode:'report',report:'https://app.powerbi.com/view?r=publico'});
     const frame=element.querySelector('iframe');const native=nativeFullscreen(element);
     await component.toggleFullscreen();fixture.detectChanges();expect(element.querySelector('iframe')).toBe(frame);
+    expect(element.querySelector('#reader-info')).toBeNull();
     native.setActive(null);fixture.detectChanges();expect(component.fullscreen()).toBe(false);
     expect(ref.close).not.toHaveBeenCalled();expect(element.querySelector('iframe')).toBe(frame);
+    expect(element.querySelector('#reader-info')).toBeTruthy();
   });
   it('libera pantalla completa al destruir el lector y conserva el tamaño móvil al volver',async()=>{
     const {component,fixture,element,ref}=setup({mobile:true});const native=nativeFullscreen(element);
-    await component.toggleFullscreen();await component.leaveFullscreen();
+    await component.toggleFullscreen();fixture.detectChanges();
+    expect(element.querySelector('#reader-info')).toBeNull();
+    await component.leaveFullscreen();fixture.detectChanges();
+    expect(element.querySelector('#reader-info')).toBeTruthy();
     expect(ref.updateSize).toHaveBeenLastCalledWith('100vw','100dvh');
     await component.toggleFullscreen();fixture.destroy();expect(native.exit).toHaveBeenCalledTimes(2);
   });

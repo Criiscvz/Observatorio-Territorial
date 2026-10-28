@@ -60,6 +60,8 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
   readonly item = this.data.item;
   readonly localPreview = !!this.data.localPdf;
   readonly isAtlas = this.data.context === 'atlas';
+  readonly typeLabel = this.isAtlas ? 'Atlas' : {ARTICULO: 'Artículo', LIBRO: 'Libro', REPORTE: 'Reporte'}[this.item.type];
+  readonly description = this.item.description?.trim() || '';
   readonly hasPdf = !this.item.locked && (this.localPreview || hasPublicPdf(this.item));
   readonly reportUrl = powerBiEmbedUrl(this.item.locked ? null : this.item.reportUrl);
   readonly mode = signal<ReaderMode>(this.data.mode);
@@ -69,8 +71,9 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
   readonly page = signal(1);
   readonly total = signal(0);
   readonly zoom = signal('fit');
-  readonly info = signal(false);
   readonly outline = signal<{title: string; page: number}[]>([]);
+  readonly outlineLoading = signal(false);
+  readonly outlineError = signal(false);
   readonly reportReady = signal(false);
   readonly reportHint = signal(false);
   readonly frameVersion = signal(0);
@@ -115,7 +118,7 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
   async load(): Promise<void> {
     if (this.item.locked || !this.hasPdf) { this.error.set('Esta publicación no tiene un PDF disponible.'); return; }
     const id = ++this.loadId;
-    this.error.set(''); this.loading.set(true);
+    this.error.set(''); this.loading.set(true); this.outline.set([]); this.outlineError.set(false);
     try {
       const bytes = this.data.localPdf ? await this.data.localPdf.arrayBuffer()
         : await firstValueFrom(this.publications.loadPdf(this.item).pipe(takeUntilDestroyed(this.destroyRef)));
@@ -151,8 +154,8 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
       this.rendering.set(true);
       const canvas = this.paper.nativeElement;
       const natural = pdfPage.getViewport({scale: 1});
-      const width = Math.max(100, this.area.nativeElement.clientWidth - 32);
-      const scale = this.zoom() === 'fit' ? Math.min(2, width / natural.width) : Number(this.zoom()) / 100;
+      const width = Math.max(100, this.area.nativeElement.clientWidth - (this.fullscreen() ? 0 : 32));
+      const scale = this.zoom() === 'fit' ? width / natural.width : Number(this.zoom()) / 100;
       const viewport = pdfPage.getViewport({scale});
       const ratio = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(16_000_000 / (viewport.width * viewport.height)));
       canvas.width = Math.floor(viewport.width * ratio); canvas.height = Math.floor(viewport.height * ratio);
@@ -170,7 +173,6 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
     this.page.set(n); this.area?.nativeElement.scrollTo?.({top: 0, left: 0}); void this.render();
   }
   setZoom(value: string): void { this.zoom.set(value); void this.render(); }
-  toggleInfo(): void { this.info.update(value => !value); }
   async toggleFullscreen(): Promise<void> {
     if (this.fullscreenBusy()) return;
     if (this.fullscreen()) { await this.leaveFullscreen(); return; }
@@ -220,6 +222,8 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
     this.frameTimer = setTimeout(() => this.reportHint.set(true), 15000);
   }
   private async readOutline(document: PDFDocumentProxy): Promise<void> {
+    this.outlineLoading.set(true);
+    this.outlineError.set(false);
     try {
       const entries = await document.getOutline();
       const result: {title: string; page: number}[] = [];
@@ -236,7 +240,8 @@ export class PublicationViewerComponent implements AfterViewInit, OnDestroy {
       };
       if (entries) await visit(entries);
       if (!this.destroyed) this.outline.set(result);
-    } catch { /* Un documento sin índice sigue siendo legible. */ }
+    } catch { if (!this.destroyed) this.outlineError.set(true); }
+    finally { if (!this.destroyed) this.outlineLoading.set(false); }
   }
   ngOnDestroy(): void {
     this.destroyed = true; ++this.loadId; ++this.renderId;

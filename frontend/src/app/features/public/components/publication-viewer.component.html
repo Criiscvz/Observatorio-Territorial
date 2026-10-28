@@ -13,7 +13,6 @@
     @if (hasPdf) { <button type="button" role="tab" [attr.aria-selected]="mode() === 'pdf'" [class.active]="mode() === 'pdf'" (click)="selectMode('pdf')"><mat-icon>picture_as_pdf</mat-icon>Documento PDF</button> }
     @if (item.reportUrl && !item.locked) { <button type="button" role="tab" [attr.aria-selected]="mode() === 'report'" [class.active]="mode() === 'report'" (click)="selectMode('report')"><mat-icon>bar_chart</mat-icon>{{ isAtlas ? 'Atlas interactivo' : 'Reporte Power BI' }}</button> }
   </div>
-  <button type="button" class="reader-button reader-info-button" aria-label="Ficha e índice" [attr.aria-expanded]="info()" aria-controls="reader-info" (click)="toggleInfo()"><mat-icon>info_outline</mat-icon><span>Ficha e índice</span></button>
 </nav>
 @if (mode() === 'pdf') {
   <div class="reader-toolbar" aria-label="Controles del documento">
@@ -26,20 +25,34 @@
     <span class="reader-status" aria-live="polite">{{ loading() ? 'Cargando documento…' : rendering() ? 'Preparando página…' : total() ? (localPreview ? 'Vista previa · Sin guardar' : 'Lectura en el portal') : '' }}</span>
   </div>
 }
-<div class="reader-workspace" [class.with-info]="info()">
-  @if (info()) {
-    <aside id="reader-info" class="reader-info" aria-label="Ficha de publicación">
-      <h3>{{ isAtlas ? 'Sobre este Atlas' : 'Sobre esta publicación' }}</h3><dl><dt>{{ isAtlas ? 'Categoría' : 'Observatorio' }}</dt><dd>{{ data.departmentName }}</dd><dt>Autores</dt><dd>{{ item.authors || 'No especificados' }}</dd><dt>Publicación</dt><dd>{{ item.date ? (item.date | date:'dd/MM/yyyy') : 'Sin fecha registrada' }}</dd><dt>Fuente</dt><dd>{{ item.source || 'No especificada' }}</dd></dl>
-      @if (item.description) { <p>{{ item.description }}</p> }
+<div class="reader-workspace">
+  @if (!fullscreen()) {
+    <aside id="reader-info" class="reader-info" aria-labelledby="reader-sheet-heading">
+      <div class="reader-sheet-heading"><mat-icon aria-hidden="true">menu_book</mat-icon><h3 id="reader-sheet-heading">Ficha de la publicación</h3></div>
+      <div class="reader-sheet-tags"><span class="reader-type-label">{{ typeLabel }} · {{ mode() === 'pdf' ? 'PDF' : 'Power BI' }}</span><span><mat-icon aria-hidden="true">{{ item.locked ? 'lock' : 'public' }}</mat-icon>{{ item.locked ? 'Restringido' : 'Disponible' }}</span></div>
+      <section class="reader-description" aria-labelledby="reader-description-heading">
+        <h3 id="reader-description-heading">Descripción</h3>
+        <p [class.reader-description-empty]="!description">{{ description || 'Sin descripción registrada.' }}</p>
+      </section>
+      <dl class="reader-metadata">
+        <div><dt><mat-icon aria-hidden="true">account_balance</mat-icon>{{ isAtlas ? 'Categoría' : 'Observatorio' }}</dt><dd>{{ data.departmentName || 'No especificado' }}</dd></div>
+        <div><dt><mat-icon aria-hidden="true">people_outline</mat-icon>Autores</dt><dd>{{ item.authors || 'No especificados' }}</dd></div>
+        <div><dt><mat-icon aria-hidden="true">calendar_today</mat-icon>Fecha de publicación</dt><dd>{{ item.date ? (item.date | date:'dd/MM/yyyy') : 'Sin fecha registrada' }}</dd></div>
+        <div><dt><mat-icon aria-hidden="true">business</mat-icon>Fuente</dt><dd>{{ item.source || 'No especificada' }}</dd></div>
+      </dl>
       @if (item.sourceUrl) { <a class="reader-button" [href]="item.sourceUrl" target="_blank" rel="noopener noreferrer"><mat-icon>open_in_new</mat-icon>Ver fuente</a> }
-      @if (mode() === 'pdf') {
-        <h3>Índice del documento</h3>
-        @if (outline().length) { <ol>@for (entry of outline(); track $index) { <li><button (click)="go(entry.page)">{{ entry.title }}<span>{{ entry.page }}</span></button></li> }</ol> }
-        @else { <p>Este PDF no incluye un índice de navegación. Usa los controles de página.</p> }
-      }
+      <section class="reader-index" aria-labelledby="reader-index-heading">
+        <div class="reader-sheet-heading"><mat-icon aria-hidden="true">format_list_bulleted</mat-icon><h3 id="reader-index-heading">{{ mode() === 'pdf' ? 'Índice del documento' : 'Navegación del reporte' }}</h3></div>
+        @if (mode() === 'pdf') {
+          @if (loading() || outlineLoading()) { <p role="status">Cargando índice del documento…</p> }
+          @else if (error() || outlineError()) { <p>No se pudo cargar el índice. Cuando el documento esté disponible, puedes usar los controles de página.</p> }
+          @else if (outline().length) { <ol>@for (entry of outline(); track $index) { <li><button type="button" [attr.aria-current]="page() === entry.page ? 'page' : null" (click)="go(entry.page)"><span>{{ entry.title }}</span><span>{{ entry.page }}</span></button></li> }</ol> }
+          @else { <p>Este PDF no incluye marcadores de navegación. Usa los controles de página para recorrerlo.</p> }
+        } @else { <p>Las páginas y filtros {{ isAtlas ? 'del Atlas' : 'del reporte' }} se consultan dentro de Power BI.</p> }
+      </section>
     </aside>
   }
-  <section class="reader-document" #documentArea [hidden]="mode() !== 'pdf'" aria-label="Documento PDF" [attr.aria-busy]="loading() || rendering()">
+  <section class="reader-document" #documentArea [hidden]="mode() !== 'pdf'" tabindex="0" aria-label="Documento PDF" [attr.aria-busy]="loading() || rendering()">
     @if (loading()) { <div class="reader-message" role="status"><mat-icon class="reader-loading-icon">hourglass_top</mat-icon><h3>Cargando documento</h3><p>Preparando el PDF para su lectura.</p></div> }
     @if (error()) { <div class="reader-message" role="alert"><mat-icon>description</mat-icon><h3>No podemos mostrar el PDF</h3><p>{{ error() }}</p><button class="reader-button reader-primary" (click)="load()"><mat-icon>refresh</mat-icon>Reintentar</button></div> }
     <div class="reader-paper" [hidden]="loading() || !!error() || !total()"><canvas #paper role="img" [attr.aria-label]="'Página ' + page() + ' de ' + total() + ' de ' + item.title"></canvas></div>
