@@ -93,3 +93,13 @@ Las pruebas de lectura SQL se ejecutan tanto en SQLite como en PostgreSQL en CI.
 5. Solo tras demostrar compatibilidad, integridad y reversión: retirar modelos, servicios/endpoints y tablas antiguos. No ejecutar `DROP TABLE` por encontrar tablas vacías en una copia.
 
 No se declara cerrada la fase 2 por aprobar la primera entrega del catálogo.
+
+## Cliente de biblioteca: segunda entrega compatible
+
+El backend se integró primero mediante el [PR #17](https://github.com/Criiscvz/Observatorio-Territorial/pull/17), commit `863a61092e8b347ba645f7c67a6f818880f55643`. La rama `subsanacion-biblioteca-fase2` migra la biblioteca pública al endpoint anterior sin modificar sus estilos o acciones de consulta.
+
+`PublicCatalogService` solicita únicamente la página seleccionada; las pestañas usan `counts` y la numeración usa `meta.total`, no el tamaño del array recibido. Búsqueda, cambio de tipo y navegación solicitan resultados al servidor. El cliente cancela solicitudes anteriores y elimina los resultados previos al cambiar de ruta o búsqueda. Si el total disminuye y deja fuera la página actual, solicita la última página válida. Los fallos de carga pueden reintentarse conservando el observatorio visible.
+
+El adaptador del visor admite el título, descripción y autores del contrato común y conserva los contratos antiguos usados por otras vistas. `resource_key` distingue registros con el mismo UUID procedentes de tablas distintas; las descargas utilizan su URL explícita, no esa clave de presentación.
+
+Verificación del cliente: **497 pruebas aprobadas en 54 archivos**, incluidas solicitudes de páginas de 20, búsqueda remota, totales de pestañas, cancelación de solicitudes obsoletas, cambio de totales, reintento y apertura de PDF/Power BI con sus metadatos. El ensayo queda disponible en `http://localhost:4300`, con API separada `http://localhost:8101`; no usa la base publicada. CI vuelve a verificar el build de producción y las cabeceras/PWA antes de integrar.
