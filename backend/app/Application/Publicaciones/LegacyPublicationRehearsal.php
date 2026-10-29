@@ -37,6 +37,9 @@ class LegacyPublicationRehearsal
     public function prepare(): void
     {
         $this->assertDisposable();
+        if (! Schema::hasColumns('observatorio_publicaciones', ['visibilidad_legada', 'eliminado_legado_at'])) {
+            throw new LegacyRehearsalBlocked('Apply the preservation schema to the disposable database before rehearsal.');
+        }
         // The old nullable-file migration only handled PostgreSQL. Match that
         // actual target schema in the disposable SQLite rehearsal too.
         if (DB::getDriverName() === 'sqlite') {
@@ -218,7 +221,7 @@ class LegacyPublicationRehearsal
             throw new LegacyRehearsalBlocked('Unknown top-level manifest fields are not accepted.');
         }
         Validator::make($manifest, [
-            'records.*' => ['required', 'array:source,id,source_sha256,target_id,codigo,owner_id,owner_decision,departamento_id,department_decision,fecha_publicacion,date_decision,estado,state_decision,observacion_revision,file'],
+            'records.*' => ['required', 'array:source,id,source_sha256,target_id,codigo,owner_id,owner_decision,departamento_id,department_decision,fecha_publicacion,date_decision,estado,state_decision,observacion_revision,preservation_decision,file'],
             'version' => ['required', 'integer', 'in:1'], 'batch_id' => ['required', 'uuid'],
             'records' => ['required', 'array', 'min:1', 'max:500'],
             'records.*.source' => ['required', 'in:articulos,reportes'], 'records.*.id' => ['required', 'uuid'],
@@ -234,6 +237,7 @@ class LegacyPublicationRehearsal
             'records.*.estado' => ['sometimes', 'in:'.implode(',', ObservatorioPublicacion::ESTADOS)],
             'records.*.state_decision' => ['sometimes', 'string', 'min:10', 'max:2000'],
             'records.*.observacion_revision' => ['sometimes', 'string', 'min:3', 'max:4000'],
+            'records.*.preservation_decision' => ['sometimes', 'string', 'min:10', 'max:2000'],
             'records.*.file' => ['sometimes', 'array:source,sha256'],
             'records.*.file.source' => ['required_with:records.*.file', 'string'],
             'records.*.file.sha256' => ['required_with:records.*.file', 'regex:/^[a-f0-9]{64}$/'],
@@ -258,8 +262,13 @@ class LegacyPublicationRehearsal
         $query = DB::table($decision['source'])->where('id', $decision['id']);
         $row = ($lock ? $query->lockForUpdate() : $query)->first();
         if (! $row || self::fingerprint((array) $row) !== $decision['source_sha256']) { throw new LegacyRehearsalBlocked('Source missing or changed after planning.'); }
-        if ($row->deleted_at !== null) { throw new LegacyRehearsalBlocked('Soft-deleted sources require a separate preservation policy.'); }
-        if (($row->visibilidad ?? 'publico') === 'privado') { throw new LegacyRehearsalBlocked('Private legacy visibility has no lossless target field; preserve source until resolved.'); }
+        if (! in_array($row->visibilidad ?? 'publico', ['publico', 'suscriptor', 'privado'], true)) {
+            throw new LegacyRehearsalBlocked('Unknown legacy visibility requires a separate explicit mapping.');
+        }
+        if (($row->deleted_at !== null || ($row->visibilidad ?? 'publico') === 'privado')
+            && strlen(trim($decision['preservation_decision'] ?? '')) < 10) {
+            throw new LegacyRehearsalBlocked('Private or deleted sources require an explicit decision to preserve their restrictions.');
+        }
         return (array) $row;
     }
 
@@ -300,6 +309,7 @@ class LegacyPublicationRehearsal
             'autores' => $article && filled($source['autor']) ? [$source['autor']] : [], 'fuente' => $source['fuente'],
             'fecha_publicacion' => $date, 'estado' => $state, 'observacion_revision' => $reason,
             'solo_suscriptores' => ($source['visibilidad'] ?? 'publico') === 'suscriptor',
+            'visibilidad_legada' => $source['visibilidad'] ?? 'publico', 'eliminado_legado_at' => $source['deleted_at'],
             'link_url' => $source[$article ? 'enlace' : 'link_url'], 'created_at' => $source['created_at'], 'updated_at' => $source['updated_at']];
     }
 

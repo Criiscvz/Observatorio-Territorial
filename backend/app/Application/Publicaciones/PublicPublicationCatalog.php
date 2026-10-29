@@ -44,6 +44,8 @@ class PublicPublicationCatalog
         return DB::table('observatorio_publicaciones as p')
             ->join('departamentos as d', 'd.id', '=', 'p.departamento_id')
             ->whereNull('d.deleted_at')->where('d.publico', true)
+            ->whereNull('p.eliminado_legado_at')
+            ->where(fn (Builder $q) => $q->whereNull('p.visibilidad_legada')->orWhereIn('p.visibilidad_legada', ['publico', 'suscriptor']))
             ->where('p.estado', 'PUBLICACION')->whereIn('p.tipo', self::TYPES)
             ->selectRaw("CAST(p.id AS TEXT) id, 'publicaciones' origen, p.tipo, p.codigo, p.titulo, p.descripcion,
                 CAST(p.autores AS TEXT) autores, p.fuente, p.fecha_publicacion, p.created_at, p.updated_at,

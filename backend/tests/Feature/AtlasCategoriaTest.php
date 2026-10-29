@@ -59,6 +59,7 @@ class AtlasCategoriaTest extends TestCase
         (require database_path('migrations/2026_10_07_000001_add_visibility_and_icon_to_atlas_categorias.php'))->up();
         (require database_path('migrations/2026_10_21_000001_add_selected_publication_to_atlas_categories.php'))->up();
         (require database_path('migrations/2026_10_28_000001_add_review_observation_to_publications.php'))->up();
+        (require database_path('migrations/2026_10_29_000001_preserve_legacy_publication_access.php'))->up();
     }
 
     private function signIn(string $role = 'ADMIN'): void

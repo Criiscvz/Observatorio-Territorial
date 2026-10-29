@@ -52,6 +52,9 @@ else
     # Ensure they exist before the new code starts accepting requests.
     php artisan migrate --force --path=database/migrations/2026_10_28_000001_add_review_observation_to_publications.php
     php artisan migrate --force --path=database/migrations/2026_10_28_000002_add_observatory_photo.php
+    # Access predicates reference these nullable fields; create schema before serving.
+    # This adds no imported rows and never enables the disposable rehearsal.
+    php artisan migrate --force --path=database/migrations/2026_10_29_000001_preserve_legacy_publication_access.php
 fi
 
 php artisan route:cache

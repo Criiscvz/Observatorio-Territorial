@@ -237,11 +237,13 @@ class ArticuloController extends Controller
 
     private function canViewLegacyContent(Request $request, $articulo): bool
     {
-        if (($articulo->estado ?? 'PUBLICADO') && ! in_array($articulo->estado, ['PUBLICADO', 'PUBLICACION'], true)) {
+        if ($articulo->estado !== null && ! in_array($articulo->estado, ['PUBLICADO', 'PUBLICACION'], true)) {
             return false;
         }
 
-        if (($articulo->visibilidad ?? 'publico') === 'privado') {
+        if ($articulo->deleted_at !== null
+            || ! in_array($articulo->visibilidad ?? 'publico', ['publico', 'suscriptor'], true)
+            || ($articulo->departamento_id !== null && (! $articulo->departamento || ! $articulo->departamento->publico))) {
             return false;
         }
 
@@ -250,6 +252,6 @@ class ArticuloController extends Controller
 
     private function isSubscriber($user): bool
     {
-        return $user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
+        return $user && in_array($user->rol, ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 }

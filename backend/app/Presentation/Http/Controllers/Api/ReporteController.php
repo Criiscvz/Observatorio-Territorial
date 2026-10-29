@@ -294,14 +294,15 @@ class ReporteController extends Controller
         }
 
         // Validación de paywall para descargas/fichas de suscriptor
-        $reporte = ReporteModel::where('ficha_indicador', 'like', '%' . $filename)->first();
-        if ($reporte && ! $this->canViewLegacyContent($request, $reporte)) {
+        $reports = ReporteModel::withTrashed()->where('ficha_indicador', 'like', '%' . $filename)->get()
+            ->filter(fn ($report) => basename(parse_url((string) $report->ficha_indicador, PHP_URL_PATH) ?: '') === $filename);
+        if ($reports->isEmpty() || $reports->contains(fn ($report) => ! $this->canViewLegacyContent($request, $report))) {
             return response()->json(['message' => 'Ficha no encontrada'], 404)
                 ->header('Access-Control-Allow-Origin', '*')
                 ->header('Cross-Origin-Resource-Policy', 'cross-origin');
         }
 
-        if ($reporte && $reporte->visibilidad === 'suscriptor') {
+        if ($reports->contains(fn ($report) => $report->visibilidad === 'suscriptor')) {
             $user = $request->user('sanctum');
             if (!$this->isSubscriber($user)) {
                 return response()->json(['message' => 'Acceso exclusivo para suscriptores.'], 403)
@@ -315,7 +316,7 @@ class ReporteController extends Controller
 
         return response($file, 200)
             ->header('Content-Type', $mimeType)
-            ->header('Cache-Control', 'public, max-age=31536000')
+            ->header('Cache-Control', 'private, no-store')
             ->header('Access-Control-Allow-Origin', '*')
             ->header('Cross-Origin-Resource-Policy', 'cross-origin');
     }
@@ -336,7 +337,9 @@ class ReporteController extends Controller
 
     private function canViewLegacyContent(Request $request, $reporte): bool
     {
-        if (($reporte->visibilidad ?? 'publico') === 'privado') {
+        if ($reporte->deleted_at !== null
+            || ! in_array($reporte->visibilidad ?? 'publico', ['publico', 'suscriptor'], true)
+            || ($reporte->departamento_id !== null && (! $reporte->departamento || ! $reporte->departamento->publico))) {
             return false;
         }
 
@@ -345,6 +348,6 @@ class ReporteController extends Controller
 
     private function isSubscriber($user): bool
     {
-        return $user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
+        return $user && in_array($user->rol, ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 }
