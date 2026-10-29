@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Application\Publicaciones\LegacyPublicationRehearsal;
+use App\Application\Publicaciones\PublicPublicationCatalog;
+use App\Application\Publicaciones\RehearsalPublicationCatalog;
 use App\Infrastructure\Persistence\Eloquent\Models\ArticuloModel;
 use App\Infrastructure\Persistence\Eloquent\Models\ReporteModel;
 use App\Models\Departamento;
@@ -257,5 +259,131 @@ class LegacyPublicationRehearsalTest extends TestCase
         $this->mustFail(fn () => $this->service->rollback($plan['batch_id']));
         $this->assertDatabaseCount('observatorio_publicaciones', 2);
         $this->assertDatabaseCount('articulos', 2);
+    }
+
+    public function test_catalog_handoff_preserves_category_received_date_and_distinct_source_ids(): void
+    {
+        $category = (string) Str::uuid();
+        DB::table('categorias_dataset')->insert(['id' => $category, 'nombre' => 'Categoría sintética', 'codigo' => 'handoff']);
+        $a = $this->article(['categoria_id' => $category]);
+        $report = ReporteModel::create(['nombre_indicador' => $a->titulo, 'categoria_id' => $category,
+            'departamento_id' => $this->department->id, 'fecha_publicacion' => '2026-09-10']);
+        // Coincident UUIDs in different sources are still two publications.
+        DB::table('reportes')->where('id', $report->id)->update(['id' => $a->id]);
+        $report->id = $a->id;
+        $d = [...$this->decision($report), 'estado' => 'PUBLICACION', 'state_decision' => 'Approval for the synthetic report.'];
+        $plan = $this->manifest([$this->decision($a), $d]);
+        $catalog = app(RehearsalPublicationCatalog::class);
+        $this->assertSame(2, $catalog->query(['categoria_id' => $category])->count());
+        $this->service->apply($plan);
+        // The production read model remains unchanged until a later, explicit cutover.
+        $this->assertSame(4, app(PublicPublicationCatalog::class)->query()->count());
+        $this->app->bind(PublicPublicationCatalog::class, RehearsalPublicationCatalog::class);
+        $response = $this->getJson('/api/publico/publicaciones?categoria_id='.$category)->assertOk()
+            ->assertJsonPath('meta.total', 2)->assertJsonPath('counts.ARTICULO', 1)->assertJsonPath('counts.REPORTE', 1);
+        $rows = collect($response->json('data'))->keyBy('tipo');
+        $this->assertSame('2026-09-01', $rows['ARTICULO']['fecha_recepcion']);
+        $this->assertNull($rows['REPORTE']['fecha_recepcion']);
+        foreach ($rows as $row) {
+            $this->assertSame($category, $row['categoria_id']);
+            $this->assertSame('Categoría sintética', $row['categoria']['nombre']);
+            $this->assertSame('publicaciones', $row['origen']);
+            foreach (['source_snapshot', 'decisions', 'source_hash', 'target_hash', 'metadata_hash', 'owner_id'] as $field) {
+                $this->assertArrayNotHasKey($field, $row);
+            }
+        }
+        $this->service->rollback($plan['batch_id']);
+        $this->getJson('/api/publico/publicaciones?categoria_id='.$category)->assertOk()->assertJsonPath('meta.total', 2);
+        $this->assertSame(1, $catalog->query()->where('origen', 'articulos')->count());
+        $this->assertSame(1, $catalog->query()->where('origen', 'reportes')->count());
+    }
+
+    public function test_partial_catalog_handoff_keeps_sql_pagination_counts_and_search_without_duplicates(): void
+    {
+        $decisions = [];
+        for ($i = 0; $i < 24; $i++) {
+            $article = $this->article(['titulo' => 'Publicación '.$i]);
+            if ($i < 12) { $decisions[] = $this->decision($article); }
+        }
+        $report = ReporteModel::create(['nombre_indicador' => 'Reporte sin convertir', 'departamento_id' => $this->department->id]);
+        $this->app->bind(PublicPublicationCatalog::class, RehearsalPublicationCatalog::class);
+        $url = '/api/publico/publicaciones?departamento_id='.$this->department->id;
+        $this->getJson($url)->assertJsonPath('meta.total', 25);
+        $plan = $this->manifest($decisions); $this->service->apply($plan);
+        DB::enableQueryLog();
+        $first = $this->getJson($url)->assertOk()->assertJsonCount(20, 'data')->assertJsonPath('meta.total', 25)
+            ->assertJsonPath('counts.ARTICULO', 24)->assertJsonPath('counts.REPORTE', 1)->json('data');
+        $queries = array_column(DB::getQueryLog(), 'query');
+        $this->assertTrue((bool) array_filter($queries, fn ($q) => str_contains(strtolower($q), 'not exists') && str_contains(strtolower($q), 'limit 20')));
+        $second = $this->getJson($url.'&page=2')->assertOk()->assertJsonCount(5, 'data')->json('data');
+        $this->assertCount(25, array_unique(array_column([...$first, ...$second], 'resource_key')));
+        $this->getJson($url.'&q=Publicaci%C3%B3n%200')->assertJsonPath('meta.total', 1);
+        $this->getJson($url.'&tipo=REPORTE')->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.id', $report->id);
+        $this->assertSame(12, $this->service->apply($plan)['unchanged']);
+        $this->service->rollback($plan['batch_id']);
+        $this->getJson($url)->assertJsonPath('meta.total', 25)->assertJsonPath('counts.ARTICULO', 24);
+    }
+
+    public function test_unpublished_converted_target_never_resurrects_legacy_source(): void
+    {
+        $a = $this->article(); $d = $this->decision($a); $plan = $this->manifest([$d]);
+        $this->service->apply($plan);
+        $catalog = app(RehearsalPublicationCatalog::class);
+        $this->assertSame(1, $catalog->query()->count());
+        $baseline = (array) DB::table('observatorio_publicaciones')->where('id', $d['target_id'])->first();
+        foreach (['EN_REVISION', 'SUSPENDIDO', 'ARCHIVADO', 'RECHAZADO'] as $state) {
+            DB::table('observatorio_publicaciones')->where('id', $d['target_id'])->update(['estado' => $state]);
+            $this->assertSame(0, $catalog->query()->count());
+        }
+        DB::table('observatorio_publicaciones')->where('id', $d['target_id'])->update($baseline);
+        $this->department->update(['publico' => false]);
+        $this->assertSame(0, $catalog->query()->count());
+        $this->department->update(['publico' => true]);
+        $this->assertSame(1, $catalog->query()->count());
+        $this->service->rollback($plan['batch_id']);
+        $this->assertSame(1, $catalog->query()->where('origen', 'articulos')->count());
+    }
+
+    public function test_catalog_metadata_changes_and_non_disposable_handoff_are_blocked(): void
+    {
+        $a = $this->article(); $plan = $this->manifest([$this->decision($a)]);
+        $this->service->apply($plan);
+        DB::table('phase2_publication_imports')->where('source_id', $a->id)->update(['fecha_recepcion' => '2020-01-01']);
+        $this->mustFail(fn () => $this->service->apply($plan));
+        $this->mustFail(fn () => $this->service->rollback($plan['batch_id']));
+        config(['publications.legacy_rehearsal_enabled' => false]);
+        $this->mustFail(fn () => app(RehearsalPublicationCatalog::class)->query());
+        config(['publications.legacy_rehearsal_enabled' => true]);
+        app()->instance('env', 'production');
+        try { $this->mustFail(fn () => app(RehearsalPublicationCatalog::class)->query()); }
+        finally { app()->instance('env', 'testing'); }
+    }
+
+    public function test_handoff_keeps_native_books_and_protected_pdf_access(): void
+    {
+        $a = $this->article(['visibilidad' => 'suscriptor']);
+        $pdf = "%PDF-1.4\nSynthetic subscriber PDF\n%%EOF";
+        Storage::disk('phase2-rehearsal')->put('public/fichas/subscriber.pdf', $pdf);
+        $d = [...$this->decision($a), 'file' => ['source' => 'public/fichas/subscriber.pdf', 'sha256' => hash('sha256', $pdf)]];
+        $this->service->apply($this->manifest([$d]));
+        $book = ObservatorioPublicacion::create(['departamento_id' => $this->department->id, 'creado_por' => $this->owner->id,
+            'tipo' => 'LIBRO', 'codigo' => 'LIB-NATIVE', 'titulo' => 'Libro nativo', 'estado' => 'PUBLICACION',
+            'fecha_publicacion' => '2026-09-11', 'autores' => ['Autora del libro']]);
+        $this->app->bind(PublicPublicationCatalog::class, RehearsalPublicationCatalog::class);
+        $download = '/api/departamentos/publicaciones/'.$d['target_id'].'/download';
+        foreach ([null, 'USER', 'EDITOR', 'ADMIN_OBSERVATORIO', 'SUBSCRIBER'] as $role) {
+            \Illuminate\Support\Facades\Auth::forgetGuards();
+            if ($role) { \Laravel\Sanctum\Sanctum::actingAs(User::factory()->create(['rol' => $role])); }
+            $allowed = $role === 'SUBSCRIBER';
+            $row = $this->getJson('/api/publico/publicaciones?tipo=ARTICULO')->assertOk()
+                ->assertJsonPath('meta.total', 1)->assertJsonPath('counts.LIBRO', 1)->json('data.0');
+            $this->assertSame(! $allowed, $row['bloqueado']);
+            $this->assertSame($allowed ? $download : null, $row['download_url']);
+            $response = $this->get($download);
+            if ($allowed) { $response->assertOk(); $this->assertSame($pdf, $response->streamedContent()); }
+            else { $response->assertForbidden(); }
+        }
+        $this->getJson('/api/publico/publicaciones?tipo=LIBRO')->assertOk()->assertJsonPath('data.0.id', $book->id)
+            ->assertJsonPath('data.0.autores.0', 'Autora del libro')->assertJsonPath('data.0.categoria_id', null);
     }
 }

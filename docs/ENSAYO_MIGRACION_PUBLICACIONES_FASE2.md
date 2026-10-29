@@ -10,6 +10,8 @@ El comando `publications:rehearse-legacy` es exclusivo de CLI. No tiene ruta HTT
 
 La fase 2 sigue en ejecución. Este ensayo demuestra repetición, detección de conflictos, reversión y recuperación; todavía no habilita el corte definitivo a una única fuente.
 
+La siguiente entrega amplía este mecanismo con [metadatos tipados y una proyección de lectura sin duplicación](ENSAYO_IDENTIDAD_PUBLICACIONES_FASE2.md), exclusiva de pruebas y recuperación sintética. Las limitaciones productivas descritas aquí siguen vigentes.
+
 ## Aislamiento obligatorio
 
 El ejecutor rechaza cualquier operación, incluida `prepare`, salvo que se cumplan todas estas condiciones:

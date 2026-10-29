@@ -39,7 +39,7 @@ class PublicPublicationCatalog
             ->orderByDesc('created_at')->orderBy('origen')->orderBy('id');
     }
 
-    private function publications(): Builder
+    protected function publications(): Builder
     {
         return DB::table('observatorio_publicaciones as p')
             ->join('departamentos as d', 'd.id', '=', 'p.departamento_id')
@@ -55,7 +55,7 @@ class PublicPublicationCatalog
                 CAST(NULL AS TEXT) ficha_indicador, CAST(NULL AS TEXT) fecha_recepcion");
     }
 
-    private function legacy(string $table): Builder
+    protected function legacy(string $table): Builder
     {
         $article = $table === 'articulos';
         $query = DB::table($table.' as p')->leftJoin('departamentos as d', 'd.id', '=', 'p.departamento_id')
