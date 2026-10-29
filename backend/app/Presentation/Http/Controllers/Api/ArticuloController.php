@@ -6,7 +6,6 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\ArticuloModel;
-use App\Models\ObservatorioPublicacion;
 use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,42 +32,7 @@ class ArticuloController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $query = ArticuloModel::with(['categoria', 'departamento']);
-
-        if ($request->filled('categoria_id')) {
-            $query->where('categoria_id', $request->query('categoria_id'));
-        }
-
-        if ($request->filled('departamento_id')) {
-            $query->where('departamento_id', $request->query('departamento_id'));
-        }
-
-        $articulos = $query
-            ->orderByRaw('fecha_publicacion DESC NULLS LAST')
-            ->orderByDesc('created_at')
-            ->get()
-            ->filter(fn($articulo) => $this->canViewLegacyContent($request, $articulo))
-            ->map(fn($articulo) => $this->mapLegacyArticulo($request, $articulo));
-
-        $publicaciones = ObservatorioPublicacion::query()
-            ->with('departamento')
-            ->where('tipo', 'ARTICULO')
-            ->where('estado', 'PUBLICACION')
-            ->when(
-                $request->filled('departamento_id'),
-                fn($publicationQuery) => $publicationQuery->where('departamento_id', $request->query('departamento_id'))
-            )
-            ->latest('fecha_publicacion')
-            ->get()
-            ->filter(fn(ObservatorioPublicacion $publicacion) => $this->canViewPublication($request, $publicacion))
-            ->map(fn(ObservatorioPublicacion $publicacion) => $this->mapPublicacionToArticulo($request, $publicacion));
-
-        return response()->json(
-            $articulos
-                ->concat($publicaciones)
-                ->sortByDesc(fn($item) => (string) ($item['fecha_publicacion'] ?? $item->fecha_publicacion ?? $item['created_at'] ?? $item->created_at ?? ''))
-                ->values()
-        );
+        return app(\App\Presentation\Http\Resources\Publicacion\LegacyCatalogResponse::class)->index($request, 'ARTICULO');
     }
 
     #[OA\Get(
@@ -269,73 +233,6 @@ class ArticuloController extends Controller
         $articulo->delete();
 
         return response()->json(['message' => 'Artículo eliminado exitosamente']);
-    }
-
-    private function mapLegacyArticulo(Request $request, $articulo): array
-    {
-        $isSubscriberOnly = ($articulo->visibilidad ?? 'publico') === 'suscriptor';
-        $isLocked = $isSubscriberOnly && ! $this->isSubscriber($request->user('sanctum'));
-
-        return [
-            'id' => $articulo->id,
-            'titulo' => $articulo->titulo,
-            'descripcion' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $articulo->descripcion,
-            'autor' => $articulo->autor,
-            'fuente' => $articulo->fuente,
-            'estado' => $articulo->estado,
-            'enlace' => $isLocked ? null : $articulo->enlace,
-            'download_url' => null,
-            'fecha_publicacion' => $articulo->fecha_publicacion,
-            'fecha_recepcion' => $articulo->fecha_recepcion,
-            'categoria_id' => $articulo->categoria_id,
-            'departamento_id' => $articulo->departamento_id,
-            'visibilidad' => $isSubscriberOnly ? 'suscriptor' : 'publico',
-            'bloqueado' => $isLocked,
-            'categoria' => $articulo->categoria,
-            'departamento' => $articulo->departamento,
-            'created_at' => $articulo->created_at?->toIso8601String(),
-            'updated_at' => $articulo->updated_at?->toIso8601String(),
-        ];
-    }
-
-    private function mapPublicacionToArticulo(Request $request, ObservatorioPublicacion $publicacion): array
-    {
-        $downloadUrl = "/api/departamentos/publicaciones/{$publicacion->id}/download";
-        $isLocked = $publicacion->solo_suscriptores && ! $this->isSubscriber($request->user('sanctum'));
-        $hasPdf = (bool) ($publicacion->archivo_pdf || $publicacion->sharepoint_url);
-
-        return [
-            'id' => $publicacion->id,
-            'codigo' => $publicacion->codigo,
-            'titulo' => $publicacion->titulo,
-            'descripcion' => $isLocked ? 'Contenido exclusivo para suscriptores.' : $publicacion->descripcion,
-            'autor' => $publicacion->autores,
-            'fuente' => $publicacion->fuente,
-            'estado' => $publicacion->estado,
-            'enlace' => $isLocked ? null : ($hasPdf ? $downloadUrl : $publicacion->link_url),
-            'link_url' => $isLocked || ($publicacion->sharepoint_file_id && $publicacion->link_url === $publicacion->sharepoint_url) ? null : $publicacion->link_url,
-            'download_url' => $isLocked || ! $hasPdf ? null : $downloadUrl,
-            'sharepoint_url' => $isLocked || $publicacion->archivo_pdf ? null : $publicacion->sharepoint_url,
-            'fecha_publicacion' => $publicacion->fecha_publicacion?->format('Y-m-d'),
-            'fecha_recepcion' => $publicacion->created_at?->format('Y-m-d'),
-            'categoria_id' => null,
-            'departamento_id' => $publicacion->departamento_id,
-            'visibilidad' => $publicacion->solo_suscriptores ? 'suscriptor' : 'publico',
-            'bloqueado' => $isLocked,
-            'categoria' => null,
-            'departamento' => $publicacion->departamento,
-            'created_at' => $publicacion->created_at?->toIso8601String(),
-            'updated_at' => $publicacion->updated_at?->toIso8601String(),
-        ];
-    }
-
-    private function canViewPublication(Request $request, ObservatorioPublicacion $publicacion): bool
-    {
-        if ($publicacion->estado !== 'PUBLICACION') {
-            return false;
-        }
-
-        return true;
     }
 
     private function canViewLegacyContent(Request $request, $articulo): bool

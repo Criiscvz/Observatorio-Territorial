@@ -14,8 +14,6 @@ use App\Application\Public\UseCases\GetPublicDepartamentosUseCase;
 use App\Application\Public\UseCases\GetTextAnalysisUseCase;
 use App\Application\Public\UseCases\GetUnivariableStatsUseCase;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\Models\ArticuloModel;
-use App\Infrastructure\Persistence\Eloquent\Models\ReporteModel;
 use App\Models\Departamento;
 use App\Models\ObservatorioPublicacion;
 use App\Presentation\Http\Requests\Public\BivariableStatsRequest;
@@ -64,26 +62,14 @@ class PublicController extends Controller
     {
         $publicDepartmentIds = Departamento::query()->publicos()->pluck('id');
 
-        $legacyArticles = ArticuloModel::query()
-            ->whereIn('departamento_id', $publicDepartmentIds)
-            ->where(fn ($query) => $query->whereNull('visibilidad')->orWhere('visibilidad', '!=', 'privado'))
-            ->where(fn ($query) => $query->whereNull('estado')->orWhereIn('estado', ['PUBLICADO', 'PUBLICACION']))
-            ->count();
-
-        $legacyReports = ReporteModel::query()
-            ->whereIn('departamento_id', $publicDepartmentIds)
-            ->where(fn ($query) => $query->whereNull('visibilidad')->orWhere('visibilidad', '!=', 'privado'))
-            ->count();
-
-        $publishedPublications = ObservatorioPublicacion::query()
-            ->whereIn('departamento_id', $publicDepartmentIds)
-            ->where('estado', 'PUBLICACION');
+        $counts = app(\App\Application\Publicaciones\PublicPublicationCatalog::class)->query()
+            ->whereNotNull('departamento_id')->selectRaw('tipo, COUNT(*) total')->groupBy('tipo')->pluck('total', 'tipo');
 
         return response()->json([
             'observatorios' => $publicDepartmentIds->count(),
-            'articulos' => $legacyArticles + (clone $publishedPublications)->where('tipo', 'ARTICULO')->count(),
-            'reportes' => $legacyReports + (clone $publishedPublications)->where('tipo', 'REPORTE')->count(),
-            'libros' => (clone $publishedPublications)->where('tipo', 'LIBRO')->count(),
+            'articulos' => (int) ($counts['ARTICULO'] ?? 0),
+            'reportes' => (int) ($counts['REPORTE'] ?? 0),
+            'libros' => (int) ($counts['LIBRO'] ?? 0),
         ]);
     }
 
