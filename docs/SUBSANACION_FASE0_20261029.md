@@ -125,3 +125,9 @@ Runtime local comprobado: PHP 8.4.26 y PHPUnit 11.5.53. Las dependencias PHP de 
 - Confirmar con DIIT el host y las decisiones de despliegue y el inicio formal de los plazos. No se presupone Azure ni Kubernetes.
 
 La primera entrega deja una línea base reproducible y pendientes trazables. La fase 0 no se presenta como cierre operativo total mientras falten estas puertas.
+
+## Actualización operativa del 29 de octubre
+
+Los pendientes anteriores describen la primera entrega. Se avanzó posteriormente sobre dos de ellos: `pruebas-rediseno` ya tiene protección activa con PR/check `Resultado`, y se completó la restauración integral de una copia local minimizada con PostgreSQL y sus PDF. Se añadió un modo Angular `rehearsal` que usa exclusivamente la API local separada y un ejecutor de comprobaciones HTTP.
+
+La evidencia, cantidades, procedimiento y límites están en [Ensayo de restauración](ENSAYO_RESTAURACION_20261029.md). La copia local no sustituye un punto de recuperación de producción antes de una migración futura. Secretos históricos, recuperación productiva, integraciones externas y decisiones DIIT continúan pendientes.
