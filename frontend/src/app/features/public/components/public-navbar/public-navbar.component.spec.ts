@@ -27,7 +27,7 @@ describe('Navegación pública compartida', () => {
     const translate = TestBed.inject(TranslateService);
     translate.setTranslation('es', {public: {header: {goToPanel: 'Ir al panel', logoutTitle: '¿Cerrar sesión?', logoutMessage: 'Vuelve a iniciar sesión para acceder.',
       loggingOut: 'Cerrando sesión…', roles: {EDITOR: 'Editor', ADMIN: 'Administrador', USER: 'Usuario', SUBSCRIBER: 'Suscriptor'}},
-      home: {nav: {geoViewer: 'Visor geográfico', dimensions: 'Observatorios', atlas: 'Atlas', barometer: 'Barómetro'}}},
+      home: {nav: {geoViewer: 'Visor geográfico', dimensions: 'Observatorios', atlas: 'Atlas', barometer: 'Barómetro', barometerResearch:'Resultados Investigación ULEAM', barometerLinkage:'Resultados Vinculación ULEAM', barometerUleam:'Barómetro ULEAM'}}},
       profile: {title: 'Mi perfil'}, auth: {logout: 'Cerrar sesión'}, common: {buttons: {cancel: 'Cancelar'}}});
     translate.use('es');
     const fixture = TestBed.createComponent(PublicNavbarComponent); fixture.detectChanges();
@@ -45,17 +45,41 @@ describe('Navegación pública compartida', () => {
     expect(element.querySelector('.portal-header a[href="/admin/dashboard"]')).toBeNull();
   });
 
-  it('enlaza directamente los tres destinos y conserva el visor configurado', () => {
+  it('conserva Observatorios y Atlas directos y el visor configurado, con Barómetro desplegable', () => {
     const {element, fixture, settings} = setup(null);
     expect([...element.querySelectorAll('.portal-navigation a')].map(a => a.getAttribute('href')))
-      .toEqual(['/publico/departamentos', '/publico/atlas', '/publico/datasets']);
-    expect(element.querySelectorAll('.portal-navigation button')).toHaveLength(0);
+      .toEqual(['/publico/departamentos', '/publico/atlas']);
+    expect(element.querySelectorAll('.portal-navigation button')).toHaveLength(1);
     expect(element.querySelector('.portal-geo')?.getAttribute('target')).toBe('_blank');
     settings.viewerUrl.set('https://example.test/nuevo'); fixture.detectChanges();
     expect(element.querySelector('.portal-geo')?.getAttribute('href')).toBe('https://example.test/nuevo');
     expect(element.querySelector('.portal-login')).not.toBeNull();
     expect(element.querySelector('.portal-register')).not.toBeNull();
     expect(element.querySelector('.account-controls')).toBeNull();
+  });
+
+  it('abre las tres opciones originales de Barómetro y permite cerrar sin navegar', async () => {
+    const {element,fixture}=setup(null);
+    element.querySelector<HTMLButtonElement>('.portal-barometer')!.click();fixture.detectChanges();
+    await fixture.whenStable();
+    const menu=document.querySelector('.portal-barometer-menu')!;
+    expect([...menu.querySelectorAll('a')].map(a=>a.getAttribute('href'))).toEqual(['/publico/barometro/investigacion','/publico/barometro/vinculacion','/publico/datasets']);
+    expect(menu.textContent).toContain('Resultados Investigación ULEAM');
+    expect(menu.textContent).toContain('Resultados Vinculación ULEAM');
+    expect(menu.textContent).toContain('Barómetro ULEAM');
+    document.querySelector<HTMLElement>('.cdk-overlay-backdrop')!.click();fixture.detectChanges();
+    await vi.waitFor(()=>expect(document.querySelector('.portal-barometer-menu')).toBeNull());
+    expect(element.querySelector('.portal-barometer')?.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('resalta Barómetro dentro de investigación, vinculación y datasets',()=>{
+    const {component}=setup(null);
+    for(const url of ['/publico/barometro/investigacion','/publico/barometro/vinculacion','/publico/datasets']){
+      (TestBed.inject(Router).events as Subject<NavigationEnd>).next(new NavigationEnd(1,url,url));
+      expect(component.barometerActive()).toBe(true);
+    }
+    (TestBed.inject(Router).events as Subject<NavigationEnd>).next(new NavigationEnd(2,'/publico/atlas','/publico/atlas'));
+    expect(component.barometerActive()).toBe(false);
   });
 
   it('no cierra sesión al abrir o cancelar la confirmación, y evita diálogos duplicados', async () => {

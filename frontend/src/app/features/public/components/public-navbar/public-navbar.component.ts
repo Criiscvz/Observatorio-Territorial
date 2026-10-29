@@ -27,11 +27,15 @@ export class PublicNavbarComponent {
   readonly siteSettings = inject(SiteSettingsService);
   readonly appConfig = APP_CONFIG;
   readonly menuOpen = signal(false);
+  readonly barometerActive = signal(false);
 
   constructor() {
     this.siteSettings.refreshPublic();
-    inject(Router).events.pipe(filter(event => event instanceof NavigationEnd), takeUntilDestroyed())
-      .subscribe(() => this.menuOpen.set(false));
+    const router = inject(Router);
+    const updateBarometer = (url:string) => this.barometerActive.set(/^\/publico\/(?:barometro|datasets)(?:[/?#]|$)/.test(url));
+    updateBarometer(router.url);
+    router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntilDestroyed())
+      .subscribe(event => { this.menuOpen.set(false); updateBarometer(event.urlAfterRedirects); });
   }
 
 }

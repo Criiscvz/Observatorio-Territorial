@@ -29,9 +29,20 @@
       <a class="portal-nav-link" routerLink="/publico/atlas" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
         <mat-icon>map</mat-icon><span>{{ 'public.home.nav.atlas' | translate }}</span>
       </a>
-      <a class="portal-nav-link" [routerLink]="['/publico/datasets']" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
-        <mat-icon>speed</mat-icon><span>{{ 'public.home.nav.barometer' | translate }}</span>
-      </a>
+      <button type="button" class="portal-nav-link portal-barometer" [class.is-active]="barometerActive()" [class.is-open]="barometerTrigger.menuOpen" [matMenuTriggerFor]="barometerMenu" #barometerTrigger="matMenuTrigger">
+        <mat-icon>speed</mat-icon><span>{{ 'public.home.nav.barometer' | translate }}</span><mat-icon class="portal-chevron">expand_more</mat-icon>
+      </button>
+      <mat-menu #barometerMenu="matMenu" class="portal-barometer-menu" xPosition="before">
+        <a mat-menu-item routerLink="/publico/barometro/investigacion" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+          <mat-icon>science</mat-icon><span>{{ 'public.home.nav.barometerResearch' | translate }}</span>
+        </a>
+        <a mat-menu-item routerLink="/publico/barometro/vinculacion" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+          <mat-icon>handshake</mat-icon><span>{{ 'public.home.nav.barometerLinkage' | translate }}</span>
+        </a>
+        <a mat-menu-item routerLink="/publico/datasets" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+          <mat-icon>speed</mat-icon><span>{{ 'public.home.nav.barometerUleam' | translate }}</span>
+        </a>
+      </mat-menu>
     </nav>
 
     <div class="portal-utilities">

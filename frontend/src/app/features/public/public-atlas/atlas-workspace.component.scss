@@ -1,4 +1,7 @@
 :host {display:block;min-width:0;color:var(--text-primary)}
+:host .atlas-workspace .atlas-header a.atlas-button.primary {color:#fff;background:var(--primary-600);border-color:var(--primary-600);border-radius:9px;min-height:42px;padding:10px 12px;font-size:.8rem;font-weight:600}
+:host .atlas-workspace .atlas-header a.atlas-button.primary:hover {background:var(--primary-700);border-color:var(--primary-700)}
+.atlas-header a.atlas-button.primary mat-icon {width:18px;height:18px;font-size:18px}
 .atlas-button mat-icon,.atlas-symbol mat-icon,.atlas-badge mat-icon,.resource-check mat-icon{color:inherit}
 .atlas-workspace{max-width:1440px;margin:0 auto}h1,h2,p{margin:0}h1{font-size:1.9rem;font-weight:700;line-height:1.25}h2{font-size:1.05rem;font-weight:650}mat-icon{width:18px;height:18px;font-size:18px;flex-shrink:0;color:inherit}
 .atlas-header{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:24px}.atlas-header>div{min-width:0;flex:1}.atlas-header p{font-size:.875rem;color:var(--text-secondary);line-height:1.65;margin-top:8px;max-width:800px}.atlas-eyebrow{display:block;text-transform:uppercase;font-size:.7rem;letter-spacing:.07em;color:var(--primary-600);font-weight:650;margin-bottom:8px}.atlas-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:.78rem;color:var(--text-secondary)}

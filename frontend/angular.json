@@ -54,7 +54,8 @@
               "src/material-theme.scss",
               "src/styles.css",
               "src/selection-tabs.css",
-              "src/publication-library.css"
+              "src/publication-library.css",
+              "src/public-navigation.css"
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
