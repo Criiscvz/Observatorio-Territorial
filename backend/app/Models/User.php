@@ -215,6 +215,7 @@ class User extends Authenticatable
     /** Management context is a view hint, never a substitute for current permissions. */
     public function canReadPublicationForManagement(ObservatorioPublicacion $publication): bool
     {
+        if ($publication->eliminado_legado_at !== null) { return false; }
         if ($this->isAdmin()) {
             return true;
         }

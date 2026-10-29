@@ -48,6 +48,7 @@ class CsrfProtectionTest extends TestCase
             $table->uuid('id')->primary();
             $table->softDeletes();
         });
+        (require database_path('migrations/2026_10_29_000001_preserve_legacy_publication_access.php'))->up();
         (require database_path('migrations/2026_09_27_000001_create_atlas_categorias.php'))->up();
         (require database_path('migrations/2026_10_07_000001_add_visibility_and_icon_to_atlas_categorias.php'))->up();
 

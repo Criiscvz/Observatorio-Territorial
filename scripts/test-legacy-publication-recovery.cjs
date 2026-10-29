@@ -78,7 +78,7 @@ try {
   assert(ready);
   const storage = path.join(output, 'storage'); const restoreStorage = path.join(output, 'restored-storage');
   fs.mkdirSync(storage); fs.mkdirSync(restoreStorage);
-  assert.equal(php(dbName, storage, 'seed').legacy_records, 2);
+  assert.equal(php(dbName, storage, 'seed').legacy_records, 4);
   const before = manifest(dbName);
   const sourceFiles = path.join(storage, 'app/private/phase2-rehearsal');
   const filesBefore = fileManifest(sourceFiles);
@@ -88,13 +88,13 @@ try {
     '--mount', `type=bind,source=${sourceFiles},target=/files,readonly`, '--mount', `type=bind,source=${output},target=/backup`,
     dbImage, '-cf', '/backup/before-files.tar', '-C', '/files', '.']);
   const applied = php(dbName, storage, 'apply');
-  assert.equal(applied.repeat_unchanged, 2);
+  assert.equal(applied.repeat_unchanged, 4);
   assert.equal(applied.catalog_handoff_verified, true);
-  assert.equal(php(dbName, storage, 'rollback').removed, 2);
+  assert.equal(php(dbName, storage, 'rollback').removed, 4);
   assert.deepEqual(manifest(dbName), before, 'Rollback changed the source/target/counter manifests.');
   assert.deepEqual(fileManifest(sourceFiles), filesBefore, 'Rollback changed the original files.');
   // Leave the first DB imported; recovery must use the pre-import backup into a NEW DB.
-  assert.equal(php(dbName, storage, 'apply').applied, 2);
+  assert.equal(php(dbName, storage, 'apply').applied, 4);
   docker(['exec', databaseId, 'createdb', '-U', 'recovery_test', restoredDb]);
   docker(['exec', databaseId, 'pg_restore', '-U', 'recovery_test', '-d', restoredDb, '--exit-on-error', '--no-owner', '--no-privileges', '/tmp/before.dump']);
   assert.deepEqual(manifest(restoredDb), before, 'Restored rows differ from pre-import backup.');
@@ -107,13 +107,13 @@ try {
   assert.equal(restored.reapply_after_restore, true);
   assert.equal(restored.catalog_handoff_verified, true);
   assert.deepEqual(manifest(restoredDb), before); assert.deepEqual(fileManifest(restoredFiles), filesBefore);
-  const result = {ok: true, syntheticLegacyRecords: 2, syntheticPdfs: 1, repeatWithoutDuplicates: true,
+  const result = {ok: true, syntheticLegacyRecords: 4, syntheticPdfs: 1, repeatWithoutDuplicates: true,
     rollbackRowsAndFilesMatch: true, restoredIntoEmptyDatabase: true, restoredRowsAndFilesMatch: true,
-    reapplyAfterRestore: true, catalogHandoffAfterRestore: true, productionRequests: 0, externalNetworking: false,
+    reapplyAfterRestore: true, catalogHandoffAfterRestore: true, privateAndDeletedPreserved: true, productionRequests: 0, externalNetworking: false,
     checkedAt: new Date().toISOString(), before, filesBefore};
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(result, null, 2));
   fs.writeFileSync(path.join(root, 'storage/codex-local/phase2-recovery-latest.json'), JSON.stringify({ok: true, output, checkedAt: result.checkedAt}, null, 2));
-  console.log(JSON.stringify({ok: true, syntheticLegacyRecords: 2, restoredIntoEmptyDatabase: true, rowsAndFilesMatch: true, productionRequests: 0,
+  console.log(JSON.stringify({ok: true, syntheticLegacyRecords: 4, restoredIntoEmptyDatabase: true, rowsAndFilesMatch: true, productionRequests: 0,
     result: path.relative(root, path.join(output, 'results.json')).replaceAll('\\', '/')}));
 } finally {
   if (databaseId && /^[a-f0-9]{64}$/.test(databaseId)) docker(['stop', '--time', '5', databaseId]);

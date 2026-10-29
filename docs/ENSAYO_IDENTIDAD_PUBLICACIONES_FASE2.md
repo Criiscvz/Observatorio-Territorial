@@ -29,6 +29,8 @@ El contrato público conserva su lista explícita de campos. No expone decisione
 
 Los registros privados y eliminados lógicamente **siguen bloqueados para conversión**. Antes de habilitarlos se debe definir una representación equivalente y aplicarla también a gestión, detalles y descargas; ocultarlos solo en el catálogo no sería suficiente. Las fuentes originales permanecen intactas.
 
+Actualización de la siguiente entrega: la [conservación de restricciones](PRIVACIDAD_CONSERVACION_PUBLICACIONES_FASE2.md) añade esa representación y sus comprobaciones. El ensayo admite estos casos con decisión explícita; no habilita conversiones productivas ni resuelve automáticamente observatorios/propietarios ausentes.
+
 ## Validación
 
 - SQLite: **300 pruebas y 2.524 aserciones**, ocho omisiones específicas de PostgreSQL.

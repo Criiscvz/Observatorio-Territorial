@@ -111,3 +111,7 @@ El [ensayo reversible de publicaciones antiguas](ENSAYO_MIGRACION_PUBLICACIONES_
 ## Cuarta entrega: identidad y metadatos en el ensayo
 
 La [proyección de cambio de fuente del ensayo](ENSAYO_IDENTIDAD_PUBLICACIONES_FASE2.md) conserva categoría y fecha de recepción, y evita contar a la vez el origen y su copia convertida. Verifica conversiones parciales, filtros, páginas de 20, recursos de suscriptores y la no reaparición de orígenes archivados. También se comprueba tras restaurar respaldos. No se enlaza al catálogo desplegado: privacidad/eliminación lógica, compatibilidad de escrituras/detalles/fichas y el corte productivo siguen pendientes.
+
+## Quinta entrega: restricciones privadas y eliminación histórica
+
+La [conservación de privacidad y eliminaciones antiguas](PRIVACIDAD_CONSERVACION_PUBLICACIONES_FASE2.md) añade dos campos internos anulables y controles en consultas, resolución de ID, gestión y descarga. El ensayo conserva esas restricciones con decisión explícita y restaura cuatro fuentes sintéticas sin pérdida. Se refuerzan las rutas antiguas de detalle y fichas mientras continúan activas. La migración de esquema se ejecuta antes de servir código, sin convertir contenido real ni habilitar el cambio de fuente; la compatibilidad de escrituras/IDs y el corte completo siguen pendientes.

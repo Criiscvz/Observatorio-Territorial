@@ -31,7 +31,7 @@ class AdminWorkspaceController extends Controller
 
     protected function publications(): Builder
     {
-        return ObservatorioPublicacion::query()->whereHas('departamento')
+        return ObservatorioPublicacion::query()->visibleLegacyAccess(request()->user())->whereHas('departamento')
             ->whereIn('tipo', ['ARTICULO', 'REPORTE', 'LIBRO']);
     }
 

@@ -105,6 +105,7 @@ class PublicController extends Controller
         }
 
         $query = ObservatorioPublicacion::query()
+            ->publicLegacyAccess()
             ->where('departamento_id', $id)
             ->where('tipo', 'LIBRO')
             ->where('estado', 'PUBLICACION')
@@ -117,6 +118,7 @@ class PublicController extends Controller
     {
         $filters = $request->validate(['categoria_id' => ['nullable', 'uuid']]);
         $query = ObservatorioPublicacion::query()
+            ->publicLegacyAccess()
             ->with('atlasCategoria')
             ->when($filters['categoria_id'] ?? null, fn ($q, $id) => $q->where('atlas_categoria_id', $id))
             ->where('tipo', 'ATLAS')

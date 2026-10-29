@@ -14,6 +14,9 @@ class PublicacionResource extends JsonResource
         $routeAction = (string) ($request->route()?->getActionName() ?? '');
         $isManagementRequest = str_contains($routeAction, 'ObservatorioPublicacionController')
             || str_contains($routeAction, 'AtlasEnlaceController');
+        abort_if($this->eliminado_legado_at !== null, 404);
+        abort_if($this->resource->hasPrivateLegacyAccess()
+            && ! ($isManagementRequest && $user?->canReadPublicationForManagement($this->resource)), 404);
         $isEditorOwner = $isManagementRequest
             && $user?->rol === 'EDITOR'
             && $user->canReadPublicationForManagement($this->resource);

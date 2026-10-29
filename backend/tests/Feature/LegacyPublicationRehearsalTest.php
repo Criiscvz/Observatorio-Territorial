@@ -386,4 +386,128 @@ class LegacyPublicationRehearsalTest extends TestCase
         $this->getJson('/api/publico/publicaciones?tipo=LIBRO')->assertOk()->assertJsonPath('data.0.id', $book->id)
             ->assertJsonPath('data.0.autores.0', 'Autora del libro')->assertJsonPath('data.0.categoria_id', null);
     }
+
+    public function test_private_and_deleted_sources_preserve_restrictions_with_current_management_permissions(): void
+    {
+        $editor = User::factory()->create(['rol' => 'EDITOR']);
+        $editor->departamentos()->attach($this->department->id, ['id' => (string) Str::uuid(), 'rol' => 'EDITOR']);
+        $reviewer = User::factory()->create(['rol' => 'ADMIN_OBSERVATORIO']);
+        $reviewer->departamentos()->attach($this->department->id, ['id' => (string) Str::uuid(), 'rol' => 'ADMIN', 'puede_revisar' => true]);
+        $limited = User::factory()->create(['rol' => 'ADMIN_OBSERVATORIO']);
+        $limited->departamentos()->attach($this->department->id, ['id' => (string) Str::uuid(), 'rol' => 'ADMIN', 'puede_revisar' => false]);
+        $private = $this->article(['visibilidad' => 'privado']);
+        $deleted = $this->article(); $deleted->delete();
+        $pdf = "%PDF-1.4\nPrivate synthetic fixture\n%%EOF";
+        Storage::disk('phase2-rehearsal')->put('public/fichas/preserved.pdf', $pdf);
+        $decisions = array_map(fn ($source) => [...$this->decision($source),
+            'owner_id' => $editor->id, 'preservation_decision' => 'Preserve the private/deleted restriction without publication.',
+            'file' => ['source' => 'public/fichas/preserved.pdf', 'sha256' => hash('sha256', $pdf)]], [$private, $deleted]);
+        $plan = $this->manifest($decisions); $this->service->apply($plan);
+        $this->assertSame(2, $this->service->apply($plan)['unchanged']);
+        $this->app->bind(PublicPublicationCatalog::class, RehearsalPublicationCatalog::class);
+        $privateId = $decisions[0]['target_id']; $deletedId = $decisions[1]['target_id'];
+        $rawDeleted = DB::table('observatorio_publicaciones')->where('id', $deletedId)->first();
+        $this->assertNotNull($rawDeleted->eliminado_legado_at);
+        $this->assertNull(ObservatorioPublicacion::find($deletedId));
+        $this->assertSame('privado', ObservatorioPublicacion::findOrFail($privateId)->visibilidad_legada);
+        $unrelatedEditor = User::factory()->create(['rol' => 'EDITOR']);
+        $unrelatedEditor->departamentos()->attach($this->department->id, ['id' => (string) Str::uuid(), 'rol' => 'EDITOR']);
+        $actors = [null, User::factory()->create(['rol' => 'USER']), User::factory()->create(['rol' => 'SUBSCRIBER']),
+            $unrelatedEditor, $limited, $editor, $reviewer, $this->owner];
+        foreach ($actors as $actor) {
+            \Illuminate\Support\Facades\Auth::forgetGuards();
+            if ($actor) { \Laravel\Sanctum\Sanctum::actingAs($actor); }
+            $allowed = $actor && in_array($actor->id, [$editor->id, $reviewer->id, $this->owner->id], true);
+            $this->getJson('/api/publico/publicaciones')->assertOk()->assertJsonPath('meta.total', 0);
+            $this->getJson('/api/articulos')->assertOk()->assertExactJson([]);
+            $url = '/api/departamentos/publicaciones/'.$privateId.'/download';
+            $this->get($url)->assertStatus($actor?->isAdmin() ? 200 : 404);
+            $response = $this->get($url.'?context=management');
+            $response->assertStatus($allowed ? 200 : 404);
+            if ($allowed) { $this->assertSame($pdf, $response->streamedContent()); }
+            foreach (['', '?context=management'] as $suffix) {
+                $this->get('/api/departamentos/publicaciones/'.$deletedId.'/download'.$suffix)->assertNotFound();
+            }
+            if ($actor) {
+                $rows = $this->getJson('/api/departamentos/'.$this->department->id.'/publicaciones')->assertOk()->json('data');
+                $this->assertSame($allowed ? [$privateId] : [], array_column($rows, 'id'));
+                $this->deleteJson('/api/departamentos/publicaciones/'.$deletedId)->assertNotFound();
+            }
+        }
+        $editor->departamentos()->detach($this->department->id);
+        \Laravel\Sanctum\Sanctum::actingAs($editor);
+        $this->get('/api/departamentos/publicaciones/'.$privateId.'/download?context=management')->assertNotFound();
+        $reviewer->departamentos()->updateExistingPivot($this->department->id, ['puede_revisar' => false]);
+        \Laravel\Sanctum\Sanctum::actingAs($reviewer);
+        $this->get('/api/departamentos/publicaciones/'.$privateId.'/download?context=management')->assertNotFound();
+        $this->getJson('/api/observatorio-admin/publicaciones')->assertOk()->assertJsonPath('meta.total', 0);
+        $this->service->rollback($plan['batch_id']);
+        $this->assertDatabaseCount('observatorio_publicaciones', 0);
+        $this->assertDatabaseCount('articulos', 2);
+        $this->assertSame($pdf, Storage::disk('phase2-rehearsal')->get('public/fichas/preserved.pdf'));
+    }
+
+    public function test_preservation_fields_cannot_be_cleared_through_review_and_schema_rollback_refuses_data_loss(): void
+    {
+        $a = $this->article(['visibilidad' => 'privado']);
+        $d = [...$this->decision($a), 'preservation_decision' => 'Keep the original private restriction in this fixture.'];
+        $this->service->apply($this->manifest([$d]));
+        \Laravel\Sanctum\Sanctum::actingAs($this->owner);
+        $this->patchJson('/api/departamentos/publicaciones/'.$d['target_id'], [
+            'titulo' => 'Review keeps privacy', 'estado' => 'PUBLICACION', 'fecha_publicacion' => '2026-09-10',
+            'solo_suscriptores' => false, 'visibilidad_legada' => null, 'eliminado_legado_at' => null,
+        ])->assertOk();
+        $this->assertSame('privado', ObservatorioPublicacion::findOrFail($d['target_id'])->visibilidad_legada);
+        $migration = require database_path('migrations/2026_10_29_000001_preserve_legacy_publication_access.php');
+        $this->mustFail(fn () => $migration->down());
+        $this->assertTrue(Schema::hasColumn('observatorio_publicaciones', 'visibilidad_legada'));
+    }
+
+    public function test_old_detail_and_file_routes_do_not_bypass_department_or_subscriber_restrictions(): void
+    {
+        $a = $this->article(['visibilidad' => 'suscriptor']);
+        $report = ReporteModel::create(['nombre_indicador' => 'Protected report', 'departamento_id' => $this->department->id,
+            'visibilidad' => 'suscriptor', 'ficha_indicador' => '/api/reportes/fichas/old.pdf']);
+        Storage::disk('phase2-rehearsal')->put('public/fichas/old.pdf', '%PDF-1.4 old fixture');
+        Storage::disk('phase2-rehearsal')->put('public/fichas/orphan.pdf', '%PDF-1.4 orphan');
+        foreach ([null, 'USER', 'EDITOR', 'ADMIN_OBSERVATORIO', 'SUBSCRIBER', 'ADMIN'] as $role) {
+            \Illuminate\Support\Facades\Auth::forgetGuards();
+            if ($role) { \Laravel\Sanctum\Sanctum::actingAs(User::factory()->create(['rol' => $role])); }
+            $allowed = in_array($role, ['SUBSCRIBER', 'ADMIN'], true);
+            $this->getJson('/api/articulos/'.$a->id)->assertStatus($allowed ? 200 : 403);
+            $this->getJson('/api/reportes/'.$report->id)->assertStatus($allowed ? 200 : 403);
+            $response = $this->get('/api/reportes/fichas/old.pdf')->assertStatus($allowed ? 200 : 403);
+            if ($allowed) { $response->assertHeader('Cache-Control', 'no-store, private'); }
+            $this->get('/api/reportes/fichas/orphan.pdf')->assertNotFound();
+        }
+        $this->department->update(['publico' => false]);
+        $this->getJson('/api/articulos/'.$a->id)->assertNotFound();
+        $this->getJson('/api/reportes/'.$report->id)->assertNotFound();
+        $this->get('/api/reportes/fichas/old.pdf')->assertNotFound();
+        $this->department->update(['publico' => true]);
+        $this->department->delete();
+        $this->getJson('/api/articulos/'.$a->id)->assertNotFound();
+        $this->getJson('/api/reportes/'.$report->id)->assertNotFound();
+        $this->get('/api/reportes/fichas/old.pdf')->assertNotFound();
+        $this->department->restore();
+        $report->delete();
+        $this->get('/api/reportes/fichas/old.pdf')->assertNotFound();
+        $this->assertSame('%PDF-1.4 old fixture', Storage::disk('phase2-rehearsal')->get('public/fichas/old.pdf'));
+    }
+
+    public function test_shared_legacy_file_fails_closed_when_any_reference_is_restricted(): void
+    {
+        Storage::disk('phase2-rehearsal')->put('public/fichas/shared.pdf', '%PDF-1.4 shared');
+        $public = ReporteModel::create(['nombre_indicador' => 'Public reference', 'visibilidad' => 'publico',
+            'ficha_indicador' => '/api/reportes/fichas/shared.pdf']);
+        $private = ReporteModel::create(['nombre_indicador' => 'Private reference', 'visibilidad' => 'privado',
+            'ficha_indicador' => 'https://example.test/api/reportes/fichas/shared.pdf']);
+        $this->get('/api/reportes/fichas/shared.pdf')->assertNotFound();
+        $private->delete();
+        $this->get('/api/reportes/fichas/shared.pdf')->assertNotFound();
+        // A similar suffix does not own this exact filename.
+        $private->forceDelete();
+        $public->update(['ficha_indicador' => '/api/reportes/fichas/not_shared.pdf']);
+        $this->get('/api/reportes/fichas/shared.pdf')->assertNotFound();
+    }
 }

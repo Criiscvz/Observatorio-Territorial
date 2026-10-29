@@ -68,7 +68,7 @@ class ObservatorioPublicacionController extends Controller
             ->limit(6);
 
         if ($request->user()->rol !== 'ADMIN') {
-            $query->where('estado', self::ESTADO_PUBLICACION)->inPublicAtlasCategories();
+            $query->publicLegacyAccess()->where('estado', self::ESTADO_PUBLICACION)->inPublicAtlasCategories();
         }
 
         return PublicacionResource::collection($query->get());
@@ -990,6 +990,7 @@ class ObservatorioPublicacionController extends Controller
     private function applyVisibilityFilter($query, Request $request): void
     {
         $user = $request->user();
+        $query->visibleLegacyAccess($user);
         if ($user->isObservatoryAdmin()) {
             $query->whereIn('departamento_id', $user->observatoryIds())->whereIn('tipo', ['ARTICULO', 'REPORTE', 'LIBRO'])
                 ->where(fn ($visible) => $visible->whereIn('departamento_id', $user->observatoryIds('puede_revisar'))
@@ -1022,6 +1023,7 @@ class ObservatorioPublicacionController extends Controller
     private function ensureCanViewPublication(Request $request, ObservatorioPublicacion $publicacion): void
     {
         $user = $request->user('sanctum') ?: $request->user();
+        abort_if($publicacion->eliminado_legado_at !== null, 404);
         if ($user?->rol === 'ADMIN') {
             return;
         }
@@ -1031,6 +1033,8 @@ class ObservatorioPublicacionController extends Controller
         if ($request->query('context') === 'management' && $user?->canReadPublicationForManagement($publicacion)) {
             return;
         }
+
+        abort_if($publicacion->hasPrivateLegacyAccess(), 404);
 
         abort_unless($publicacion->estado === self::ESTADO_PUBLICACION, 404, 'La publicación no está disponible.');
 
