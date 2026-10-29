@@ -194,7 +194,7 @@ class CsrfProtectionTest extends TestCase
     public function test_valid_csrf_token_does_not_bypass_administrator_role_requirement(): void
     {
         $this->actingAs((new User())->forceFill([
-            'id' => $this->admin->id, 'rol' => 'EDITOR', 'password' => $this->admin->password,
+            'id' => $this->admin->id, 'rol' => 'EDITOR', 'password' => $this->admin->password, 'is_active' => true,
         ]), 'web');
 
         $this->postJson('/api/atlas/categorias', ['nombre' => 'Must not be saved'],

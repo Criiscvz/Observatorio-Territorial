@@ -991,7 +991,9 @@ class ObservatorioPublicacionController extends Controller
     {
         $user = $request->user();
         if ($user->isObservatoryAdmin()) {
-            $query->whereIn('departamento_id', $user->observatoryIds())->whereIn('tipo', ['ARTICULO', 'REPORTE', 'LIBRO']);
+            $query->whereIn('departamento_id', $user->observatoryIds())->whereIn('tipo', ['ARTICULO', 'REPORTE', 'LIBRO'])
+                ->where(fn ($visible) => $visible->whereIn('departamento_id', $user->observatoryIds('puede_revisar'))
+                    ->orWhere('estado', self::ESTADO_PUBLICACION));
             return;
         }
         if ($user->rol === 'ADMIN') {
@@ -1005,7 +1007,9 @@ class ObservatorioPublicacionController extends Controller
                         ->where('estado', self::ESTADO_PUBLICACION)
                         ->where(fn ($categoryQuery) => $categoryQuery->where('tipo', '!=', 'ATLAS')
                             ->orWhere(fn ($atlasQuery) => $atlasQuery->inPublicAtlasCategories())))
-                    ->orWhere('creado_por', $user->id);
+                    ->orWhere(fn ($owned) => $owned->where('creado_por', $user->id)
+                        ->whereIn('tipo', ['ARTICULO', 'REPORTE', 'LIBRO'])
+                        ->whereIn('departamento_id', $user->departamentos()->wherePivotIn('rol', ['ADMIN', 'EDITOR'])->pluck('departamentos.id')));
             });
         } else {
             $query->where('estado', self::ESTADO_PUBLICACION)
@@ -1021,16 +1025,10 @@ class ObservatorioPublicacionController extends Controller
         if ($user?->rol === 'ADMIN') {
             return;
         }
-        if ($user?->isObservatoryAdmin() && $request->query('context') === 'management') {
-            abort_unless($publicacion->tipo !== 'ATLAS' && in_array($publicacion->departamento_id, $user->observatoryIds(), true), 403);
-            return;
-        }
-
-        if (
-            $request->query('context') === 'management'
-            && $user?->rol === 'EDITOR'
-            && (int) $publicacion->creado_por === (int) $user->id
-        ) {
+        // A soft-deleted parent must not turn a private/assigned resource into a global download.
+        abort_if(($publicacion->departamento_id !== null && ! $publicacion->departamento)
+            || ($publicacion->departamento_id === null && $publicacion->tipo !== 'ATLAS'), 404);
+        if ($request->query('context') === 'management' && $user?->canReadPublicationForManagement($publicacion)) {
             return;
         }
 

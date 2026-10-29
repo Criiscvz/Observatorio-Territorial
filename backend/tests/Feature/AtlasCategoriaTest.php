@@ -509,8 +509,13 @@ class AtlasCategoriaTest extends TestCase
         $this->getJson($download)->assertNotFound();
     }
 
-    public function test_department_lists_respect_private_atlas_categories_and_keep_editor_ownership_access(): void
+    public function test_department_lists_respect_private_atlas_categories_even_for_the_former_editor_owner(): void
     {
+        Schema::create('usuario_departamento', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id');
+            $table->uuid('departamento_id');
+            $table->string('rol');
+        });
         Schema::create('departamentos', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('nombre');
@@ -527,7 +532,7 @@ class AtlasCategoriaTest extends TestCase
             $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(0, 'data');
         }
         $publication->update(['creado_por' => 1]);
-        $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(0, 'data');
         $this->signIn();
         $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(1, 'data');
     }

@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { credentialLines } from './credential-patterns.mjs';
 
 // Narrow repository regressions, not a general-purpose secret scanner.
 // Read tracked path metadata and the explicitly named examples only: never .env.
@@ -35,28 +36,6 @@ function isSecretFile(path) {
     return !/^\.env(?:\.[\w-]+)*\.example$/.test(basename);
   }
   return basename === 'auth.json' || /\.(?:pem|key|p12|pfx)$/i.test(basename);
-}
-
-function credentialLines(text) {
-  const findings = [];
-  // Detect weak example styles, without embedding the actual historical values.
-  const weakExampleStyle = /\b(?:password|secret|post)\d{1,4}\b/i;
-  for (const [index, line] of text.split(/\r?\n/).entries()) {
-    if (/\b(?:postgres(?:ql)?|mongodb(?:\+srv)?|mysql|redis):\/\/[^\s:@/]+:[^\s@]+@/i.test(line)) {
-      findings.push({ line: index + 1, rule: 'embedded-database-password' });
-    }
-    if (weakExampleStyle.test(line)) {
-      findings.push({ line: index + 1, rule: 'retired-example-password' });
-    }
-    const assignment = line.match(/^\s*(?:APP_KEY|DATABASE_URL|MONGODB_URI|DB_PASSWORD|MONGO_INITDB_ROOT_PASSWORD|MONGODB_ROOT_PASSWORD|ADMIN_PASSWORD|INITIAL_USER_PASSWORD|MICROSOFT_CLIENT_SECRET|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY)[ \t]*[:=][ \t]*(.*)$/);
-    if (assignment) {
-      const value = assignment[1].trim();
-      if (value && !value.startsWith('#') && !/^\$\{[A-Z_]+:\?[^}]+\}$/.test(value)) {
-        findings.push({ line: index + 1, rule: 'literal-documentation-password' });
-      }
-    }
-  }
-  return findings;
 }
 
 test('the five reviewed artifacts are absent from the Git index', () => {
@@ -134,6 +113,9 @@ test('the environment template contains no literal credentials', async () => {
 test('the documentation detector distinguishes empty values from the next line', () => {
   assert.deepEqual(credentialLines('DB_PASSWORD=\nDB_HOST=localhost'), []);
   assert.deepEqual(credentialLines('MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:?required}'), []);
+  assert.deepEqual(credentialLines("DATABASE_URL: ''\nMONGODB_URI: \"\"\nAPP_KEY=null"), []);
+  assert.equal(credentialLines("DB_PASSWORD='synthetic-fixture-only'").length, 1);
+  assert.equal(credentialLines('MAIL_PASSWORD=synthetic-fixture-only').length, 1);
 });
 
 test('the PostgreSQL guide distinguishes a prompt from password authentication', async () => {

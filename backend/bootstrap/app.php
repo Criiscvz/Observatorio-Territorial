@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Esto asegura que Laravel SIEMPRE responda JSON en rutas /api/*
         $middleware->prependToGroup('api', \App\Http\Middleware\ForceJsonResponse::class);
         $middleware->statefulApi();
+        $middleware->appendToGroup('api', \App\Http\Middleware\EnsureActiveAccount::class);
 
         // Para API: NO redirigir a login, sino devolver JSON 401
         $middleware->redirectGuestsTo(function (Request $request) {
