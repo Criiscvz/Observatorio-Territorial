@@ -4,6 +4,8 @@ Fecha: 29 de octubre de 2026 (America/Guayaquil).
 Base de trabajo: `pruebas-rediseno`, commit `5d5fd835eadee64c33c4f60e1fa84fcb9a431c66`.
 Rama: `subsanacion-seguridad-fase1`.
 
+Actualización de cierre: las correcciones se integraron por el [PR #15](https://github.com/Criiscvz/Observatorio-Territorial/pull/15), commit `3b7fbf526740e8151233fb755ef5b1e2734cfdff`, y se verificaron en el despliegue de `pruebas-rediseno`. El tratamiento posterior de credenciales y la matriz final se registran en el [acta de cierre técnico](CIERRE_FASE1_20261029.md). La rama de esta actualización es `subsanacion-cierre-fase1`.
+
 ## Cambios de esta entrega
 
 La lectura de publicaciones en contexto de gestión ahora exige permisos vigentes. Un parámetro de URL no concede permisos y ser el autor no sustituye una asignación de Editor activa. El mismo criterio se usa al generar enlaces de descarga y al autorizar su lectura.
@@ -25,7 +27,9 @@ El control de CI sigue revisando archivos rastreados y el rango nuevo del PR, co
 
 El escaneo utiliza la [configuración oficial de Gitleaks 8.30.1](https://github.com/gitleaks/gitleaks/blob/v8.30.1/config/gitleaks.toml). Los candidatos se clasifican de manera privada; los ejemplos explícitos no generan una excepción general para documentos o historial.
 
-La revisión operativa de credenciales permanece **abierta** y se lleva en registros locales ignorados. Esos registros, exportaciones, nombres/correos de cuentas, contraseñas e información de acceso a proveedores no deben adjuntarse a un PR público. No se ha reescrito el historial ni cambiado credenciales de servicios por el hecho de encontrar una coincidencia.
+La revisión operativa encontró credenciales que requerían tratamiento. El responsable renovó las contraseñas afectadas en la aplicación publicada; la comprobación posterior de solo lectura no encontró coincidencias con los candidatos históricos examinados. La credencial de MongoDB local se rotó tras ensayar respaldo/restauración y se verificaron tanto el rechazo de la anterior como la conexión del driver PHP. Las exportaciones temporales y el estado temporal de contraseñas se retiraron.
+
+La evidencia operativa se conserva en registros locales ignorados. Esos registros, nombres/correos de cuentas, contraseñas e información de acceso a proveedores no deben adjuntarse a un PR público. Se conserva el historial con los hallazgos clasificados y tratados, sin nuevas exclusiones del escáner. No se presenta el historial como libre de ejemplos ni se reescriben referencias compartidas. El procedimiento y los límites se documentan en el acta de cierre.
 
 Para repetir la auditoría manual desde una copia completa, con el binario verificado configurado en `GITLEAKS_BIN`:
 
@@ -43,8 +47,12 @@ Guarda metadatos en `storage/codex-local/phase1/secret-history-metadata.json` y 
 | Backend SQLite | 279 casos, 2.258 aserciones; 8 omisiones que requieren PostgreSQL. |
 | PostgreSQL/JSONB/aislamiento | 77 pruebas y 183 aserciones aprobadas. Hay solapamiento con la suite general; no sumar como casos únicos. |
 | Frontend | 494 pruebas aprobadas en 53 archivos. |
-| Escáner/higiene/workflow | 35 pruebas aprobadas, incluidos canarios históricos y candidatos eliminados de documentación. |
+| Escáner/higiene/workflow | 36 pruebas aprobadas en el cierre, incluidos canarios históricos, candidatos eliminados de documentación y fallo de lectura de Git. |
 | Copia de aplicación restaurada | 121 comprobaciones HTTP, cinco roles y 26 PDF verificados por SHA-256, aprobados contra `localhost:8101`. |
+| Despliegue del PR #15 | CI aprobado y commit verificado como Ready/Production en Vercel y Live en Render; 16 solicitudes HTTP de solo lectura aprobadas. |
+| Credenciales operativas | Revisión privada de configuración y comparación posterior al cambio de contraseñas sin coincidencias con los candidatos examinados. |
+| MongoDB local | Respaldo/restauración ensayados; credencial anterior rechazada y nueva aceptada por mongosh y el driver PHP; datos de aplicación sin cambios y estado detenido conservado. |
+| Compose local | Configuración validada con valores sintéticos; publicación de MongoDB limitada a `127.0.0.1`. |
 
 La suite de aplicación restaurada utiliza cuentas sintéticas y configuración independiente. Las pruebas de escritura y regresión no usan producción. La revisión operativa autorizada de cuentas se realizó mediante una transacción SQL de solo lectura y comparación local de hashes; no se probaron inicios de sesión con contraseñas encontradas ni se modificaron cuentas.
 
@@ -54,11 +62,11 @@ La suite de aplicación restaurada utiliza cuentas sintéticas y configuración 
 |---|---|
 | NC-01, SQL JSONB | Regresiones PostgreSQL aprobadas; parámetros vinculados conservados. |
 | NC-02, seed HTTP | `SeedRoutesDisabledTest` aprobado; no se introduce inicialización por HTTP. |
-| NC-03, credenciales | Inventario ampliado y revisión operativa documentada de forma privada. Requiere tratamiento del responsable antes del cierre. |
+| NC-03, credenciales | Inventario ampliado y tratamiento operativo verificado dentro del alcance. Evidencia privada y decisión de conservar el historial con hallazgos tratados; sin aceptación institucional implícita. |
 | NC-05, autorización | Se corrigen límites de lectura y revocación. La centralización completa en Policies/capacidades sigue prevista en fase 3. |
 | NC-10, sesión | Regresiones de cookies/CSRF y cuentas desactivadas aprobadas; el interceptor conserva restricción de origen/ruta de API. |
 | NC-11, cabeceras/visores | Se conservan Helmet/CSP y los controles de origen del visor. CI verifica el build y las cabeceras/PWA del artefacto. |
 | NC-14, configuración | Variables operativas se revisan sin publicarlas; sin `env()` en negocio/rutas/bootstrap. Se retira `777` del Dockerfile de desarrollo. |
 | NC-15, higiene | Guardas y escaneo aprobados. No equivale a limpieza del historial o de copias ajenas. |
 
-La fase 1 no se declara cerrada mientras siga pendiente el tratamiento de credenciales operativas. La actualización de contenedores completos, `--ignore-platform-reqs`, usuario de ejecución y migraciones de arranque se coordinan en la fase 4 con un build reproducible; esta entrega no presenta una nueva imagen Docker validada. Las restricciones de red, continuidad del servicio gratuito y recuperación productiva requieren su procedimiento operativo específico.
+El alcance técnico de fase 1 queda verificado con el tratamiento de credenciales descrito y las pruebas registradas. No equivale a certificación de seguridad ni a aceptación institucional de todas las NC. La actualización de contenedores completos, `--ignore-platform-reqs`, usuario de ejecución y migraciones de arranque se coordinan en la fase 4 con un build reproducible; esta entrega no presenta una nueva imagen Docker validada. Las restricciones de red, continuidad del servicio gratuito y recuperación productiva tienen seguimiento separado en el acta de cierre.

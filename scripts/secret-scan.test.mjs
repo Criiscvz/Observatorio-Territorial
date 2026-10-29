@@ -133,6 +133,12 @@ test('untrusted or unbounded history options are rejected before scanner executi
   assert.throws(() => scanHistory('.', '0'.repeat(40), 'a'.repeat(40)));
 });
 
+test('a failed Git history read cannot be reported as a clean scan', async () => {
+  await fixture({ 'source.txt': 'clean fixture\n' }, async directory => {
+    await assert.rejects(scanAllReachableHistory(directory));
+  });
+});
+
 test('the explicit history audit detects a root-commit canary removed before HEAD on another branch', async () => {
   const canary = fakeGithubToken();
   await fixture({ 'source.txt': `token=${canary}\n` }, async directory => {

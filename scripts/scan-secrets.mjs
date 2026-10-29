@@ -29,6 +29,9 @@ async function runScan(directory, mode, extra, { config = join(root, '.gitleaks.
     { encoding: 'utf8', timeout: 130000, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
     // Never forward scanner stdout/stderr or source/Secret/Match report fields.
     assert(!result.error && [0, 1].includes(result.status), 'Gitleaks failed; raw diagnostics suppressed.');
+    // With error-only logging, diagnostics mean the scan was incomplete. In
+    // particular, Gitleaks can exit 0 with an empty report when Git itself fails.
+    assert(!result.stderr.trim(), 'Gitleaks reported an execution error; raw diagnostics suppressed.');
     const report = JSON.parse(await readFile(reportPath, 'utf8'));
     assert(Array.isArray(report), 'Unexpected scanner report; contents suppressed.');
     const findings = report.map(item => {
