@@ -88,7 +88,7 @@ Las pruebas de lectura SQL se ejecutan tanto en SQLite como en PostgreSQL en CI.
 
 1. Inventario actual autorizado de producción y respaldo reciente de su base y archivos antes de cualquier migración; la copia local no sustituye ese punto de recuperación.
 2. Mapa reversible de orígenes y campos: UUID/código, categoría, fecha de recepción/publicación, autor/propietario, observatorio, visibilidad, estados/motivos y fichas/enlaces/PDF. Tratar explícitamente propietarios, fechas o departamentos ausentes; no inventarlos.
-3. Migración repetible ensayada con fixtures antiguos no vacíos, duplicados/conflictos y fallos intermedios. Conciliar registros y SHA-256 de archivos, probar una segunda ejecución sin duplicados y restaurar la copia de respaldo.
+3. Migración repetible con conciliación de registros/archivos y restauración. La mecánica ya se ensayó con fixtures sintéticos no vacíos (véase la tercera entrega); falta el ensayo del corte completo con una copia autorizada y resolver los campos/casos todavía bloqueados.
 4. Transición de escrituras, detalles, fichas y consumidores de Barómetro/gestión; paginación SQL donde todavía hay arrays completos y contratos de salida explícitos restantes.
 5. Solo tras demostrar compatibilidad, integridad y reversión: retirar modelos, servicios/endpoints y tablas antiguos. No ejecutar `DROP TABLE` por encontrar tablas vacías en una copia.
 
@@ -103,3 +103,7 @@ El backend se integró primero mediante el [PR #17](https://github.com/Criiscvz/
 El adaptador del visor admite el título, descripción y autores del contrato común y conserva los contratos antiguos usados por otras vistas. `resource_key` distingue registros con el mismo UUID procedentes de tablas distintas; las descargas utilizan su URL explícita, no esa clave de presentación.
 
 Verificación del cliente: **497 pruebas aprobadas en 54 archivos**, incluidas solicitudes de páginas de 20, búsqueda remota, totales de pestañas, cancelación de solicitudes obsoletas, cambio de totales, reintento y apertura de PDF/Power BI con sus metadatos. El ensayo queda disponible en `http://localhost:4300`, con API separada `http://localhost:8101`; no usa la base publicada. CI vuelve a verificar el build de producción y las cabeceras/PWA antes de integrar.
+
+## Tercera entrega: mecánica de conversión y recuperación
+
+El [ensayo reversible de publicaciones antiguas](ENSAYO_MIGRACION_PUBLICACIONES_FASE2.md) documenta el ejecutor CLI desactivado por defecto, las decisiones trazables, la repetición sin duplicados, el bloqueo de conflictos y la recuperación desde respaldos en una base vacía. Se verificó con fuentes y archivos sintéticos separados de la aplicación local y de producción. No introduce migraciones automáticas ni habilita una conversión real; quedan pendientes la identidad de lectura al cortar fuentes, los campos sin equivalente y la transición de consumidores/escrituras.
