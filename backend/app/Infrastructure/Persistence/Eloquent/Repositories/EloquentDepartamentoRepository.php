@@ -101,6 +101,7 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
             'codigo_interno' => $departamento->codigoInterno,
             'descripcion' => $departamento->descripcion,
             'icono' => $departamento->icono,
+            'foto' => $departamento->foto ?: null,
             'publico' => $departamento->publico,
         ]);
 
@@ -116,6 +117,7 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
             'codigo_interno' => $departamento->codigoInterno,
             'descripcion' => $departamento->descripcion,
             'icono' => $departamento->icono,
+            'foto' => $departamento->foto ?: null,
             'publico' => $departamento->publico,
         ]);
 
@@ -192,6 +194,7 @@ class EloquentDepartamentoRepository implements DepartamentoRepositoryInterface
             codigoInterno: $model->codigo_interno,
             descripcion: $model->descripcion,
             icono: $model->icono,
+            foto: $model->foto,
             publico: (bool) $model->publico,
             createdAt: $model->created_at ? new \DateTimeImmutable($model->created_at->toDateTimeString()) : null,
             updatedAt: $model->updated_at ? new \DateTimeImmutable($model->updated_at->toDateTimeString()) : null,

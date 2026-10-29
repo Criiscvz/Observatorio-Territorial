@@ -18,6 +18,7 @@ class Departamento
         public readonly ?\DateTimeImmutable $createdAt = null,
         public readonly ?\DateTimeImmutable $updatedAt = null,
         public readonly ?array $datasets = null,
+        public readonly ?string $foto = null,
     ) {}
 
     public static function create(
@@ -25,7 +26,8 @@ class Departamento
         string $codigoInterno,
         ?string $descripcion = null,
         ?string $icono = null,
-        bool $publico = false
+        bool $publico = false,
+        ?string $foto = null,
     ): self {
         return new self(
             id: null,
@@ -34,6 +36,7 @@ class Departamento
             descripcion: $descripcion,
             icono: $icono,
             publico: $publico,
+            foto: $foto,
         );
     }
 
@@ -49,6 +52,7 @@ class Departamento
             createdAt: $this->createdAt,
             updatedAt: $this->updatedAt,
             datasets: $this->datasets,
+            foto: $this->foto,
         );
     }
 
@@ -57,7 +61,8 @@ class Departamento
         ?string $codigoInterno = null,
         ?string $descripcion = null,
         ?string $icono = null,
-        ?bool $publico = null
+        ?bool $publico = null,
+        ?string $foto = null,
     ): self {
         return new self(
             id: $this->id,
@@ -69,6 +74,7 @@ class Departamento
             createdAt: $this->createdAt,
             updatedAt: new \DateTimeImmutable(),
             datasets: $this->datasets,
+            foto: $foto ?? $this->foto,
         );
     }
 
@@ -80,6 +86,7 @@ class Departamento
             'codigo_interno' => $this->codigoInterno,
             'descripcion' => $this->descripcion,
             'icono' => $this->icono,
+            'foto_url' => $this->foto ?: null,
             'publico' => $this->publico,
             'created_at' => $this->createdAt?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updatedAt?->format('Y-m-d H:i:s'),

@@ -1,141 +1,30 @@
-<div class="max-w-2xl mx-auto">
-  <a class="back-link" routerLink="/admin/departamentos">
-    <mat-icon>arrow_back</mat-icon>{{ 'layout.sidebar.manageDepartments' | translate }}
-  </a>
-  <h1 class="text-2xl font-bold text-[var(--text-primary)] mb-6">
-    {{
-      isEdit()
-        ? ('departamentos.form.titleEdit' | translate)
-        : ('departamentos.form.titleNew' | translate)
-    }}
-  </h1>
-
-  <mat-card>
-    <mat-card-content>
-      @if (error()) {
-        <div class="alert alert-error">
-          {{ error() }}
-        </div>
-      }
-
-      @if (success()) {
-        <div class="alert alert-success">
-          {{ success() }}
-        </div>
-      }
-
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4">
-        <mat-form-field class="w-full" appearance="outline">
-          <mat-label>{{ 'departamentos.form.name' | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="nombre"
-            [placeholder]="'departamentos.form.namePlaceholder' | translate"
-            maxlength="255"
-          />
-          <mat-icon matSuffix>business</mat-icon>
-          <mat-hint align="end">{{ form.get('nombre')?.value?.length || 0 }}/255</mat-hint>
-          @if (form.get('nombre')?.hasError('required') && form.get('nombre')?.touched) {
-            <mat-error>{{ 'departamentos.form.validation.nameRequired' | translate }}</mat-error>
-          }
-          @if (form.get('nombre')?.hasError('minlength')) {
-            <mat-error>{{ 'departamentos.form.validation.nameMinLength' | translate }}</mat-error>
-          }
-          @if (form.get('nombre')?.hasError('maxlength')) {
-            <mat-error>{{ 'departamentos.form.validation.nameMaxLength' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field class="w-full" appearance="outline">
-          <mat-label>{{ 'departamentos.form.code' | translate }}</mat-label>
-          <input
-            matInput
-            formControlName="codigo_interno"
-            [placeholder]="'departamentos.form.codePlaceholder' | translate"
-            maxlength="50"
-          />
-          <mat-icon matSuffix>tag</mat-icon>
-          <mat-hint>{{ 'departamentos.form.codeHint' | translate }}</mat-hint>
-          @if (
-            form.get('codigo_interno')?.hasError('required') && form.get('codigo_interno')?.touched
-          ) {
-            <mat-error>{{ 'departamentos.form.validation.codeRequired' | translate }}</mat-error>
-          }
-          @if (form.get('codigo_interno')?.hasError('maxlength')) {
-            <mat-error>{{ 'departamentos.form.validation.codeMaxLength' | translate }}</mat-error>
-          }
-        </mat-form-field>
-
-        <mat-form-field class="w-full" appearance="outline">
-          <mat-label>{{ 'departamentos.form.description' | translate }}</mat-label>
-          <textarea
-            matInput
-            formControlName="descripcion"
-            rows="4"
-            [placeholder]="'departamentos.form.descriptionPlaceholder' | translate"
-            maxlength="1000"
-          ></textarea>
-          <mat-hint align="end">{{ form.get('descripcion')?.value?.length || 0 }}/1000</mat-hint>
-        </mat-form-field>
-
-        <!-- Icon selector -->
-        <mat-form-field class="w-full" appearance="outline">
-          <mat-label>{{ 'departamentos.form.icon' | translate }}</mat-label>
-          <mat-select formControlName="icono">
-            <mat-option [value]="''">{{ 'departamentos.form.noIcon' | translate }}</mat-option>
-            @if (unlistedIcon; as icon) {
-              <mat-option [value]="icon">
-                <mat-icon class="mr-2">{{ icon }}</mat-icon>
-                {{ icon }}
-              </mat-option>
-            }
-            @for (icon of availableIcons; track icon.value) {
-              <mat-option [value]="icon.value">
-                <mat-icon class="mr-2">{{ icon.value }}</mat-icon>
-                {{ icon.labelKey | translate }}
-              </mat-option>
-            }
-          </mat-select>
-          @if (form.get('icono')?.value) {
-            <mat-icon matSuffix>{{ form.get('icono')?.value }}</mat-icon>
-          } @else {
-            <mat-icon matSuffix>category</mat-icon>
-          }
-          <mat-hint>{{ 'departamentos.form.iconHint' | translate }}</mat-hint>
-        </mat-form-field>
-
-        <div class="flex items-center gap-4 pt-2">
-          <mat-slide-toggle formControlName="publico" color="primary">
-            {{ 'departamentos.form.public' | translate }}
-          </mat-slide-toggle>
-        </div>
-        <p class="text-sm text-[var(--text-secondary)]">
-          {{ 'departamentos.form.publicDescription' | translate }}
-        </p>
-      </form>
-    </mat-card-content>
-
-    <mat-card-actions align="end" class="px-4 pb-4">
-      <button mat-button type="button" routerLink="/admin/departamentos" [disabled]="loading()">
-        {{ 'common.buttons.cancel' | translate }}
-      </button>
-      <button
-        mat-raised-button
-        color="primary"
-        [disabled]="form.invalid || loading()"
-        (click)="onSubmit()"
-      >
-        @if (loading()) {
-          <mat-spinner diameter="20" class="inline-block mr-2"></mat-spinner>
-          {{ 'departamentos.form.saving' | translate }}
-        } @else {
-          {{
-            isEdit()
-              ? ('departamentos.form.saveChanges' | translate)
-              : ('departamentos.form.createDepartment' | translate)
-          }}
-        }
-      </button>
-    </mat-card-actions>
-  </mat-card>
-</div>
+<a class="identity-button back-link" routerLink="/admin/departamentos"><mat-icon>arrow_back</mat-icon>Volver a observatorios</a>
+<header class="identity-header"><span>Gestión de observatorios</span><h1>{{isEdit()?'Editar observatorio':'Nuevo observatorio'}}</h1><p>Actualiza sus datos y elige cómo se identificará en la página.</p></header>
+@if(error()){<div class="identity-alert" role="alert">{{error()}}</div>}
+@if(success()){<div class="identity-success" role="status">{{success()}}</div>}
+@if(fetching()){<p role="status">Cargando observatorio…</p>}
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+<fieldset [disabled]="loading() || fetching()" class="identity-grid">
+<section class="identity-panel"><header><h2>Información general</h2><p>Datos del observatorio</p></header><div class="identity-fields">
+<label>Nombre del observatorio *<input formControlName="nombre" maxlength="255" placeholder="Nombre del observatorio" [attr.aria-invalid]="form.controls['nombre'].touched && form.controls['nombre'].invalid"><small>{{form.value.nombre?.length||0}}/255</small>@if(form.controls['nombre'].touched && form.controls['nombre'].invalid){<span class="identity-error">Escribe un nombre de entre 3 y 255 caracteres.</span>}</label>
+<label>Código interno *<input formControlName="codigo_interno" maxlength="50" placeholder="Ejemplo: Electoral-2026"><small>Identificador único del observatorio.</small>@if(form.controls['codigo_interno'].touched && form.controls['codigo_interno'].invalid){<span class="identity-error">El código interno es obligatorio.</span>}</label>
+<label>Descripción (opcional)<textarea formControlName="descripcion" rows="5" maxlength="1000"></textarea><small>{{form.value.descripcion?.length||0}}/1000</small></label>
+<label class="identity-visibility"><input type="checkbox" formControlName="publico"><span>Observatorio público<small>Visible para quienes visiten el portal.</small></span></label>
+</div></section>
+<section class="identity-panel"><header><h2>Identidad del observatorio</h2><p>Elige un icono o utiliza una fotografía.</p></header><div class="identity-fields">
+<div class="identity-mode" aria-label="Tipo de identidad"><button type="button" [attr.aria-pressed]="identityMode()==='icon'" (click)="setIdentityMode('icon')"><mat-icon>category</mat-icon>Icono</button><button type="button" [attr.aria-pressed]="identityMode()==='photo'" (click)="setIdentityMode('photo')"><mat-icon>image</mat-icon>Foto</button></div>
+@if(identityMode()==='photo'){
+<div class="identity-photo-area"><div class="identity-picture large">@if(photoPreview()){<img [src]="photoPreview()" alt="Vista previa de la foto" [style.transform]="'scale('+zoom()+')'">}@else{<mat-icon>add_photo_alternate</mat-icon>}</div><p>{{photoName()||'Selecciona una foto para el observatorio'}}</p><div class="identity-photo-actions"><button type="button" class="identity-button" (click)="photoInput.click()"><mat-icon>upload</mat-icon>{{photoPreview()?'Cambiar foto':'Seleccionar foto'}}</button>@if(photoPreview()){<button class="identity-button" type="button" (click)="removePhoto()">Quitar</button>}</div>
+<input #photoInput type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="selectPhoto($any($event.target).files?.[0]); $any($event.target).value=''">
+@if(selectedPhoto){<label class="identity-zoom"><span>Encuadre</span><input type="range" aria-label="Ampliar foto" min="1" max="2" step="0.05" [value]="zoom()" (input)="zoom.set(+$any($event.target).value)"></label>}
+<div class="identity-drop" (dragover)="$event.preventDefault()" (drop)="onDrop($event)">También puedes arrastrar una foto aquí.<small>JPG, PNG o WebP · Máximo 2 MB<br>Recomendado: imagen cuadrada de 400 × 400 px.<br>Dimensiones máximas: 4096 × 4096 px.</small></div></div>
+}@else{
+<div class="identity-picture large"><mat-icon>{{form.value.icono||'account_balance'}}</mat-icon></div>
+<div class="identity-icon-grid" aria-label="Elegir icono">@for(icon of availableIcons.slice(0,8);track icon.value){<button type="button" (click)="form.controls['icono'].setValue(icon.value)" [attr.aria-pressed]="form.value.icono===icon.value" [attr.aria-label]="icon.labelKey|translate"><mat-icon>{{icon.value}}</mat-icon></button>}</div>
+<mat-form-field appearance="outline"><mat-label>Todos los iconos</mat-label><mat-select formControlName="icono" [disabled]="loading() || fetching()"><mat-option value="">Predeterminado</mat-option>@if(unlistedIcon;as icon){<mat-option [value]="icon">{{icon}}</mat-option>}@for(icon of availableIcons;track icon.value){<mat-option [value]="icon.value"><mat-icon>{{icon.value}}</mat-icon>{{icon.labelKey|translate}}</mat-option>}</mat-select></mat-form-field>
+}
+@if(photoError()){<p class="identity-error" role="alert">{{photoError()}}</p>}
+</div><div class="identity-preview"><small>ASÍ SE VERÁ EN EL LISTADO</small><div class="identity-preview-row"><span class="identity-picture">@if(identityMode()==='photo'&&photoPreview()){<img [src]="photoPreview()" alt="" [style.transform]="'scale('+zoom()+')'">}@else{<mat-icon>{{form.value.icono||'account_balance'}}</mat-icon>}</span><div><strong>{{form.value.nombre||'Nombre del observatorio'}}</strong><small>{{form.value.codigo_interno||'Código interno'}}</small></div></div><p>La misma imagen se usará en el panel y en el portal público.</p></div></section>
+</fieldset>
+<footer class="identity-footer"><span>Los cambios se aplican al guardar.</span><div><a class="identity-button" routerLink="/admin/departamentos">Cancelar</a><button type="submit" class="identity-button primary" [disabled]="form.invalid || loading() || fetching() || !!photoError()"><mat-icon>{{loading()?'hourglass_top':'check'}}</mat-icon>{{loading()?'Guardando…':isEdit()?'Guardar cambios':'Crear observatorio'}}</button></div></footer>
+</form>

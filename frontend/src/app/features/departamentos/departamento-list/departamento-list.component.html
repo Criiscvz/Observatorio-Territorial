@@ -24,7 +24,7 @@
         <tbody>
           @for(item of visibleDepartamentos();track item.id){
             <tr class="observatorio-row">
-              <td><div class="observatorio-heading"><span class="observatorio-icon"><mat-icon>{{item.icono||'business'}}</mat-icon></span><div><a class="observatorio-name" [routerLink]="['/admin/departamentos',item.id]">{{item.nombre}}</a><span class="observatorio-code">{{item.codigo_interno}}</span></div></div></td>
+              <td><div class="observatorio-heading"><span class="observatorio-icon">@if(item.foto_url){<img class="observatory-identity-image" [src]="item.foto_url" alt="">}@else{<mat-icon>{{item.icono||'business'}}</mat-icon>}</span><div><a class="observatorio-name" [routerLink]="['/admin/departamentos',item.id]">{{item.nombre}}</a><span class="observatorio-code">{{item.codigo_interno}}</span></div></div></td>
               <td><span class="visibility-badge" [class.private]="!item.publico"><mat-icon>{{item.publico?'public':'lock_outline'}}</mat-icon>{{ (item.publico?'common.labels.public':'common.labels.private') | translate }}</span></td>
               <td><div class="observatorio-actions">
                 <a class="directory-action manage-action" [routerLink]="['/admin/departamentos',item.id]" [attr.aria-label]="('departamentos.management.manage' | translate)+' '+item.nombre"><mat-icon>folder_open</mat-icon><span>{{ 'departamentos.management.manage' | translate }}</span></a>

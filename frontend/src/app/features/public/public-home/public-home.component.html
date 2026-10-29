@@ -121,7 +121,7 @@
       @for (depto of visibleObservatories(); track depto.id) {
         <a [routerLink]="['/publico/departamentos', depto.id]" class="observatory-row">
           <div class="department-avatar" aria-hidden="true">
-            @if (depto.icono) {
+            @if (depto.foto_url) {<img class="observatory-identity-image" [src]="depto.foto_url" alt="">} @else if (depto.icono) {
               <mat-icon>{{ depto.icono }}</mat-icon>
             } @else {
               {{ depto.nombre.charAt(0).toUpperCase() }}

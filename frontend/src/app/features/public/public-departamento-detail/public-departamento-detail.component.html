@@ -3,7 +3,7 @@
     <div class="library-empty" role="status"><mat-spinner diameter="36"/><p>Cargando observatorio y publicaciones…</p></div>
   } @else if (departamento(); as department) {
     <a class="public-button back-button" routerLink="/publico/departamentos"><mat-icon>arrow_back</mat-icon>Volver a observatorios</a>
-    <header class="observatory-heading"><span class="observatory-icon"><mat-icon aria-hidden="true">{{ department.icono || 'account_balance' }}</mat-icon></span><div><p class="eyebrow">Investigación y publicaciones</p><h1>{{ department.nombre }}</h1><p>{{ department.descripcion || 'Consulta las publicaciones y los recursos de este observatorio.' }}</p></div></header>
+    <header class="observatory-heading"><span class="observatory-icon">@if(department.foto_url){<img class="observatory-identity-image" [src]="department.foto_url" alt="">}@else{<mat-icon aria-hidden="true">{{ department.icono || 'account_balance' }}</mat-icon>}</span><div><p class="eyebrow">Investigación y publicaciones</p><h1>{{ department.nombre }}</h1><p>{{ department.descripcion || 'Consulta las publicaciones y los recursos de este observatorio.' }}</p></div></header>
     @if (publicationErrors().length) {<div class="library-warning" role="alert"><span>No se pudieron cargar: {{ publicationErrors().join(', ') }}.</span><button class="public-button" (click)="retry()">Reintentar</button></div>}
     <section class="public-library" aria-label="Biblioteca de publicaciones">
       <div class="library-heading"><h2>Biblioteca de publicaciones</h2><span>Artículos, reportes y libros</span></div>

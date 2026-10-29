@@ -16,7 +16,7 @@
     <section class="directory-list" aria-label="Observatorios públicos">
       @for (item of visible(); track item.id) {
         <article class="directory-row">
-          <span class="observatory-icon"><mat-icon aria-hidden="true">{{ item.icono || 'account_balance' }}</mat-icon></span>
+          <span class="observatory-icon">@if(item.foto_url){<img class="observatory-identity-image" [src]="item.foto_url" alt="">}@else{<mat-icon aria-hidden="true">{{ item.icono || 'account_balance' }}</mat-icon>}</span>
           <div class="observatory-copy"><h2><a [routerLink]="['/publico/departamentos', item.id]">{{ item.nombre }}</a></h2><p>{{ item.descripcion || 'Consulta las publicaciones y los recursos de este observatorio.' }}</p></div>
           <a class="public-button public-button--soft" [routerLink]="['/publico/departamentos', item.id]" [attr.aria-label]="'Explorar ' + item.nombre">Explorar <mat-icon aria-hidden="true">north_east</mat-icon></a>
         </article>

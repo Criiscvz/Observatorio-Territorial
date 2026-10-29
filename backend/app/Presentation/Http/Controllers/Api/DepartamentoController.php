@@ -100,7 +100,7 @@ class DepartamentoController extends Controller
     public function store(CreateDepartamentoRequest $request): JsonResponse
     {
         $dto = CreateDepartamentoDTO::fromArray(
-            $request->validated(),
+            array_replace($request->validated(), ['foto' => app(\App\Infrastructure\Services\ObservatoryPhoto::class)->data($request)]),
             $request->user()->id
         );
 
@@ -158,7 +158,7 @@ class DepartamentoController extends Controller
     public function update(UpdateDepartamentoRequest $request, string $id): JsonResponse
     {
         $dto = UpdateDepartamentoDTO::fromArray(
-            $request->validated(),
+            array_replace($request->validated(), ['foto' => app(\App\Infrastructure\Services\ObservatoryPhoto::class)->data($request)]),
             $id,
             $request->user()->id
         );

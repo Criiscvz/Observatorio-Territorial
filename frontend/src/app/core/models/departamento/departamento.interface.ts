@@ -6,6 +6,7 @@ export interface Departamento {
   codigo_interno: string;
   descripcion?: string;
   icono?: string;
+  foto_url?: string | null;
   publico: boolean;
   created_at: string;
   updated_at: string;

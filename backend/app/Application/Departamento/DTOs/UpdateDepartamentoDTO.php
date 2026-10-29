@@ -14,6 +14,7 @@ final readonly class UpdateDepartamentoDTO
         public ?string $icono,
         public ?bool $publico,
         public int $userId,
+        public ?string $foto = null,
     ) {}
 
     public static function fromArray(array $data, string $id, int $userId): self
@@ -24,8 +25,9 @@ final readonly class UpdateDepartamentoDTO
             codigoInterno: $data['codigo_interno'] ?? null,
             descripcion: $data['descripcion'] ?? null,
             icono: $data['icono'] ?? null,
-            publico: $data['publico'] ?? null,
+            publico: isset($data['publico']) ? (bool) $data['publico'] : null,
             userId: $userId,
+            foto: $data['foto'] ?? null,
         );
     }
 }

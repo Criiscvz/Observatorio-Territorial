@@ -51,6 +51,7 @@ else
     # Publication responses and review forms read these additive columns.
     # Ensure they exist before the new code starts accepting requests.
     php artisan migrate --force --path=database/migrations/2026_10_28_000001_add_review_observation_to_publications.php
+    php artisan migrate --force --path=database/migrations/2026_10_28_000002_add_observatory_photo.php
 fi
 
 php artisan route:cache

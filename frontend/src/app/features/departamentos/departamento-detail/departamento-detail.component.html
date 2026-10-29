@@ -5,7 +5,7 @@
     <header class="detail-header compact-observatory-header">
       <div class="observatory-context">
         <a class="observatory-button observatory-back" routerLink="/admin/departamentos"><mat-icon aria-hidden="true">arrow_back</mat-icon>Volver a observatorios</a>
-        <h1>{{ departamento()?.nombre }}</h1>
+        <h1 class="observatory-identity-title">@if(departamento()?.foto_url){<img [src]="departamento()?.foto_url" alt="" class="observatory-heading-photo">}{{ departamento()?.nombre }}</h1>
         <p class="observatory-description">{{ departamento()?.descripcion || ('departamentos.detail.noDescription' | translate) }}</p>
         <div class="observatory-meta"><span class="observatory-visibility"><mat-icon>{{ departamento()?.publico ? 'public' : 'lock_outline' }}</mat-icon>{{ (departamento()?.publico ? 'common.labels.public' : 'common.labels.private') | translate }}</span><span>{{ departamento()?.codigo_interno }}</span>
           @if(isAdmin()) {

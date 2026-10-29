@@ -13,6 +13,7 @@ final readonly class CreateDepartamentoDTO
         public ?string $icono,
         public bool $publico,
         public int $userId,
+        public ?string $foto = null,
     ) {}
 
     public static function fromArray(array $data, int $userId): self
@@ -22,8 +23,9 @@ final readonly class CreateDepartamentoDTO
             codigoInterno: $data['codigo_interno'],
             descripcion: $data['descripcion'] ?? null,
             icono: $data['icono'] ?? null,
-            publico: $data['publico'] ?? false,
+            publico: (bool) ($data['publico'] ?? false),
             userId: $userId,
+            foto: $data['foto'] ?? null,
         );
     }
 }

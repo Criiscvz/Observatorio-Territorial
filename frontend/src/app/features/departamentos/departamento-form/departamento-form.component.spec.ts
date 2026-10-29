@@ -103,4 +103,35 @@ describe('Observatory form icon compatibility', () => {
       component.availableIcons.length,
     );
   });
+
+  it('keeps a saved photo until explicitly switching to an icon or removing it', async () => {
+    const photo='data:image/jpeg;base64,existing';
+    service.getById.mockReturnValue(of({...departamento,foto_url:photo}));
+    const fixture=TestBed.createComponent(DepartamentoFormComponent);fixture.detectChanges();
+    const component=fixture.componentInstance;
+    expect(component.identityMode()).toBe('photo');expect(component.photoPreview()).toBe(photo);
+    await component.onSubmit();expect(service.update).toHaveBeenCalledWith(departamento.id,expect.objectContaining({eliminar_foto:false}));
+    component.loading.set(false);component.removePhoto();await component.onSubmit();
+    expect(service.update).toHaveBeenLastCalledWith(departamento.id,expect.objectContaining({eliminar_foto:true,icono:'shield'}));
+    fixture.destroy();
+  });
+  it('rejects incompatible and oversized files without losing the current identity',async()=>{
+    const fixture=TestBed.createComponent(DepartamentoFormComponent);fixture.detectChanges();const component=fixture.componentInstance;
+    await component.selectPhoto(new File(['<svg/>'],'x.svg',{type:'image/svg+xml'}));expect(component.photoError()).toContain('JPG');expect(component.selectedPhoto).toBeNull();
+    await component.selectPhoto(new File([new Uint8Array(2*1024*1024+1)],'big.png',{type:'image/png'}));expect(component.photoError()).toContain('2 MB');
+    await component.onSubmit();expect(service.update).not.toHaveBeenCalled();fixture.destroy();
+  });
+  it('requires a photo in photo mode and blocks duplicate submits',async()=>{
+    const fixture=TestBed.createComponent(DepartamentoFormComponent);fixture.detectChanges();const component=fixture.componentInstance;
+    component.setIdentityMode('photo');await component.onSubmit();expect(component.photoError()).toContain('Selecciona');expect(service.update).not.toHaveBeenCalled();
+    component.setIdentityMode('icon');await component.onSubmit();await component.onSubmit();expect(service.update).toHaveBeenCalledOnce();fixture.destroy();
+  });
+  it('sends the prepared photo and form values together, without uploading before save',async()=>{
+    const fixture=TestBed.createComponent(DepartamentoFormComponent);fixture.detectChanges();const component=fixture.componentInstance;
+    const photo=new File(['jpeg'],'observatorio.jpg',{type:'image/jpeg'});
+    component.selectedPhoto=photo;component.photoPreview.set('data:image/jpeg;base64,cropped');component.setIdentityMode('photo');
+    vi.spyOn(component as any,'croppedPhoto').mockResolvedValue(photo);
+    expect(service.update).not.toHaveBeenCalled();await component.onSubmit();
+    const body=service.update.mock.calls[0][1] as FormData;expect(body).toBeInstanceOf(FormData);expect(body.get('foto')).toBe(photo);expect(body.get('publico')).toBe('1');expect(body.get('eliminar_foto')).toBe('0');expect(body.get('nombre')).toBe('Resiliencia');fixture.destroy();
+  });
 });

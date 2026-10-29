@@ -30,11 +30,15 @@ export class DepartamentoService {
     return this.api.get<Departamento>(`/departamentos/${id}`);
   }
 
-  create(data: Partial<Departamento>): Observable<Departamento> {
+  create(data: Partial<Departamento> | FormData): Observable<Departamento> {
     return this.api.post<Departamento>('/departamentos', data).pipe(tap(() => this.notifyChange()));
   }
 
-  update(id: string, data: Partial<Departamento>): Observable<Departamento> {
+  update(id: string, data: Partial<Departamento> | FormData): Observable<Departamento> {
+    if (data instanceof FormData) {
+      data.set('_method', 'PUT');
+      return this.api.upload<Departamento>(`/departamentos/${id}`, data).pipe(tap(() => this.notifyChange()));
+    }
     return this.api
       .put<Departamento>(`/departamentos/${id}`, data)
       .pipe(tap(() => this.notifyChange()));
