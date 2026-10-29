@@ -12,6 +12,9 @@ import { AuthService } from '@core/services/auth.service';
 import { PublicacionService, SharePointImportTarget } from '@core/services/publicacion.service';
 import { SharePointAtlasImportDialogComponent } from '@features/public/public-atlas/sharepoint-atlas-import-dialog.component';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { PublicLibraryPublication, publicHttpUrl } from '@features/public/components/public-library-publication';
+import { powerBiEmbedUrl } from '@features/public/components/publication-viewer.component';
+import { PublicationViewerService } from '@features/public/components/publication-viewer.service';
 
 type WorkspaceType = 'ARTICULO' | 'LIBRO' | 'REPORTE';
 interface Destination { tipo: WorkspaceType; departamento: Departamento; }
@@ -39,6 +42,7 @@ export class PublicationDestinationComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly dialog = inject(MatDialog);
+  private readonly viewer = inject(PublicationViewerService);
   @ViewChild('editor') private editor?: ElementRef<HTMLElement>;
   @ViewChild('pdfInput') private pdfInput?: ElementRef<HTMLInputElement>;
   private leaveConfirmation?: Observable<boolean>;
@@ -81,6 +85,31 @@ export class PublicationDestinationComponent implements OnInit {
   }
   get isReport() { return this.destination()?.tipo === 'REPORTE'; }
   get destinationLabel() { const value = this.destination(); return value ? this.types[value.tipo] : ''; }
+  get canPreviewPdf(): boolean {
+    return !!this.destination() && !this.isReport && !!this.selectedFile() && !this.fileError()
+      && !this.saving() && !this.importing() && !this.savedPublication();
+  }
+  get reportPreviewUrl(): string | null { return this.isReport ? powerBiEmbedUrl(this.publicationForm.controls.link_url.value.trim()) : null; }
+  get canPreviewReport(): boolean {
+    return !!this.reportPreviewUrl && !this.saving() && !this.importing() && !this.savedPublication();
+  }
+  preview(): void {
+    const target = this.destination();
+    if (!target || (this.isReport ? !this.canPreviewReport : !this.canPreviewPdf)) return;
+    const values = this.publicationForm.getRawValue();
+    const file = this.isReport ? null : this.selectedFile();
+    const item: PublicLibraryPublication = {
+      id: 'workspace-publication-preview', type: target.tipo,
+      title: values.titulo.trim() || file?.name || 'Vista previa del reporte',
+      code: 'Sin guardar', date: values.fecha_publicacion || null,
+      authors: values.autores.map(author => author.trim()).filter(Boolean).join(', '),
+      description: values.descripcion.trim(), source: values.fuente.trim(),
+      sourceUrl: this.isReport ? publicHttpUrl(values.fuente) : publicHttpUrl(values.link_url) || publicHttpUrl(values.fuente),
+      reportUrl: this.reportPreviewUrl, download_url: null, sharepoint_url: null, locked: false,
+    };
+    if (file) this.viewer.open(item, target.departamento.nombre, 'pdf', undefined, file);
+    else this.viewer.open(item, target.departamento.nombre, 'report');
+  }
 
   ngOnInit(): void {
     const tipo = this.route.snapshot.queryParamMap.get('tipo');

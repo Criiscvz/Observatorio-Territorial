@@ -1,0 +1,36 @@
+<header class="workspace-header"><div><span class="eyebrow">Crear contenido · Atlas</span><h1>Nueva publicación</h1><p class="subtitle">Selecciona la categoría donde se guardará el Atlas.</p></div><a class="action" routerLink="/admin/dashboard"><mat-icon>arrow_back</mat-icon>Volver al inicio</a></header>
+@if(loadError()){<div class="feedback error" role="alert">No se pudieron cargar las categorías. <button class="text-action" type="button" (click)="load()">Reintentar</button></div>}
+<div class="creation-grid" [class.editor-open]="destination()">
+  <form class="panel destination-form" [formGroup]="destinationForm" (ngSubmit)="openForm()">
+    <div class="panel-heading"><h2>Destino de la publicación</h2><p>{{destination()?'Destino del formulario abierto':'Define dónde se guardará el contenido.'}}</p></div>
+    <div class="destination-fields">
+      <label>Categoría *<select formControlName="categoria" [attr.aria-invalid]="destinationForm.controls.categoria.touched && destinationForm.controls.categoria.invalid"><option value="">{{loading()?'Cargando categorías…':'Selecciona una categoría'}}</option>@for(item of categories();track item.id){<option [value]="item.id">{{item.nombre}}</option>}</select>@if(destinationForm.controls.categoria.touched && destinationForm.controls.categoria.invalid){<small class="field-error" role="alert">Selecciona una categoría disponible.</small>}</label>
+      <div class="fixed-type"><span>Tipo de publicación</span><div><mat-icon>bar_chart</mat-icon>Atlas</div></div>
+      @if(!loading() && !loadError() && !categories().length){<p class="subtitle full">Primero debes <a routerLink="/admin/atlas">crear una categoría de Atlas</a>.</p>}
+    </div>
+    @if(!destination()){<p class="destination-hint"><mat-icon>view_sidebar</mat-icon>El formulario se abrirá al lado en computadora y debajo en celular.</p>}
+    <footer class="form-footer">@if(destination()){<button class="action" type="button" (click)="requestClose()" [disabled]="saving()"><mat-icon>edit</mat-icon>Modificar destino</button>}@else{<a class="action" routerLink="/admin/dashboard">Cancelar</a><button class="action primary" type="submit" [disabled]="loading() || loadError() || destinationForm.invalid || !categories().length">Abrir formulario<mat-icon>arrow_forward</mat-icon></button>}</footer>
+  </form>
+  @if(destination();as target){
+    <section class="panel editor" #editor aria-labelledby="atlas-editor-title">
+      <header class="editor-heading"><div class="editor-destination"><span class="destination-confirmed"><mat-icon aria-hidden="true">check_circle_outline</mat-icon>{{saved()?'Atlas guardado en esta categoría':'Publicarás en esta categoría'}}</span><div class="destination-identity"><span class="destination-symbol"><mat-icon aria-hidden="true">{{categoryIcon(target.nombre,target.icono).icon}}</mat-icon></span><div class="destination-copy"><h2 id="atlas-editor-title">{{target.nombre}}</h2><p class="destination-type"><mat-icon aria-hidden="true">bar_chart</mat-icon>Atlas · Enlace de Power BI</p></div></div></div><button class="icon-action" type="button" aria-label="Cerrar formulario" (click)="requestClose()" [disabled]="saving()"><mat-icon>close</mat-icon></button></header>
+      @if(confirmClose()){<div class="discard-confirmation" role="alert"><strong>¿Descartar los cambios sin guardar?</strong><p>Los datos del Atlas se perderán.</p><div><button class="action" type="button" (click)="confirmClose.set(false)">Seguir editando</button><button class="action" type="button" (click)="closeForm()">Descartar y cerrar</button></div></div>}
+      @if(saved();as publication){
+        <div class="success" role="status"><mat-icon>task_alt</mat-icon><h3>Atlas guardado correctamente</h3><strong>{{publication.titulo}}</strong><p>Código: {{publication.codigo}}</p><p>El enlace está guardado en la biblioteca de {{target.nombre}}.</p><div class="success-actions"><a class="action" [routerLink]="['/admin/atlas/categorias',target.id]">Ver en la biblioteca<mat-icon>arrow_outward</mat-icon></a><button class="action primary" type="button" (click)="createAnother()"><mat-icon>add</mat-icon>Crear otro Atlas</button></div></div>
+      }@else{
+        <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="saving()" novalidate>
+          <fieldset class="editor-fields" [disabled]="saving()">
+            <label class="full">Título del Atlas *<input name="titulo" formControlName="titulo" maxlength="255" placeholder="Escribe un título descriptivo" [attr.aria-invalid]="!!fieldError('titulo')" aria-describedby="atlas-title-error"><small class="counter"><span>Máximo 255 caracteres</span><span>{{form.controls.titulo.value.length}}/255</span></small><small id="atlas-title-error" class="field-error">{{fieldError('titulo')}}</small></label>
+            <label>Fecha de publicación *<input name="fecha_publicacion" formControlName="fecha_publicacion" type="date" [attr.aria-invalid]="!!fieldError('fecha_publicacion')" aria-describedby="atlas-date-error"><small id="atlas-date-error" class="field-error">{{fieldError('fecha_publicacion')}}</small></label>
+            <label>Fuente (opcional)<input name="fuente" formControlName="fuente" maxlength="255" placeholder="Institución o fuente de información" [attr.aria-invalid]="!!fieldError('fuente')"><small class="field-error">{{fieldError('fuente')}}</small></label>
+            <label class="full">Enlace del Atlas *<input name="link_url" formControlName="link_url" type="url" maxlength="2048" placeholder="https://app.powerbi.com/view?r=…" [attr.aria-invalid]="!!fieldError('link_url')" aria-describedby="atlas-link-hint atlas-link-error"><small id="atlas-link-hint">Ingresa el enlace público del reporte que se mostrará en el visor.</small><small id="atlas-link-error" class="field-error">{{fieldError('link_url')}}</small></label>
+            <div class="atlas-link-preview full"><mat-icon>ondemand_video</mat-icon><div><strong>Se abrirá en el visor del portal</strong><small>Con ficha de la publicación y opción de pantalla completa.</small></div><button class="action" type="button" (click)="preview()" [disabled]="saving() || form.controls.link_url.invalid"><mat-icon>visibility</mat-icon>Probar enlace</button></div>
+            <label class="full">Descripción (opcional)<textarea name="descripcion" formControlName="descripcion" rows="3" maxlength="3000" placeholder="Describe los indicadores y el contenido de este Atlas" [attr.aria-invalid]="!!fieldError('descripcion')"></textarea><small>Esta información aparecerá en la ficha del visor.</small><small class="field-error">{{fieldError('descripcion')}}</small></label>
+          </fieldset>
+          @if(serverError()){<p class="feedback error" role="alert">{{serverError()}}@if(fieldErrors()['atlas_categoria_id']){<br>{{fieldErrors()['atlas_categoria_id']}}}</p>}
+          <footer class="editor-footer"><small>* Campos obligatorios</small><div><button class="action" type="button" (click)="requestClose()" [disabled]="saving()">Cancelar</button><button class="action primary" type="submit" [disabled]="saving()"><mat-icon>{{saving()?'hourglass_top':'save'}}</mat-icon>{{saving()?'Guardando…':'Guardar enlace'}}</button></div></footer>
+        </form>
+      }
+    </section>
+  }
+</div>

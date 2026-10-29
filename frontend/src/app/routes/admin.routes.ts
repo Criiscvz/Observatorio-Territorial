@@ -95,11 +95,12 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'atlas/subir',
     loadComponent: () =>
-        import('../features/public/public-atlas/atlas-workspace.component').then(
-          (m) => m.AtlasWorkspaceComponent,
+        import('../features/public/public-atlas/atlas-destination.component').then(
+          (m) => m.AtlasDestinationComponent,
       ),
     canActivate: [adminGuard],
-      title: 'Agregar enlace de Atlas - Observatorio',
+    canDeactivate: [publicationDraftGuard],
+      title: 'Agregar Atlas - Observatorio',
   },
   {
     path: 'datasets/:id',

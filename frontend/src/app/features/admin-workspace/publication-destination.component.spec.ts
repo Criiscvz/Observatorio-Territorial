@@ -7,24 +7,51 @@ import { DepartamentoService } from '@core/services/departamento.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { SharePointAtlasImportDialogComponent } from '@features/public/public-atlas/sharepoint-atlas-import-dialog.component';
 import { PublicationDestinationComponent } from './publication-destination.component';
+import { PublicationViewerService } from '@features/public/components/publication-viewer.service';
 
 describe('Creación de artículos, libros y reportes en el panel', () => {
   function setup(tipo = 'ARTICULO', departments = [{ id: 'salud', nombre: 'Salud' }, { id: 'laboral', nombre: 'Laboral' }], departamento = '') {
     const publications = { create: vi.fn(() => of({ id: 'nuevo', codigo: 'ART-0010', titulo: 'Guardado' } as any)) };
     const service = { getAll: vi.fn(() => of(departments)) };
     const dialog = { open: vi.fn(() => ({ afterClosed: () => of(false) })) };
+    const viewer = { open: vi.fn() };
+    TestBed.configureTestingModule({providers:[{provide:PublicationViewerService,useValue:viewer}]});
     TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({ tipo, departamento }) } } }, { provide: DepartamentoService, useValue: service }, { provide: PublicacionService, useValue: publications }, { provide: MatDialog, useValue: dialog }] });
     const fixture = TestBed.createComponent(PublicationDestinationComponent);fixture.detectChanges();
     const component = fixture.componentInstance;
     const open = () => { component.form.controls.departamento.setValue('laboral');component.openForm();fixture.detectChanges(); };
     const fill = () => component.publicationForm.patchValue({ titulo: ' Publicación de prueba ', fecha_publicacion: '2026-10-20', ...(tipo === 'REPORTE' ? { link_url: 'https://app.powerbi.com/view?r=test' } : {}) });
-    return { fixture, component, publications, service, dialog, open, fill };
+    return { fixture, component, publications, service, dialog, viewer, open, fill };
   }
   it.each(['ARTICULO', 'LIBRO', 'REPORTE'])('abre %s en la misma pantalla y conserva el observatorio', tipo => {
     const {fixture, component, open} = setup(tipo);expect(component.destination()).toBeNull();open();
     expect(component.destination()?.tipo).toBe(tipo);expect(component.destination()?.departamento.id).toBe('laboral');
     expect(component.form.disabled).toBe(true);expect(fixture.nativeElement.querySelector('.creation-grid.editor-open')).not.toBeNull();
     expect(fixture.nativeElement.querySelectorAll('form').length).toBe(2);
+  });
+  it.each(['ARTICULO','LIBRO'])('previsualiza el PDF de %s con el visor sin subirlo ni perder el borrador',tipo=>{
+    const {fixture,component,publications,viewer,open,fill}=setup(tipo);open();fill();component.submit();
+    const file=new File(['%PDF-1.4'],'documento.pdf',{type:'application/pdf'});component.selectFile(file);
+    component.publicationForm.patchValue({descripcion:'Descripción del borrador',fuente:'ULEAM'});component.autores.at(0).setValue(' Ana ');fixture.detectChanges();
+    fixture.nativeElement.querySelector('button.preview-pdf').click();
+    expect(viewer.open).toHaveBeenCalledWith(expect.objectContaining({type:tipo,title:'Publicación de prueba',code:'Sin guardar',description:'Descripción del borrador',authors:'Ana',download_url:null,reportUrl:null}),'Laboral','pdf',undefined,file);
+    expect(publications.create).not.toHaveBeenCalled();expect(component.selectedFile()).toBe(file);expect(component.step()).toBe(2);
+    component.clearFile();fixture.detectChanges();component.preview();expect(fixture.nativeElement.querySelector('button.preview-pdf')).toBeNull();expect(viewer.open).toHaveBeenCalledOnce();
+  });
+  it('no ofrece PDF inválidos y utiliza el nombre del archivo si el título está vacío',()=>{
+    const {component,viewer,open}=setup();open();component.selectFile(new File(['csv'],'datos.csv',{type:'text/csv'}));component.preview();expect(viewer.open).not.toHaveBeenCalled();
+    component.selectFile(new File(['%PDF'],'libro.pdf',{type:'application/pdf'}));component.preview();expect(viewer.open).toHaveBeenCalledWith(expect.objectContaining({title:'libro.pdf'}),'Laboral','pdf',undefined,expect.any(File));
+    component.importing.set(true);component.preview();component.importing.set(false);component.saving.set(true);component.preview();expect(viewer.open).toHaveBeenCalledOnce();
+  });
+  it('los reportes prueban el enlace en Power BI aunque tengan un PDF opcional seleccionado',()=>{
+    const {fixture,component,viewer,publications,open,fill}=setup('REPORTE');open();fill();component.selectFile(new File(['%PDF'],'ficha.pdf',{type:'application/pdf'}));fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('button.preview-pdf')).toBeNull();fixture.nativeElement.querySelector('button.preview-report').click();
+    expect(viewer.open).toHaveBeenCalledWith(expect.objectContaining({type:'REPORTE',reportUrl:'https://app.powerbi.com/view?r=test',download_url:null}),'Laboral','report');
+    expect(publications.create).not.toHaveBeenCalled();expect(component.step()).toBe(1);
+  });
+  it.each(['javascript:alert(1)','https://app.powerbi.com.evil.test/view?r=x','https://example.test','http://app.powerbi.com/view?r=x'])('no abre enlaces incompatibles con el visor: %s',url=>{
+    const {component,fixture,viewer,open}=setup('REPORTE');open();component.publicationForm.controls.link_url.setValue(url);fixture.detectChanges();component.preview();
+    expect(viewer.open).not.toHaveBeenCalled();expect(fixture.nativeElement.querySelector('button.preview-report').disabled).toBe(true);
   });
   it.each(['ARTICULO','REPORTE','LIBRO'])('preselecciona el observatorio de origen y el tipo %s sin pedirlo de nuevo', tipo => {
     const {component,fixture}=setup(tipo,undefined,'salud');

@@ -57,6 +57,9 @@
                 <button class="text-action" type="button" (click)="addAuthor()"><mat-icon>add</mat-icon>Agregar autor</button>
               </div>
               <label class="full">{{isReport ? 'URL de Power BI *' : 'URL externa (opcional)'}}<input name="link_url" type="url" formControlName="link_url" maxlength="2048" [placeholder]="isReport ? 'https://app.powerbi.com/view?r=…' : 'https://…'" [attr.aria-invalid]="!!fieldError('link_url')" aria-describedby="url-error"><small>{{isReport ? 'El reporte se consulta mediante este enlace. El PDF es opcional.' : 'Enlace de referencia de la publicación.'}}</small><small id="url-error" class="field-error">{{fieldError('link_url')}}</small></label>
+              @if(isReport) {
+                <div class="preview-resource full"><mat-icon>ondemand_video</mat-icon><div><strong>Prueba el reporte en el visor</strong><small>Abre el enlace público de Power BI con la información del formulario, sin guardar la publicación.</small>@if(publicationForm.controls.link_url.value.trim() && !reportPreviewUrl){<small>Para la vista previa, usa un enlace público con formato https://app.powerbi.com/view?r=…</small>}</div><button class="action preview-report" type="button" (click)="preview()" [disabled]="!canPreviewReport"><mat-icon>visibility</mat-icon>Probar enlace</button></div>
+              }
               <label class="full">Descripción (opcional)<textarea name="descripcion" formControlName="descripcion" rows="3" maxlength="3000" placeholder="Resume el contenido" [attr.aria-invalid]="!!fieldError('descripcion')" aria-describedby="description-error"></textarea><small class="counter"><span>Máximo 3000 caracteres</span><span>{{publicationForm.controls.descripcion.value.length}}/3000</span></small><small id="description-error" class="field-error">{{fieldError('descripcion')}}</small></label>
             </div>
             <div class="editor-fields" [hidden]="step() !== 2">
@@ -65,6 +68,9 @@
                 <button class="upload-zone" type="button" [class.dragging]="dragging()" (click)="pdfInput.click()" (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)" aria-describedby="pdf-error"><mat-icon>{{selectedFile() ? 'task_alt' : 'upload_file'}}</mat-icon><strong>{{selectedFile()?.name || 'Seleccionar o arrastrar archivo PDF'}}</strong><span>{{selectedFile() ? fileSize(selectedFile()!.size) : 'Solo PDF · Máximo 20 MB'}}</span></button>
                 @if(selectedFile() || fileError() || fieldErrors()['archivo']) { <button class="text-action" type="button" (click)="clearFile()"><mat-icon>close</mat-icon>Quitar archivo seleccionado</button> }
                 <p class="field-error" id="pdf-error" role="alert">{{fileError() || fieldErrors()['archivo']}}</p>
+                @if(!isReport && selectedFile() && !fileError()) {
+                  <div class="preview-resource"><mat-icon>picture_as_pdf</mat-icon><div><strong>Revisa el PDF antes de subirlo</strong><small>Se abre desde tu computadora. El archivo se subirá al guardar o enviar la publicación.</small></div><button class="action preview-pdf" type="button" (click)="preview()" [disabled]="!canPreviewPdf"><mat-icon>visibility</mat-icon>Vista previa del PDF</button></div>
+                }
               </div>
               @if(canChooseStatus()) {
               <label class="full">Estado *<select name="estado" formControlName="estado" [attr.aria-invalid]="!!fieldError('estado')" aria-describedby="state-error"><option value="PUBLICACION">Publicación</option><option value="EN_REVISION">En revisión</option><option value="SUSPENDIDO">Suspendido</option><option value="ARCHIVADO">Archivado</option><option value="RECHAZADO">Rechazado</option></select><small id="state-error" class="field-error">{{fieldError('estado')}}</small></label>

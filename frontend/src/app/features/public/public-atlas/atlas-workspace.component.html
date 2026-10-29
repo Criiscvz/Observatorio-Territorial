@@ -14,7 +14,7 @@
     @if(!inCategory()) {
       <button type="button" class="atlas-button primary" (click)="openCategory()" [disabled]="loading()||busy()"><mat-icon>add</mat-icon>Nueva categoría</button>
     } @else if(category()) {
-      <button type="button" class="atlas-button primary" (click)="openLink()" [disabled]="loading()||busy()"><mat-icon>add</mat-icon>Agregar enlace</button>
+      <a class="atlas-button primary" routerLink="/admin/atlas/subir" [queryParams]="{categoria: categoryId()}"><mat-icon>add</mat-icon>Agregar Atlas</a>
     }
   </header>
   @if(error()){<div class="atlas-alert" role="alert">{{error()}} <button class="atlas-button" type="button" (click)="load()">Reintentar</button></div>}
