@@ -96,9 +96,47 @@ if ($action === 'seed') {
         if ($result['removed'] !== 4 || ! $result['copied_files_removed']) { throw new RuntimeException('Rollback failed.'); }
         verifyCatalogHandoff(false);
         echo json_encode(['removed' => 4, 'original_pdf_retained' => $disk->exists('public/fichas/recovery.pdf')]);
+    } elseif ($action === 'verify-adapters') {
+        $owner = App\Models\User::findOrFail($plan['records'][0]['owner_id']);
+        Laravel\Sanctum\Sanctum::actingAs($owner);
+        $beforeSources = [];
+        foreach (['articulos', 'reportes'] as $table) {
+            $beforeSources[$table] = $service::fingerprint($db::table($table)->orderBy('id')->get()->map(fn ($r) => (array) $r)->all());
+        }
+        $kernel = app(Illuminate\Contracts\Http\Kernel::class);
+        $read = function (string $method, string $url, array $body = []) use ($kernel): array {
+            $request = Illuminate\Http\Request::create($url, $method, $body, [], [], ['HTTP_ACCEPT' => 'application/json']);
+            $response = $kernel->handle($request);
+            if ($response->getStatusCode() !== 200) { throw new RuntimeException('Synthetic adapter HTTP request failed.'); }
+            $decoded = json_decode($response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+            $kernel->terminate($request, $response);
+            return $decoded;
+        };
+        $record = $plan['records'][0];
+        $read('PUT', '/api/articulos/'.$record['id'], ['titulo' => 'Edited through the old URL']);
+        $read('PATCH', '/api/departamentos/publicaciones/'.$record['target_id'], [
+            'titulo' => 'Edited through the current form', 'estado' => 'PUBLICACION', 'fecha_publicacion' => '2026-09-01',
+            'solo_suscriptores' => true, 'autores' => ['Synthetic author', 'Additional author'],
+        ]);
+        $row = $read('GET', '/api/articulos/'.$record['id']);
+        if ($row['id'] !== $record['target_id'] || $row['titulo'] !== 'Edited through the current form'
+            || count($row['autor']) !== 2 || $db::table('observatorio_publicaciones')->count() !== 4) {
+            throw new RuntimeException('Old/current forms diverged during the recovery fixture.');
+        }
+        foreach ($beforeSources as $table => $hash) {
+            if ($hash !== $service::fingerprint($db::table($table)->orderBy('id')->get()->map(fn ($r) => (array) $r)->all())) {
+                throw new RuntimeException('Adapter changed the original source rows.');
+            }
+        }
+        $blocked = false;
+        try { $service->rollback($plan['batch_id']); } catch (App\Application\Publicaciones\LegacyRehearsalBlocked) { $blocked = true; }
+        if (! $blocked) { throw new RuntimeException('Recovery overwrote subsequent adapter edits.'); }
+        verifyCatalogHandoff(true);
+        echo json_encode(['adapters_verified' => true, 'source_rows_unchanged' => true, 'edited_target_rollback_blocked' => true]);
     } elseif ($action === 'verify-restored') {
         if ($db::table('articulos')->count() !== 3 || $db::table('reportes')->count() !== 1
-            || $db::table('observatorio_publicaciones')->count() !== 0 || $db::table('phase2_publication_imports')->count() !== 0) {
+            || $db::table('observatorio_publicaciones')->count() !== 0 || $db::table('phase2_publication_imports')->count() !== 0
+            || $db::table('publication_origins')->count() !== 0) {
             throw new RuntimeException('Restored source/target counts differ.');
         }
         verifyCatalogHandoff(false);

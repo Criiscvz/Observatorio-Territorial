@@ -115,3 +115,7 @@ La [proyección de cambio de fuente del ensayo](ENSAYO_IDENTIDAD_PUBLICACIONES_F
 ## Quinta entrega: restricciones privadas y eliminación histórica
 
 La [conservación de privacidad y eliminaciones antiguas](PRIVACIDAD_CONSERVACION_PUBLICACIONES_FASE2.md) añade dos campos internos anulables y controles en consultas, resolución de ID, gestión y descarga. El ensayo conserva esas restricciones con decisión explícita y restaura cuatro fuentes sintéticas sin pérdida. Se refuerzan las rutas antiguas de detalle y fichas mientras continúan activas. La migración de esquema se ejecuta antes de servir código, sin convertir contenido real ni habilitar el cambio de fuente; la compatibilidad de escrituras/IDs y el corte completo siguen pendientes.
+
+## Sexta entrega: mapa permanente y adaptadores
+
+El [mapa permanente y los accesos antiguos](ADAPTADORES_PUBLICACIONES_FASE2.md) sustituyen la dependencia de lectura del registro temporal del ensayo. Los accesos antiguos resuelven su destino y editan una sola publicación; el catálogo deja de contar su original. Las altas con contrato antiguo se guardan directamente en la tabla nueva y las eliminaciones con mapa conservan su identidad. Permisos, PDF, colisiones, fallos y restauración se verifican antes de integrar. El esquema inicial está vacío: inventario/respaldo productivos, conciliación real y ensayo completo siguen pendientes antes de convertir contenido y retirar tablas.

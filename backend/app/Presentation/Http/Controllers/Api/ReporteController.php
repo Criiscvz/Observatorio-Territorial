@@ -50,6 +50,9 @@ class ReporteController extends Controller
     )]
     public function show(Request $request, string $id): JsonResponse
     {
+        if ($response = app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->show($request, 'reportes', $id)) {
+            return $response;
+        }
         $reporte = ReporteModel::with(['categoria', 'departamento'])->find($id);
 
         if (!$reporte) {
@@ -99,48 +102,7 @@ class ReporteController extends Controller
     )]
     public function store(Request $request): JsonResponse
     {
-        // Normalizar URL: agregar https:// si no especifica protocolo
-        $input = $request->all();
-        if (!empty($input['link_url']) && !preg_match('#^https?://#i', $input['link_url'])) {
-            $input['link_url'] = 'https://' . $input['link_url'];
-        }
-
-        $validator = Validator::make($input, [
-            'nombre_indicador' => 'required|string|max:255',
-            'descripcion_indicador' => 'nullable|string',
-            'fecha_publicacion' => 'nullable|date',
-            'link_url' => 'nullable|url|max:500',
-            'fuente' => 'nullable|string|max:255',
-            'visibilidad' => 'sometimes|string|in:publico,suscriptor,privado',
-            'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
-            'departamento_id' => 'nullable|uuid|exists:departamentos,id',
-            'ficha' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Datos de validación inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $data = $validator->validated();
-
-        if ($request->hasFile('ficha')) {
-            $data['ficha_indicador'] = $this->guardarFicha($request->file('ficha'));
-        }
-
-        unset($data['ficha']);
-
-        $this->resourceAuthorizer->ensureCanManageDepartamento(
-            $request->user(),
-            $data['departamento_id'] ?? null,
-        );
-
-        $reporte = ReporteModel::create($data);
-        $reporte->load(['categoria', 'departamento']);
-
-        return response()->json($reporte, 201);
+        return app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->create($request, 'reportes');
     }
 
     #[OA\Put(
@@ -176,6 +138,12 @@ class ReporteController extends Controller
         ]
     )]
     public function update(Request $request, string $id): JsonResponse
+    {
+        return app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->write(
+            $request, 'reportes', $id, fn () => $this->updateLegacy($request, $id));
+    }
+
+    private function updateLegacy(Request $request, string $id): JsonResponse
     {
         $reporte = ReporteModel::find($id);
 
@@ -252,6 +220,12 @@ class ReporteController extends Controller
     )]
     public function destroy(Request $request, string $id): JsonResponse
     {
+        return app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->write(
+            $request, 'reportes', $id, fn () => $this->destroyLegacy($request, $id), delete: true);
+    }
+
+    private function destroyLegacy(Request $request, string $id): JsonResponse
+    {
         $reporte = ReporteModel::find($id);
 
         if (!$reporte) {
@@ -285,6 +259,9 @@ class ReporteController extends Controller
                 ->header('Cross-Origin-Resource-Policy', 'cross-origin');
         }
 
+        if ($response = app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->file($request, $filename)) {
+            return $response;
+        }
         $path = 'public/fichas/' . $filename;
 
         if (!Storage::exists($path)) {

@@ -42,6 +42,8 @@ class PublicPublicationCatalog
     protected function publications(): Builder
     {
         return DB::table('observatorio_publicaciones as p')
+            ->leftJoin('publication_origins as m', 'm.target_id', '=', 'p.id')
+            ->leftJoin('categorias_dataset as c', 'c.id', '=', 'm.categoria_id')
             ->join('departamentos as d', 'd.id', '=', 'p.departamento_id')
             ->whereNull('d.deleted_at')->where('d.publico', true)
             ->whereNull('p.eliminado_legado_at')
@@ -50,17 +52,19 @@ class PublicPublicationCatalog
             ->selectRaw("CAST(p.id AS TEXT) id, 'publicaciones' origen, p.tipo, p.codigo, p.titulo, p.descripcion,
                 CAST(p.autores AS TEXT) autores, p.fuente, p.fecha_publicacion, p.created_at, p.updated_at,
                 CAST(p.departamento_id AS TEXT) departamento_id, d.nombre departamento_nombre,
-                CAST(NULL AS TEXT) categoria_id, CAST(NULL AS TEXT) categoria_nombre,
-                CAST(NULL AS TEXT) categoria_codigo, CAST(NULL AS TEXT) categoria_color, CAST(NULL AS TEXT) categoria_icono,
+                CAST(m.categoria_id AS TEXT) categoria_id, c.nombre categoria_nombre,
+                c.codigo categoria_codigo, c.color categoria_color, c.icono categoria_icono,
                 p.solo_suscriptores, p.link_url, p.archivo_pdf,
                 p.sharepoint_url, p.sharepoint_file_type, p.sharepoint_file_id,
-                CAST(NULL AS TEXT) ficha_indicador, CAST(NULL AS TEXT) fecha_recepcion");
+                CAST(NULL AS TEXT) ficha_indicador, CAST(m.fecha_recepcion AS TEXT) fecha_recepcion");
     }
 
     protected function legacy(string $table): Builder
     {
         $article = $table === 'articulos';
         $query = DB::table($table.' as p')->leftJoin('departamentos as d', 'd.id', '=', 'p.departamento_id')
+            ->whereNotExists(fn (Builder $map) => $map->selectRaw('1')->from('publication_origins as m')
+                ->where('m.source_kind', 'legacy')->where('m.source_table', $table)->whereColumn('m.source_id', 'p.id'))
             ->leftJoin('categorias_dataset as c', 'c.id', '=', 'p.categoria_id')
             ->whereNull('p.deleted_at')
             ->where(fn (Builder $q) => $q->whereNull('p.visibilidad')->orWhereIn('p.visibilidad', ['publico', 'suscriptor']))
