@@ -13,6 +13,7 @@ class SessionLogoutTest extends TestCase
 
     public function test_logout_invalidates_the_browser_session_when_sanctum_is_the_request_guard(): void
     {
+        config(['sanctum.stateful' => ['localhost:4200']]);
         $user = User::factory()->create(['rol' => 'ADMIN', 'email_verified_at' => now()]);
         $sessionKey = Auth::guard('web')->getName();
 
