@@ -57,6 +57,11 @@ export function scanHistory(repository, base, head, options) {
   return runScan(repository, 'git', [`--log-opts=${base}..${head} --no-ext-diff`], options);
 }
 
+// Explicit operator audit, separate from the bounded range required by PR CI.
+// Includes root commits and every reachable local/remote ref, never arbitrary log options.
+export const scanAllReachableHistory = (repository, options) => runScan(repository, 'git',
+  ['--log-opts=--all --full-history --no-ext-diff'], options);
+
 export async function trackedSnapshot(repository) {
   const result = spawnSync('git', ['ls-files', '--stage', '-z'],
     { cwd: repository, encoding: 'utf8', timeout: 10000 });

@@ -16,9 +16,9 @@ class PublicacionResource extends JsonResource
             || str_contains($routeAction, 'AtlasEnlaceController');
         $isEditorOwner = $isManagementRequest
             && $user?->rol === 'EDITOR'
-            && (int) $this->creado_por === (int) $user->id;
+            && $user->canReadPublicationForManagement($this->resource);
         $isScopedManager = $isManagementRequest && $user?->isObservatoryAdmin() && $this->tipo !== 'ATLAS'
-            && in_array($this->departamento_id, $user->observatoryIds(), true);
+            && $user->canReadPublicationForManagement($this->resource);
         $canViewSubscriberContent = $isScopedManager || ! $isSubscriberContent
             || ($user && in_array($user->rol, ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true))
             || $isEditorOwner;

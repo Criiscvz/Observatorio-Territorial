@@ -5,7 +5,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
-import { requireScanner, scanDirectory, scanHistory, trackedSnapshot } from './scan-secrets.mjs';
+import { requireScanner, scanAllReachableHistory, scanDirectory, scanHistory, trackedSnapshot } from './scan-secrets.mjs';
+import { scanCredentialHistory } from './audit-credential-history.mjs';
 
 requireScanner(); // Never silently skip the scanner's regression tests.
 const fakeGithubToken = () => 'ghp_' + randomBytes(18).toString('hex');
@@ -130,4 +131,45 @@ test('a canary committed and then removed is still detected in the new commit ra
 test('untrusted or unbounded history options are rejected before scanner execution', () => {
   assert.throws(() => scanHistory('.', '--all', 'HEAD'));
   assert.throws(() => scanHistory('.', '0'.repeat(40), 'a'.repeat(40)));
+});
+
+test('the explicit history audit detects a root-commit canary removed before HEAD on another branch', async () => {
+  const canary = fakeGithubToken();
+  await fixture({ 'source.txt': `token=${canary}\n` }, async directory => {
+    const git = args => {
+      const result = spawnSync('git', ['-c', 'user.name=CI Fixture', '-c', 'user.email=ci@example.test', ...args],
+        { cwd: directory, encoding: 'utf8' });
+      assert.equal(result.status, 0, 'Synthetic Git history fixture failed.');
+    };
+    git(['init', '--quiet']);
+    git(['add', '--', 'source.txt']);
+    git(['commit', '--quiet', '-m', 'root canary']);
+    git(['branch', 'historical-fixture']);
+    await writeFile(join(directory, 'source.txt'), 'clean\n');
+    git(['commit', '--quiet', '-am', 'remove canary']);
+    const findings = await scanAllReachableHistory(directory);
+    assert(findings.some(item => item.rule === 'github-pat' && /^[a-f0-9]{40}$/.test(item.commit)));
+    assert(findings.every(item => Object.keys(item).sort().join(',') === 'commit,file,line,rule'));
+    assert(!JSON.stringify(findings).includes(canary));
+  });
+});
+
+test('the history inventory detects a removed low-entropy password example without returning its value', async () => {
+  const synthetic = 'synthetic-local-fixture-only';
+  await fixture({ 'docs/config.md': `DB_PASSWORD=${synthetic}\n` }, async directory => {
+    const git = args => {
+      const result = spawnSync('git', ['-c', 'user.name=CI Fixture', '-c', 'user.email=ci@example.test', ...args],
+        { cwd: directory, encoding: 'utf8' });
+      assert.equal(result.status, 0, 'Synthetic history fixture failed.');
+    };
+    git(['init', '--quiet']);
+    git(['add', '--', 'docs/config.md']);
+    git(['commit', '--quiet', '-m', 'synthetic configuration']);
+    await writeFile(join(directory, 'docs/config.md'), 'DB_PASSWORD=\n');
+    git(['commit', '--quiet', '-am', 'remove literal']);
+    const findings = scanCredentialHistory(directory);
+    assert(findings.some(item => item.rule === 'literal-documentation-password' && item.file === 'docs/config.md'));
+    assert(findings.every(item => Object.keys(item).sort().join(',') === 'commit,file,line,rule'));
+    assert(!JSON.stringify(findings).includes(synthetic));
+  });
 });

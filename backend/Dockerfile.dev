@@ -85,7 +85,7 @@ RUN mkdir -p storage/framework/cache/data \
     storage/app/public/avatars \
     storage/api-docs \
     bootstrap/cache \
-    && chmod -R 777 storage bootstrap/cache
+    && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8000
 

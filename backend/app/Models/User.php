@@ -212,6 +212,25 @@ class User extends Authenticatable
             && in_array($id, $this->observatoryIds('puede_revisar'), true));
     }
 
+    /** Management context is a view hint, never a substitute for current permissions. */
+    public function canReadPublicationForManagement(ObservatorioPublicacion $publication): bool
+    {
+        if ($this->isAdmin()) {
+            return true;
+        }
+        if (! in_array($publication->tipo, ['ARTICULO', 'REPORTE', 'LIBRO'], true)
+            || ! $publication->departamento) {
+            return false;
+        }
+        if ($this->isObservatoryAdmin()) {
+            return $this->canReviewObservatory($publication->departamento_id);
+        }
+
+        return $this->isEditor() && (int) $publication->creado_por === (int) $this->id
+            && $this->departamentos()->whereKey($publication->departamento_id)
+                ->wherePivotIn('rol', ['ADMIN', 'EDITOR'])->exists();
+    }
+
     /**
      * Verificar si el usuario tiene rol global SUBSCRIBER
      */
