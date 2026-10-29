@@ -1,0 +1,137 @@
+:host {
+  --footer-surface: #f3f5fa;
+  --footer-text: #172033;
+  --footer-muted: #536074;
+  --footer-border: #dce2ee;
+  --footer-accent: #454fbd;
+  display: block;
+}
+
+:host-context(.dark) {
+  --footer-surface: #172338;
+  --footer-text: #f8fafc;
+  --footer-muted: #bdc8d9;
+  --footer-border: #34425a;
+  --footer-accent: #b3bfff;
+}
+
+.essential-footer {
+  padding: 2.25rem 1.5rem 0;
+  background: var(--footer-surface);
+  border-top: 2px solid var(--footer-accent);
+}
+
+.essential-footer__content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.essential-footer__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.essential-footer__logo {
+  width: auto;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.essential-footer__name {
+  margin: 0;
+  color: var(--footer-text);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.essential-footer__university {
+  margin: 0.375rem 0 0;
+  color: var(--footer-muted);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+}
+
+.essential-footer__tagline {
+  margin: 1.25rem 0 1.75rem;
+  color: var(--footer-muted);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.essential-footer__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--footer-border);
+}
+
+.essential-footer__copyright {
+  margin: 0;
+  color: var(--footer-muted);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.essential-footer .essential-footer__bottom a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  flex-shrink: 0;
+  color: var(--footer-accent);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.6;
+  text-decoration: none;
+}
+
+.essential-footer__website-link mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: inherit;
+}
+
+.essential-footer .essential-footer__bottom a:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.essential-footer__website-link:focus-visible {
+  outline: 2px solid var(--footer-accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+@media (max-width: 640px) {
+  .essential-footer {
+    padding: 2rem 1rem 0;
+  }
+
+  .essential-footer__brand {
+    flex-direction: column;
+    gap: 0.875rem;
+    text-align: center;
+  }
+
+  .essential-footer__tagline {
+    max-width: 360px;
+    margin: 1.25rem auto 1.5rem;
+  }
+
+  .essential-footer__bottom {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}

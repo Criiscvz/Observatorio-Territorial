@@ -164,7 +164,7 @@ DB_HOST=127.0.0.1
 DB_PORT=5432
 DB_DATABASE=observatorio_uleam
 DB_USERNAME=postgres
-DB_PASSWORD=secret123
+DB_PASSWORD=<valor-protegido>
 
 SANCTUM_STATEFUL_DOMAINS=localhost:4200
 SESSION_DOMAIN=localhost

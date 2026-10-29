@@ -11,13 +11,26 @@ use App\Application\Auth\UseCases\GetCurrentUserUseCase;
 use App\Application\Auth\UseCases\LoginUseCase;
 use App\Application\Auth\UseCases\LogoutUseCase;
 use App\Application\Auth\UseCases\RegisterUseCase;
+use App\Application\Auth\DTOs\AuthResponseDTO;
+use App\Application\Auth\Services\EmailVerificationService;
+use App\Application\Auth\Services\GoogleOAuthService;
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Presentation\Http\Requests\Auth\GoogleCodeExchangeRequest;
 use App\Presentation\Http\Requests\Auth\LoginRequest;
+use App\Presentation\Http\Requests\Auth\ResendVerificationCodeRequest;
 use App\Presentation\Http\Requests\Auth\RegisterRequest;
+use App\Presentation\Http\Requests\Auth\VerifyEmailCodeRequest;
 use App\Presentation\Http\Resources\Auth\AuthResource;
 use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 #[OA\Tag(name: 'Auth', description: 'Endpoints de autenticación')]
 class AuthController extends Controller
@@ -27,6 +40,8 @@ class AuthController extends Controller
         private readonly RegisterUseCase $registerUseCase,
         private readonly LogoutUseCase $logoutUseCase,
         private readonly GetCurrentUserUseCase $getCurrentUserUseCase,
+        private readonly EmailVerificationService $emailVerificationService,
+        private readonly GoogleOAuthService $googleOAuthService,
     ) {}
 
     #[OA\Post(
@@ -38,7 +53,7 @@ class AuthController extends Controller
                 required: ['email', 'password'],
                 properties: [
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'admin@example.com'),
-                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123')
+                    new OA\Property(property: 'password', type: 'string', format: 'password')
                 ]
             )
         ),
@@ -52,6 +67,9 @@ class AuthController extends Controller
     {
         $dto = LoginDTO::fromArray($request->validated());
         $result = $this->loginUseCase->execute($dto);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
 
         return response()->json(new AuthResource($result));
     }
@@ -66,8 +84,12 @@ class AuthController extends Controller
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com'),
-                    new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
-                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'password123')
+                    new OA\Property(property: 'password', type: 'string', format: 'password'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password'),
+                    new OA\Property(property: 'vinculo', type: 'string', nullable: true, enum: ['ESTUDIANTE', 'DOCENTE', 'INVESTIGADOR', 'PERSONAL_ADMINISTRATIVO', 'PUBLICO_GENERAL']),
+                    new OA\Property(property: 'institucion_tipo', type: 'string', nullable: true, enum: ['ULEAM', 'OTRA', 'NINGUNA']),
+                    new OA\Property(property: 'institucion', type: 'string', nullable: true),
+                    new OA\Property(property: 'interes_departamento_id', type: 'string', format: 'uuid', nullable: true)
                 ]
             )
         ),
@@ -80,9 +102,121 @@ class AuthController extends Controller
     public function register(RegisterRequest $request): JsonResponse
     {
         $dto = RegisterDTO::fromArray($request->validated());
-        $result = $this->registerUseCase->execute($dto);
+        $user = $this->registerUseCase->execute($dto);
+        $emailSent = true;
 
-        return response()->json(new AuthResource($result), 201);
+        try {
+            $this->emailVerificationService->send($user, false);
+        } catch (Throwable $e) {
+            $emailSent = false;
+            Log::warning('Verification email delivery failed.', [
+                'user_id' => $user->id,
+                'exception' => $e::class,
+            ]);
+        }
+
+        return response()->json([
+            'message' => $emailSent
+                ? 'Cuenta creada. Revisa tu correo para obtener el código de verificación.'
+                : 'Cuenta creada. No pudimos enviar el correo; solicita un nuevo código.',
+            'verification_required' => true,
+            'email' => $user->email,
+            'email_sent' => $emailSent,
+            'resend_after' => $emailSent ? EmailVerificationService::RESEND_COOLDOWN_SECONDS : 0,
+        ], 201);
+    }
+
+    public function verifyEmailCode(VerifyEmailCodeRequest $request): JsonResponse
+    {
+        $email = Str::lower(trim((string) $request->validated('email')));
+        $user = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
+
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'code' => ['El código expiró o ya no es válido.'],
+            ]);
+        }
+
+        $verifiedUser = $this->emailVerificationService->verify(
+            $user,
+            (string) $request->validated('code'),
+        );
+
+        $authResponse = $this->createAuthResponse($verifiedUser);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        return response()->json(new AuthResource($authResponse));
+    }
+
+    public function resendVerificationCode(ResendVerificationCodeRequest $request): JsonResponse
+    {
+        $email = Str::lower(trim((string) $request->validated('email')));
+        $user = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
+
+        if ($user && $user->email_verified_at === null) {
+            try {
+                $this->emailVerificationService->send($user);
+            } catch (Throwable $e) {
+                Log::warning('Verification email resend failed.', [
+                    'user_id' => $user->id,
+                    'exception' => $e::class,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Si la cuenta requiere verificación, recibirás un nuevo código.',
+            'resend_after' => EmailVerificationService::RESEND_COOLDOWN_SECONDS,
+        ]);
+    }
+
+    public function googleRedirect(): JsonResponse
+    {
+        try {
+            return response()->json(['url' => $this->googleOAuthService->authorizationUrl()]);
+        } catch (Throwable $e) {
+            Log::warning('Google OAuth could not start.', ['exception' => $e::class]);
+            return response()->json(['message' => 'Google no está disponible en este momento.'], 503);
+        }
+    }
+
+    public function googleCallback(Request $request): RedirectResponse
+    {
+        $frontendUrl = rtrim((string) config('app.frontend_url'), '/');
+
+        if ($request->filled('error') || !$request->filled(['code', 'state'])) {
+            return redirect()->away($frontendUrl.'/auth/login?google_error=cancelled');
+        }
+
+        try {
+            $loginCode = $this->googleOAuthService->handleCallback(
+                (string) $request->query('code'),
+                (string) $request->query('state'),
+            );
+
+            return redirect()->away($frontendUrl.'/auth/google/callback?code='.rawurlencode($loginCode));
+        } catch (Throwable $e) {
+            Log::warning('Google OAuth callback failed.', ['exception' => $e::class]);
+            return redirect()->away($frontendUrl.'/auth/login?google_error=failed');
+        }
+    }
+
+    public function googleExchange(GoogleCodeExchangeRequest $request): JsonResponse
+    {
+        try {
+            $user = $this->googleOAuthService->consumeLoginCode((string) $request->validated('code'));
+        } catch (Throwable $e) {
+            return response()->json(['message' => 'El acceso de Google expiró o no es válido.'], 422);
+        }
+
+        $authResponse = $this->createAuthResponse($user);
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        return response()->json(new AuthResource($authResponse));
     }
 
     #[OA\Post(
@@ -96,7 +230,9 @@ class AuthController extends Controller
     )]
     public function logout(Request $request): JsonResponse
     {
-        $this->logoutUseCase->execute($request->user());
+        $this->logoutUseCase->execute();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->json(['message' => 'Sesión cerrada exitosamente']);
     }
@@ -115,5 +251,13 @@ class AuthController extends Controller
         $user = $this->getCurrentUserUseCase->execute($request->user());
 
         return response()->json(new UserResource($user));
+    }
+
+    private function createAuthResponse(User $user): AuthResponseDTO
+    {
+        $user->load(['perfil', 'departamentos']);
+        Auth::login($user);
+
+        return AuthResponseDTO::fromUser($user);
     }
 }

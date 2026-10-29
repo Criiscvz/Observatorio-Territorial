@@ -32,7 +32,7 @@ class Departamento extends Model
     public function usuarios(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'usuario_departamento', 'departamento_id', 'user_id')
-            ->withPivot('rol')
+            ->withPivot('rol', 'puede_revisar', 'puede_agregar_editores')
             ->withTimestamps();
     }
 

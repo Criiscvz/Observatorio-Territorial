@@ -1,0 +1,25 @@
+<section class="dialog-container">
+  <header class="dialog-title">
+    <div class="title-icon"><mat-icon>person_add</mat-icon></div>
+    <div class="title-copy"><span class="eyebrow">Equipo del observatorio</span><h2 mat-dialog-title>Agregar editor</h2><p>Selecciona una cuenta y luego asigna su observatorio.</p></div>
+    <button class="access-icon" type="button" aria-label="Cerrar ventana" (click)="close()"><mat-icon>close</mat-icon></button>
+  </header>
+  <mat-dialog-content class="dialog-content picker-body">
+    <div class="workflow"><span class="current">1 · Seleccionar usuario</span><span>2 · Asignar acceso</span></div>
+    <label class="access-search"><mat-icon>search</mat-icon><input type="search" [formControl]="search" maxlength="255" placeholder="Buscar por nombre o correo" aria-label="Buscar usuario para asignar como editor"></label>
+    <p class="obs-hint">Solo aparecen cuentas con rol Usuario. Al guardar el acceso, la cuenta tendrá el rol Editor.</p>
+    @if(loading()){<p class="empty-observatorios" role="status">Cargando usuarios…</p>}
+    @else if(error()){<div class="empty-observatorios" role="alert"><span>{{error()}}</span><button class="access-button" type="button" (click)="load(page())">Reintentar</button></div>}
+    @else{
+      <div class="candidate-list">
+        @for(user of users(); track user.id){
+          <button class="candidate" type="button" [disabled]="user.is_active === false" (click)="choose(user)" [attr.aria-label]="'Asignar como editor a ' + user.name">
+            <span class="user-avatar">{{user.name.charAt(0).toUpperCase()}}</span><span class="candidate-copy"><strong>{{user.name}}</strong><small>{{user.email}}</small></span>
+            @if(user.is_active === false){<span class="section-count">Inactivo</span>}@else{<mat-icon>chevron_right</mat-icon>}
+          </button>
+        }@empty{<p class="empty-observatorios">No hay usuarios en esta selección.</p>}
+      </div>
+    }
+  </mat-dialog-content>
+  <footer class="dialog-actions picker-footer"><span>{{total()}} usuarios</span><div class="quick-actions"><button class="access-icon" type="button" aria-label="Página anterior" [disabled]="loading() || page() <= 1" (click)="load(page()-1)"><mat-icon>chevron_left</mat-icon></button><span>{{page()}} / {{lastPage()}}</span><button class="access-icon" type="button" aria-label="Página siguiente" [disabled]="loading() || page() >= lastPage()" (click)="load(page()+1)"><mat-icon>chevron_right</mat-icon></button></div></footer>
+</section>

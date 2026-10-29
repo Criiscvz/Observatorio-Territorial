@@ -24,11 +24,16 @@ APP_URL=https://tu-dominio.com
 
 DB_DATABASE=observatorio_uleam
 DB_USERNAME=postgres
-DB_PASSWORD=TU_PASSWORD_SEGURA
+DB_PASSWORD=<valor-protegido>
 
-SEED_TOKEN=TU_TOKEN_SEGURO
-ADMIN_EMAIL=admin@uleam.edu.ec
-ADMIN_PASSWORD=TU_PASSWORD_ADMIN
+# Configurar únicamente cuando se vayan a ejecutar seeders por CLI.
+ADMIN_EMAIL=<correo-administrador>
+ADMIN_PASSWORD=<valor-protegido>
+
+# Obligatorio para autenticación SPA mediante cookies.
+FRONTEND_URL=https://<dominio-frontend>
+SANCTUM_STATEFUL_DOMAINS=<dominio-frontend>
+SESSION_DOMAIN=.<dominio-institucional>
 
 SANCTUM_STATEFUL_DOMAINS=tu-dominio.com,localhost:4200
 ```
@@ -63,11 +68,7 @@ docker-compose -f docker-compose.prod.yml exec backend php artisan migrate
 ### Crear usuario administrador
 
 ```bash
-# Via API (requiere SEED_TOKEN configurado)
-curl -X POST http://localhost:8000/api/seed/admin \
-  -H "X-Seed-Token: TU_SEED_TOKEN"
-
-# O directamente en el contenedor
+# Los seeders se ejecutan exclusivamente por CLI; nunca mediante la API.
 docker-compose -f docker-compose.prod.yml exec backend php artisan db:seed --class=AdminUserSeeder
 ```
 

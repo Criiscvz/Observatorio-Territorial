@@ -22,6 +22,8 @@ class SavePermisosRequest extends FormRequest
             'permisos.*.modulo' => ['required', 'string', Rule::in(Permiso::MODULOS)],
             'permisos.*.nivel' => ['required', 'string', Rule::in(Permiso::NIVELES)],
             'permisos.*.departamento_id' => ['nullable', 'string', 'exists:departamentos,id'],
+            'permisos.*.puede_revisar' => ['sometimes', 'boolean'],
+            'permisos.*.puede_agregar_editores' => ['sometimes', 'boolean'],
         ];
     }
 

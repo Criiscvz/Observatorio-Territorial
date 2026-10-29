@@ -1,233 +1,136 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { PublicationViewerService } from '../components/publication-viewer.service';
 import { Component, computed, DestroyRef, inject, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Dataset, Departamento } from '@core/models';
+import { catchError, combineLatest, forkJoin, map, of, startWith, Subject, switchMap, tap } from 'rxjs';
+import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
-import { ArticulosService, Articulo } from '@core/services/articulos.service';
-import { ReportesService, Reporte } from '@core/services/reportes.service';
+import { ArticulosService } from '@core/services/articulos.service';
+import { ReportesService } from '@core/services/reportes.service';
 import { AuthService } from '@core/services/auth.service';
 import { PublicacionService } from '@core/services/publicacion.service';
-import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
-import { TranslateModule } from '@ngx-translate/core';
+import { hasPublicPdf, PublicLibraryPublication, PublicLibraryType, toPublicLibraryItem } from '../components/public-library-publication';
+import { PublicPublicationDetailsComponent } from '../components/public-publication-details.component';
 
 @Component({
   selector: 'app-public-departamento-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    FormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatProgressSpinnerModule,
-    MatDialogModule,
-    MatSnackBarModule,
-    MatChipsModule,
-    MatTabsModule,
-    TranslateModule,
-  ],
+  imports: [CommonModule, RouterLink, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './public-departamento-detail.component.html',
   styleUrl: './public-departamento-detail.component.scss',
 })
 export class PublicDepartamentoDetailComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly route = inject(ActivatedRoute);
-  private readonly deptoService = inject(DepartamentoService);
-  private readonly articulosService = inject(ArticulosService);
-  private readonly reportesService = inject(ReportesService);
-  private readonly authService = inject(AuthService);
-  private readonly publicacionService = inject(PublicacionService);
+  private readonly departments = inject(DepartamentoService);
+  private readonly articles = inject(ArticulosService);
+  private readonly reports = inject(ReportesService);
+  private readonly auth = inject(AuthService);
+  private readonly publications = inject(PublicacionService);
+  private readonly viewer = inject(PublicationViewerService);
   private readonly dialog = inject(MatDialog);
-  private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
-
-  departamento = signal<Departamento | null>(null);
-  articulos = signal<Articulo[]>([]);
-  reportes = signal<Reporte[]>([]);
-  atlas = signal<ObservatorioPublicacion[]>([]);
-  loading = signal(true);
-  datasetSearchTerm = '';
-
-  deptoGradient = 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)';
-
-  private readonly datasetColors = [
-    '#6366F1', '#EC4899', '#14B8A6', '#F59E0B',
-    '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16',
-    '#F97316', '#3B82F6',
+  private readonly reload = new Subject<void>();
+  readonly departamento = signal<Departamento | null>(null);
+  readonly items = signal<PublicLibraryPublication[]>([]);
+  readonly loading = signal(true);
+  readonly loadError = signal(false);
+  readonly publicationErrors = signal<string[]>([]);
+  readonly type = signal<PublicLibraryType>('ARTICULO');
+  readonly query = signal('');
+  readonly page = signal(0);
+  readonly pageSize = 20;
+  readonly hasPdf = hasPublicPdf;
+  readonly types: {value: PublicLibraryType; label: string; singular: string; icon: string}[] = [
+    {value: 'ARTICULO', label: 'Artículos', singular: 'artículo', icon: 'article'},
+    {value: 'REPORTE', label: 'Reportes', singular: 'reporte', icon: 'bar_chart'},
+    {value: 'LIBRO', label: 'Libros', singular: 'libro', icon: 'menu_book'},
   ];
-
-  /** Artículos agrupados por categoría */
-  articulosAgrupados = computed(() =>
-    this.articulosService.agruparPorCategoria(this.articulos())
-  );
-
-  /** Reportes agrupados por categoría */
-  reportesAgrupados = computed(() =>
-    this.reportesService.agruparPorCategoria(this.reportes())
-  );
-
-  atlasAgrupados = computed(() => [
-    {
-      categoria: 'Libros ULEAM',
-      color: '#6366F1',
-      items: this.atlas(),
-    },
-  ]);
-
-  get datasets(): Dataset[] {
-    const all = this.departamento()?.datasets || [];
-    if (!this.datasetSearchTerm.trim()) return all;
-    const term = this.datasetSearchTerm.toLowerCase().trim();
-    return all.filter((ds) => ds.nombre.toLowerCase().includes(term));
-  }
-
-  get totalRegistros(): number {
-    return this.datasets.reduce((sum, ds) => sum + (ds.total_registros || 0), 0);
-  }
+  readonly typeLabel = computed(() => this.types.find(t => t.value === this.type())!);
+  readonly filtered = computed(() => {
+    const query = this.normalize(this.query());
+    return this.items().filter(item => item.type === this.type()).filter(item => !query || this.normalize([item.title, item.code, item.authors, item.source].join(' ')).includes(query));
+  });
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize)));
+  readonly currentPage = computed(() => Math.min(this.page(), this.pageCount() - 1));
+  readonly visible = computed(() => this.filtered().slice(this.currentPage() * this.pageSize, (this.currentPage() + 1) * this.pageSize));
+  readonly rangeStart = computed(() => this.filtered().length ? this.currentPage() * this.pageSize + 1 : 0);
+  readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.filtered().length));
 
   ngOnInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+    if (!isPlatformBrowser(this.platformId)) { this.loading.set(false); return; }
+    combineLatest([this.route.params, this.reload.pipe(startWith(undefined))]).pipe(
+      switchMap(([params]) => {
         const id = params['id'];
-        if (id) {
-          this.loadDepartamento(id);
-        }
-      });
-    } else {
+        this.loading.set(true); this.loadError.set(false); this.publicationErrors.set([]);
+        this.departamento.set(null); this.items.set([]); this.query.set(''); this.page.set(0);
+        if (!id) return of(null);
+        const fail = (name: string) => { this.publicationErrors.update(errors => [...errors, name]); return of([]); };
+        return this.departments.getPublicById(id).pipe(
+          tap(department => this.departamento.set(department)),
+          switchMap(() => forkJoin({
+            articles: this.articles.getAll(id).pipe(catchError(() => fail('artículos'))),
+            reports: this.reports.getAll(id).pipe(catchError(() => fail('reportes'))),
+            books: this.publications.getPublicAtlasByDepartamento(id).pipe(catchError(() => fail('libros'))),
+          })),
+          map(data => {
+            const role = String(this.auth.user()?.rol || '').toUpperCase();
+            const subscriber = this.auth.isAuthenticated() && ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
+            return [
+              ...data.articles.filter(item => item.departamento_id === id).map(item => toPublicLibraryItem(item, 'ARTICULO', subscriber)),
+              ...data.reports.filter(item => item.departamento_id === id).map(item => toPublicLibraryItem(item, 'REPORTE', subscriber)),
+              ...data.books.filter(item => item.departamento_id === id && item.tipo === 'LIBRO').map(item => toPublicLibraryItem(item, 'LIBRO', subscriber)),
+            ].sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.title.localeCompare(b.title, 'es'));
+          }),
+          catchError(() => { this.loadError.set(true); this.departamento.set(null); return of(null); }),
+        );
+      }),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(items => {
+      this.items.set(items || []);
+      this.type.set(this.types.find(type => this.count(type.value))?.value || 'ARTICULO');
       this.loading.set(false);
-    }
-  }
-
-  loadDepartamento(id: string): void {
-    this.deptoService.getPublicById(id).subscribe({
-      next: (depto) => {
-        this.departamento.set(depto);
-        this.loading.set(false);
-        // Cargar artículos y reportes filtrados por este departamento
-        this.articulosService.getAll(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-          next: (arts) => this.articulos.set(arts),
-          error: () => this.articulos.set([]),
-        });
-        this.reportesService.getAll(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-          next: (reps) => this.reportes.set(reps),
-          error: () => this.reportes.set([]),
-        });
-        this.publicacionService
-          .getPublicAtlasByDepartamento(id)
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe({
-            next: (items) => this.atlas.set(items),
-            error: () => this.atlas.set([]),
-          });
-      },
-      error: () => {
-        this.departamento.set(null);
-        this.loading.set(false);
-      },
     });
   }
-  getDatasetColor(index: number): string {
-    return this.datasetColors[index % this.datasetColors.length];
+
+  retry(): void { this.reload.next(); }
+  count(type: PublicLibraryType): number { return this.items().filter(item => item.type === type).length; }
+  selectType(type: PublicLibraryType): void { this.type.set(type); this.query.set(''); this.page.set(0); }
+  search(value: string): void { this.query.set(value); this.page.set(0); }
+  changePage(delta: number): void { this.page.set(Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1))); }
+  icon(item: PublicLibraryPublication): string { return this.types.find(type => type.value === item.type)!.icon; }
+  readLabel(item: PublicLibraryPublication): string {
+    if (item.locked) return 'Suscribirse';
+    if (item.type === 'REPORTE') return item.reportUrl ? 'Ver reporte' : this.hasPdf(item) ? 'Ver PDF' : 'Ver detalles';
+    return item.type === 'LIBRO' ? 'Leer libro' : 'Leer artículo';
   }
-
-  getTypeClass(tipo: string): string {
-    switch (tipo) {
-      case 'NUMERICO': return 'type-numeric';
-      case 'CATEGORICO': return 'type-categoric';
-      case 'FECHA': return 'type-date';
-      default: return 'type-text';
-    }
+  openDetails(item: PublicLibraryPublication): void {
+    if (item.locked) { this.showSubscriberMessage(); return; }
+    this.dialog.open(PublicPublicationDetailsComponent, {
+      data: {item, departmentName: this.departamento()?.nombre || ''},
+      width: '700px', maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 24px)',
+      autoFocus: 'dialog', restoreFocus: true,
+    });
   }
-
-  isSubscriberContent(item: Articulo | Reporte | ObservatorioPublicacion): boolean {
-    return (
-      item.bloqueado === true ||
-      ('visibilidad' in item && item.visibilidad === 'suscriptor') ||
-      ('solo_suscriptores' in item && item.solo_suscriptores)
-    );
+  read(item: PublicLibraryPublication): void {
+    if (item.locked) { this.showSubscriberMessage(); return; }
+    if (item.reportUrl) { this.viewer.open(item, this.departamento()?.nombre || '', 'report'); return; }
+    if (this.hasPdf(item)) {
+      this.viewer.open(item, this.departamento()?.nombre || '', 'pdf');
+    } else if (item.sourceUrl) window.open(item.sourceUrl, '_blank', 'noopener,noreferrer');
+    else this.openDetails(item);
   }
-
-  canViewSubscriberContent(item: Articulo | Reporte | ObservatorioPublicacion): boolean {
-    if (!this.isSubscriberContent(item)) return true;
-    if (!this.authService.isAuthenticated()) return false;
-
-    const user = this.authService.user();
-    const role = String(user?.rol ?? '').toUpperCase();
-    return ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
-  }
-
-  showSubscriberMessage(): void {
+  private showSubscriberMessage(): void {
     this.dialog.open(SubscriberAccessDialogComponent, {
-      width: 'min(92vw, 460px)',
-      maxWidth: '92vw',
-      panelClass: 'subscriber-access-dialog-panel',
-      backdropClass: 'subscriber-access-dialog-backdrop',
-      autoFocus: false,
-      restoreFocus: false,
-      data: {
-        title: 'Contenido exclusivo para suscriptores',
-        message:
-          'Este contenido está disponible exclusivamente para usuarios suscriptores. Inicie sesión con una cuenta suscriptora o suscríbase para obtener acceso.',
-        icon: 'lock',
-        closeText: 'Entendido',
-      },
+      width: 'min(92vw, 460px)', maxWidth: '92vw', autoFocus: false,
+      panelClass: 'subscriber-access-dialog-panel', backdropClass: 'subscriber-access-dialog-backdrop',
+      data: {title: 'Contenido exclusivo para suscriptores', message: 'Inicia sesión con una cuenta suscriptora para consultar esta publicación.', icon: 'lock', closeText: 'Entendido'},
     });
   }
-
-  openArticlePdf(articulo: Articulo): void {
-    this.publicacionService
-      .openPdf({
-        download_url: articulo.download_url ?? null,
-        sharepoint_url: articulo.sharepoint_url ?? null,
-      })
-      .subscribe((opened) => {
-        if (!opened) {
-          this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
-            duration: 3500,
-          });
-        }
-      });
-  }
-
-  openReportPdf(reporte: Reporte): void {
-    this.publicacionService
-      .openPdf({
-        download_url: reporte.download_url ?? reporte.ficha_indicador ?? null,
-        sharepoint_url: reporte.sharepoint_url ?? null,
-      })
-      .subscribe((opened) => {
-        if (!opened) {
-          this.snackBar.open('No hay PDF disponible para este reporte.', 'Cerrar', {
-            duration: 3500,
-          });
-        }
-      });
-  }
-
-  openAtlasPdf(atlas: ObservatorioPublicacion): void {
-    this.publicacionService.openPdf(atlas).subscribe((opened) => {
-      if (!opened) {
-        this.snackBar.open('No hay PDF disponible para este libro.', 'Cerrar', {
-          duration: 3500,
-        });
-      }
-    });
-  }
+  private normalize(value: string): string { return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim(); }
 }
-

@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')->group(function () {
-    // Lectura - todos los usuarios autenticados
+Route::middleware(['auth:sanctum', 'role:ADMIN,USER,SUBSCRIBER,SUSCRIPTOR,SUBSCRIPTOR'])->group(function () {
+    // El editor trabaja con publicaciones; los otros roles conservan su lectura.
     Route::get('/', [DatasetController::class, 'index']);
     Route::get('/{dataset}', [DatasetController::class, 'show']);
     Route::get('/{dataset}/data', [DatasetController::class, 'data']);
 
-    // Escritura - admin y editor
-    Route::middleware('role:ADMIN,EDITOR')->group(function () {
+    // Escritura - solo administración.
+    Route::middleware('role:ADMIN')->group(function () {
         Route::post('/', [DatasetController::class, 'store']);
         Route::put('/{dataset}', [DatasetController::class, 'update']);
         Route::post('/{dataset}/analyze', [DatasetController::class, 'analyze']);

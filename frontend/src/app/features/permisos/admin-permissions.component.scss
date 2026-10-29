@@ -1,3 +1,5 @@
+@use '../../shared/styles/selection-tabs' as selection;
+
 .page-container {
   max-width: 1280px;
   margin: 0 auto;
@@ -109,7 +111,7 @@
 
 .role-card {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   min-height: 150px;
   padding: 16px;
@@ -138,6 +140,7 @@
   gap: 8px;
   align-items: flex-start;
   margin-bottom: 8px;
+  overflow-wrap: anywhere;
 }
 
 .role-card h3 {
@@ -244,82 +247,7 @@
   font-size: 46px;
 }
 
-.users-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 16px;
-}
-
-.user-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 320px;
-  padding: 18px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  transition:
-    border-color var(--transition-fast, 150ms ease),
-    box-shadow var(--transition-fast, 150ms ease),
-    transform var(--transition-fast, 150ms ease);
-}
-
-.user-card:hover {
-  border-color: var(--border-hover);
-  box-shadow: 0 10px 28px var(--shadow-color);
-  transform: translateY(-1px);
-}
-
-.user-card-head {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-}
-
-.user-avatar {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--uleam-red, #b3261e), var(--primary-500, #6366f1));
-  color: #fff;
-  font-weight: 800;
-}
-
-.user-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.user-name,
-.user-email {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-name {
-  color: var(--text-primary);
-  font-weight: 800;
-}
-
-.user-email {
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-}
-
-.user-permission-summary {
-  margin-top: 6px;
-}
-
-.role-badge,
-.nivel-chip {
+.role-badge {
   display: inline-flex;
   align-items: center;
   width: max-content;
@@ -359,154 +287,105 @@
   color: var(--success-color);
 }
 
-.user-card-body {
-  flex: 1;
-}
-
-.admin-note {
+.editor-scope-note {
   display: flex;
-  gap: 10px;
   align-items: flex-start;
-  padding: 12px;
-  border: 1px solid var(--error-border);
-  border-radius: 6px;
-  background: var(--error-bg);
-  color: var(--text-primary);
-  font-size: 0.86rem;
-}
-
-.admin-note mat-icon {
-  color: var(--error-color);
-}
-
-.modulos-permisos {
-  display: grid;
-  gap: 8px;
-}
-
-.modulo-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
   gap: 10px;
-  align-items: center;
-  padding: 10px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--card-bg);
-}
-
-.modulo-icon-wrapper {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 5px;
-  background: var(--info-bg);
-  color: var(--info-color);
-}
-
-.modulo-icon {
-  width: 18px;
-  height: 18px;
-  font-size: 18px;
-}
-
-.modulo-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-}
-
-.modulo-label {
-  overflow: hidden;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nivel-chip {
-  padding: 5px 8px;
-}
-
-.nivel-none {
-  border-color: var(--border-color);
-  background: var(--bg-tertiary);
+  border-radius: 10px;
+  background: var(--bg-secondary);
   color: var(--text-secondary);
+  font-size: .82rem;
+  line-height: 1.5;
 }
 
-.nivel-read {
-  border-color: var(--info-border);
-  background: var(--info-bg);
-  color: var(--info-color);
-}
+.editor-scope-note mat-icon { color: var(--primary-600); flex-shrink: 0; }
+.users-toolbar { grid-template-columns: minmax(0, 1fr); }
+.users-toolbar:has(.add-editor) { grid-template-columns: minmax(0, 1fr) auto; }
+.editor-search { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0 12px; border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); color: var(--text-secondary); }
+.editor-search mat-icon { flex-shrink: 0; }
+.editor-search input { width: 100%; min-width: 0; min-height: 44px; border: 0; background: transparent; color: var(--text-primary); font: inherit; font-size: .875rem; }
+.editor-search input::placeholder { color: var(--text-secondary); opacity: 1; }
+.editor-search:focus-within { outline: 2px solid var(--primary-500); outline-offset: 2px; }
+.editor-search input:focus-visible { outline: none; }
+.editors-list { border: 1px solid var(--border-color); border-radius: 12px; background: var(--card-bg); }
+.editor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 20px; padding: 18px; }
+.editor-row + .editor-row { border-top: 1px solid var(--border-color); }
+.editor-identity { grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.user-avatar { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 50%; background: color-mix(in srgb, var(--primary-500) 13%, var(--card-bg)); color: var(--primary-700); font-size: .95rem; font-weight: 700; }
+.user-meta { flex: 1; min-width: 0; }
+.editor-name { display: block; margin: 0; color: var(--text-primary); font-size: .9rem; font-weight: 650; line-height: 1.5; overflow-wrap: anywhere; }
+.user-email { display: block; color: var(--text-secondary); font-size: .78rem; overflow-wrap: anywhere; }
+.editor-identity .badge-editor { border-color: transparent; color: var(--primary-700); background: color-mix(in srgb, var(--primary-500) 13%, var(--card-bg)); font-size: .65rem; }
+.editor-assignments { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; min-width: 0; }
+.assignment-count { color: var(--text-secondary); font-size: .78rem; }
+.observatorio-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); border-radius: 6px; padding: 4px 8px; color: var(--text-primary); font-size: .75rem; overflow-wrap: anywhere; max-width: 100%; }
+.observatorio-chip mat-icon { flex-shrink: 0; width: 15px; height: 15px; font-size: 15px; color: var(--text-secondary); }
+.editor-actions, .confirmation-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.editor-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 9px; background: var(--card-bg); color: var(--text-primary); font: inherit; font-size: .8rem; font-weight: 600; line-height: 1.4; cursor: pointer; }
+.editor-action mat-icon { font-size: 18px; width: 18px; height: 18px; color: inherit; flex-shrink: 0; }
+// Native buttons keep their label and icon contrast independent of Material theme overrides.
+.editor-action.manage-observatorios { color: #fff; background: #4f46e5; border-color: #4f46e5; box-shadow: 0 3px 10px var(--shadow-color); }
+.editor-action.manage-observatorios:enabled:hover { color: #fff; background: #4338ca; border-color: #4338ca; }
+.editor-action.reset-access { color: var(--text-secondary); background: transparent; border-color: transparent; padding-inline: 4px; }
+.editor-action.reset-access:enabled:hover { color: var(--error-color-dark); background: var(--error-bg); }
+.editor-action:focus-visible, .editor-role-details summary:focus-visible { outline: 2px solid var(--primary-500); outline-offset: 3px; }
+.editor-action:disabled { opacity: .5; cursor: default; box-shadow: none; }
+.editor-role-details { margin-top: 14px; font-size: .8rem; color: var(--text-secondary); }
+.editor-role-details summary { display: flex; align-items: center; gap: 6px; min-height: 42px; width: fit-content; cursor: pointer; list-style: none; border-radius: 6px; }
+.editor-role-details summary::-webkit-details-marker { display: none; }
+.editor-role-details[open] summary mat-icon { transform: rotate(180deg); }
+.editor-role-details ul { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 6px 0 0; padding: 0; list-style: none; }
+.editor-role-details li { display: flex; align-items: center; gap: 6px; }
+.editor-role-details li mat-icon { width: 16px; height: 16px; font-size: 16px; color: var(--success-color); }
+.reset-confirmation { grid-column: 1 / -1; padding: 14px; border-radius: 9px; border: 1px solid var(--error-border); background: var(--error-bg); font-size: .8rem; color: var(--text-primary); }
+.reset-confirmation p { margin: 5px 0 12px; color: var(--text-secondary); }
+.editor-action.confirm-reset { color: var(--error-color-dark); border-color: var(--error-border); }
+.permissions-status { margin: 10px 0 0; color: var(--text-secondary); font-size: .8rem; }
+.permissions-status:empty { margin: 0; }
+:host-context(.dark) .user-avatar, :host-context(.dark) .editor-identity .badge-editor, :host-context(.dark) .editor-scope-note mat-icon { color: var(--primary-300); }
+:host-context(.dark) .editor-action.reset-access:enabled:hover, :host-context(.dark) .editor-action.confirm-reset { color: var(--error-color-light); }
 
-.nivel-write {
-  border-color: var(--warning-border);
-  background: var(--warning-bg);
-  color: var(--warning-color);
+@media (min-width: 1100px) {
+  .editor-row { grid-template-columns: minmax(260px, 1fr) minmax(160px, .8fr) auto; align-items: center; }
+  .editor-identity { grid-column: auto; }
 }
-
-.nivel-admin {
-  border-color: var(--success-border);
-  background: var(--success-bg);
-  color: var(--success-color);
-}
-
-.user-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-  padding-top: 4px;
-}
-
-.user-card-actions button {
-  min-height: 38px;
-}
-
+@media (min-width: 761px) and (max-width: 1100px) { .roles-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
-  .page-container {
-    padding: 16px;
-  }
-
-  .page-header,
-  .user-card-head {
-    grid-template-columns: 1fr;
-  }
-
-  .role-badge {
-    justify-self: start;
-  }
-
-  .users-toolbar,
-  .users-grid,
-  .roles-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .section-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .card-content,
-  .permissions-card mat-card-header {
-    padding: 18px;
-  }
+  .users-toolbar:has(.add-editor) { grid-template-columns: minmax(0, 1fr); }
+  .page-container { padding: 16px; }
+  .page-header { grid-template-columns: 1fr; }
+  .roles-grid { grid-template-columns: 1fr; }
+  .section-heading { align-items: flex-start; flex-direction: column; }
+  .card-content, .permissions-card mat-card-header { padding: 18px; }
+  .editor-row { grid-template-columns: minmax(0, 1fr); padding: 14px; }
+  .editor-actions { justify-content: space-between; }
+}
+@media (max-width: 480px) {
+  .editor-search input { font-size: 16px; }
+  .card-content, .permissions-card mat-card-header { padding: 12px; }
+  .editor-identity { flex-wrap: wrap; gap: 10px; }
+  .editor-identity .user-meta { flex-basis: calc(100% - 50px); }
+  .editor-identity .badge-editor { margin-left: 50px; }
+  .editor-actions { flex-direction: column-reverse; align-items: stretch; gap: 4px; }
+  .confirmation-actions { flex-direction: column-reverse; align-items: stretch; }
+  .editor-role-details summary { align-items: flex-start; padding-block: 10px; }
+  .editor-role-details summary mat-icon { flex-shrink: 0; }
+}
+@media (pointer: coarse) { .editor-action, .editor-role-details summary { min-height: 44px; } }
+.role-tabs {
+  @include selection.navigation;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  span { padding: 2px 7px; border-radius: 6px; background: var(--hover-bg); }
 }
 
-@media (max-width: 480px) {
-  .modulo-info {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .user-card-actions button {
-    width: 100%;
-    justify-content: center;
-  }
+.badge-admin_observatorio { color: var(--primary-700); background: var(--tab-active-bg); border-color: var(--tab-active-border); }
+@media(max-width: 600px) {
+  .editor-identity { flex-wrap: wrap; }
+  .editor-identity .role-badge { white-space: normal; max-width: 100%; }
 }

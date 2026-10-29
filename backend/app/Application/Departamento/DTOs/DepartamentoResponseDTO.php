@@ -18,6 +18,7 @@ final readonly class DepartamentoResponseDTO
         public ?string $createdAt,
         public ?array $datasets,
         public ?string $userRole,
+        public ?string $foto = null,
     ) {}
 
     public static function fromEntity(Departamento $entity, ?string $userRole = null): self
@@ -32,6 +33,7 @@ final readonly class DepartamentoResponseDTO
             createdAt: $entity->createdAt?->format('Y-m-d H:i:s'),
             datasets: $entity->datasets,
             userRole: $userRole,
+            foto: $entity->foto,
         );
     }
 
@@ -43,6 +45,7 @@ final readonly class DepartamentoResponseDTO
             'codigo_interno' => $this->codigoInterno,
             'descripcion' => $this->descripcion,
             'icono' => $this->icono,
+            'foto_url' => $this->foto ?: null,
             'publico' => $this->publico,
             'created_at' => $this->createdAt,
             'datasets' => $this->datasets,

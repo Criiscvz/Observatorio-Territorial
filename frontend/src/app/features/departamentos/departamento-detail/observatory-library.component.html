@@ -1,0 +1,46 @@
+<section class="library" aria-label="Biblioteca de publicaciones">
+  <header class="library-heading"><h2>Biblioteca de publicaciones</h2><span>Artículos, reportes y libros</span></header>
+  <div class="library-tabs" role="tablist" aria-label="Tipo de publicación">
+    @for (tab of types; track tab.value) {
+      <button type="button" role="tab" [id]="'library-tab-' + tab.value" aria-controls="library-panel" [attr.aria-selected]="type() === tab.value" (click)="selectType(tab.value)">
+        <mat-icon aria-hidden="true">{{tab.icon}}</mat-icon>{{tab.label}}<span class="tab-total">{{count(tab.value)}}</span>
+      </button>
+    }
+  </div>
+  <section id="library-panel" role="tabpanel" [attr.aria-labelledby]="'library-tab-' + type()">
+    <div class="library-toolbar">
+      <label class="library-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" aria-label="Buscar en la biblioteca" placeholder="Buscar título, código, autor o fuente…" [value]="query()" (input)="search($any($event.target).value)">
+        @if(query()) {<button class="library-icon" type="button" aria-label="Limpiar búsqueda" (click)="search('')"><mat-icon>close</mat-icon></button>}
+      </label><span class="library-total" role="status">{{filtered().length}} publicaciones</span>
+    </div>
+    @if(loading()) {<p class="library-empty" role="status">Cargando publicaciones…</p>}
+    @else {
+      <table class="library-table" aria-label="Publicaciones del observatorio">
+        <thead><tr><th scope="col">Publicación</th><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col">Fuente</th><th scope="col">Archivo disponible</th><th scope="col">Acciones</th></tr></thead>
+        <tbody>
+          @for(item of visible(); track item.id) {
+            <tr class="library-row" [class.expanded]="expandedId() === item.id">
+              <td class="library-primary"><div class="publication-heading"><span class="file-icon"><mat-icon>{{type() === 'ARTICULO' ? 'article' : type() === 'REPORTE' ? 'bar_chart' : 'menu_book'}}</mat-icon></span><div class="publication-copy"><button class="publication-title" type="button" (click)="toggle(item)" [attr.aria-expanded]="expandedId() === item.id" [attr.aria-controls]="'library-detail-' + item.id" [matTooltip]="item.titulo">{{item.titulo}}</button><span class="publication-code">{{item.codigo}}</span>@if(hasReviewObservation(item)){<span class="review-note-preview" [matTooltip]="item.observacion_revision || 'Sin observación registrada.'">Motivo: {{item.observacion_revision || 'Sin observación registrada.'}}</span>}</div></div></td>
+              <td class="library-date" data-label="Fecha">{{item.fecha_publicacion ? (item.fecha_publicacion | date:'dd/MM/yyyy') : 'Sin fecha'}}</td>
+              <td class="library-status" data-label="Estado"><span class="state" [attr.data-state]="item.estado"><mat-icon>{{stateIcon(item)}}</mat-icon>{{stateLabel(item)}}</span>@if(item.solo_suscriptores){<span class="subscriber"><mat-icon>lock</mat-icon>Suscriptores</span>}</td>
+              <td class="library-source" data-label="Fuente"><span class="source-value">@if(sourceUrl(item)){<mat-icon class="source-check" aria-label="Fuente enlazada">check_circle</mat-icon>}<span class="source-name" [matTooltip]="item.fuente || (sourceUrl(item) ? 'Enlace disponible' : 'Sin fuente')">{{item.fuente || (sourceUrl(item) ? 'Enlace disponible' : 'Sin fuente')}}</span></span></td>
+              <td class="library-file" data-label="Archivo"><span class="availability" [class.available]="hasPdf(item)"><mat-icon>{{hasPdf(item) ? 'check_circle' : 'remove_circle_outline'}}</mat-icon>{{hasPdf(item) ? 'PDF' : 'Sin PDF'}}</span></td>
+              <td class="library-actions"><div class="row-actions">
+                <button type="button" class="library-icon detail-toggle" (click)="toggle(item)" [attr.aria-label]="(expandedId() === item.id ? 'Ocultar detalles de ' : 'Ver detalles de ') + item.titulo" [attr.aria-expanded]="expandedId() === item.id" [attr.aria-controls]="'library-detail-' + item.id" [matTooltip]="expandedId() === item.id ? 'Ocultar detalles' : 'Ver detalles'"><mat-icon>{{expandedId() === item.id ? 'expand_less' : 'visibility'}}</mat-icon></button>
+                @if(canEdit()(item)){<button type="button" class="library-icon" (click)="edit.emit(item)" [attr.aria-label]="'Editar ' + item.titulo" matTooltip="Editar"><mat-icon>edit</mat-icon></button>}
+                @if(canDelete()(item)){<button type="button" class="library-icon delete-icon" (click)="remove.emit(item)" [attr.aria-label]="'Eliminar ' + item.titulo" matTooltip="Eliminar"><mat-icon>delete_outline</mat-icon></button>}
+              </div></td>
+            </tr>
+            @if(expandedId() === item.id) {
+              <tr class="library-detail-row" [id]="'library-detail-' + item.id"><td colspan="6"><div class="library-detail">
+                <dl>@if(hasReviewObservation(item)){<div class="review-observation"><dt>Observación de revisión · {{stateLabel(item)}}</dt><dd>{{item.observacion_revision || 'Sin observación registrada.'}}</dd>@if(item.fecha_revision){<small>{{item.fecha_revision | date:'dd/MM/yyyy HH:mm'}}</small>}@if(item.estado === 'RECHAZADO' && !canEdit()(item)){<p>Solo consulta. Esta publicación rechazada no se puede editar ni eliminar.</p>}</div>}<div><dt>Descripción</dt><dd>{{item.descripcion || 'Sin descripción'}}</dd></div><div><dt>Autores</dt><dd>{{authors(item)}}</dd></div><div><dt>Subido por</dt><dd>{{item.creador?.name || 'No disponible'}}</dd></div><div><dt>Archivo</dt><dd>{{item.nombre_archivo_original || item.sharepoint_file_name || 'Sin PDF adjunto'}}</dd></div></dl>
+                <div class="resource-actions"><button type="button" class="library-button primary" [disabled]="!canView(item)" (click)="viewPublication.emit(item)"><mat-icon>{{item.tipo === 'REPORTE' ? 'bar_chart' : 'picture_as_pdf'}}</mat-icon>{{item.tipo === 'REPORTE' ? 'Ver reporte' : 'Ver PDF'}}</button></div>
+              </div></td></tr>
+            }
+          } @empty {<tr><td colspan="6"><div class="library-empty"><mat-icon>{{query() ? 'search_off' : 'folder_open'}}</mat-icon><p>{{query() ? 'No se encontraron publicaciones. Prueba con otro título, código, autor o fuente.' : 'Todavía no hay publicaciones de este tipo en el observatorio.'}}</p></div></td></tr>}
+        </tbody>
+      </table>
+      <footer class="library-pagination"><span role="status">{{rangeStart()}}–{{rangeEnd()}} de {{filtered().length}} publicaciones <span class="page-size">· 20 por página</span></span><div class="page-actions"><button class="library-icon" type="button" aria-label="Página anterior" [disabled]="currentPage() === 0" (click)="changePage(-1)"><mat-icon>chevron_left</mat-icon></button><span>{{currentPage()+1}} / {{pageCount()}}</span><button class="library-icon" type="button" aria-label="Página siguiente" [disabled]="currentPage()+1 >= pageCount()" (click)="changePage(1)"><mat-icon>chevron_right</mat-icon></button></div></footer>
+    }
+  </section>
+</section>

@@ -5,6 +5,8 @@ import { User } from '../user/user.interface';
  * Configuración de permiso para un módulo específico.
  */
 export interface PermisoConfig {
+  puede_revisar?: boolean;
+  puede_agregar_editores?: boolean;
   id?: string;
   user_id?: number;
   modulo: ModuloPermiso;

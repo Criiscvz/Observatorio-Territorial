@@ -1,0 +1,75 @@
+<header class="portal-header" (keydown.escape)="menuOpen.set(false)">
+  <div class="portal-bar">
+    <div class="portal-start">
+    <a routerLink="/" class="portal-brand portal-nav-link" (click)="menuOpen.set(false)" [attr.aria-label]="appConfig.app.name">
+      <img src="ULEAM.png" alt="ULEAM" />
+      <span class="portal-brand-copy">
+        <strong>{{ appConfig.app.name }}</strong>
+        <span>{{ appConfig.university.shortName }}</span>
+      </span>
+    </a>
+
+    <a class="portal-geo portal-nav-link" [href]="siteSettings.viewerUrl()" target="_blank" rel="noopener noreferrer">
+      <mat-icon>public</mat-icon>
+      <span>{{ 'public.home.nav.geoViewer' | translate }}</span>
+    </a>
+
+    </div>
+
+    <button type="button" class="portal-icon portal-menu-toggle" (click)="menuOpen.set(!menuOpen())"
+      [attr.aria-label]="(menuOpen() ? 'public.header.closeMenu' : 'public.header.openMenu') | translate"
+      [attr.aria-expanded]="menuOpen()" aria-controls="portal-navigation">
+      <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+    </button>
+
+    <nav id="portal-navigation" class="portal-navigation" [class.is-open]="menuOpen()" [attr.aria-label]="'public.header.navigation' | translate">
+      <a class="portal-nav-link" routerLink="/publico/departamentos" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+        <mat-icon>account_balance</mat-icon><span>{{ 'public.home.nav.dimensions' | translate }}</span>
+      </a>
+      <a class="portal-nav-link" routerLink="/publico/atlas" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+        <mat-icon>map</mat-icon><span>{{ 'public.home.nav.atlas' | translate }}</span>
+      </a>
+      <button type="button" class="portal-nav-link portal-barometer" [class.is-active]="barometerActive()" [class.is-open]="barometerTrigger.menuOpen" [matMenuTriggerFor]="barometerMenu" #barometerTrigger="matMenuTrigger">
+        <mat-icon>speed</mat-icon><span>{{ 'public.home.nav.barometer' | translate }}</span><mat-icon class="portal-chevron">expand_more</mat-icon>
+      </button>
+      <mat-menu #barometerMenu="matMenu" class="portal-barometer-menu" xPosition="before">
+        <a mat-menu-item routerLink="/publico/barometro/investigacion" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+          <mat-icon>science</mat-icon><span>{{ 'public.home.nav.barometerResearch' | translate }}</span>
+        </a>
+        <a mat-menu-item routerLink="/publico/barometro/vinculacion" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+          <mat-icon>handshake</mat-icon><span>{{ 'public.home.nav.barometerLinkage' | translate }}</span>
+        </a>
+        <a mat-menu-item routerLink="/publico/datasets" routerLinkActive="is-active" ariaCurrentWhenActive="page" (click)="menuOpen.set(false)">
+          <mat-icon>speed</mat-icon><span>{{ 'public.home.nav.barometerUleam' | translate }}</span>
+        </a>
+      </mat-menu>
+    </nav>
+
+    <div class="portal-utilities">
+      <button type="button" class="portal-language" [matMenuTriggerFor]="languageMenu" [attr.aria-label]="'language.select' | translate">
+        <mat-icon>language</mat-icon><span>{{ language.currentLang().toUpperCase() }}</span>
+      </button>
+      <mat-menu #languageMenu="matMenu">
+        @for (lang of language.availableLanguages; track lang.code) {
+          <button mat-menu-item (click)="language.setLanguage(lang.code)">
+            <span>{{ lang.name }}</span>
+            @if (language.currentLang() === lang.code) { <mat-icon>check</mat-icon> }
+          </button>
+        }
+      </mat-menu>
+      <button type="button" class="portal-icon" (click)="theme.toggleTheme()"
+        [attr.aria-label]="(theme.isDark() ? 'layout.header.themeLight' : 'layout.header.themeDark') | translate">
+        <mat-icon>{{ theme.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+
+      @if (auth.isAuthenticated()) {
+        <app-account-controls />
+      } @else {
+        <div class="portal-auth">
+          <a class="portal-login portal-nav-link" routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
+          <a class="portal-register portal-nav-link" routerLink="/auth/register">{{ 'public.header.register' | translate }}</a>
+        </div>
+      }
+    </div>
+  </div>
+</header>

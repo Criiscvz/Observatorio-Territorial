@@ -44,6 +44,8 @@ RUN apk add --no-cache \
     libxml2-dev \
     # Para intl
     icu-dev \
+    # Certificados para Neon, Atlas y Supabase Storage
+    ca-certificates \
     # Nginx
     nginx \
     # Supervisor para manejar procesos
@@ -73,7 +75,7 @@ RUN docker-php-ext-configure gd \
 # $PHPIZE_DEPS (autoconf, gcc, g++, make, ...) y openssl-dev se instalan
 # de forma temporal (--virtual) y se borran al terminar para no inflar la imagen.
 RUN apk add --no-cache --virtual .mongodb-build-deps $PHPIZE_DEPS openssl-dev \
-    && pecl install mongodb \
+    && pecl install mongodb-2.5.2 \
     && docker-php-ext-enable mongodb \
     && apk del .mongodb-build-deps
 
@@ -127,7 +129,7 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Exponer puerto
-EXPOSE 8000
+EXPOSE 10000
 
 # Comando de entrada
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

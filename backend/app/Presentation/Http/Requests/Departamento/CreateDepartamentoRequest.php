@@ -19,7 +19,10 @@ class CreateDepartamentoRequest extends FormRequest
             'nombre' => ['required', 'string', 'max:255'],
             'codigo_interno' => ['required', 'string', 'max:50', 'unique:departamentos,codigo_interno'],
             'descripcion' => ['nullable', 'string', 'max:1000'],
+            'icono' => ['nullable', 'string', 'max:100'],
             'publico' => ['boolean'],
+            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4096,max_height=4096'],
+            'eliminar_foto' => ['sometimes', 'boolean'],
         ];
     }
 

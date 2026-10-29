@@ -23,7 +23,7 @@ $DockerNetwork = "observatirio_default"
 function Get-DockerMongoUri {
     $line = Select-String -Path $EnvFile -Pattern '^\s*MONGODB_URI\s*=\s*(.+)$' | Select-Object -First 1
     if (-not $line) {
-        return "mongodb://root:secret123@observatorio_mongo:27017/?authSource=admin"
+        throw "MONGODB_URI debe configurarse en backend/.env antes de iniciar el backend."
     }
     $uri = $line.Matches[0].Groups[1].Value.Trim().Trim('"')
     return ($uri -replace '@(127\.0\.0\.1|localhost):', '@observatorio_mongo:')

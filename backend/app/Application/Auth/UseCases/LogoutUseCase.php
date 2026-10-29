@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Application\Auth\UseCases;
 
-use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class LogoutUseCase
 {
-    public function execute(User $user): void
+    public function execute(): void
     {
-        $user->currentAccessToken()->delete();
+        // Sanctum authenticates the API request, but the browser session belongs to web.
+        Auth::guard('web')->logout();
     }
 }

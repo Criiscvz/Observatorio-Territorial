@@ -15,11 +15,6 @@ export const adminGuard: CanActivateFn = () => {
     return true;
   }
 
-  if (!authService.isAuthenticated()) {
-    router.navigate(['/auth/login']);
-    return false;
-  }
-
   if (!authService.user()) {
     return authService.checkAuth().pipe(
       map((isValid) => {
@@ -52,7 +47,7 @@ export function roleGuard(...allowedRoles: UserRole[]): CanActivateFn {
       return true;
     }
 
-    if (authService.isAuthenticated() && !authService.user()) {
+    if (!authService.user()) {
       return authService.checkAuth().pipe(
         map((isValid) => {
           if (isValid && authService.hasAnyRole(allowedRoles)) {

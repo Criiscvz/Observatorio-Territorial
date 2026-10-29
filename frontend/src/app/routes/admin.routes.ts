@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { adminGuard, roleGuard } from '../core/guards/role.guard';
+import { publicationDraftGuard } from '../core/guards/publication-draft.guard';
 
 export const ADMIN_ROUTES: Routes = [
   // Dashboard
@@ -11,11 +12,23 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('../features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      import('../features/admin-workspace/admin-workspace.component').then((m) => m.WorkspaceEntryComponent),
     title: 'Dashboard - Observatorio',
   },
 
+  {path:'publicaciones/nueva',canActivate:[roleGuard('ADMIN','EDITOR','ADMIN_OBSERVATORIO')],canDeactivate:[publicationDraftGuard],loadComponent:()=>import('../features/admin-workspace/publication-destination.component').then(m=>m.PublicationDestinationComponent),title:'Nueva publicación - Observatorio'},
+  {path:'publicaciones',canActivate:[roleGuard('ADMIN','EDITOR','ADMIN_OBSERVATORIO')],loadComponent:()=>import('../features/admin-workspace/admin-workspace.component').then(m=>m.WorkspacePublicationsComponent),title:'Publicaciones - Observatorio'},
+  {path:'configuracion',canActivate:[adminGuard],loadComponent:()=>import('../features/admin-workspace/admin-workspace.component').then(m=>m.SiteSettingsComponent),title:'Configuración del sitio - Observatorio'},
   // Departamentos
+  {
+    path: 'departamentos',
+    canActivate: [roleGuard('ADMIN','EDITOR','ADMIN_OBSERVATORIO')],
+    loadComponent: () =>
+      import('../features/departamentos/departamento-list/departamento-list.component').then(
+        (m) => m.DepartamentoListComponent,
+      ),
+    title: 'Gestión de Observatorios - Observatorio',
+  },
   {
     path: 'departamentos/nuevo',
     loadComponent: () =>
@@ -46,6 +59,7 @@ export const ADMIN_ROUTES: Routes = [
   // Datasets
   {
     path: 'datasets',
+    canActivate: [roleGuard('ADMIN','USER','SUBSCRIBER')],
     loadComponent: () =>
       import('../features/datasets/dataset-list/dataset-list.component').then(
         (m) => m.DatasetListComponent,
@@ -58,14 +72,22 @@ export const ADMIN_ROUTES: Routes = [
       import('../features/datasets/dataset-upload/dataset-upload.component').then(
         (m) => m.DatasetUploadComponent,
       ),
-    canActivate: [roleGuard('ADMIN', 'EDITOR')],
+    canActivate: [adminGuard],
     title: 'Subir Dataset - Observatorio',
+  },
+  {
+      path: 'atlas/categorias', pathMatch: 'full', redirectTo: 'atlas',
+    },
+    {
+      path: 'atlas/categorias/:categoria',
+      loadComponent: () => import('../features/public/public-atlas/atlas-workspace.component').then(m => m.AtlasWorkspaceComponent),
+      canActivate: [adminGuard], title: 'Categoría de Atlas - Observatorio',
   },
   {
     path: 'atlas',
     loadComponent: () =>
-      import('../features/public/public-atlas/global-atlas-management.component').then(
-        (m) => m.GlobalAtlasManagementComponent,
+        import('../features/public/public-atlas/atlas-workspace.component').then(
+          (m) => m.AtlasWorkspaceComponent,
       ),
     canActivate: [adminGuard],
     title: 'Gestión de Atlas - Observatorio',
@@ -73,14 +95,16 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: 'atlas/subir',
     loadComponent: () =>
-      import('../features/public/public-atlas/global-atlas-upload.component').then(
-        (m) => m.GlobalAtlasUploadComponent,
+        import('../features/public/public-atlas/atlas-destination.component').then(
+          (m) => m.AtlasDestinationComponent,
       ),
     canActivate: [adminGuard],
-    title: 'Subir Atlas - Observatorio',
+    canDeactivate: [publicationDraftGuard],
+      title: 'Agregar Atlas - Observatorio',
   },
   {
     path: 'datasets/:id',
+    canActivate: [roleGuard('ADMIN','USER','SUBSCRIBER')],
     loadComponent: () =>
       import('../features/datasets/dataset-view/dataset-view.component').then(
         (m) => m.DatasetViewComponent,
@@ -89,6 +113,7 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'datasets/:id/variable/:variableId',
+    canActivate: [roleGuard('ADMIN','USER','SUBSCRIBER')],
     loadComponent: () =>
       import('../features/datasets/admin-variable-analysis/admin-variable-analysis.component').then(
         (m) => m.AdminVariableAnalysisComponent,
@@ -99,11 +124,11 @@ export const ADMIN_ROUTES: Routes = [
   // Usuarios (solo admin)
   {
     path: 'usuarios',
+    canActivate: [roleGuard('ADMIN', 'ADMIN_OBSERVATORIO')],
     loadComponent: () =>
       import('../features/usuarios/usuario-list/usuario-list.component').then(
         (m) => m.UsuarioListComponent,
       ),
-    canActivate: [adminGuard],
     title: 'Usuarios - Observatorio',
   },
   {
@@ -128,9 +153,9 @@ export const ADMIN_ROUTES: Routes = [
     path: 'permisos',
     loadComponent: () =>
       import('../features/permisos/admin-permissions.component').then(
-        (m) => m.AdminPermissionsComponent
+        (m) => m.AdminPermissionsComponent,
       ),
-    canActivate: [adminGuard],
+    canActivate: [roleGuard('ADMIN', 'ADMIN_OBSERVATORIO')],
     title: 'Permisos de Roles - Observatorio',
   },
 ];

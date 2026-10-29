@@ -1,180 +1,10 @@
-<!-- Header público -->
-<header class="public-header">
-  <div class="header-container">
-    <a routerLink="/" class="logo-link">
-      <img src="ULEAM.png" alt="ULEAM" class="logo" routerLink="/" (click)="mobileMenuOpen.set(false)" style="cursor: pointer;" />
-      <div class="logo-text-container">
-        <span class="logo-text">{{ appConfig.app.name }}</span>
-        <span class="logo-subtitle">{{ appConfig.university.shortName }}</span>
-      </div>
-    </a>
+<app-public-navbar />
 
-    <button mat-icon-button class="mobile-menu-btn" (click)="mobileMenuOpen.set(true)"><mat-icon>menu</mat-icon></button>
-    <nav class="nav-links">
-      <!-- Visor Geográfico -->
-      <a
-        href="https://departamentos.uleam.edu.ec/observatorio-territorial/"
-        target="_blank"
-        class="nav-link featured"
-      >
-        <mat-icon>public</mat-icon>
-        {{ 'public.home.nav.geoViewer' | translate }}
-      </a>
-
-      <!-- Menú de Observatorios -->
-      <button class="nav-link" [matMenuTriggerFor]="dimensionsMenu">
-        <mat-icon>category</mat-icon>
-        {{ 'public.home.nav.dimensions' | translate }}
-        <mat-icon class="dropdown-arrow">expand_more</mat-icon>
-      </button>
-      <mat-menu #dimensionsMenu="matMenu" class="observatories-menu">
-        @for (depto of departamentos(); track depto.id) {
-          <a mat-menu-item [routerLink]="['/publico/departamentos', depto.id]">
-            <mat-icon>{{ depto.icono || 'folder' }}</mat-icon>
-            <span>{{ depto.nombre }}</span>
-          </a>
-        }
-        @if (departamentos().length === 0) {
-          <button mat-menu-item disabled>
-            <mat-icon>info</mat-icon>
-            <span>{{ 'public.home.departments.empty' | translate }}</span>
-          </button>
-        }
-      </mat-menu>
-
-      <a routerLink="/publico/atlas" routerLinkActive="active" class="nav-link">
-        <mat-icon>map</mat-icon>
-        {{ 'public.home.nav.atlas' | translate }}
-      </a>
-
-      <!-- Menú Barómetro -->
-      <button class="nav-link" [matMenuTriggerFor]="barometerMenu">
-        <mat-icon>speed</mat-icon>
-        {{ 'public.home.nav.barometer' | translate }}
-        <mat-icon class="dropdown-arrow">expand_more</mat-icon>
-      </button>
-      <mat-menu #barometerMenu="matMenu">
-        <a mat-menu-item routerLink="/publico/barometro/investigacion">
-          <mat-icon>science</mat-icon>
-          <span>{{ 'public.home.nav.barometerResearch' | translate }}</span>
-        </a>
-        <a mat-menu-item routerLink="/publico/barometro/vinculacion">
-          <mat-icon>handshake</mat-icon>
-          <span>{{ 'public.home.nav.barometerLinkage' | translate }}</span>
-        </a>
-        <a mat-menu-item routerLink="/publico/datasets">
-          <mat-icon>speed</mat-icon>
-          <span>{{ 'public.home.nav.barometerUleam' | translate }}</span>
-        </a>
-      </mat-menu>
-    </nav>
-
-    <div class="header-actions">
-      <!-- Language selector -->
-      <button
-        class="lang-toggle"
-        [matMenuTriggerFor]="langMenu"
-        [matTooltip]="'language.select' | translate"
-      >
-        <mat-icon>language</mat-icon>
-        <span class="lang-code">{{ languageService.currentLang().toUpperCase() }}</span>
-      </button>
-      <mat-menu #langMenu="matMenu">
-        @for (lang of languageService.availableLanguages; track lang.code) {
-          <button
-            mat-menu-item
-            (click)="languageService.setLanguage(lang.code)"
-            [class.active]="languageService.currentLang() === lang.code"
-          >
-            <span class="lang-flag">{{ lang.flag }}</span>
-            <span>{{ lang.name }}</span>
-            @if (languageService.currentLang() === lang.code) {
-              <mat-icon class="check-icon">check</mat-icon>
-            }
-          </button>
-        }
-      </mat-menu>
-
-      <button class="theme-toggle" (click)="themeService.toggleTheme()">
-        <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-      </button>
-
-      <!-- Botones de autenticación o menú de usuario -->
-      @if (authService.isAuthenticated()) {
-        <!-- Usuario autenticado: mostrar menú -->
-        <button class="user-btn" [matMenuTriggerFor]="userMenu">
-          <div class="user-avatar">
-            @if (authService.user()?.perfil?.avatar) {
-              <img
-                [src]="authService.user()?.perfil?.avatar"
-                alt="Avatar"
-                class="avatar-img"
-                crossorigin="anonymous"
-              />
-            } @else {
-              <span>{{ authService.user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
-            }
-          </div>
-          <span class="user-name-text">{{ authService.user()?.name }}</span>
-          <mat-icon class="dropdown-icon">expand_more</mat-icon>
-        </button>
-
-        <mat-menu #userMenu="matMenu" class="user-menu">
-          <div class="menu-header">
-            <div class="menu-avatar">
-              @if (authService.user()?.perfil?.avatar) {
-                <img
-                  [src]="authService.user()?.perfil?.avatar"
-                  alt="Avatar"
-                  class="avatar-img"
-                  crossorigin="anonymous"
-                />
-              } @else {
-                <span>{{ authService.user()?.name?.charAt(0)?.toUpperCase() || 'U' }}</span>
-              }
-            </div>
-            <div class="menu-user-info">
-              <span class="menu-user-name">{{ authService.user()?.name }}</span>
-              <span class="menu-user-email">{{ authService.user()?.email }}</span>
-            </div>
-          </div>
-
-          <mat-divider></mat-divider>
-
-          <a mat-menu-item routerLink="/perfil" class="menu-item">
-            <mat-icon>person</mat-icon>
-            <span>{{ 'profile.title' | translate }}</span>
-          </a>
-
-          @if (authService.isAdmin()) {
-            <a mat-menu-item routerLink="/admin/dashboard" class="menu-item">
-              <mat-icon>dashboard</mat-icon>
-              <span>{{ 'layout.sidebar.dashboard' | translate }}</span>
-            </a>
-          }
-
-          <mat-divider></mat-divider>
-
-          <button mat-menu-item (click)="authService.logout().subscribe()" class="menu-item logout">
-            <mat-icon>logout</mat-icon>
-            <span>{{ 'auth.logout' | translate }}</span>
-          </button>
-        </mat-menu>
-      } @else {
-        <!-- Usuario no autenticado: mostrar login/register -->
-        <a mat-stroked-button class="public-auth-button public-auth-button--login" routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
-        <a mat-raised-button class="public-auth-button public-auth-button--register" color="primary" routerLink="/auth/register">{{
-          'public.header.register' | translate
-        }}</a>
-      }
-    </div>
-  </div>
-</header>
-
-<!-- Hero Section -->
+<!-- Institutional hero -->
 <section class="hero">
-  <div class="hero-bg"></div>
+  <div class="hero-bg" aria-hidden="true"></div>
   <div class="hero-content">
+    <p class="eyebrow">{{ appConfig.university.name }}</p>
     <h1 class="hero-title">
       <span class="hero-highlight">{{ 'public.home.hero.title' | translate }}</span> <br />{{
         'public.home.hero.titleHighlight' | translate
@@ -194,10 +24,10 @@
         {{ 'public.home.hero.exploreData' | translate }}
       </a>
       @if (authService.isAuthenticated()) {
-        @if (authService.isAdmin()) {
+        @if (authService.isAdmin() || authService.isEditor()) {
           <a mat-stroked-button routerLink="/admin/dashboard" class="hero-btn">
             <mat-icon>dashboard</mat-icon>
-            {{ 'public.home.hero.goToDashboard' | translate }}
+            {{ 'public.header.goToPanel' | translate }}
           </a>
         } @else {
           <a mat-stroked-button routerLink="/perfil" class="hero-btn">
@@ -213,82 +43,64 @@
       }
     </div>
   </div>
-  <div class="hero-illustration">
-    <div class="floating-card card-1">
-      <mat-icon>bar_chart</mat-icon>
-      <span>{{ 'public.home.floatingCards.dynamicCharts' | translate }}</span>
-    </div>
-    <div class="floating-card card-2">
-      <mat-icon>pie_chart</mat-icon>
-      <span>{{ 'public.home.floatingCards.visualAnalysis' | translate }}</span>
-    </div>
-    <div class="floating-card card-3">
-      <mat-icon>analytics</mat-icon>
-      <span>{{ 'public.home.floatingCards.correlations' | translate }}</span>
-    </div>
-  </div>
+
 </section>
 
 <!-- Stats Section -->
 <section class="stats-section">
   <div class="stats-container">
     <div class="stat-item">
-      <span class="stat-number">{{ departamentos().length }}</span>
-      <span class="stat-label">{{ 'public.home.stats.publicDepartments' | translate }}</span>
+      <span class="stat-number">{{ publicStats().observatorios }}</span>
+      <span class="stat-label">{{ 'public.home.stats.observatories' | translate }}</span>
     </div>
     <div class="stat-item">
-      <span class="stat-number">{{ totalDatasets }}</span>
-      <span class="stat-label">{{ 'public.home.stats.availableDatasets' | translate }}</span>
+      <span class="stat-number">{{ publicStats().articulos }}</span>
+      <span class="stat-label">{{ 'public.home.stats.articles' | translate }}</span>
     </div>
     <div class="stat-item">
-      <span class="stat-number">{{ formatNumber(totalRegistros) }}</span>
-      <span class="stat-label">{{ 'public.home.stats.analyzedRecords' | translate }}</span>
+      <span class="stat-number">{{ publicStats().reportes }}</span>
+      <span class="stat-label">{{ 'public.home.stats.reports' | translate }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-number">{{ publicStats().libros }}</span>
+      <span class="stat-label">{{ 'public.home.stats.books' | translate }}</span>
     </div>
   </div>
 </section>
 
-<!-- Features Section -->
-<section class="features-section">
+<!-- Institutional entry points -->
+<section class="features-section" aria-labelledby="resources-title">
   <div class="section-header">
-    <h2 class="section-title">{{ 'public.home.features.title' | translate }}</h2>
+    <p class="eyebrow">{{ 'public.home.features.eyebrow' | translate }}</p>
+    <h2 id="resources-title" class="section-title">{{ 'public.home.features.title' | translate }}</h2>
     <p class="section-subtitle">{{ 'public.home.features.subtitle' | translate }}</p>
   </div>
   <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">
-        <mat-icon>cloud_upload</mat-icon>
-      </div>
-      <h3>{{ 'public.home.features.smartImport.title' | translate }}</h3>
-      <p>{{ 'public.home.features.smartImport.description' | translate }}</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <mat-icon>auto_graph</mat-icon>
-      </div>
-      <h3>{{ 'public.home.features.autoCharts.title' | translate }}</h3>
-      <p>{{ 'public.home.features.autoCharts.description' | translate }}</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <mat-icon>compare_arrows</mat-icon>
-      </div>
-      <h3>{{ 'public.home.features.bivariable.title' | translate }}</h3>
-      <p>{{ 'public.home.features.bivariable.description' | translate }}</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">
-        <mat-icon>share</mat-icon>
-      </div>
-      <h3>{{ 'public.home.features.sharePublic.title' | translate }}</h3>
-      <p>{{ 'public.home.features.sharePublic.description' | translate }}</p>
-    </div>
+    <a routerLink="/publico/departamentos" class="feature-card">
+      <div class="feature-icon"><mat-icon>account_balance</mat-icon></div>
+      <h3>{{ 'public.home.features.observatories.title' | translate }}</h3>
+      <p>{{ 'public.home.features.observatories.description' | translate }}</p>
+      <span class="card-action">{{ 'public.home.features.observatories.action' | translate }}<mat-icon>arrow_forward</mat-icon></span>
+    </a>
+    <a routerLink="/publico/atlas" class="feature-card">
+      <div class="feature-icon"><mat-icon>menu_book</mat-icon></div>
+      <h3>{{ 'public.home.features.atlas.title' | translate }}</h3>
+      <p>{{ 'public.home.features.atlas.description' | translate }}</p>
+      <span class="card-action">{{ 'public.home.features.atlas.action' | translate }}<mat-icon>arrow_forward</mat-icon></span>
+    </a>
+    <a routerLink="/publico/datasets" class="feature-card">
+      <div class="feature-icon"><mat-icon>speed</mat-icon></div>
+      <h3>{{ 'public.home.features.barometer.title' | translate }}</h3>
+      <p>{{ 'public.home.features.barometer.description' | translate }}</p>
+      <span class="card-action">{{ 'public.home.features.barometer.action' | translate }}<mat-icon>arrow_forward</mat-icon></span>
+    </a>
   </div>
 </section>
 
 <!-- Public Departments Preview -->
-<section class="departments-section">
+<section class="departments-section" aria-labelledby="observatories-title">
   <div class="section-header">
-    <h2 class="section-title">{{ 'public.home.departments.title' | translate }}</h2>
+    <h2 id="observatories-title" class="section-title">{{ 'public.home.departments.title' | translate }}</h2>
     <p class="section-subtitle">{{ 'public.home.departments.subtitle' | translate }}</p>
   </div>
 
@@ -298,35 +110,42 @@
       <p>{{ 'public.home.departments.loading' | translate }}</p>
     </div>
   } @else if (departamentos().length > 0) {
-    <div class="departments-grid">
-      @for (depto of departamentos().slice(0, 6); track depto.id) {
-        <a [routerLink]="['/publico/departamentos', depto.id]" class="department-card">
-          <div class="department-avatar" [style.background]="getDeptoColor($index)">
-            @if (depto.icono) {
+    <div class="observatory-directory">
+      <label class="observatory-search-label" for="observatory-search">{{ 'public.home.departments.searchLabel' | translate }}</label>
+      <div class="observatory-search">
+        <mat-icon aria-hidden="true">search</mat-icon>
+        <input #observatorySearchInput id="observatory-search" type="search" [value]="observatorySearch()" (input)="searchObservatories(observatorySearchInput.value)" [placeholder]="'public.home.departments.searchPlaceholder' | translate" />
+      </div>
+      <p class="observatory-results" role="status">{{ 'public.home.departments.results' | translate: { start: observatoryRangeStart(), end: observatoryRangeEnd(), total: filteredObservatories().length } }}</p>
+      <div class="observatory-list">
+      @for (depto of visibleObservatories(); track depto.id) {
+        <a [routerLink]="['/publico/departamentos', depto.id]" class="observatory-row">
+          <div class="department-avatar" aria-hidden="true">
+            @if (depto.foto_url) {<img class="observatory-identity-image" [src]="depto.foto_url" alt="">} @else if (depto.icono) {
               <mat-icon>{{ depto.icono }}</mat-icon>
             } @else {
               {{ depto.nombre.charAt(0).toUpperCase() }}
             }
           </div>
           <div class="department-info">
-            <h4>{{ depto.nombre }}</h4>
+            <h3>{{ depto.nombre }}</h3>
             <p>{{ depto.descripcion || ('public.home.departments.noDescription' | translate) }}</p>
-            <span class="dataset-count">
-              <mat-icon>table_chart</mat-icon>
-              {{ depto.datasets?.length || 0 }} {{ 'common.units.datasets' | translate }}
-            </span>
           </div>
+          <mat-icon class="observatory-arrow" aria-hidden="true">north_east</mat-icon>
         </a>
       }
-    </div>
-    @if (departamentos().length > 6) {
-      <div class="view-all-container">
-        <a mat-stroked-button routerLink="/publico/departamentos">
-          {{ 'public.home.departments.viewAll' | translate }}
-          <mat-icon>arrow_forward</mat-icon>
-        </a>
+      @empty {
+        <p class="observatory-no-results">{{ 'public.home.departments.noResults' | translate }}</p>
+      }
       </div>
-    }
+      @if (filteredObservatories().length > observatoryPageSize) {
+        <nav class="observatory-pagination" [attr.aria-label]="'public.home.departments.pagination' | translate">
+          <button mat-icon-button type="button" (click)="changeObservatoryPage(-1)" [disabled]="currentObservatoryPage() === 0" [attr.aria-label]="'public.home.departments.previousPage' | translate"><mat-icon>chevron_left</mat-icon></button>
+          <span>{{ 'public.home.departments.page' | translate: { current: currentObservatoryPage() + 1, total: observatoryPageCount() } }}</span>
+          <button mat-icon-button type="button" (click)="changeObservatoryPage(1)" [disabled]="currentObservatoryPage() === observatoryPageCount() - 1" [attr.aria-label]="'public.home.departments.nextPage' | translate"><mat-icon>chevron_right</mat-icon></button>
+        </nav>
+      }
+    </div>
   } @else {
     <div class="empty-departments">
       <mat-icon>folder_off</mat-icon>
@@ -335,19 +154,17 @@
   }
 </section>
 
-<!-- CTA Section -->
+<!-- Community invitation -->
 @if (!authService.isAuthenticated()) {
-  <section class="cta-section">
-    <div class="cta-decoration cta-decoration-1"></div>
-    <div class="cta-decoration cta-decoration-2"></div>
+  <section class="cta-section" aria-labelledby="community-title">
     <div class="cta-content">
-      <div class="cta-icon">
-        <mat-icon>explore</mat-icon>
+      <div class="cta-copy">
+        <p class="eyebrow">{{ 'public.home.cta.eyebrow' | translate }}</p>
+        <h2 id="community-title">{{ 'public.home.cta.title' | translate }}</h2>
+        <p>{{ 'public.home.cta.subtitle' | translate }}</p>
       </div>
-      <h2>{{ 'public.home.cta.title' | translate }}</h2>
-      <p>{{ 'public.home.cta.subtitle' | translate }}</p>
       <div class="cta-actions">
-        <a mat-raised-button routerLink="/auth/register" class="cta-btn-primary">
+        <a mat-raised-button color="primary" routerLink="/auth/register" class="cta-btn-primary">
           <mat-icon>person_add</mat-icon>
           {{ 'public.home.cta.button' | translate }}
         </a>
@@ -361,98 +178,4 @@
 }
 
 <!-- Footer -->
-<footer class="public-footer">
-  <div class="footer-content">
-    <div class="footer-brand">
-      <img src="ULEAM.png" alt="ULEAM" class="footer-logo" />
-      <div class="footer-brand-info">
-        <p class="footer-app-name">{{ appConfig.app.name }}</p>
-        <p class="footer-university">{{ appConfig.university.name }}</p>
-      </div>
-    </div>
-    <div class="footer-links">
-      <a [href]="appConfig.university.url" target="_blank">{{
-        'public.home.footer.websiteLink' | translate
-      }}</a>
-      <a routerLink="/publico/departamentos">{{
-        'public.home.footer.departmentsLink' | translate
-      }}</a>
-      <a routerLink="/auth/login">{{ 'public.header.login' | translate }}</a>
-    </div>
-    <div class="footer-copy">
-      <p>{{ 'layout.footer.copyright' | translate: { year: currentYear } }}</p>
-    </div>
-  </div>
-</footer>
-
-
-<!-- Mobile Sidebar -->
-@if (mobileMenuOpen()) {
-  <div class="mobile-sidebar-overlay" (click)="mobileMenuOpen.set(false)"></div>
-  <div class="mobile-sidebar">
-    <div class="mobile-sidebar-header">
-      <img src="ULEAM.png" alt="ULEAM" class="logo" routerLink="/" (click)="mobileMenuOpen.set(false)" style="cursor: pointer;" />
-      <button mat-icon-button (click)="mobileMenuOpen.set(false)">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-    <nav class="mobile-nav-links">
-      <!-- Visor Geografico -->
-      <a href="https://departamentos.uleam.edu.ec/observatorio-territorial/" target="_blank" class="nav-link featured" (click)="mobileMenuOpen.set(false)">
-        <mat-icon>public</mat-icon>
-        {{ 'public.home.nav.geoViewer' | translate }}
-      </a>
-
-      <!-- Menu de Observatorios -->
-      <button class="nav-link" (click)="showObservatories.set(!showObservatories())">
-        <mat-icon>category</mat-icon>
-        {{ 'public.home.nav.dimensions' | translate }}
-        <mat-icon class="dropdown-arrow">{{ showObservatories() ? 'expand_less' : 'expand_more' }}</mat-icon>
-      </button>
-      @if (showObservatories()) {
-        <div class="mobile-sub-menu" [class.open]="showObservatories()">
-          @for (depto of departamentos(); track depto.id) {
-            <a class="nav-link sub-link" [routerLink]="['/publico/departamentos', depto.id]" (click)="mobileMenuOpen.set(false)">
-              <mat-icon>{{ depto.icono || 'folder' }}</mat-icon>
-              <span>{{ depto.nombre }}</span>
-            </a>
-          }
-          @if (departamentos().length === 0) {
-            <div class="nav-link sub-link disabled">
-              <mat-icon>info</mat-icon>
-              <span>{{ 'public.home.departments.empty' | translate }}</span>
-            </div>
-          }
-        </div>
-      }
-
-      <a routerLink="/publico/atlas" class="nav-link" (click)="mobileMenuOpen.set(false)">
-        <mat-icon>map</mat-icon>
-        {{ 'public.home.nav.atlas' | translate }}
-      </a>
-
-      <!-- Menu Barometro -->
-      <button class="nav-link" (click)="showBarometer.set(!showBarometer())">
-        <mat-icon>speed</mat-icon>
-        {{ 'public.home.nav.barometer' | translate }}
-        <mat-icon class="dropdown-arrow">{{ showBarometer() ? 'expand_less' : 'expand_more' }}</mat-icon>
-      </button>
-      @if (showBarometer()) {
-        <div class="mobile-sub-menu"[class.open]="showBarometer()">
-          <a class="nav-link sub-link" routerLink="/publico/barometro/investigacion" (click)="mobileMenuOpen.set(false)">
-            <mat-icon>science</mat-icon>
-            <span>{{ 'public.home.nav.barometerResearch' | translate }}</span>
-          </a>
-          <a class="nav-link sub-link" routerLink="/publico/barometro/vinculacion" (click)="mobileMenuOpen.set(false)">
-            <mat-icon>handshake</mat-icon>
-            <span>{{ 'public.home.nav.barometerLinkage' | translate }}</span>
-          </a>
-          <a class="nav-link sub-link" routerLink="/publico/datasets" (click)="mobileMenuOpen.set(false)">
-            <mat-icon>speed</mat-icon>
-            <span>{{ 'public.home.nav.barometerUleam' | translate }}</span>
-          </a>
-        </div>
-      }
-    </nav>
-  </div>
-}
+<app-public-footer />

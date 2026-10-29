@@ -5,12 +5,42 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import helmet from 'helmet';
 import { join } from 'node:path';
+import { environment } from './environments/environment';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+const isDevelopment = !environment.production;
+const apiOrigin =
+  process.env['API_ORIGIN'] ?? (isDevelopment ? new URL(environment.apiUrl).origin : undefined);
+
+app.disable('x-powered-by');
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"],
+        formAction: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:', ...(isDevelopment && apiOrigin ? [apiOrigin] : [])],
+        fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+        connectSrc: ["'self'", ...(apiOrigin ? [apiOrigin] : [])],
+        frameSrc: ["'self'", 'blob:', 'https://app.powerbi.com'],
+        workerSrc: ["'self'"],
+        // La API local usa HTTP; en producción se mantiene la mejora automática a HTTPS.
+        'upgrade-insecure-requests': isDevelopment ? null : [],
+      },
+    },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  }),
+);
 
 /**
  * Example Express Rest API endpoints can be defined here.

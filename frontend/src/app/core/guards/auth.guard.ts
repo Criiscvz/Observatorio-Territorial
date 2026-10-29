@@ -10,11 +10,6 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (!authService.isAuthenticated()) {
-    router.navigate(['/auth/login']);
-    return false;
-  }
-
   if (authService.user()) {
     return true;
   }
@@ -41,12 +36,8 @@ export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (!authService.isAuthenticated()) {
-    return true;
-  }
-
   const redirectAuthenticatedUser = (): false => {
-    if (authService.isAdmin() || authService.isEditor()) {
+    if (authService.isAdmin() || authService.isEditor() || authService.isObservatoryAdmin()) {
       router.navigate(['/admin/dashboard']);
     } else {
       router.navigate(['/publico/departamentos']);
@@ -58,8 +49,9 @@ export const guestGuard: CanActivateFn = () => {
     return redirectAuthenticatedUser();
   }
 
-  return authService.checkAuth().pipe(
-    map((isValid) => (isValid ? redirectAuthenticatedUser() : true)),
-    catchError(() => of(true)),
-  );
+  // Las rutas de acceso deben seguir disponibles aunque el backend se esté
+  // iniciando o no responda. La validación de la cookie se realiza en las
+  // rutas protegidas mediante authGuard; bloquear aquí deja el router sin
+  // componente y muestra una pantalla en blanco.
+  return true;
 };

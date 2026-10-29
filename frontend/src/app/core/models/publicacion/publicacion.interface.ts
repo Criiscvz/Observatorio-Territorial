@@ -1,11 +1,16 @@
 export type TipoPublicacion = 'ARTICULO' | 'REPORTE' | 'LIBRO' | 'ATLAS';
-export type EstadoPublicacion =
-  | 'PUBLICACION'
-  | 'EN_REVISION'
-  | 'SUSPENDIDO'
-  | 'ARCHIVADO';
+export type EstadoPublicacion = 'PUBLICACION' | 'EN_REVISION' | 'SUSPENDIDO' | 'ARCHIVADO' | 'RECHAZADO';
+export const requiresReviewObservation = (estado: EstadoPublicacion): boolean => ['SUSPENDIDO', 'ARCHIVADO', 'RECHAZADO'].includes(estado);
 
 export interface ObservatorioPublicacion {
+  atlas_categoria_id?: string | null;
+  atlas_categoria?: {
+    id: string;
+    nombre: string;
+    descripcion: string | null;
+    icono?: string | null;
+    publico?: boolean;
+  } | null;
   id: string;
   departamento_id?: string | null;
   creado_por?: number | null;
@@ -17,6 +22,8 @@ export interface ObservatorioPublicacion {
   } | null;
   tipo: TipoPublicacion;
   estado: EstadoPublicacion;
+  observacion_revision?: string | null;
+  fecha_revision?: string | null;
   solo_suscriptores: boolean;
   bloqueado?: boolean;
   codigo: string;
@@ -24,7 +31,7 @@ export interface ObservatorioPublicacion {
   fecha_publicacion: string;
   link_url?: string | null;
   descripcion?: string | null;
-  autores?: string | null;
+  autores?: string[] | string | null;
   fuente: string;
   nombre_archivo_original?: string | null;
   download_url?: string | null;

@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
 import { Departamento } from '@core/models';
+import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
 import {
   SharePointAtlasImportResponse,
   SharePointBrowserItem,
@@ -22,6 +23,7 @@ import {
 } from '@core/services/publicacion.service';
 
 interface DialogData {
+  categoriaId?: string | null;
   departamentos: Departamento[];
   target?: SharePointImportTarget;
   context?: 'global-atlas' | 'observatorio';
@@ -45,19 +47,19 @@ interface DialogData {
   styleUrl: './sharepoint-atlas-import-dialog.component.scss',
 })
 export class SharePointAtlasImportDialogComponent {
+  private readonly categoriaService = inject(AtlasCategoriaService);
+  readonly categorias = signal<AtlasCategoria[]>([]);
   private readonly publicacionService = inject(PublicacionService);
   private readonly dialogRef = inject(MatDialogRef<SharePointAtlasImportDialogComponent>);
   private readonly destroyRef = inject(DestroyRef);
   readonly data = inject<DialogData>(MAT_DIALOG_DATA);
+  readonly selectedCategoryId = signal(this.data.categoriaId ?? '');
+  readonly categoriesLoading = signal(false);
+  readonly categoriesError = signal(false);
   readonly target: SharePointImportTarget = this.data.target ?? 'atlas';
   readonly isObservatorioContext = this.data.context === 'observatorio';
   readonly isGlobalAtlasContext = this.target === 'atlas' && !this.isObservatorioContext;
-  readonly rootLabel =
-    this.target === 'atlas' && this.isObservatorioContext
-      ? 'Libros'
-      : this.target === 'atlas'
-        ? 'Atlas'
-        : 'Barómetro';
+  readonly rootLabel = this.target === 'articulos' || this.target === 'reportes' ? 'Barómetro' : 'Atlas';
   readonly destinationLabel =
     this.target === 'articulos'
       ? 'Artículos'
@@ -83,6 +85,13 @@ export class SharePointAtlasImportDialogComponent {
   });
 
   constructor() {
+    if (this.isGlobalAtlasContext) {
+      this.categoriesLoading.set(true);
+      this.categoriaService.list().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: items => { this.categorias.set(items); this.categoriesLoading.set(false); },
+        error: () => { this.categoriesError.set(true); this.categoriesLoading.set(false); },
+      });
+    }
     if (this.isGlobalAtlasContext || this.selectedDepartamentoId()) {
       this.loadFolder(null);
     }
@@ -164,25 +173,29 @@ export class SharePointAtlasImportDialogComponent {
     const departamentoId = this.selectedDepartamentoId();
     const ids = Array.from(this.selectedFiles().keys());
     if ((!this.isGlobalAtlasContext && !departamentoId) || ids.length === 0 || this.importing()) return;
+    if (this.isGlobalAtlasContext && (this.categoriesLoading() || this.categoriesError())) return;
 
     this.importing.set(true);
+    this.dialogRef.disableClose = true;
     this.error.set(null);
     const request = this.isGlobalAtlasContext
-      ? this.publicacionService.importManyGlobalAtlasSharePoint(ids)
+      ? this.publicacionService.importManyGlobalAtlasSharePoint(ids, this.selectedCategoryId() || null)
       : this.publicacionService.importManySharePoint(departamentoId, this.target, ids);
 
     request
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => this.dialogRef.close(result),
-        error: () => {
-          this.error.set('No se pudo completar la importacion desde SharePoint.');
+        error: (error) => {
+          this.error.set(error?.status === 422 ? 'La categoría o los archivos seleccionados ya no están disponibles. Revisa la selección.' : 'No se pudo completar la importación desde SharePoint.');
           this.importing.set(false);
+          this.dialogRef.disableClose = false;
         },
       });
   }
 
   cancel(): void {
+    if (this.importing()) return;
     this.dialogRef.close(null);
   }
 

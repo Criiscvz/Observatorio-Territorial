@@ -1,0 +1,29 @@
+:host { display: block; min-width: 0; }
+.account-controls { display: flex; align-items: center; gap: 8px; min-width: 0; padding-left: 12px; border-left: 1px solid var(--border-color); }
+.account-identity { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.account-avatar { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #5045df, #818cf8); color: #fff; font-size: 13px; font-weight: 700; overflow: hidden; }
+.account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.account-copy { display: flex; flex-direction: column; min-width: 0; max-width: 145px; line-height: 1.4; }
+.account-copy strong { color: var(--text-primary); font-size: 12px; font-weight: 700; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+.account-copy > span { color: var(--text-secondary); font-size: 11px; }
+.account-role { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-icon { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; padding: 8px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text-secondary); cursor: pointer; text-decoration: none; }
+.account-icon mat-icon { width: 19px; height: 19px; font-size: 19px; }
+.account-icon:hover { background: var(--hover-bg); color: var(--text-primary); }
+.account-settings.is-active { background: var(--primary-50); color: var(--primary-700); }
+.account-logout:hover { color: var(--error-color); }
+.account-logout:disabled { opacity: .55; cursor: wait; }
+.account-icon:focus-visible { outline: 3px solid var(--primary-400); outline-offset: 3px; }
+:host-context(.dark) .account-settings.is-active { color: #c7d2fe; background: #293153; }
+@media (max-width: 1250px) and (min-width: 1061px) {
+  .account-controls { gap: 4px; padding-left: 6px; }
+  .account-copy { max-width: 95px; }
+}
+@media (max-width: 520px) {
+  .account-controls { gap: 4px; padding-left: 6px; }
+  .account-copy { max-width: 100px; }
+  .account-icon { width: 36px; }
+}
+@media (max-width: 380px) {
+  .account-copy { max-width: 78px; }
+}

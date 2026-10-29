@@ -17,6 +17,16 @@ export const AUTH_ROUTES: Routes = [
     title: 'Registro - Observatorio',
   },
   {
+    path: 'verificar-correo',
+    loadComponent: () => import('../features/auth/verify-email/verify-email.component').then((m) => m.VerifyEmailComponent),
+    title: 'Verifica tu correo - Observatorio',
+  },
+  {
+    path: 'google/callback',
+    loadComponent: () => import('../features/auth/google-callback/google-callback.component').then((m) => m.GoogleCallbackComponent),
+    title: 'Acceso con Google - Observatorio',
+  },
+  {
     path: '',
     redirectTo: 'login',
     pathMatch: 'full',

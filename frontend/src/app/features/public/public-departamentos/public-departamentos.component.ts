@@ -1,21 +1,13 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, computed, inject, OnInit, PLATFORM_ID, signal, DestroyRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 
-import { TranslateModule } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
-import { AuthService } from '@core/services/auth.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { PublicDocumentListComponent } from '../public-document-list/public-document-list.component';
 
 @Component({
   selector: 'app-public-departamentos',
@@ -24,44 +16,29 @@ import { PublicDocumentListComponent } from '../public-document-list/public-docu
     CommonModule,
     RouterLink,
     FormsModule,
-    MatCardModule,
-    MatButtonModule,
     MatIconModule,
-    MatFormFieldModule,
-    MatInputModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
-    TranslateModule,
-    PublicDocumentListComponent,
   ],
   templateUrl: './public-departamentos.component.html',
   styleUrl: './public-departamentos.component.scss',
 })
 export class PublicDepartamentosComponent implements OnInit {
-    private readonly destroyRef = inject(DestroyRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly deptoService = inject(DepartamentoService);
-  private readonly authService = inject(AuthService);
 
   departamentos = signal<Departamento[]>([]);
   filteredDepartamentos = signal<Departamento[]>([]);
   loading = signal(true);
   searchTerm = '';
-  readonly showAdminPanelButton = computed(() => this.authService.isAdmin());
-  readonly showEditorPanelButton = computed(
-    () => !this.authService.isAdmin() && this.authService.isEditor(),
-  );
-
-  private readonly deptoGradients = [
-    'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
-    'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)',
-    'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
-    'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-    'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
-    'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-    'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
-    'linear-gradient(135deg, #84CC16 0%, #65A30D 100%)',
-  ];
+  readonly page = signal(0);
+  readonly pageSize = 5;
+  readonly loadError = signal(false);
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filteredDepartamentos().length / this.pageSize)));
+  readonly currentPage = computed(() => Math.min(this.page(), this.pageCount() - 1));
+  readonly visible = computed(() => this.filteredDepartamentos().slice(this.currentPage() * this.pageSize, (this.currentPage() + 1) * this.pageSize));
+  readonly rangeStart = computed(() => this.filteredDepartamentos().length ? this.currentPage() * this.pageSize + 1 : 0);
+  readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.filteredDepartamentos().length));
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
@@ -72,13 +49,17 @@ export class PublicDepartamentosComponent implements OnInit {
   }
 
   loadDepartamentos(): void {
+    this.loading.set(true);
+    this.loadError.set(false);
     this.deptoService.getPublicos().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (deptos) => {
         this.departamentos.set(deptos || []);
         this.filteredDepartamentos.set(deptos || []);
+        this.page.set(0);
         this.loading.set(false);
       },
       error: () => {
+        this.loadError.set(true);
         this.departamentos.set([]);
         this.filteredDepartamentos.set([]);
         this.loading.set(false);
@@ -87,7 +68,8 @@ export class PublicDepartamentosComponent implements OnInit {
   }
 
   filterDepartamentos(): void {
-    const term = this.searchTerm.toLowerCase().trim();
+    this.page.set(0);
+    const term = this.normalize(this.searchTerm);
     if (!term) {
       this.filteredDepartamentos.set(this.departamentos());
       return;
@@ -95,18 +77,22 @@ export class PublicDepartamentosComponent implements OnInit {
 
     const filtered = this.departamentos().filter(
       (d) =>
-        d.nombre.toLowerCase().includes(term) ||
-        (d.descripcion && d.descripcion.toLowerCase().includes(term)),
+        this.normalize(d.nombre).includes(term) ||
+        (d.descripcion && this.normalize(d.descripcion).includes(term)),
     );
     this.filteredDepartamentos.set(filtered);
   }
 
   clearSearch(): void {
     this.searchTerm = '';
+    this.page.set(0);
     this.filteredDepartamentos.set(this.departamentos());
   }
 
-  getDeptoGradient(index: number): string {
-    return this.deptoGradients[index % this.deptoGradients.length];
+  changePage(delta: number): void {
+    this.page.set(Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1)));
+  }
+  private normalize(value: string): string {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
   }
 }

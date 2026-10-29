@@ -93,6 +93,29 @@
   },
   "auth": {
     "login": {
+      "design": {
+        "university": "UNIVERSIDAD LAICA ELOY ALFARO DE MANABÍ",
+        "introTitle": "Connect with knowledge about ",
+        "introAccent": "our region.",
+        "introCopy": "A space to explore publications and share knowledge about our region.",
+        "observatories": "Observatories",
+        "observatoriesHint": "Information about our region",
+        "publications": "Articles, reports and books",
+        "publicationsHint": "Knowledge for everyone",
+        "institutionalName": "Observatorio Territorial Multidisciplinario ULEAM",
+        "backPortal": "Back to the portal",
+        "account": "YOUR ACCOUNT",
+        "welcome": "Welcome back",
+        "subtitle": "Sign in to access your account.",
+        "emailPlaceholder": "name@example.com",
+        "passwordPlaceholder": "Enter your password",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password",
+        "orContinue": "or continue with",
+        "google": "Continue with Google",
+        "googleError": "Google sign-in could not be completed. Please try again.",
+        "googleUnavailable": "Google is currently unavailable."
+      },
       "title": "ULEAM Observatory",
       "subtitle": "Sign in to your account",
       "email": "Email",
@@ -123,11 +146,98 @@
       "loginLink": "Sign in",
       "errors": {
         "registrationFailed": "Failed to create account"
+      },
+      "accountIntro": "Join our community of knowledge.",
+      "progress": "Registration progress",
+      "stepAccount": "Your account",
+      "stepProfile": "Your profile",
+      "optional": "Optional",
+      "accountDetails": "Account details",
+      "requiredNote": "Fields marked * are required.",
+      "givenName": "Given names",
+      "familyName": "Family names",
+      "emailHint": "You can use an institutional or personal email.",
+      "continue": "Continue",
+      "back": "Back",
+      "profileTitle": "Tell us a little about yourself",
+      "profileIntro": "These details are optional. You can complete them later.",
+      "skip": "Skip and create account",
+      "skipHint": "You can complete your profile later.",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "showConfirmation": "Show confirmation",
+      "hideConfirmation": "Hide confirmation",
+      "or": "or",
+      "google": "Continue with Google",
+      "googleUnavailable": "Google is unavailable right now.",
+      "community": {
+        "link": "Community affiliation",
+        "institution": "Institution",
+        "choose": "Select an option",
+        "otherInstitution": "Another institution",
+        "noInstitution": "No institutional affiliation",
+        "institutionName": "Institution name",
+        "interest": "Area of interest",
+        "chooseInterest": "Select an observatory",
+        "refresh": "Refresh observatories",
+        "loading": "Loading observatories…",
+        "loadError": "Observatories could not be loaded. Retry or complete this detail later.",
+        "links": {
+          "ESTUDIANTE": "Student",
+          "DOCENTE": "Lecturer",
+          "INVESTIGADOR": "Researcher",
+          "PERSONAL_ADMINISTRATIVO": "Administrative staff",
+          "PUBLICO_GENERAL": "General public"
+        }
       }
     },
     "logout": "Sign Out"
   },
   "profile": {
+    "workspace": {
+      "myAccount": "MY ACCOUNT",
+      "subtitle": "Your personal details, community and access.",
+      "backPanel": "Back to panel",
+      "backHome": "Back to home",
+      "accountSummary": "Account summary",
+      "photo": "Profile picture",
+      "changePhoto": "Change picture",
+      "verified": "Verified email",
+      "access": "Access",
+      "allObservatories": "All observatories",
+      "assignedCount": "{{count}} assigned observatories",
+      "notSelected": "Not selected",
+      "edit": "Edit profile",
+      "consultation": "View mode",
+      "editing": "Editing",
+      "photoFormats": "JPG, PNG or WebP · Up to 2 MB",
+      "sections": "Profile sections",
+      "personal": "Personal details",
+      "community": "Community",
+      "readOnly": "Read only",
+      "notAdded": "Not added",
+      "noBio": "No bio yet",
+      "communityTitle": "Community and interests",
+      "accessTitle": "Account access",
+      "permissionsNote": "Roles and permissions are assigned by administration.",
+      "adminAccess": "You can manage all observatories.",
+      "open": "Open",
+      "noAssignments": "You have no assigned observatories.",
+      "cancelEdit": "Cancel editing",
+      "save": "Save changes",
+      "readHint": "Select Edit profile to update your details.",
+      "editHint": "You can edit your details or switch tabs.",
+      "cancelled": "Editing cancelled. Your details are unchanged.",
+      "invalid": "Review the highlighted fields before saving.",
+      "photoPending": "Picture selected. Save your changes to apply it.",
+      "photoRemovalPending": "Your picture will be removed when you save.",
+      "partialAvatarError": "Your details were saved, but the picture could not be updated. You can try again.",
+      "institutions": {
+        "ULEAM": "ULEAM",
+        "OTRA": "Another institution",
+        "NINGUNA": "No institutional affiliation"
+      }
+    },
     "title": "My Profile",
     "subtitle": "Manage your personal information and account settings",
     "personalInfo": "Personal Information",
@@ -164,7 +274,8 @@
       "admin": "Administrator",
       "user": "Regular user",
       "subscriber": "Subscriber",
-      "editor": "Editor"
+      "editor": "Editor",
+      "observatoryAdmin": "Supervisor"
     },
     "messages": {
       "updateSuccess": "Profile updated successfully",
@@ -196,6 +307,9 @@
       "permissions": "Role Permissions",
       "departments": "Observatories",
       "newDepartment": "New observatory",
+      "manageDepartments": "Manage observatories",
+      "searchDepartments": "Search observatory…",
+      "clearSearch": "Clear search",
       "allDatasets": "All Datasets",
       "publicView": "Public View",
       "noDepartments": "No observatories",
@@ -449,6 +563,32 @@
   },
   "departamentos": {
     "title": "Observatories",
+    "management": {
+      "subtitle": "Organize your observatories and access their data and publications in one place.",
+      "available": "Available observatories",
+      "count": "{{shown}} of {{total}} observatories",
+      "searchPlaceholder": "Name, code or description",
+      "refresh": "Refresh",
+      "backDashboard": "Back to dashboard",
+      "view": "View observatory",
+      "noResultsDescription": "Try another name or clear the search.",
+      "deleteTitle": "Delete observatory",
+      "deleteMessage": "Delete the observatory «{{name}}»? The observatory and its associated information will no longer be available. This action cannot be undone from this screen.",
+      "deleteConfirm": "Delete observatory",
+      "deleted": "Observatory deleted successfully.",
+      "operationError": "The operation could not be completed. Try refreshing or check your connection.",
+      "manage": "Manage",
+      "observatoryColumn": "Observatory",
+      "visibility": "Visibility",
+      "allVisibility": "All visibility",
+      "actions": "Actions",
+      "moreActions": "More actions for",
+      "clearFilters": "Clear filters",
+      "pageRange": "{{start}}–{{end}} of {{total}}",
+      "perPage": "{{count}} per page",
+      "previous": "Previous page",
+      "next": "Next page"
+    },
     "list": {
       "title": "Observatories",
       "newDepartment": "New Observatory",
@@ -518,6 +658,8 @@
       "environment": "Environment",
       "sports": "Sports",
       "culture": "Culture / Art",
+      "care": "Care / Wellbeing",
+      "resilience": "Resilience / Protection",
       "technology": "Technology",
       "finance": "Finance",
       "agriculture": "Agriculture",
@@ -530,63 +672,85 @@
   "public": {
     "header": {
       "login": "Sign In",
-      "register": "Register"
+      "register": "Register",
+      "openMenu": "Open menu",
+      "closeMenu": "Close menu",
+      "navigation": "Main navigation",
+      "goToPanel": "Go to panel",
+      "logoutTitle": "Sign out?",
+      "logoutMessage": "You will need to sign in again to access your account.",
+      "loggingOut": "Signing out…",
+      "roles": {
+        "ADMIN": "Administrator",
+        "EDITOR": "Editor",
+        "USER": "User",
+        "SUBSCRIBER": "Subscriber",
+        "ADMIN_OBSERVATORIO": "Supervisor"
+      }
     },
     "home": {
       "hero": {
         "title": "Territorial Observatory",
         "titleHighlight": "Multidisciplinary ULEAM",
-        "subtitle": "Transform your Excel files into interactive dashboards automatically. Analyze, visualize, and share data intelligently.",
+        "subtitle": "Explore data, publications and analysis about our region. Information to understand the territory and inform decisions.",
         "exploreData": "Explore Public Data",
         "createAccount": "Create Free Account",
         "goToDashboard": "Go to Dashboard"
       },
-      "floatingCards": {
-        "dynamicCharts": "Dynamic Charts",
-        "visualAnalysis": "Visual Analysis",
-        "correlations": "Correlations"
-      },
       "stats": {
-        "publicDepartments": "Public Departments",
-        "availableDatasets": "Available Datasets",
-        "analyzedRecords": "Analyzed Records"
+        "observatories": "Observatories",
+        "articles": "Articles",
+        "reports": "Reports",
+        "books": "Books"
       },
       "features": {
-        "title": "Powerful Analysis Tools",
-        "subtitle": "Everything you need to turn data into knowledge",
-        "smartImport": {
-          "title": "Smart Import",
-          "description": "Upload Excel or CSV files and the system will automatically detect data types"
+        "eyebrow": "KNOWLEDGE IN SERVICE OF THE TERRITORY",
+        "title": "Explore the Observatory",
+        "subtitle": "Three ways to discover information about ULEAM and its region.",
+        "observatories": {
+          "title": "Observatories",
+          "description": "Browse publications and resources across different fields of knowledge.",
+          "action": "Discover the observatories"
         },
-        "autoCharts": {
-          "title": "Automatic Charts",
-          "description": "Generate instant visualizations: bars, pie, lines, scatter and more"
+        "atlas": {
+          "title": "Territorial atlas",
+          "description": "Browse territorial reports and publications organized by category.",
+          "action": "Open the atlas"
         },
-        "bivariable": {
-          "title": "Bivariable Analysis",
-          "description": "Discover correlations and relationships between variables with one click"
-        },
-        "sharePublic": {
-          "title": "Share Publicly",
-          "description": "Make your analyses public for anyone to view"
+        "barometer": {
+          "title": "ULEAM Barometer",
+          "description": "Browse the datasets available in the university barometer.",
+          "action": "Explore the barometer"
         }
       },
       "departments": {
-        "title": "Territorial Observatory",
-        "subtitle": "Explore data shared by the university community",
+        "title": "Find your observatory",
+        "subtitle": "Explore research by field of knowledge.",
         "loading": "Loading observatories...",
-        "noDescription": "No description",
+        "noDescription": "Browse the publications and resources from this observatory.",
         "viewAll": "View all observatories",
-        "empty": "No public observatories available"
+        "empty": "No public observatories available",
+        "explore": "Explore observatory",
+        "searchLabel": "Search observatories",
+        "searchPlaceholder": "Search by name or topic",
+        "results": "Showing {{ start }}–{{ end }} of {{ total }}",
+        "noResults": "No observatories match your search. Try another name or topic.",
+        "pagination": "Observatory pages",
+        "previousPage": "Previous page",
+        "nextPage": "Next page",
+        "page": "Page {{ current }} of {{ total }}"
       },
       "cta": {
-        "title": "Join Territorial Observatory",
-        "subtitle": "Access territorial data, multidisciplinary analysis, and visualization tools for informed decision-making.",
-        "button": "Create Free Account"
+        "title": "Join the Territorial Observatory",
+        "subtitle": "Explore our open access publications. You can also create an account to join the community.",
+        "button": "Create Free Account",
+        "eyebrow": "ULEAM COMMUNITY"
       },
       "footer": {
         "websiteLink": "ULEAM Website",
-        "departmentsLink": "Observatories"
+        "departmentsLink": "Observatories",
+        "navigation": "Useful links",
+        "tagline": "Information connecting the university with its region."
       },
       "nav": {
         "home": "Home",

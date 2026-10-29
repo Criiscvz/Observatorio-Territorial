@@ -279,9 +279,19 @@ p {
 /* ================================================
    4. SCROLLBAR PERSONALIZADO
    ================================================ */
+html {
+  scrollbar-gutter: stable;
+  scrollbar-color: var(--text-secondary) var(--bg-tertiary);
+}
+
+html:has(app-public-home),
+html:has(app-public-layout) {
+  overflow-y: scroll;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
@@ -290,13 +300,13 @@ p {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--text-secondary);
   border-radius: var(--radius-full);
   transition: background var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
+  background: var(--text-primary);
 }
 
 .dark ::-webkit-scrollbar-track {
@@ -304,7 +314,7 @@ p {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--text-secondary);
 }
 
 /* ================================================
@@ -1221,6 +1231,7 @@ a:not([class*='mat-']):not([class*='btn']):not([class*='nav']) {
   align-items: center;
   gap: 0.75rem;
   text-decoration: none;
+  min-width: 0;
 }
 
 .logo {
@@ -1336,6 +1347,19 @@ a:not([class*='mat-']):not([class*='btn']):not([class*='nav']) {
 .public-auth-button--login,
 .public-auth-button--register {
   padding-inline: 1.25rem !important;
+}
+
+.mobile-sidebar-actions {
+  display: grid;
+  gap: 0.625rem;
+  padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.mobile-sidebar-actions a {
+  min-height: 44px;
 }
 
 /* Language selector */
@@ -1589,19 +1613,108 @@ a:not([class*='mat-']):not([class*='btn']):not([class*='nav']) {
   margin: 0;
 }
 
-/* Responsive - Public Layout */
-@media (max-width: 768px) {
-  .nav-links,
-  .logo-text-container {
+/* Switch navigation before desktop links crowd out account actions. */
+@media (max-width: 1280px) {
+  .public-header .header-container {
+    gap: 0.75rem;
+  }
+
+  .public-header .nav-links {
     display: none;
   }
 
+  .public-header .logo-link {
+    flex: 1;
+  }
+
+  .public-header .header-container > .mobile-menu-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: var(--text-primary);
+  }
+}
+
+@media (max-width: 768px) {
   .user-name-text,
   .user-name {
     display: none;
   }
+}
 
-  .header-actions a[mat-stroked-button] {
+@media (max-width: 768px) {
+  .public-header .header-container {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    column-gap: 0.375rem;
+    row-gap: 0.625rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .public-header .logo-link {
+    grid-column: 1 / span 3;
+    grid-row: 1;
+  }
+
+  .public-header .header-actions {
+    display: contents;
+  }
+
+  .public-header .lang-toggle {
+    grid-column: 4;
+    grid-row: 1;
+    justify-content: center;
+    padding-inline: 0;
+    min-height: 44px;
+  }
+
+  .public-header .theme-toggle {
+    grid-column: 5;
+    grid-row: 1;
+    justify-self: center;
+    min-height: 44px;
+  }
+
+  .public-header .header-container > .mobile-menu-btn {
+    grid-column: 6;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .public-header .public-auth-button {
+    grid-row: 2;
+    min-width: 0;
+    min-height: 44px;
+    width: 100%;
+    padding-inline: 0.5rem !important;
+  }
+
+  .public-header .public-auth-button--login {
+    grid-column: 1 / span 3;
+  }
+
+  .public-header .public-auth-button--register {
+    grid-column: 4 / span 3;
+  }
+
+  .public-header .user-btn {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .public-header .user-name-text,
+  .public-header .user-name {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-header .logo-text-container {
     display: none;
   }
 }
@@ -1816,10 +1929,10 @@ a:not([class*='mat-']):not([class*='btn']):not([class*='nav']) {
 /* Bloquear scroll cuando el sidebar movil esta abierto */
 body:has(.mobile-sidebar-overlay) {
   overflow: hidden !important;
-  touch-action: none !important;
 }
 .mobile-sidebar-overlay {
   backdrop-filter: blur(4px);
+  touch-action: none;
 }
 
 
@@ -1898,4 +2011,13 @@ body:has(.mobile-sidebar-overlay) {
 .sharepoint-import-dialog-backdrop {
   background: rgba(2, 6, 23, 0.64) !important;
   backdrop-filter: blur(4px);
+}
+
+/* Admin shell owns scrolling; public pages keep the document scrollbar. */
+html:has(app-main-layout) {
+  scrollbar-gutter: auto;
+  overflow: hidden;
+}
+body:has(app-main-layout) {
+  overflow: hidden;
 }

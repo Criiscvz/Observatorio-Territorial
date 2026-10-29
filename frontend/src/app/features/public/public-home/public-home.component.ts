@@ -1,21 +1,26 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Component, inject, OnInit, PLATFORM_ID, signal, DestroyRef } from '@angular/core';
+import { Component, computed, inject, OnInit, PLATFORM_ID, signal, DestroyRef } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 import { APP_CONFIG } from '@core/config';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
-import { LanguageService } from '@core/services/language.service';
-import { ThemeService } from '@core/services/theme.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { catchError, forkJoin, of } from 'rxjs';
+import { PublicNavbarComponent } from '../components/public-navbar/public-navbar.component';
+import { PublicFooterComponent } from '../components/public-footer/public-footer.component';
+
+const EMPTY_PUBLIC_STATS = {
+  observatorios: 0,
+  articulos: 0,
+  reportes: 0,
+  libros: 0,
+};
 
 @Component({
   selector: 'app-public-home',
@@ -24,13 +29,12 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
     CommonModule,
     RouterLink,
     MatButtonModule,
-    MatDividerModule,
     MatIconModule,
     MatCardModule,
-    MatMenuModule,
     MatProgressSpinnerModule,
-    MatTooltipModule,
     TranslateModule,
+    PublicFooterComponent,
+    PublicNavbarComponent,
   ],
   templateUrl: './public-home.component.html',
   styleUrl: './public-home.component.scss',
@@ -40,40 +44,36 @@ export class PublicHomeComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly deptoService = inject(DepartamentoService);
   readonly authService = inject(AuthService);
-  readonly themeService = inject(ThemeService);
-  readonly languageService = inject(LanguageService);
 
   readonly appConfig = APP_CONFIG;
 
   departamentos = signal<Departamento[]>([]);
+  readonly observatoryPageSize = 5;
+  readonly observatorySearch = signal('');
+  readonly observatoryPage = signal(0);
+  readonly filteredObservatories = computed(() => {
+    const normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+    const search = normalize(this.observatorySearch().trim());
+    return this.departamentos().filter(depto => normalize(`${depto.nombre} ${depto.descripcion || ''}`).includes(search));
+  });
+  readonly observatoryPageCount = computed(() => Math.max(1, Math.ceil(this.filteredObservatories().length / this.observatoryPageSize)));
+  readonly currentObservatoryPage = computed(() => Math.min(this.observatoryPage(), this.observatoryPageCount() - 1));
+  readonly visibleObservatories = computed(() => {
+    const start = this.currentObservatoryPage() * this.observatoryPageSize;
+    return this.filteredObservatories().slice(start, start + this.observatoryPageSize);
+  });
+  readonly observatoryRangeStart = computed(() => this.filteredObservatories().length ? this.currentObservatoryPage() * this.observatoryPageSize + 1 : 0);
+  readonly observatoryRangeEnd = computed(() => Math.min((this.currentObservatoryPage() + 1) * this.observatoryPageSize, this.filteredObservatories().length));
+  publicStats = signal(EMPTY_PUBLIC_STATS);
   loading = signal(true);
-  mobileMenuOpen = signal(false);
-  showObservatories = signal(false);
-  showBarometer = signal(false);
-  currentYear = new Date().getFullYear();
 
-  private readonly deptoColors = [
-    '#6366F1',
-    '#EC4899',
-    '#14B8A6',
-    '#F59E0B',
-    '#EF4444',
-    '#8B5CF6',
-    '#06B6D4',
-    '#84CC16',
-    '#F97316',
-    '#3B82F6',
-  ];
-
-  get totalDatasets(): number {
-    return this.departamentos().reduce((sum, d) => sum + (d.datasets?.length || 0), 0);
+  searchObservatories(value: string): void {
+    this.observatorySearch.set(value);
+    this.observatoryPage.set(0);
   }
 
-  get totalRegistros(): number {
-    return this.departamentos().reduce((sum, d) => {
-      const datasets = d.datasets || [];
-      return sum + datasets.reduce((s, ds) => s + (ds.total_registros || 0), 0);
-    }, 0);
+  changeObservatoryPage(direction: number): void {
+    this.observatoryPage.set(Math.max(0, Math.min(this.currentObservatoryPage() + direction, this.observatoryPageCount() - 1)));
   }
 
   ngOnInit(): void {
@@ -87,26 +87,22 @@ export class PublicHomeComponent implements OnInit {
   }
 
   loadDepartamentos(): void {
-    this.deptoService.getPublicos().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (deptos) => {
-        this.departamentos.set(deptos || []);
+    forkJoin({
+      departamentos: this.deptoService.getPublicos().pipe(catchError(() => of([]))),
+      stats: this.deptoService.getPublicStats().pipe(catchError(() => of(EMPTY_PUBLIC_STATS))),
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ({ departamentos, stats }) => {
+        this.departamentos.set(departamentos || []);
+        this.publicStats.set(stats);
         this.loading.set(false);
       },
       error: () => {
         this.departamentos.set([]);
+        this.publicStats.set(EMPTY_PUBLIC_STATS);
         this.loading.set(false);
       },
     });
   }
 
-  getDeptoColor(index: number): string {
-    return this.deptoColors[index % this.deptoColors.length];
-  }
 
-  formatNumber(num: number): string {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
-    return num.toString();
-  }
 }
-

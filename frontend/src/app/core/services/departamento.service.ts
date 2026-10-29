@@ -3,6 +3,13 @@ import { Observable, Subject, tap } from 'rxjs';
 import { Departamento } from '../models';
 import { ApiService } from './api.service';
 
+export interface PublicHomeStats {
+  observatorios: number;
+  articulos: number;
+  reportes: number;
+  libros: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -23,11 +30,15 @@ export class DepartamentoService {
     return this.api.get<Departamento>(`/departamentos/${id}`);
   }
 
-  create(data: Partial<Departamento>): Observable<Departamento> {
+  create(data: Partial<Departamento> | FormData): Observable<Departamento> {
     return this.api.post<Departamento>('/departamentos', data).pipe(tap(() => this.notifyChange()));
   }
 
-  update(id: string, data: Partial<Departamento>): Observable<Departamento> {
+  update(id: string, data: Partial<Departamento> | FormData): Observable<Departamento> {
+    if (data instanceof FormData) {
+      data.set('_method', 'PUT');
+      return this.api.upload<Departamento>(`/departamentos/${id}`, data).pipe(tap(() => this.notifyChange()));
+    }
     return this.api
       .put<Departamento>(`/departamentos/${id}`, data)
       .pipe(tap(() => this.notifyChange()));
@@ -47,6 +58,10 @@ export class DepartamentoService {
   // Público (sin auth)
   getPublicos(): Observable<Departamento[]> {
     return this.api.get<Departamento[]>('/publico/departamentos');
+  }
+
+  getPublicStats(): Observable<PublicHomeStats> {
+    return this.api.get<PublicHomeStats>('/publico/estadisticas');
   }
 
   getPublicById(id: string): Observable<Departamento> {

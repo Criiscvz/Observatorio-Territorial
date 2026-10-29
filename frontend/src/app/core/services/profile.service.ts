@@ -4,8 +4,9 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { User } from '@core/models';
 import { environment } from '../../../environments/environment';
+import { CommunityProfileData } from '../models/user/community-profile';
 
-export interface UpdateProfileData {
+export interface UpdateProfileData extends CommunityProfileData {
   name?: string;
   telefono?: string;
   cargo?: string;

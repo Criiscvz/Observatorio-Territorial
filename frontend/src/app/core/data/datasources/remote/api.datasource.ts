@@ -24,6 +24,13 @@ export class ApiDatasource {
     return this.http.post<T>(`${this.baseUrl}${endpoint}`, body);
   }
 
+  getCsrfCookie(): Observable<void> {
+    const csrfUrl = this.baseUrl.startsWith('/')
+      ? '/sanctum/csrf-cookie'
+      : new URL('/sanctum/csrf-cookie', this.baseUrl).toString();
+    return this.http.get<void>(csrfUrl, { withCredentials: true });
+  }
+
   put<T>(endpoint: string, body: unknown): Observable<T> {
     return this.http.put<T>(`${this.baseUrl}${endpoint}`, body);
   }

@@ -1,134 +1,31 @@
-<div class="page-container">
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="header-content">
-      <h1 class="page-title">{{ 'public.departments.title' | translate }}</h1>
-      <p class="page-subtitle">
-        {{ 'public.departments.subtitle' | translate }}
-      </p>
-    </div>
-
-    <!-- Search -->
-    <div class="search-container">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-label>{{ 'common.buttons.search' | translate }}</mat-label>
-        <input
-          matInput
-          [(ngModel)]="searchTerm"
-          (ngModelChange)="filterDepartamentos()"
-          [placeholder]="'public.departments.search' | translate"
-        />
-        <mat-icon matPrefix>search</mat-icon>
-        @if (searchTerm) {
-          <button matSuffix mat-icon-button (click)="clearSearch()">
-            <mat-icon>close</mat-icon>
-          </button>
-        }
-      </mat-form-field>
-    </div>
+<main class="observatory-directory">
+  <header class="directory-heading">
+    <p class="eyebrow">Universidad y territorio</p>
+    <h1>Nuestros observatorios</h1>
+    <p>Investigación, publicaciones y análisis de la comunidad universitaria para comprender nuestro territorio.</p>
+  </header>
+  <div class="directory-tools">
+    <label class="public-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" aria-label="Buscar observatorios" placeholder="Buscar observatorio por nombre o tema…" [(ngModel)]="searchTerm" (ngModelChange)="filterDepartamentos()"></label>
+    <span class="result-count" aria-live="polite">{{ filteredDepartamentos().length }} {{ filteredDepartamentos().length === 1 ? 'observatorio' : 'observatorios' }}</span>
   </div>
-
-  <!-- Results info -->
-  <div class="results-info">
-    <span class="results-count">
-      {{ 'public.departments.resultsCount' | translate: { count: filteredDepartamentos().length } }}
-    </span>
-  </div>
-
-  @if (showAdminPanelButton()) {
-    <section class="editor-panel-entry">
-      <div>
-        <strong>Panel de administración</strong>
-        <span
-          >Gestiona observatorios, usuarios, roles, datasets, artículos, reportes y atlas del
-          sistema.</span
-        >
-      </div>
-      <a mat-raised-button color="primary" routerLink="/admin/dashboard">
-        <mat-icon>admin_panel_settings</mat-icon>
-        Ir al panel de administración
-      </a>
-    </section>
-  } @else if (showEditorPanelButton()) {
-    <section class="editor-panel-entry">
-      <div>
-        <strong>Panel del editor</strong>
-        <span>Gestiona artículos, reportes y atlas de tus Observatorios asignados.</span>
-      </div>
-      <a mat-raised-button color="primary" routerLink="/admin/dashboard">
-        <mat-icon>edit_note</mat-icon>
-        Ir al panel del editor
-      </a>
-    </section>
-  }
-
   @if (loading()) {
-    <div class="loading-container">
-      <mat-spinner diameter="48"></mat-spinner>
-      <p>{{ 'public.departments.loading' | translate }}</p>
-    </div>
-  } @else if (filteredDepartamentos().length > 0) {
-    <div class="departments-grid">
-      @for (depto of filteredDepartamentos(); track depto.id; let i = $index) {
-        <a [routerLink]="['/publico/departamentos', depto.id]" class="department-card">
-          <div class="card-header">
-            <div class="department-avatar" [style.background]="getDeptoGradient(i)">
-              @if (depto.icono) {
-                <mat-icon>{{ depto.icono }}</mat-icon>
-              } @else {
-                {{ depto.nombre.charAt(0).toUpperCase() }}
-              }
-            </div>
-            <div class="department-meta">
-              <h3>{{ depto.nombre }}</h3>
-              <span class="meta-badge">
-                <mat-icon>folder</mat-icon>
-                {{ depto.datasets?.length || 0 }} {{ 'common.units.datasets' | translate }}
-              </span>
-            </div>
-          </div>
-
-          <p class="department-desc">
-            {{ depto.descripcion || ('public.departmentDetail.noDescription' | translate) }}
-          </p>
-
-          @if (depto.datasets && depto.datasets.length > 0) {
-            <div class="datasets-preview">
-              <span class="preview-label">{{ 'dashboard.recentDatasets.title' | translate }}:</span>
-              <div class="dataset-chips">
-                @for (ds of depto.datasets.slice(0, 3); track ds.id) {
-                  <span class="dataset-chip">{{ ds.nombre }}</span>
-                }
-                @if (depto.datasets.length > 3) {
-                  <span class="more-chip">+{{ depto.datasets.length - 3 }} más</span>
-                }
-              </div>
-            </div>
-          }
-
-          <div class="card-footer">
-            <span class="view-link">
-              {{ 'public.departments.viewDetails' | translate }}
-              <mat-icon>arrow_forward</mat-icon>
-            </span>
-          </div>
-        </a>
+    <div class="directory-empty" role="status"><mat-spinner diameter="36"/><p>Cargando observatorios…</p></div>
+  } @else if (loadError()) {
+    <div class="directory-empty" role="alert"><mat-icon>cloud_off</mat-icon><h2>No se pudieron cargar los observatorios</h2><button class="public-button" (click)="loadDepartamentos()">Reintentar</button></div>
+  } @else if (visible().length) {
+    <section class="directory-list" aria-label="Observatorios públicos">
+      @for (item of visible(); track item.id) {
+        <article class="directory-row">
+          <span class="observatory-icon">@if(item.foto_url){<img class="observatory-identity-image" [src]="item.foto_url" alt="">}@else{<mat-icon aria-hidden="true">{{ item.icono || 'account_balance' }}</mat-icon>}</span>
+          <div class="observatory-copy"><h2><a [routerLink]="['/publico/departamentos', item.id]">{{ item.nombre }}</a></h2><p>{{ item.descripcion || 'Consulta las publicaciones y los recursos de este observatorio.' }}</p></div>
+          <a class="public-button public-button--soft" [routerLink]="['/publico/departamentos', item.id]" [attr.aria-label]="'Explorar ' + item.nombre">Explorar <mat-icon aria-hidden="true">north_east</mat-icon></a>
+        </article>
       }
-    </div>
+    </section>
   } @else {
-    <div class="empty-state">
-      <mat-icon>search_off</mat-icon>
-      <h3>{{ 'common.messages.noResults' | translate }}</h3>
-      @if (searchTerm) {
-        <p>No hay resultados para "{{ searchTerm }}"</p>
-        <button mat-stroked-button (click)="clearSearch()">
-          {{ 'common.buttons.clear' | translate }}
-        </button>
-      } @else {
-        <p>{{ 'public.departments.empty' | translate }}</p>
-      }
-    </div>
+    <div class="directory-empty"><mat-icon>search_off</mat-icon><h2>{{ searchTerm ? 'No encontramos observatorios con esa búsqueda' : 'Aún no hay observatorios públicos' }}</h2>@if (searchTerm) {<button class="public-button" (click)="clearSearch()">Limpiar búsqueda</button>}</div>
   }
-
-  <app-public-document-list></app-public-document-list>
-</div>
+  @if (!loading() && !loadError()) {
+    <nav class="public-pagination" aria-label="Paginación de observatorios"><span>{{ rangeStart() }}–{{ rangeEnd() }} de {{ filteredDepartamentos().length }} · 5 por página</span><div><button class="page-button" aria-label="Página anterior" [disabled]="currentPage() === 0" (click)="changePage(-1)"><mat-icon>chevron_left</mat-icon></button><span class="page-index" aria-live="polite">{{ currentPage() + 1 }} / {{ pageCount() }}</span><button class="page-button" aria-label="Página siguiente" [disabled]="currentPage() + 1 >= pageCount()" (click)="changePage(1)"><mat-icon>chevron_right</mat-icon></button></div></nav>
+  }
+</main>

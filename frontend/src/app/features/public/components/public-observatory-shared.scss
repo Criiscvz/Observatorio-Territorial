@@ -1,0 +1,22 @@
+:host { display: block; --public-accent: var(--primary-700); --public-tint: var(--primary-50); }
+:host-context(.dark) { --public-accent: var(--primary-300); --public-tint: #293251; }
+.eyebrow { color: var(--public-accent); font-size: .7rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; margin: 0 0 .5rem; }
+.public-search { display: flex; align-items: center; gap: .7rem; flex: 1; min-width: 0; max-width: 590px; padding: 0 .9rem; border: 1px solid var(--card-border); background: var(--bg-primary); border-radius: 10px; color: var(--text-secondary); }
+.public-search input { min-width: 0; width: 100%; border: 0; background: transparent; color: var(--text-primary); font: inherit; padding: .8rem 0; outline-offset: 4px; }
+.public-search input::placeholder { color: var(--text-secondary); opacity: 1; }
+.public-search mat-icon { width: 19px; height: 19px; font-size: 19px; flex-shrink: 0; }
+.public-button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .65rem .85rem; min-height: 40px; border: 1px solid var(--card-border); border-radius: 9px; background: var(--card-bg); color: var(--text-primary); font: inherit; font-size: .8rem; font-weight: 650; white-space: nowrap; text-decoration: none; cursor: pointer; }
+.public-button { color: var(--text-primary) !important; }
+.public-button.public-button--soft { color: var(--public-accent) !important; background: var(--public-tint); border-color: transparent; }
+.public-button.public-button--primary { color: #fff !important; background: #4f46e5; border-color: #4f46e5; }
+.public-button mat-icon { width: 18px; height: 18px; font-size: 18px; color: inherit !important; }
+.public-button:hover:not(:disabled) { border-color: var(--public-accent); }
+.public-button:disabled { opacity: .5; cursor: default; }
+.result-count { margin-left: auto; white-space: nowrap; color: var(--text-secondary); font-size: .8rem; }
+.public-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 0; color: var(--text-secondary); font-size: .8rem; }
+.public-pagination>div { display: flex; align-items: center; gap: .5rem; }
+.page-button { padding: .4rem; display: grid; place-items: center; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--card-border); border-radius: 8px; cursor: pointer; }
+.page-button:disabled { opacity: .4; cursor: default; }
+.page-index { color: var(--public-accent); background: var(--public-tint); border-radius: 6px; padding: .3rem .6rem; font-variant-numeric: tabular-nums; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--public-accent); outline-offset: 3px; }
+@media (max-width: 560px) { .public-search input { font-size: 16px; } .public-pagination { flex-wrap: wrap; font-size: .75rem; } }

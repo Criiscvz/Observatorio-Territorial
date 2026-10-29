@@ -17,11 +17,13 @@ use App\Application\User\UseCases\UpdateUserRoleUseCase;
 use App\Application\User\UseCases\UpdateUserUseCase;
 use App\Http\Controllers\Controller;
 use App\Presentation\Http\Requests\User\CreateUserRequest;
+use App\Presentation\Http\Requests\User\ChangeUserPasswordRequest;
 use App\Presentation\Http\Requests\User\UpdateUserRequest;
 use App\Presentation\Http\Requests\User\UpdateUserRoleRequest;
 use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 #[OA\Tag(name: 'Users', description: 'Gestión de usuarios (solo administradores)')]
 class UserController extends Controller
@@ -51,9 +53,9 @@ class UserController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->input('per_page', 15);
-        $search = $request->input('search');
-        $users = $this->getUsersUseCase->execute($request->user()->id, $perPage, $search);
+        $filters = $request->validate(['per_page' => 'sometimes|integer|min:1|max:100', 'page' => 'sometimes|integer|min:1',
+            'search' => 'nullable|string|max:255', 'rol' => 'nullable|in:ADMIN,ADMIN_OBSERVATORIO,EDITOR,SUBSCRIBER,USER']);
+        $users = $this->getUsersUseCase->execute($request->user()->id, (int) ($filters['per_page'] ?? 15), $filters['search'] ?? null, $filters['rol'] ?? null);
 
         return response()->json([
             'data' => UserResource::collection($users->items()),
@@ -139,7 +141,7 @@ class UserController extends Controller
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Juan Pérez'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'juan@example.com'),
-                    new OA\Property(property: 'password', type: 'string', example: 'password123'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password'),
                     new OA\Property(property: 'rol', type: 'string', enum: ['ADMIN', 'USER'], example: 'USER'),
                     new OA\Property(property: 'is_active', type: 'boolean', example: true),
                     new OA\Property(property: 'telefono', type: 'string', example: '+593999999999'),
@@ -181,7 +183,7 @@ class UserController extends Controller
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Juan Pérez'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'juan@example.com'),
-                    new OA\Property(property: 'password', type: 'string', example: 'newpassword123'),
+                    new OA\Property(property: 'password', type: 'string', format: 'password'),
                     new OA\Property(property: 'rol', type: 'string', enum: ['ADMIN', 'USER'], example: 'USER'),
                     new OA\Property(property: 'is_active', type: 'boolean', example: true),
                     new OA\Property(property: 'telefono', type: 'string', example: '+593999999999'),
@@ -203,11 +205,32 @@ class UserController extends Controller
         $dto = UpdateUserDTO::fromArray($request->validated(), $id, $request->user()->id);
 
         $user = $this->updateUserUseCase->execute($dto);
+        if ($dto->password !== null && $id === (int) $request->user()->id) $this->endOwnSession($request);
 
         return response()->json([
             'message' => 'Usuario actualizado exitosamente',
             'data' => new UserResource($user),
         ]);
+    }
+
+    public function changePassword(ChangeUserPasswordRequest $request, int $id): JsonResponse
+    {
+        $ownAccount = $id === (int) $request->user()->id;
+        $this->updateUserUseCase->execute(new UpdateUserDTO(
+            userId: $id, adminId: $request->user()->id, password: $request->validated()['password'],
+        ));
+        if ($ownAccount) $this->endOwnSession($request);
+
+        return response()->json(['message' => 'Contraseña actualizada correctamente.', 'reauthenticate' => $ownAccount]);
+    }
+
+    private function endOwnSession(Request $request): void
+    {
+        Auth::guard('web')->logout();
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
     }
 
     #[OA\Delete(

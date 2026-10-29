@@ -90,22 +90,7 @@
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>{{ 'users.form.role' | translate }}</mat-label>
                 <mat-select formControlName="rol">
-                  <mat-option value="USER">
-                    <mat-icon>person</mat-icon>
-                    USER - {{ 'users.roles.userDesc' | translate }}
-                  </mat-option>
-                  <mat-option value="ADMIN">
-                    <mat-icon>security</mat-icon>
-                    ADMIN - {{ 'users.roles.adminDesc' | translate }}
-                  </mat-option>
-                  <mat-option value="EDITOR">
-                    <mat-icon>edit</mat-icon>
-                    EDITOR - {{ 'users.roles.editorDesc' | translate }}
-                  </mat-option>
-                  <mat-option value="SUBSCRIBER">
-                    <mat-icon>card_membership</mat-icon>
-                    SUBSCRIBER - {{ 'users.roles.subscriberDesc' | translate }}
-                  </mat-option>
+                  @for(role of roles;track role.value){<mat-option [value]="role.value"><mat-icon>{{role.icon}}</mat-icon>{{role.label}}</mat-option>}
                 </mat-select>
                 <mat-icon matPrefix>admin_panel_settings</mat-icon>
               </mat-form-field>

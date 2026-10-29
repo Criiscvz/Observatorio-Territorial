@@ -16,6 +16,12 @@ class ReporteArticuloSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->environment('production')) {
+            $this->command?->info('Seeder de artículos y reportes de demostración omitido en producción.');
+
+            return;
+        }
+
         $departamentos = DepartamentoModel::all();
         $categorias = CategoriaDatasetModel::all();
 

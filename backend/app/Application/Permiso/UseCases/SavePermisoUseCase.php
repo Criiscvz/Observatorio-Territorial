@@ -52,7 +52,12 @@ class SavePermisoUseCase
      */
     public function saveAll(int $userId, array $permisosData): array
     {
-        $user = User::query()->findOrFail($userId);
+        return DB::transaction(fn () => $this->replaceAll($userId, $permisosData));
+    }
+
+    private function replaceAll(int $userId, array $permisosData): array
+    {
+        $user = User::query()->lockForUpdate()->findOrFail($userId);
 
         // Obtener permisos actuales para detectar los que ya no existen
         $existing = $this->permisoRepository->findByUserId($userId);
@@ -61,10 +66,19 @@ class SavePermisoUseCase
             fn(array $data) => ($data['modulo'] ?? null) === Permiso::MODULO_OBSERVATORIOS
         ));
 
-        if ($this->hasActiveObservatorioPermission($observatorioPermisos) && ! in_array($user->rol, ['ADMIN', 'EDITOR'], true)) {
+        if ($this->hasActiveObservatorioPermission($observatorioPermisos) && ! in_array($user->rol, ['ADMIN', 'EDITOR', 'ADMIN_OBSERVATORIO'], true)) {
             throw ValidationException::withMessages([
                 'user_id' => ['Solo usuarios ADMIN o EDITOR pueden recibir permisos de edición sobre Observatorios.'],
             ]);
+        }
+
+        foreach ($observatorioPermisos as $permission) {
+            if ($user->isObservatoryAdmin() && $permission['nivel'] !== 'ninguno' && empty($permission['departamento_id'])) {
+                throw ValidationException::withMessages(['permisos' => 'Selecciona cada observatorio explícitamente para este rol.']);
+            }
+            if (! $user->isObservatoryAdmin() && (! empty($permission['puede_revisar']) || ! empty($permission['puede_agregar_editores']))) {
+                throw ValidationException::withMessages(['permisos' => 'Estos permisos son exclusivos del administrador de observatorio.']);
+            }
         }
 
         // Construir key para identificar permisos existentes
@@ -93,9 +107,7 @@ class SavePermisoUseCase
             }
         }
 
-        if (!empty($observatorioPermisos)) {
-            $this->syncObservatorioAccess($userId, $observatorioPermisos);
-        }
+        $this->syncObservatorioAccess($userId, $observatorioPermisos);
 
         return $results;
     }
@@ -110,6 +122,7 @@ class SavePermisoUseCase
     private function syncObservatorioAccess(int $userId, array $observatorioPermisos): void
     {
         $desired = [];
+        $isObservatoryAdmin = User::findOrFail($userId)->isObservatoryAdmin();
 
         foreach ($observatorioPermisos as $permiso) {
             $nivel = $permiso['nivel'] ?? Permiso::NIVEL_NINGUNO;
@@ -129,7 +142,11 @@ class SavePermisoUseCase
                 : [$departamentoId];
 
             foreach ($departamentoIds as $id) {
-                $desired[$id] = $rol;
+                $desired[$id] = [
+                    'rol' => $isObservatoryAdmin ? 'ADMIN' : $rol,
+                    'puede_revisar' => $isObservatoryAdmin && (bool) ($permiso['puede_revisar'] ?? false),
+                    'puede_agregar_editores' => $isObservatoryAdmin && (bool) ($permiso['puede_agregar_editores'] ?? false),
+                ];
             }
         }
 
@@ -142,7 +159,7 @@ class SavePermisoUseCase
                 )
                 ->delete();
 
-            foreach ($desired as $departamentoId => $rol) {
+            foreach ($desired as $departamentoId => $attributes) {
                 $existing = DB::table('usuario_departamento')
                     ->where('user_id', $userId)
                     ->where('departamento_id', $departamentoId)
@@ -152,7 +169,7 @@ class SavePermisoUseCase
                     DB::table('usuario_departamento')
                         ->where('id', $existing->id)
                         ->update([
-                            'rol' => $rol,
+                            ...$attributes,
                             'updated_at' => now(),
                         ]);
                     continue;
@@ -162,7 +179,7 @@ class SavePermisoUseCase
                     'id' => Str::uuid()->toString(),
                     'user_id' => $userId,
                     'departamento_id' => $departamentoId,
-                    'rol' => $rol,
+                    ...$attributes,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

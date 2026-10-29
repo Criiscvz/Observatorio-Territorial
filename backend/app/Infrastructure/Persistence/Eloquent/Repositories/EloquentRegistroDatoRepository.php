@@ -7,11 +7,14 @@ namespace App\Infrastructure\Persistence\Eloquent\Repositories;
 use App\Domain\Dataset\Repositories\RegistroDatoRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Models\RegistroDatoModel;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 {
+    private const NUMERIC_PATTERN = '^-?[0-9]+(\.[0-9]+)?$';
+
     public function __construct(
         private readonly RegistroDatoModel $model
     ) {}
@@ -57,11 +60,10 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getCategoricalFrequencies(string $datasetId, string $columna, int $limit = 20): array
     {
-        return DB::table('registros_datos')
-            ->select(DB::raw("data->>'$columna' as categoria, COUNT(*) as frecuencia"))
-            ->where('dataset_id', $datasetId)
-            ->whereNotNull(DB::raw("data->>'$columna'"))
-            ->groupBy(DB::raw("data->>'$columna'"))
+        return $this->datasetColumns($datasetId, ['categoria' => $columna])
+            ->selectRaw('categoria, COUNT(*) as frecuencia')
+            ->whereNotNull('categoria')
+            ->groupBy('categoria')
             ->orderBy('frecuencia', 'desc')
             ->limit($limit)
             ->get()
@@ -70,18 +72,17 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getNumericStats(string $datasetId, string $columna): array
     {
-        $result = DB::table('registros_datos')
-            ->select(DB::raw("
+        $result = $this->datasetColumns($datasetId, ['value' => $columna])
+            ->selectRaw('
                 COUNT(*) as count,
-                AVG((data->>'$columna')::numeric) as mean,
-                MIN((data->>'$columna')::numeric) as min,
-                MAX((data->>'$columna')::numeric) as max,
-                SUM((data->>'$columna')::numeric) as sum,
-                STDDEV((data->>'$columna')::numeric) as std,
-                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY (data->>'$columna')::numeric) as median
-            "))
-            ->where('dataset_id', $datasetId)
-            ->whereRaw("data->>'$columna' ~ '^-?[0-9]+(\\.[0-9]+)?$'")
+                AVG(value::numeric) as mean,
+                MIN(value::numeric) as min,
+                MAX(value::numeric) as max,
+                SUM(value::numeric) as sum,
+                STDDEV(value::numeric) as std,
+                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY value::numeric) as median
+            ')
+            ->whereRaw('value ~ ?', [self::NUMERIC_PATTERN])
             ->first();
 
         return (array) $result;
@@ -89,9 +90,13 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getHistogram(string $datasetId, string $columna, int $bins = 10): array
     {
+        if ($bins < 1) {
+            throw new \InvalidArgumentException('El número de intervalos debe ser mayor que cero.');
+        }
+
         $stats = $this->getNumericStats($datasetId, $columna);
         
-        if (empty($stats['min']) || empty($stats['max']) || $stats['min'] == $stats['max']) {
+        if ($stats['min'] === null || $stats['max'] === null || $stats['min'] == $stats['max']) {
             return [];
         }
 
@@ -99,13 +104,12 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
         $max = (float) $stats['max'];
         $binWidth = ($max - $min) / $bins;
 
-        $result = DB::table('registros_datos')
-            ->select(DB::raw("
-                FLOOR(((data->>'$columna')::numeric - $min) / $binWidth) as bin,
+        $result = $this->datasetColumns($datasetId, ['value' => $columna])
+            ->selectRaw('
+                LEAST(FLOOR((value::numeric - CAST(? AS numeric)) / CAST(? AS numeric)), ?) as bin,
                 COUNT(*) as count
-            "))
-            ->where('dataset_id', $datasetId)
-            ->whereRaw("data->>'$columna' ~ '^-?[0-9]+(\\.[0-9]+)?$'")
+            ', [$min, $binWidth, $bins - 1])
+            ->whereRaw('value ~ ?', [self::NUMERIC_PATTERN])
             ->groupBy('bin')
             ->orderBy('bin')
             ->get();
@@ -124,14 +128,10 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getScatterData(string $datasetId, string $columnaX, string $columnaY, int $limit = 1000): array
     {
-        return DB::table('registros_datos')
-            ->select(DB::raw("
-                (data->>'$columnaX')::numeric as x,
-                (data->>'$columnaY')::numeric as y
-            "))
-            ->where('dataset_id', $datasetId)
-            ->whereRaw("data->>'$columnaX' ~ '^-?[0-9]+(\\.[0-9]+)?$'")
-            ->whereRaw("data->>'$columnaY' ~ '^-?[0-9]+(\\.[0-9]+)?$'")
+        return $this->datasetColumns($datasetId, ['value_x' => $columnaX, 'value_y' => $columnaY])
+            ->selectRaw('value_x::numeric as x, value_y::numeric as y')
+            ->whereRaw('value_x ~ ?', [self::NUMERIC_PATTERN])
+            ->whereRaw('value_y ~ ?', [self::NUMERIC_PATTERN])
             ->limit($limit)
             ->get()
             ->map(fn($row) => [(float) $row->x, (float) $row->y])
@@ -140,16 +140,15 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getGroupedAverages(string $datasetId, string $columnaCategoria, string $columnaNumerico, int $limit = 20): array
     {
-        return DB::table('registros_datos')
-            ->select(DB::raw("
-                data->>'$columnaCategoria' as categoria,
-                AVG((data->>'$columnaNumerico')::numeric) as promedio,
+        return $this->datasetColumns($datasetId, ['categoria' => $columnaCategoria, 'value' => $columnaNumerico])
+            ->selectRaw('
+                categoria,
+                AVG(value::numeric) as promedio,
                 COUNT(*) as count
-            "))
-            ->where('dataset_id', $datasetId)
-            ->whereNotNull(DB::raw("data->>'$columnaCategoria'"))
-            ->whereRaw("data->>'$columnaNumerico' ~ '^-?[0-9]+(\\.[0-9]+)?$'")
-            ->groupBy(DB::raw("data->>'$columnaCategoria'"))
+            ')
+            ->whereNotNull('categoria')
+            ->whereRaw('value ~ ?', [self::NUMERIC_PATTERN])
+            ->groupBy('categoria')
             ->orderBy('promedio', 'desc')
             ->limit($limit)
             ->get()
@@ -158,16 +157,11 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getContingencyTable(string $datasetId, string $columnaX, string $columnaY, int $limit = 15): array
     {
-        $result = DB::table('registros_datos')
-            ->select(DB::raw("
-                data->>'$columnaX' as x,
-                data->>'$columnaY' as y,
-                COUNT(*) as count
-            "))
-            ->where('dataset_id', $datasetId)
-            ->whereNotNull(DB::raw("data->>'$columnaX'"))
-            ->whereNotNull(DB::raw("data->>'$columnaY'"))
-            ->groupBy(DB::raw("data->>'$columnaX'"), DB::raw("data->>'$columnaY'"))
+        $result = $this->datasetColumns($datasetId, ['x' => $columnaX, 'y' => $columnaY])
+            ->selectRaw('x, y, COUNT(*) as count')
+            ->whereNotNull('x')
+            ->whereNotNull('y')
+            ->groupBy('x', 'y')
             ->orderBy('count', 'desc')
             ->limit($limit * $limit)
             ->get();
@@ -193,16 +187,15 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getTimeSeriesAverage(string $datasetId, string $columnaFecha, string $columnaNumerico, int $limit = 50): array
     {
-        return DB::table('registros_datos')
-            ->select(DB::raw("
-                DATE(data->>'$columnaFecha') as fecha,
-                AVG((data->>'$columnaNumerico')::numeric) as avg_value,
+        return $this->datasetColumns($datasetId, ['date_value' => $columnaFecha, 'value' => $columnaNumerico])
+            ->selectRaw('
+                DATE(date_value) as fecha,
+                AVG(value::numeric) as avg_value,
                 COUNT(*) as count
-            "))
-            ->where('dataset_id', $datasetId)
-            ->whereNotNull(DB::raw("data->>'$columnaFecha'"))
-            ->whereRaw("data->>'$columnaNumerico' ~ '^-?[0-9]+(\\.[0-9]+)?$'")
-            ->groupBy(DB::raw("DATE(data->>'$columnaFecha')"))
+            ')
+            ->whereNotNull('date_value')
+            ->whereRaw('value ~ ?', [self::NUMERIC_PATTERN])
+            ->groupBy('fecha')
             ->orderBy('fecha')
             ->limit($limit)
             ->get()
@@ -211,37 +204,38 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
 
     public function getStackedTimeData(string $datasetId, string $columnaFecha, string $columnaCategoria, int $limit = 50): array
     {
+        $values = $this->datasetColumns($datasetId, ['date_value' => $columnaFecha, 'categoria' => $columnaCategoria]);
+
         // Obtener categorías únicas
-        $categories = DB::table('registros_datos')
-            ->select(DB::raw("DISTINCT data->>'$columnaCategoria' as cat"))
-            ->where('dataset_id', $datasetId)
-            ->whereNotNull(DB::raw("data->>'$columnaCategoria'"))
-            ->orderBy('cat')
+        $categories = (clone $values)
+            ->distinct()
+            ->select('categoria')
+            ->whereNotNull('categoria')
+            ->orderBy('categoria')
             ->limit(10)
-            ->pluck('cat')
+            ->pluck('categoria')
             ->toArray();
 
         // Obtener fechas únicas
-        $dates = DB::table('registros_datos')
-            ->select(DB::raw("DISTINCT DATE(data->>'$columnaFecha') as fecha"))
-            ->where('dataset_id', $datasetId)
-            ->whereNotNull(DB::raw("data->>'$columnaFecha'"))
+        $dates = (clone $values)
+            ->distinct()
+            ->selectRaw('DATE(date_value) as fecha')
+            ->whereNotNull('date_value')
             ->orderBy('fecha')
             ->limit($limit)
             ->pluck('fecha')
             ->toArray();
 
         // Contar por fecha y categoría
-        $counts = DB::table('registros_datos')
-            ->select(DB::raw("
-                DATE(data->>'$columnaFecha') as fecha,
-                data->>'$columnaCategoria' as categoria,
+        $counts = (clone $values)
+            ->selectRaw('
+                DATE(date_value) as fecha,
+                categoria,
                 COUNT(*) as count
-            "))
-            ->where('dataset_id', $datasetId)
-            ->whereNotNull(DB::raw("data->>'$columnaFecha'"))
-            ->whereNotNull(DB::raw("data->>'$columnaCategoria'"))
-            ->groupBy(DB::raw("DATE(data->>'$columnaFecha')"), DB::raw("data->>'$columnaCategoria'"))
+            ')
+            ->whereNotNull('date_value')
+            ->whereNotNull('categoria')
+            ->groupBy('fecha', 'categoria')
             ->get();
 
         // Construir series
@@ -263,5 +257,37 @@ class EloquentRegistroDatoRepository implements RegistroDatoRepositoryInterface
             'categories' => $categories,
             'series' => $series,
         ];
+    }
+
+    /**
+     * Project JSON keys once as bound text values, never as SQL fragments.
+     * The aliases are fixed by the calling methods and escaped as identifiers.
+     * Using a subquery also avoids repeating positional parameters in GROUP BY.
+     *
+     * @param array<string, string> $columns SQL alias => imported JSON key
+     */
+    private function datasetColumns(string $datasetId, array $columns): Builder
+    {
+        $query = DB::table('registros_datos')->where('dataset_id', $datasetId);
+
+        foreach ($columns as $alias => $column) {
+            $column = $this->sanitizeColumn($column);
+            $query->selectRaw(
+                'data->>CAST(? AS text) AS '.$query->getGrammar()->wrap($alias),
+                [$column],
+            );
+        }
+
+        return DB::query()->fromSub($query, 'dataset_values');
+    }
+
+    /** Imported column names are normalized by ExcelReaderService. */
+    private function sanitizeColumn(string $columna): string
+    {
+        if (!preg_match('/^[a-zA-Z0-9_]+$/D', $columna)) {
+            throw new \InvalidArgumentException("Nombre de columna inválido: {$columna}");
+        }
+
+        return $columna;
     }
 }

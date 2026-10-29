@@ -1,132 +1,46 @@
-<div class="dialog-container">
-  <div mat-dialog-title class="dialog-title">
-    <div class="title-icon"><mat-icon>edit_note</mat-icon></div>
-    <div>
-      <span class="eyebrow">Gestión de acceso</span>
-      <h2>Configurar acceso del editor</h2>
-    </div>
+<section class="dialog-container access-list-dialog">
+  <header class="dialog-title">
+    <div class="title-icon"><mat-icon>{{isObservatoryAdmin ? 'manage_accounts' : 'edit_note'}}</mat-icon></div>
+    <div class="title-copy"><span class="eyebrow">Gestión de acceso</span><h2 mat-dialog-title>{{readOnly ? 'Acceso del editor' : promotingEditor ? 'Asignar editor' : isObservatoryAdmin ? 'Configurar supervisor' : 'Configurar editor'}}</h2><p>{{isObservatoryAdmin ? 'Asigna observatorios y configura sus permisos.' : 'Define dónde podrá crear y gestionar su contenido.'}}</p></div>
+    <button class="access-icon" type="button" aria-label="Cerrar ventana" (click)="cancel()"><mat-icon>close</mat-icon></button>
+  </header>
+  <div class="user-info">
+      <div class="user-avatar">{{(user.name || 'E').charAt(0).toUpperCase()}}</div>
+      <div class="user-details"><h3>{{user.name}}</h3><p class="email">{{user.email}}</p></div>
+      <span class="role-badge">{{promotingEditor ? 'Usuario → Editor' : isObservatoryAdmin ? 'Supervisor' : 'Editor'}}</span>
   </div>
-
   <mat-dialog-content class="dialog-content">
-    <div class="user-info">
-      <div class="user-avatar">{{ (user.name || 'E').charAt(0).toUpperCase() }}</div>
-      <div class="user-details">
-        <h3>{{ user.name }}</h3>
-        <p class="email">{{ user.email }}</p>
-        <div class="user-facts">
-          <span class="role-badge badge-editor">EDITOR</span>
-          <span class="status-badge">
-            <mat-icon>verified_user</mat-icon>
-            {{ user.is_active === false ? 'Usuario inactivo' : 'Usuario activo' }}
-          </span>
-        </div>
+    @if(promotingEditor){<div class="workflow"><span>1 · Usuario seleccionado</span><span class="current">2 · Asignar acceso</span></div>}
+    @if(delegated){<p class="scope-note"><mat-icon>{{readOnly ? 'visibility' : 'verified_user'}}</mat-icon><span>{{readOnly ? 'Consulta los accesos dentro de tus observatorios asignados. No tienes habilitado Agregar editores en estos accesos.' : 'Solo puedes modificar los observatorios donde tienes habilitado Agregar editores. Los demás accesos se conservan.'}}</span></p>}
+    <section class="observatorios-panel" aria-label="Observatorios y permisos">
+      <div class="section-heading"><h3>{{readOnly ? 'Accesos asignados' : 'Observatorios y permisos'}}</h3><span class="section-count" aria-live="polite">{{selectedDepartamentoIds.length}} de {{departamentos.length}} asignados</span></div>
+      <label class="access-search"><mat-icon>search</mat-icon><input type="search" [ngModel]="observatorioSearch" (ngModelChange)="onSearchChange($event)" placeholder="Buscar por nombre o código" aria-label="Buscar observatorio"></label>
+      <div class="selection-summary"><span>{{departamentos.length}} observatorios {{readOnly ? 'en tu alcance' : 'disponibles'}}</span>
+        @if(!readOnly){<div class="quick-actions"><button class="text-action" type="button" [disabled]="!permissionsReady" (click)="selectAllDepartamentos()">Seleccionar todos</button><button class="text-action" type="button" [disabled]="!permissionsReady" (click)="clearDepartamentos()">Limpiar</button></div>}
       </div>
-    </div>
-
-    <section class="observatorios-panel">
-      <div class="section-heading">
-        <div>
-          <span class="eyebrow">Observatorios asignados</span>
-          <h3>Selecciona uno o varios Observatorios</h3>
-        </div>
-        <span class="section-count">
-          {{ selectedDepartamentoIds.length }} seleccionados
-        </span>
-      </div>
-
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-label>Buscar Observatorio</mat-label>
-        <mat-icon matPrefix>search</mat-icon>
-        <input
-          matInput
-          [ngModel]="observatorioSearch"
-          (ngModelChange)="onSearchChange($event)"
-          placeholder="Nombre, código o descripción"
-        />
-      </mat-form-field>
-
-      <div class="selection-summary">
-        <span>
-          {{ selectedDepartamentoIds.length }} de {{ departamentos.length }}
-          Observatorios con acceso
-        </span>
-        <div class="quick-actions">
-          <button mat-button type="button" (click)="selectAllDepartamentos()">
-            Seleccionar todos
-          </button>
-          <button mat-button type="button" (click)="clearDepartamentos()">
-            Limpiar
-          </button>
-        </div>
-      </div>
-
-      @if (loadingDepartamentos) {
-        <div class="empty-observatorios">
-          <mat-spinner diameter="22"></mat-spinner>
-          <span>Cargando Observatorios...</span>
-        </div>
-      } @else if (loadDepartamentosError) {
-        <div class="empty-observatorios">
-          <mat-icon>error_outline</mat-icon>
-          <span>{{ loadDepartamentosError }}</span>
-        </div>
-      } @else if (filteredDepartamentosList.length) {
+      @if(loadingDepartamentos || (!permissionsReady && !loadDepartamentosError)){<div class="empty-observatorios" role="status"><mat-spinner diameter="22"></mat-spinner>Cargando accesos…</div>}
+      @else if(loadDepartamentosError){<p class="empty-observatorios" role="alert"><mat-icon>error_outline</mat-icon>{{loadDepartamentosError}}</p>}
+      @else{
         <div class="observatorios-list">
-          @for (dep of filteredDepartamentosList; track dep.id) {
-            <label
-              class="observatorio-option"
-              [class.selected]="isDepartamentoSelected(dep.id)"
-            >
-              <mat-checkbox
-                [checked]="isDepartamentoSelected(dep.id)"
-                (change)="toggleDepartamento(dep.id, $event.checked)"
-              ></mat-checkbox>
-              <span class="observatorio-copy">
-                <strong>{{ dep.nombre }}</strong>
-                <span>{{ dep.codigo_interno }}</span>
-                <small>
-                  {{ isDepartamentoSelected(dep.id) ? 'Con acceso' : 'Sin acceso' }}
-                </small>
-              </span>
-            </label>
-          }
-        </div>
-      } @else {
-        <div class="empty-observatorios">
-          <mat-icon>search_off</mat-icon>
-          <span>No hay Observatorios que coincidan con la búsqueda.</span>
+          @for(dep of filteredDepartamentosList; track dep.id){
+            <article class="observatorio-card" [class.selected]="isDepartamentoSelected(dep.id)">
+              <label class="observatorio-option"><input type="checkbox" [disabled]="readOnly" [attr.aria-label]="'Asignar ' + dep.nombre" [checked]="isDepartamentoSelected(dep.id)" (change)="toggleDepartamento(dep.id, $any($event.target).checked)"><span class="observatorio-copy"><strong>{{dep.nombre}}</strong><small>{{dep.codigo_interno}}</small></span><span class="access-state" [class.enabled]="isDepartamentoSelected(dep.id)"><mat-icon>{{isDepartamentoSelected(dep.id) ? 'check_circle_outline' : 'remove_circle_outline'}}</mat-icon>{{isDepartamentoSelected(dep.id) ? 'Asignado' : 'Sin acceso'}}</span></label>
+              @if(isObservatoryAdmin && isDepartamentoSelected(dep.id)){
+                <div class="delegated-permissions" [attr.aria-label]="'Permisos en ' + dep.nombre">
+                  <label class="permission-toggle"><input class="permission-switch" role="switch" type="checkbox" [attr.aria-label]="'Edición y revisión en ' + dep.nombre" [(ngModel)]="flags(dep.id).puede_revisar"><span><strong>Edición y revisión</strong><small>Crear, editar, publicar, suspender y archivar contenido.</small>@if(isNewAssignment(dep.id) && flags(dep.id).puede_revisar){<small class="default-permission">Activo por defecto</small>}</span></label>
+                  <label class="permission-toggle"><input class="permission-switch" role="switch" type="checkbox" [attr.aria-label]="'Agregar editores en ' + dep.nombre" [(ngModel)]="flags(dep.id).puede_agregar_editores"><span><strong>Agregar editores</strong><small>Asignar editores a este observatorio y gestionar sus accesos.</small></span></label>
+                </div>
+              } @else if(!isObservatoryAdmin && isDepartamentoSelected(dep.id)) {
+                <div class="editor-access-included"><mat-icon>done_all</mat-icon><span>Crear artículos, reportes y libros · Enviar a revisión</span></div>
+              }
+            </article>
+          }@empty{<p class="empty-observatorios">No hay observatorios en esta selección.</p>}
         </div>
       }
     </section>
-
-    <section class="editor-permissions-panel">
-      <div class="section-heading compact">
-        <div>
-          <span class="eyebrow">Permisos del editor</span>
-          <h3>Acciones incluidas por rol</h3>
-        </div>
-      </div>
-
-      <div class="acciones-list">
-        @for (permission of editorPermissions; track permission) {
-          <span class="accion-chip">
-            <mat-icon>check_circle</mat-icon>
-            {{ permission }}
-          </span>
-        }
-      </div>
-
-      <p class="obs-hint">
-        Estos permisos son propios del rol EDITOR. Lo configurable aquí es a qué Observatorios puede acceder.
-      </p>
-    </section>
+    <p class="access-list-note"><mat-icon>verified_user</mat-icon><span>{{isObservatoryAdmin ? 'Edición y revisión se activa al añadir un observatorio. Ambos permisos pueden desactivarse de forma independiente.' : 'El editor crea contenido y consulta sus propios envíos en los observatorios asignados.'}}</span></p>
   </mat-dialog-content>
-
-  <mat-dialog-actions align="end" class="dialog-actions">
-    <button mat-button (click)="cancel()">Cancelar</button>
-    <button mat-flat-button color="primary" (click)="save()">
-      <mat-icon>save</mat-icon>
-      Guardar permisos
-    </button>
-  </mat-dialog-actions>
-</div>
+  <footer class="dialog-actions"><span class="footer-hint">{{readOnly ? 'Solo consulta' : promotingEditor ? 'El rol cambiará al guardar.' : 'Los cambios se aplican al guardar.'}}</span><div class="quick-actions"><button class="access-button" type="button" (click)="cancel()">{{readOnly ? 'Cerrar' : 'Cancelar'}}</button>
+    @if(!readOnly){<button class="access-button primary" type="button" (click)="save()" [disabled]="!permissionsReady || loadingDepartamentos || !!loadDepartamentosError || (promotingEditor && (!selectedDepartamentoIds.length || user.is_active === false))"><mat-icon>{{promotingEditor ? 'person_add' : 'check'}}</mat-icon>{{promotingEditor ? 'Asignar editor' : 'Guardar permisos'}}</button>}
+  </div></footer>
+</section>

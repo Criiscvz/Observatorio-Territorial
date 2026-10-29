@@ -11,6 +11,7 @@ use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
 use App\Domain\Dataset\Repositories\RegistroDatoRepositoryInterface;
 use App\Domain\Dataset\Repositories\VariableMetadatoRepositoryInterface;
 use App\Infrastructure\Services\ExcelReaderService;
+use App\Infrastructure\Services\TemporaryStorageFileService;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -23,6 +24,7 @@ class ConfirmImportUseCase
         private readonly VariableMetadatoRepositoryInterface $variableRepository,
         private readonly RegistroDatoRepositoryInterface $registroRepository,
         private readonly ExcelReaderService $excelReader,
+        private readonly TemporaryStorageFileService $temporaryStorageFile,
     ) {}
 
     public function execute(ConfirmImportDTO $dto): DatasetResponseDTO
@@ -43,10 +45,11 @@ class ConfirmImportUseCase
             throw new HttpException(Response::HTTP_BAD_REQUEST, 'El dataset ya fue procesado');
         }
 
-        $filePath = storage_path('app/datasets/' . $dataset->nombreArchivo);
+        $filePath = $this->temporaryStorageFile->download('datasets/'.$dataset->nombreArchivo);
         $totalRegistros = 0;
 
-        DB::transaction(function () use ($dto, $filePath, &$totalRegistros) {
+        try {
+            DB::transaction(function () use ($dto, $filePath, &$totalRegistros) {
             // Eliminar metadatos anteriores si existen
             $this->variableRepository->deleteByDatasetId($dto->datasetId);
             
@@ -74,7 +77,10 @@ class ConfirmImportUseCase
             if (!empty($batch)) {
                 $this->registroRepository->insertBatch($dto->datasetId, $batch);
             }
-        });
+            });
+        } finally {
+            @unlink($filePath);
+        }
 
         // Actualizar estado del dataset
         $updatedDataset = $dataset->markAsCompletado($totalRegistros);

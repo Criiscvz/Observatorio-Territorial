@@ -277,8 +277,7 @@
                                     },
                                     "password": {
                                         "type": "string",
-                                        "format": "password",
-                                        "example": "password123"
+                                        "format": "password"
                                     }
                                 },
                                 "type": "object"
@@ -326,13 +325,11 @@
                                     },
                                     "password": {
                                         "type": "string",
-                                        "format": "password",
-                                        "example": "password123"
+                                        "format": "password"
                                     },
                                     "password_confirmation": {
                                         "type": "string",
-                                        "format": "password",
-                                        "example": "password123"
+                                        "format": "password"
                                     }
                                 },
                                 "type": "object"
@@ -2272,90 +2269,6 @@
                 }
             }
         },
-        "/seed/admin": {
-            "post": {
-                "tags": [
-                    "Seed"
-                ],
-                "summary": "Crear usuario administrador inicial",
-                "operationId": "349ea281b132164d42fc57a1f2b966e5",
-                "parameters": [
-                    {
-                        "name": "X-Seed-Token",
-                        "in": "header",
-                        "description": "Token de seguridad para ejecutar seeders",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Usuario administrador creado exitosamente"
-                    },
-                    "403": {
-                        "description": "Token de seguridad inválido"
-                    }
-                }
-            }
-        },
-        "/seed/departamentos": {
-            "post": {
-                "tags": [
-                    "Seed"
-                ],
-                "summary": "Crear departamentos iniciales",
-                "operationId": "f7ec8ed4ea72f0ce51a3e88e76f1fdb5",
-                "parameters": [
-                    {
-                        "name": "X-Seed-Token",
-                        "in": "header",
-                        "description": "Token de seguridad para ejecutar seeders",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Departamentos creados exitosamente"
-                    },
-                    "403": {
-                        "description": "Token de seguridad inválido"
-                    }
-                }
-            }
-        },
-        "/seed/all": {
-            "post": {
-                "tags": [
-                    "Seed"
-                ],
-                "summary": "Ejecutar todos los seeders iniciales",
-                "operationId": "c9c1c32a03f65c0b040f2b8445631018",
-                "parameters": [
-                    {
-                        "name": "X-Seed-Token",
-                        "in": "header",
-                        "description": "Token de seguridad para ejecutar seeders",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Todos los seeders ejecutados exitosamente"
-                    },
-                    "403": {
-                        "description": "Token de seguridad inválido"
-                    }
-                }
-            }
-        },
         "/users": {
             "get": {
                 "tags": [
@@ -2416,7 +2329,7 @@
                                     },
                                     "password": {
                                         "type": "string",
-                                        "example": "password123"
+                                        "format": "password"
                                     },
                                     "rol": {
                                         "type": "string",
@@ -2594,7 +2507,7 @@
                                     },
                                     "password": {
                                         "type": "string",
-                                        "example": "newpassword123"
+                                        "format": "password"
                                     },
                                     "rol": {
                                         "type": "string",

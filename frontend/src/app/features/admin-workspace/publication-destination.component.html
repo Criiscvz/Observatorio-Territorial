@@ -1,0 +1,89 @@
+<header class="workspace-header">
+  <div><span class="eyebrow">Crear contenido</span><h1>Nueva publicación</h1><p class="subtitle">Selecciona el observatorio y el tipo de contenido que se publicará.</p></div>
+  <a class="action" routerLink="/admin/dashboard"><mat-icon>arrow_back</mat-icon>Volver al inicio</a>
+</header>
+@if(error()) { <div class="feedback error" role="alert">No se pudieron cargar los observatorios. <button class="text-action" (click)="load()">Reintentar</button></div> }
+<div class="creation-grid" [class.editor-open]="destination()">
+  <form class="panel destination-form" [formGroup]="form" (ngSubmit)="openForm()">
+    <div class="panel-heading"><h2>Destino de la publicación</h2><p>{{destination() ? 'Destino del formulario abierto' : 'Define dónde se guardará el contenido.'}}</p></div>
+    <div class="destination-fields">
+      <label>Observatorio *<select formControlName="departamento" [attr.aria-invalid]="form.controls.departamento.touched && form.controls.departamento.invalid"><option value="">{{loading() ? 'Cargando observatorios…' : 'Selecciona un observatorio'}}</option>@for(item of observatories();track item.id) { <option [value]="item.id">{{item.nombre}}</option> }</select>
+        @if(form.controls.departamento.touched && form.controls.departamento.invalid) { <small class="field-error" role="alert">Selecciona un observatorio válido.</small> }
+      </label>
+      <label>Tipo de publicación<select formControlName="tipo"><option value="ARTICULO">Artículo</option><option value="LIBRO">Libro PDF</option><option value="REPORTE">Reporte Power BI</option></select></label>
+      @if(!isAdmin()) { <p class="destination-hint"><mat-icon>verified_user</mat-icon>Solo puedes elegir tus observatorios asignados.</p> }
+      @if(!loading() && !error() && !observatories().length) { <p class="subtitle full">@if(isAdmin()){Primero debes <a routerLink="/admin/departamentos/nuevo">crear un observatorio</a>.}@else{No tienes observatorios asignados. Solicita la asignación a un administrador.}</p> }
+    </div>
+    @if(destination() && isAdmin()) {
+      <section class="destination-import" aria-label="Importación desde SharePoint">
+        <button class="action sharepoint-action" type="button" (click)="importSharePoint()" [disabled]="saving() || importing()">
+          <span class="sharepoint-icon"><mat-icon>{{importing() ? 'hourglass_top' : 'cloud_download'}}</mat-icon></span>
+          <span class="sharepoint-copy"><strong>{{importing() ? 'Importador abierto' : 'Importar desde SharePoint'}}</strong><small>{{destinationLabel}} para este observatorio</small></span>
+        </button>
+        @if(importMessage()) { <div class="import-feedback" [class.import-feedback--error]="importFailed()" role="status" aria-live="polite">{{importMessage()}} <a [routerLink]="['/admin/departamentos',destination()!.departamento.id]">Ver en el observatorio<mat-icon>arrow_outward</mat-icon></a></div> }
+      </section>
+    }
+    @if(!destination()) { <p class="destination-hint"><mat-icon>view_sidebar</mat-icon>El formulario se abrirá al lado en computadora y debajo en celular.</p> }
+    <div class="form-footer">
+      @if(destination()) { <button class="action" type="button" (click)="requestClose()" [disabled]="saving() || importing()"><mat-icon>edit</mat-icon>Modificar destino</button> }
+      @else { <a class="action" routerLink="/admin/dashboard">Cancelar</a><button class="action primary" type="submit" [disabled]="loading() || error() || form.invalid" aria-controls="publication-editor">Abrir formulario<mat-icon>arrow_forward</mat-icon></button> }
+    </div>
+  </form>
+  @if(destination(); as target) {
+    <section class="panel editor" id="publication-editor" #editor aria-labelledby="editor-title">
+      <header class="editor-heading">
+        <div class="editor-destination">
+          <span class="destination-confirmed"><mat-icon aria-hidden="true">check_circle_outline</mat-icon>{{savedPublication() ? 'Publicación guardada en este observatorio' : 'Publicarás en este observatorio'}}</span>
+          <div class="destination-identity">
+            <span class="destination-symbol"><mat-icon aria-hidden="true">account_balance</mat-icon></span>
+            <div class="destination-copy"><h2 id="editor-title">{{target.departamento.nombre}}</h2><p class="destination-type"><mat-icon aria-hidden="true">{{isReport ? 'bar_chart' : target.tipo === 'LIBRO' ? 'menu_book' : 'article'}}</mat-icon>{{destinationLabel}}</p></div>
+          </div>
+        </div>
+        <button class="icon-action" type="button" (click)="requestClose()" [disabled]="saving() || importing()" aria-label="Cerrar formulario"><mat-icon>close</mat-icon></button>
+      </header>
+      @if(confirmClose()) { <div class="discard-confirmation" role="alert"><strong>¿Descartar los cambios sin guardar?</strong><p>Los datos del formulario se perderán.</p><div><button type="button" class="action" (click)="confirmClose.set(false)">Seguir editando</button><button type="button" class="action" (click)="closeForm()">Descartar y cerrar</button></div></div> }
+      @if(savedPublication(); as saved) {
+        <div class="success" role="status" aria-live="polite"><mat-icon>task_alt</mat-icon><h3>{{canChooseStatus() ? 'Publicación guardada correctamente' : 'Publicación enviada a revisión'}}</h3><strong>{{saved.titulo}}</strong><p>Código: {{saved.codigo}}</p><p>El contenido está guardado en {{target.departamento.nombre}}.</p><div class="success-actions"><a class="action" [routerLink]="['/admin/departamentos',target.departamento.id]">Ver en el observatorio<mat-icon>arrow_outward</mat-icon></a><button class="action primary" type="button" (click)="createAnother()"><mat-icon>add</mat-icon>Crear otra publicación</button></div></div>
+      } @else {
+        <form [formGroup]="publicationForm" (ngSubmit)="submit()" [attr.aria-busy]="saving()" novalidate>
+          <nav class="steps" aria-label="Secciones del formulario"><button type="button" [attr.aria-current]="step() === 1 ? 'step' : null" (click)="goToStep(1)" [disabled]="saving()"><span>1</span>Información</button><button type="button" [attr.aria-current]="step() === 2 ? 'step' : null" (click)="goToStep(2)" [disabled]="saving()"><span>2</span>{{!canChooseStatus() ? 'PDF y envío' : isReport ? 'Acceso y PDF opcional' : 'PDF y acceso'}}</button></nav>
+          <fieldset [disabled]="saving() || importing()">
+            <div class="editor-fields" [hidden]="step() !== 1">
+              <label class="full">{{isReport ? 'Nombre del reporte' : 'Título'}} *<input name="titulo" formControlName="titulo" maxlength="255" placeholder="Escribe un título descriptivo" [attr.aria-invalid]="!!fieldError('titulo')" aria-describedby="title-error"><small class="counter"><span>Máximo 255 caracteres</span><span>{{publicationForm.controls.titulo.value.length}}/255</span></small><small id="title-error" class="field-error">{{fieldError('titulo')}}</small></label>
+              <label>Fecha de publicación *<input name="fecha_publicacion" type="date" formControlName="fecha_publicacion" [attr.aria-invalid]="!!fieldError('fecha_publicacion')" aria-describedby="date-error"><small id="date-error" class="field-error">{{fieldError('fecha_publicacion')}}</small></label>
+              <label>Fuente (opcional)<input name="fuente" formControlName="fuente" maxlength="255" placeholder="Institución o fuente" [attr.aria-invalid]="!!fieldError('fuente')" aria-describedby="source-error"><small id="source-error" class="field-error">{{fieldError('fuente')}}</small></label>
+              <div class="authors full" formArrayName="autores"><span>Autores (opcionales)</span>
+                @for(author of autores.controls; track author; let i = $index) { <div class="author-row"><label><span class="sr-only">Autor {{i+1}}</span><input [formControlName]="i" maxlength="255" placeholder="Nombre del autor" [attr.aria-invalid]="!!fieldError('autores.'+i)" [attr.aria-describedby]="'author-error-'+i"><small class="field-error" [id]="'author-error-'+i">{{fieldError('autores.'+i)}}</small></label>@if(autores.length > 1) { <button class="icon-action" type="button" (click)="removeAuthor(i)" [attr.aria-label]="'Quitar autor '+(i+1)"><mat-icon>remove</mat-icon></button> }</div> }
+                <button class="text-action" type="button" (click)="addAuthor()"><mat-icon>add</mat-icon>Agregar autor</button>
+              </div>
+              <label class="full">{{isReport ? 'URL de Power BI *' : 'URL externa (opcional)'}}<input name="link_url" type="url" formControlName="link_url" maxlength="2048" [placeholder]="isReport ? 'https://app.powerbi.com/view?r=…' : 'https://…'" [attr.aria-invalid]="!!fieldError('link_url')" aria-describedby="url-error"><small>{{isReport ? 'El reporte se consulta mediante este enlace. El PDF es opcional.' : 'Enlace de referencia de la publicación.'}}</small><small id="url-error" class="field-error">{{fieldError('link_url')}}</small></label>
+              @if(isReport) {
+                <div class="preview-resource full"><mat-icon>ondemand_video</mat-icon><div><strong>Prueba el reporte en el visor</strong><small>Abre el enlace público de Power BI con la información del formulario, sin guardar la publicación.</small>@if(publicationForm.controls.link_url.value.trim() && !reportPreviewUrl){<small>Para la vista previa, usa un enlace público con formato https://app.powerbi.com/view?r=…</small>}</div><button class="action preview-report" type="button" (click)="preview()" [disabled]="!canPreviewReport"><mat-icon>visibility</mat-icon>Probar enlace</button></div>
+              }
+              <label class="full">Descripción (opcional)<textarea name="descripcion" formControlName="descripcion" rows="3" maxlength="3000" placeholder="Resume el contenido" [attr.aria-invalid]="!!fieldError('descripcion')" aria-describedby="description-error"></textarea><small class="counter"><span>Máximo 3000 caracteres</span><span>{{publicationForm.controls.descripcion.value.length}}/3000</span></small><small id="description-error" class="field-error">{{fieldError('descripcion')}}</small></label>
+            </div>
+            <div class="editor-fields" [hidden]="step() !== 2">
+              <div class="file-field full"><strong>{{isReport ? 'Archivo PDF (opcional)' : 'Archivo PDF *'}}</strong>
+                <input #pdfInput id="publication-workspace-pdf" type="file" accept="application/pdf,application/x-pdf,.pdf" hidden (change)="onFileSelected($event)">
+                <button class="upload-zone" type="button" [class.dragging]="dragging()" (click)="pdfInput.click()" (dragover)="onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)" aria-describedby="pdf-error"><mat-icon>{{selectedFile() ? 'task_alt' : 'upload_file'}}</mat-icon><strong>{{selectedFile()?.name || 'Seleccionar o arrastrar archivo PDF'}}</strong><span>{{selectedFile() ? fileSize(selectedFile()!.size) : 'Solo PDF · Máximo 20 MB'}}</span></button>
+                @if(selectedFile() || fileError() || fieldErrors()['archivo']) { <button class="text-action" type="button" (click)="clearFile()"><mat-icon>close</mat-icon>Quitar archivo seleccionado</button> }
+                <p class="field-error" id="pdf-error" role="alert">{{fileError() || fieldErrors()['archivo']}}</p>
+                @if(!isReport && selectedFile() && !fileError()) {
+                  <div class="preview-resource"><mat-icon>picture_as_pdf</mat-icon><div><strong>Revisa el PDF antes de subirlo</strong><small>Se abre desde tu computadora. El archivo se subirá al guardar o enviar la publicación.</small></div><button class="action preview-pdf" type="button" (click)="preview()" [disabled]="!canPreviewPdf"><mat-icon>visibility</mat-icon>Vista previa del PDF</button></div>
+                }
+              </div>
+              @if(canChooseStatus()) {
+              <label class="full">Estado *<select name="estado" formControlName="estado" [attr.aria-invalid]="!!fieldError('estado')" aria-describedby="state-error"><option value="PUBLICACION">Publicación</option><option value="EN_REVISION">En revisión</option><option value="SUSPENDIDO">Suspendido</option><option value="ARCHIVADO">Archivado</option><option value="RECHAZADO">Rechazado</option></select><small id="state-error" class="field-error">{{fieldError('estado')}}</small></label>
+              @if(needsReviewObservation){<label class="full">Motivo de la decisión *<textarea name="observacion_revision" formControlName="observacion_revision" rows="3" maxlength="2000" placeholder="Explica al editor el motivo de esta decisión." [attr.aria-invalid]="!!fieldError('observacion_revision')"></textarea><small>Visible en la biblioteca del editor. Máximo 2000 caracteres.</small><small class="field-error" role="alert">{{fieldError('observacion_revision')}}</small>@if(publicationForm.controls.estado.value === 'RECHAZADO') {<small>El editor solo podrá consultar esta publicación; no podrá editarla ni eliminarla.</small>}</label>}<div class="full"><label class="checkbox"><input type="checkbox" formControlName="solo_suscriptores">Solo para suscriptores</label><p class="access-hint">El administrador conserva el acceso. La privacidad del observatorio también se respeta.</p><p class="field-error">{{fieldError('solo_suscriptores')}}</p></div>
+              } @else {
+                <div class="full feedback" role="note"><strong>Se enviará a revisión</strong><p>El administrador revisará tu publicación antes de publicarla.</p></div>
+              }
+            </div>
+          </fieldset>
+          @if(serverError()) { <p class="feedback error" role="alert">{{serverError()}}</p> }
+          <footer class="editor-footer"><small>* Obligatorio · El código se genera al guardar.</small><div>@if(step() === 2) { <button class="action" type="button" (click)="goToStep(1)" [disabled]="saving()"><mat-icon>arrow_back</mat-icon>Anterior</button> }<button class="action" type="button" (click)="requestClose()" [disabled]="saving() || importing()">Cancelar</button><button class="action primary" type="submit" [disabled]="saving() || importing()"><mat-icon>{{saving() ? 'hourglass_top' : step() === 1 ? 'arrow_forward' : 'save'}}</mat-icon>{{saving() ? 'Guardando…' : step() === 1 ? 'Continuar' : canChooseStatus() ? 'Guardar publicación' : 'Enviar a revisión'}}</button></div></footer>
+        </form>
+      }
+    </section>
+  }
+</div>

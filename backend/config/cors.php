@@ -19,19 +19,16 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [
+    'allowed_origins' => array_filter([
+        env('FRONTEND_URL'),
         'http://localhost:4200',
         'http://localhost:4300',
         'http://localhost:4000',
         'http://127.0.0.1:4200',
         'http://127.0.0.1:4300',
-        'https://observatirio.vercel.app',
-        'https://observatirio.onrender.com',
-    ],
+    ]),
 
-    'allowed_origins_patterns' => [
-        '#^https://observatirio.*\.vercel\.app$#',
-    ],
+    'allowed_origins_patterns' => [],
 
     'allowed_headers' => ['*'],
 

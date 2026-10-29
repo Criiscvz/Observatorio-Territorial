@@ -1,0 +1,16 @@
+<header class="details-heading"><div><p class="eyebrow">{{ typeLabel }} · {{ item.code }}</p><h2 mat-dialog-title>{{ item.title }}</h2><p class="department-name">{{ data.departmentName }}</p></div><button mat-dialog-close class="close-button" aria-label="Cerrar publicación"><mat-icon>close</mat-icon></button></header>
+<mat-dialog-content class="details-content">
+  <dl class="publication-metadata">
+    <div><dt>Publicación</dt><dd>{{ item.date ? (item.date | date:'dd/MM/yyyy') : 'Sin fecha registrada' }}</dd></div>
+    <div><dt>Autores</dt><dd>{{ item.authors || 'No especificados' }}</dd></div>
+    <div><dt>Fuente</dt><dd>{{ item.source || 'Sin fuente registrada' }}</dd></div>
+    <div><dt>Formato</dt><dd>{{ item.type === 'REPORTE' ? 'Reporte interactivo' : 'Documento de lectura' }}</dd></div>
+  </dl>
+  @if (item.description) { <p class="publication-summary">{{ item.description }}</p> }
+  @if (!hasPdf(item) && data.context !== 'atlas') { <p class="missing-resource"><mat-icon>info_outline</mat-icon>Esta publicación no tiene un PDF adjunto.</p> }
+</mat-dialog-content>
+<mat-dialog-actions class="resource-actions">
+  @if (item.reportUrl && !item.locked) { <button class="public-button public-button--primary" (click)="openViewer('report')"><mat-icon>bar_chart</mat-icon>{{data.context === 'atlas' ? 'Ver Atlas' : 'Ver reporte'}}</button> }
+  @if (hasPdf(item)) { <button class="public-button" [class.public-button--primary]="item.type !== 'REPORTE'" (click)="openPdf()"><mat-icon>picture_as_pdf</mat-icon>Ver PDF</button> }
+  @if (item.sourceUrl && !item.locked) { <a class="public-button" [href]="item.sourceUrl" target="_blank" rel="noopener noreferrer"><mat-icon>open_in_new</mat-icon>Ver fuente</a> }
+</mat-dialog-actions>

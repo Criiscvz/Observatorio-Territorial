@@ -23,7 +23,14 @@ class UserResource extends JsonResource
                 'cargo' => $this->perfil->cargo,
                 'avatar' => $this->perfil->avatar,
                 'bio' => $this->perfil->bio,
+                'vinculo' => $this->perfil->vinculo,
+                'institucion_tipo' => $this->perfil->institucion_tipo,
+                'institucion' => $this->perfil->institucion,
             ]),
+            'intereses' => $this->whenLoaded('intereses', fn () => $this->intereses
+                ->filter(fn ($observatorio) => $observatorio->publico)
+                ->map(fn ($observatorio) => ['id' => $observatorio->id, 'nombre' => $observatorio->nombre])
+                ->values()),
             'departamentos' => $this->whenLoaded(
                 'departamentos',
                 fn() =>
@@ -34,6 +41,10 @@ class UserResource extends JsonResource
                     'descripcion' => $d->descripcion,
                     'publico' => $d->publico,
                     'rol' => $d->pivot->rol,
+                    'puede_revisar' => (bool) $d->pivot->puede_revisar,
+                    'puede_agregar_editores' => (bool) $d->pivot->puede_agregar_editores,
+                    'puede_revisar' => (bool) $d->pivot->puede_revisar,
+                    'puede_agregar_editores' => (bool) $d->pivot->puede_agregar_editores,
                     'assigned_at' => $d->pivot->created_at?->toISOString(),
                 ])
             ),

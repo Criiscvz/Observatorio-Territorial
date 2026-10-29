@@ -1,4 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8000/api',
+  // Replaced at Vercel build time from the API_URL environment variable.
+  apiUrl: 'https://api-url-not-configured.invalid/api',
 };

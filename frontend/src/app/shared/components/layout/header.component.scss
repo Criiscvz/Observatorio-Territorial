@@ -1,0 +1,28 @@
+.workspace-header { min-height: 64px; background: var(--bg-secondary); color: var(--text-primary); border-bottom: 1px solid var(--border-color); }
+.workspace-header-content { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 24px; min-width: 0; }
+.workspace-header-start { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.workspace-brand { display: flex; align-items: center; gap: 12px; min-width: 0; color: var(--text-primary); text-decoration: none; }
+.workspace-brand > img { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
+.workspace-brand-copy { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.workspace-brand-copy strong { font-size: 14px; font-weight: 750; }
+.workspace-brand-copy > span { color: var(--primary-700); font-size: 11px; font-weight: 650; margin-top: 2px; }
+.workspace-header-utilities { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0; min-width: 0; }
+.workspace-icon, .workspace-language { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; min-height: 40px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.workspace-icon { width: 40px; padding: 8px; }
+.workspace-language { gap: 4px; padding: 8px 4px; font-size: 11px; }
+.workspace-header mat-icon { width: 19px; height: 19px; font-size: 19px; flex-shrink: 0; }
+.workspace-icon:hover, .workspace-language:hover { background: var(--hover-bg); color: var(--text-primary); }
+.workspace-header button:focus-visible, .workspace-brand:focus-visible { outline: 3px solid var(--primary-400); outline-offset: 3px; }
+:host-context(.dark) .workspace-brand-copy > span { color: var(--primary-300); }
+@media (max-width: 767px) {
+  .workspace-header-content { padding-inline: 12px; gap: 8px; }
+  .workspace-header-start { gap: 8px; }
+  .workspace-brand { gap: 8px; }
+  .workspace-brand-copy strong { font-size: 12px; }
+}
+@media (max-width: 600px) {
+  .workspace-header-content { flex-wrap: wrap; }
+  .workspace-header-start, .workspace-header-utilities { width: 100%; }
+  .workspace-header-utilities { gap: 4px; }
+  .workspace-language, .workspace-header-utilities > .workspace-icon { width: 36px; }
+}

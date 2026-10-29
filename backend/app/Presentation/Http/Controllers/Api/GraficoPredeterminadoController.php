@@ -6,6 +6,7 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\GraficoPredeterminadoModel;
+use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -14,6 +15,10 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Gráficos Predeterminados', description: 'Gestión de gráficos predeterminados')]
 class GraficoPredeterminadoController extends Controller
 {
+    public function __construct(
+        private readonly DepartamentoResourceAuthorizer $resourceAuthorizer,
+    ) {}
+
     #[OA\Get(
         path: '/datasets/{datasetId}/graficos-predeterminados',
         summary: 'Listar gráficos predeterminados de un dataset',
@@ -90,7 +95,14 @@ class GraficoPredeterminadoController extends Controller
         }
 
         $data = $validator->validated();
-        $data['dataset_id'] = $datasetId;
+        $dataset = $this->resourceAuthorizer->findManagedDataset($request->user(), $datasetId);
+        $this->resourceAuthorizer->ensureVariablesBelongToDataset(
+            $dataset->id,
+            $data['variable_x_id'],
+            $data['variable_y_id'] ?? null,
+        );
+
+        $data['dataset_id'] = $dataset->id;
         $data['creado_por'] = $request->user()->id;
         $data['activo'] = true;
 
@@ -120,6 +132,8 @@ class GraficoPredeterminadoController extends Controller
             return response()->json(['message' => 'Gráfico no encontrado'], 404);
         }
 
+        $dataset = $this->resourceAuthorizer->findManagedDataset($request->user(), $grafico->dataset_id);
+
         $validator = Validator::make($request->all(), [
             'titulo' => 'sometimes|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
@@ -141,7 +155,14 @@ class GraficoPredeterminadoController extends Controller
             ], 422);
         }
 
-        $grafico->update($validator->validated());
+        $data = $validator->validated();
+        $this->resourceAuthorizer->ensureVariablesBelongToDataset(
+            $dataset->id,
+            $data['variable_x_id'] ?? $grafico->variable_x_id,
+            $data['variable_y_id'] ?? $grafico->variable_y_id,
+        );
+
+        $grafico->update($data);
 
         return response()->json($grafico->load(['variableX', 'variableY']));
     }
@@ -159,13 +180,15 @@ class GraficoPredeterminadoController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $grafico = GraficoPredeterminadoModel::find($id);
 
         if (!$grafico) {
             return response()->json(['message' => 'Gráfico no encontrado'], 404);
         }
+
+        $this->resourceAuthorizer->findManagedDataset($request->user(), $grafico->dataset_id);
 
         $grafico->delete();
 

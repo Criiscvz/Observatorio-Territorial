@@ -1,0 +1,24 @@
+:root {
+  --tab-active-bg: var(--primary-50);
+  --tab-active-border: var(--primary-200);
+  --tab-active-color: var(--primary-700);
+}
+
+.dark {
+  --tab-active-bg: #2a3056;
+  --tab-active-border: #6366a3;
+  --tab-active-color: var(--primary-200);
+}
+
+.mat-mdc-tab-group {
+  --mdc-tab-indicator-active-indicator-color: var(--tab-active-color);
+  --mat-tab-header-active-label-text-color: var(--tab-active-color);
+}
+
+.mat-mdc-tab.mdc-tab--active {
+  color: var(--tab-active-color) !important;
+  background-color: var(--tab-active-bg);
+  border-radius: 10px 10px 0 0;
+  box-shadow: inset 0 -3px 0 var(--tab-active-color);
+  font-weight: 700;
+}

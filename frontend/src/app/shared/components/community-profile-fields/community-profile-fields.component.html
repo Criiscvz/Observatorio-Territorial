@@ -1,0 +1,36 @@
+<div class="community-fields" [formGroup]="form">
+  <label>
+    {{ 'auth.register.community.link' | translate }}
+    <select formControlName="vinculo">
+      <option value="">{{ 'auth.register.community.choose' | translate }}</option>
+      @for (link of links; track link) { <option [value]="link">{{ ('auth.register.community.links.' + link) | translate }}</option> }
+    </select>
+  </label>
+  <label>
+    {{ 'auth.register.community.institution' | translate }}
+    <select formControlName="institucion_tipo">
+      <option value="">{{ 'auth.register.community.choose' | translate }}</option>
+      <option value="ULEAM">ULEAM</option>
+      <option value="OTRA">{{ 'auth.register.community.otherInstitution' | translate }}</option>
+      <option value="NINGUNA">{{ 'auth.register.community.noInstitution' | translate }}</option>
+    </select>
+  </label>
+  @if (form.get('institucion_tipo')?.value === 'OTRA') {
+    <label>
+      {{ 'auth.register.community.institutionName' | translate }} *
+      <input formControlName="institucion" autocomplete="organization" maxlength="255" [attr.aria-invalid]="form.hasError('institutionRequired') && form.get('institucion')?.touched" />
+      @if (form.hasError('institutionRequired') && form.get('institucion')?.touched) { <small class="field-error">{{ 'common.validation.required' | translate }}</small> }
+    </label>
+  }
+  <div class="interest-field">
+    <div class="interest-label"><label for="community-interest">{{ 'auth.register.community.interest' | translate }}</label>
+      <button type="button" class="refresh-button" (click)="refresh()" [disabled]="loading()" [attr.aria-label]="'auth.register.community.refresh' | translate"><mat-icon aria-hidden="true">refresh</mat-icon></button>
+    </div>
+    <select id="community-interest" formControlName="interes_departamento_id" [attr.aria-busy]="loading()">
+      <option value="">{{ 'auth.register.community.chooseInterest' | translate }}</option>
+      @for (observatory of observatories(); track observatory.id) { <option [value]="observatory.id">{{ observatory.nombre }}</option> }
+    </select>
+  </div>
+  @if (loading()) { <p class="field-status" role="status">{{ 'auth.register.community.loading' | translate }}</p> }
+  @if (failed()) { <p class="field-status" role="status">{{ 'auth.register.community.loadError' | translate }}</p> }
+</div>

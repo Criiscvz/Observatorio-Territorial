@@ -6,7 +6,6 @@ use App\Models\User;
 use Database\Seeders\AdminUserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Env;
 use Tests\TestCase;
 
 class InitialUsersSeederTest extends TestCase
@@ -19,13 +18,10 @@ class InitialUsersSeederTest extends TestCase
 
     public function test_initial_users_are_created_updated_and_can_login(): void
     {
-        $environment = Env::getRepository();
-        $environment->set('ADMIN_NAME', 'Test Administrator');
-        $environment->set('ADMIN_EMAIL', self::ADMIN_EMAIL);
-        $environment->set('ADMIN_PASSWORD', self::PASSWORD);
-        $environment->set('INITIAL_USER_NAME', 'Test User');
-        $environment->set('INITIAL_USER_EMAIL', self::USER_EMAIL);
-        $environment->set('INITIAL_USER_PASSWORD', self::PASSWORD);
+        config(['initial_users.users' => [
+            ['name' => 'Test Administrator', 'email' => self::ADMIN_EMAIL, 'password' => self::PASSWORD, 'rol' => 'ADMIN'],
+            ['name' => 'Test User', 'email' => self::USER_EMAIL, 'password' => self::PASSWORD, 'rol' => 'USER'],
+        ]]);
 
         $this->seed(AdminUserSeeder::class);
 
@@ -61,22 +57,51 @@ class InitialUsersSeederTest extends TestCase
         $this->assertTrue($normalUser->is_active);
         $this->assertTrue(Hash::check(self::PASSWORD, $normalUser->password));
 
-        $this->postJson('/api/login', [
+        $this->withHeader('Origin', 'http://localhost:4200')->postJson('/api/login', [
             'email' => self::ADMIN_EMAIL,
             'password' => self::PASSWORD,
         ])
             ->assertOk()
             ->assertJsonPath('user.email', self::ADMIN_EMAIL)
             ->assertJsonPath('user.rol', 'ADMIN')
-            ->assertJsonStructure(['token']);
+            ->assertJsonMissing(['token']);
 
-        $this->postJson('/api/login', [
+        $this->withHeader('Origin', 'http://localhost:4200')->postJson('/api/login', [
             'email' => self::USER_EMAIL,
             'password' => self::PASSWORD,
         ])
             ->assertOk()
             ->assertJsonPath('user.email', self::USER_EMAIL)
             ->assertJsonPath('user.rol', 'USER')
-            ->assertJsonStructure(['token']);
+            ->assertJsonMissing(['token']);
+    }
+
+    public function test_missing_or_incomplete_configuration_does_not_create_default_users(): void
+    {
+        config(['initial_users.users' => [
+            ['name' => null, 'email' => null, 'password' => null, 'rol' => 'ADMIN'],
+            ['name' => 'Incomplete', 'email' => 'invalid-email', 'password' => self::PASSWORD, 'rol' => 'USER'],
+            ['name' => 'Incomplete', 'email' => 'incomplete@example.test', 'password' => '', 'rol' => 'SUBSCRIBER'],
+        ]]);
+
+        $this->seed(AdminUserSeeder::class);
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_configured_deleted_user_is_restored_without_duplicates(): void
+    {
+        config(['initial_users.users' => [
+            ['name' => 'Restored Admin', 'email' => self::ADMIN_EMAIL, 'password' => self::PASSWORD, 'rol' => 'ADMIN'],
+        ]]);
+        $this->seed(AdminUserSeeder::class);
+        $user = User::where('email', self::ADMIN_EMAIL)->firstOrFail();
+        $user->delete();
+
+        $this->seed(AdminUserSeeder::class);
+
+        $this->assertSame(1, User::withTrashed()->where('email', self::ADMIN_EMAIL)->count());
+        $this->assertFalse($user->fresh()->trashed());
+        $this->assertTrue($user->fresh()->is_active);
     }
 }

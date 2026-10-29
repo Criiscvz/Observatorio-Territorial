@@ -414,8 +414,8 @@ docker exec observatorio-backend-dev php artisan config:clear
 | Swagger UI | http://localhost:8000/api/docs |
 | Health (simple) | http://localhost:8000/api/health |
 | Health (profundo, PG+Mongo) | http://localhost:8000/api/health?deep=1 |
-| PostgreSQL | localhost:5433 (`postgres` / `secret123` / `observatorio_uleam`) |
-| MongoDB | localhost:27017 (`root` / `secret123`, db `observatorio_nosql`) |
+| Acceso administrador local | Definido por `ADMIN_EMAIL` y `ADMIN_PASSWORD`; sin valores predeterminados. |
+| Acceso usuario local | Definido por `INITIAL_USER_EMAIL` y `INITIAL_USER_PASSWORD`; sin valores predeterminados. |
 
 ### 7.7 Cómo confirmar que todo levantó bien (checklist rápido)
 

@@ -1,26 +1,19 @@
 ﻿import { CommonModule } from '@angular/common';
-import { Component, computed, DestroyRef, ElementRef, ViewChild, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, TemplateRef, ViewChild, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatButtonToggleModule } from '@angular/material/button-toggle';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { AbstractControl, FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSelectModule } from '@angular/material/select';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, NavigationStart, Router, RouterLink } from '@angular/router';
 import { Dataset, Departamento } from '@core/models';
 import {
   ObservatorioPublicacion,
   EstadoPublicacion,
   TipoPublicacion,
+  requiresReviewObservation,
 } from '@core/models/publicacion/publicacion.interface';
 import { AuthService } from '@core/services/auth.service';
 import { DatasetService } from '@core/services/dataset.service';
@@ -32,6 +25,9 @@ import {
 import { SharePointAtlasImportDialogComponent } from '@features/public/public-atlas/sharepoint-atlas-import-dialog.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
+import { LibraryType, ObservatoryLibraryComponent } from './observatory-library.component';
+import { PublicationViewerService } from '@features/public/components/publication-viewer.service';
+import { hasPublicPdf, publicHttpUrl, PublicLibraryPublication, toPublicLibraryItem } from '@features/public/components/public-library-publication';
 
 @Component({
   selector: 'app-departamento-detail',
@@ -40,32 +36,27 @@ import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confir
     CommonModule,
     RouterLink,
     ReactiveFormsModule,
-    MatCardModule,
-    MatButtonModule,
-    MatButtonToggleModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    MatCheckboxModule,
     MatIconModule,
     MatMenuModule,
     MatProgressSpinnerModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatTabsModule,
     TranslateModule,
+    ObservatoryLibraryComponent,
   ],
   templateUrl: './departamento-detail.component.html',
-  styleUrl: './departamento-detail.component.scss',
+  styleUrls: ['./departamento-detail.component.scss', './publication-dialog.scss'],
 })
 export class DepartamentoDetailComponent implements OnInit {
-  @ViewChild('publicationFormSection') private publicationFormSection?: ElementRef<HTMLElement>;
+  @ViewChild('publicationOverlay', {static:true}) private publicationOverlay?: TemplateRef<unknown>;
+  private publicationDialog?: MatDialogRef<unknown>;
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly deptoService = inject(DepartamentoService);
   private readonly datasetService = inject(DatasetService);
   private readonly publicacionService = inject(PublicacionService);
+  private readonly publicationViewer = inject(PublicationViewerService);
   private readonly authService = inject(AuthService);
   private readonly translate = inject(TranslateService);
   private readonly dialog = inject(MatDialog);
@@ -75,6 +66,9 @@ export class DepartamentoDetailComponent implements OnInit {
 
   readonly isAdmin = this.authService.isAdmin;
   readonly isEditor = this.authService.isEditor;
+  readonly libraryType = signal<LibraryType>('ARTICULO');
+  readonly canEditLibraryPublication = (item: ObservatorioPublicacion) => this.canEditPublication(item);
+  readonly canDeleteLibraryPublication = (item: ObservatorioPublicacion) => this.canDeletePublication(item);
   departamento = signal<Departamento | null>(null);
   datasets = signal<Dataset[]>([]);
   publicaciones = signal<ObservatorioPublicacion[]>([]);
@@ -99,6 +93,96 @@ export class DepartamentoDetailComponent implements OnInit {
   articleSearchTerm = signal('');
   reportSearchTerm = signal('');
   bookSearchTerm = signal('');
+  readonly editorStep = signal(1);
+  readonly discardChanges = signal(false);
+  readonly discardTarget = signal<'close' | 'review'>('close');
+  readonly reviewSelectedId = signal<string | null>(null);
+  readonly reviewError = signal('');
+  readonly selectedReview = computed(() => this.reviewPublicaciones().find(item => item.id === this.reviewSelectedId()) || this.reviewPublicaciones()[0] || null);
+
+  constructor() {
+    this.destroyRef.onDestroy(() => this.publicationDialog?.close());
+  }
+
+  private openPublicationOverlay(): void {
+    if (this.publicationDialog || !this.publicationOverlay) return;
+    const ref = this.dialog.open(this.publicationOverlay, {
+      width:'960px', maxWidth:'calc(100vw - 24px)',
+      height:'calc(100dvh - 24px)', maxHeight:'820px',
+      panelClass:'publication-workspace-dialog', backdropClass:'publication-workspace-backdrop',
+      disableClose:true, autoFocus:'first-tabbable', restoreFocus:true,
+      ariaLabel:'Revisión y edición de publicaciones',
+    });
+    this.publicationDialog = ref;
+    ref.backdropClick().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.requestOverlayClose());
+    ref.keydownEvents().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
+      if (event.key === 'Escape') { event.preventDefault(); this.requestOverlayClose(); }
+    });
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.publicationDialog !== ref) return;
+      this.publicationDialog = undefined; this.closeAllObservationForms(); this.resetReviewPanel();
+    });
+  }
+
+  private finishOverlayClose(): void {
+    const ref = this.publicationDialog; this.publicationDialog = undefined;
+    ref?.close(); this.closeAllObservationForms(); this.resetReviewPanel();
+  }
+
+  requestOverlayClose(): void {
+    if (this.savingPublication() || this.changingReviewStatus()) return;
+    if (this.showPublicationForm() && (this.publicationForm.dirty || this.selectedFile())) {
+      this.discardTarget.set('close'); this.discardChanges.set(true); return;
+    }
+    this.finishOverlayClose();
+  }
+
+  returnToReview(): void {
+    if (this.savingPublication()) return;
+    if (this.publicationForm.dirty || this.selectedFile()) {
+      this.discardTarget.set('review'); this.discardChanges.set(true); return;
+    }
+    this.closeAllObservationForms();
+  }
+
+  confirmDiscard(): void {
+    if (this.discardTarget() === 'review') this.closeAllObservationForms();
+    else this.finishOverlayClose();
+  }
+
+  continuePublication(): void {
+    this.publicationForm.markAllAsTouched();
+    if (this.informationValid()) this.editorStep.set(2);
+  }
+
+  private informationValid(): boolean {
+    return ['titulo', 'fecha_publicacion', 'link_url', 'descripcion', 'autores', 'fuente']
+      .every(name => this.publicationForm.get(name)?.valid);
+  }
+
+  get needsReviewObservation(): boolean {
+    return this.canChoosePublicationStatus && requiresReviewObservation(this.publicationForm.controls.estado.value);
+  }
+
+  private configureReviewObservation(): void {
+    const control = this.publicationForm.controls.observacion_revision;
+    control.setValidators([Validators.maxLength(2000), ...(this.needsReviewObservation
+      ? [Validators.required, (field: AbstractControl) => String(field.value ?? '').trim() ? null : {required:true}] : [])]);
+    control.updateValueAndValidity({emitEvent:false});
+  }
+
+  submitPublication(): void {
+    if (this.editorStep() === 1) this.continuePublication();
+    else this.savePublication();
+  }
+
+  publicationFieldError(name: 'titulo' | 'fecha_publicacion' | 'link_url' | 'descripcion' | 'fuente' | 'observacion_revision'): string {
+    const control = this.publicationForm.controls[name];
+    if (!control.touched || !control.invalid) return '';
+    if (control.hasError('required')) return 'Este campo es obligatorio.';
+    if (control.hasError('maxlength')) return `Máximo ${control.errors?.['maxlength'].requiredLength} caracteres.`;
+    return name === 'link_url' ? 'Ingresa una URL válida con http o https.' : 'Ingresa un valor válido.';
+  }
 
   filteredDatasets = computed(() => {
     const term = this.normalizeSearch(this.datasetSearchTerm());
@@ -118,13 +202,14 @@ export class DepartamentoDetailComponent implements OnInit {
   readonly publicationForm = this.fb.nonNullable.group({
     tipo: ['ARTICULO' as TipoPublicacion, Validators.required],
     estado: ['PUBLICACION' as EstadoPublicacion, Validators.required],
+    observacion_revision: ['', Validators.maxLength(2000)],
     solo_suscriptores: [false],
-    titulo: ['', [Validators.required, Validators.maxLength(255)]],
-    fecha_publicacion: ['', Validators.required],
+    titulo: ['', [Validators.required, (control: AbstractControl) => String(control.value ?? '').trim() ? null : {required:true}, Validators.maxLength(255)]],
+    fecha_publicacion: ['', [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
     link_url: ['', Validators.pattern(/^https?:\/\/.+/i)],
     descripcion: ['', Validators.maxLength(3000)],
-    autores: ['', Validators.maxLength(1000)],
-    fuente: ['', [Validators.required, Validators.maxLength(255)]],
+    autores: this.fb.nonNullable.array([this.createAutorControl()]),
+    fuente: ['', Validators.maxLength(255)],
   });
 
   get articulos(): ObservatorioPublicacion[] {
@@ -159,6 +244,10 @@ export class DepartamentoDetailComponent implements OnInit {
     return this.tipo === 'LIBRO';
   }
 
+  get autores(): FormArray<FormControl<string>> {
+    return this.publicationForm.controls.autores;
+  }
+
   get shouldShowPdfUpload(): boolean {
     return this.isArticulo || this.isReporte || this.isLibro || this.tipo === 'ATLAS';
   }
@@ -172,7 +261,7 @@ export class DepartamentoDetailComponent implements OnInit {
       ['ADMIN', 'EDITOR'].includes(String(departamento.user_role ?? '').toUpperCase()) ||
       this.authService.hasRoleInDepartamento(departamento.id, ['ADMIN', 'EDITOR']);
 
-    return this.isAdmin() || (this.isEditor() && hasObservatorioPermission);
+    return this.isAdmin() || this.authService.canReviewObservatory(this.departamento()?.id) || (this.isEditor() && hasObservatorioPermission);
   }
 
   get canUploadButtonGroup(): boolean {
@@ -180,7 +269,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   get canChoosePublicationStatus(): boolean {
-    return this.isAdmin();
+    return this.authService.canReviewObservatory(this.departamento()?.id);
   }
 
   get panelTitle(): string {
@@ -192,8 +281,9 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   canEditPublication(publicacion: ObservatorioPublicacion): boolean {
+    if (this.isEditor() && publicacion.estado === 'RECHAZADO') return false;
     const user = this.authService.user();
-    return this.isAdmin() || (this.isEditor() && !!user && publicacion.creado_por === user.id);
+    return this.isAdmin() || (publicacion.tipo !== 'ATLAS' && this.authService.canReviewObservatory(publicacion.departamento_id)) || (this.isEditor() && !!user && publicacion.tipo !== 'ATLAS' && Number(publicacion.creado_por) === user.id);
   }
 
   canDeletePublication(publicacion: ObservatorioPublicacion): boolean {
@@ -221,10 +311,15 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route.queryParamMap?.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      this.workspaceActionKey = '';
+      if (!this.loadingPublicaciones()) this.applyWorkspaceAction();
+    });
     this.resetReviewPanel();
     this.closeAllObservationForms();
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event) => {
       if (event instanceof NavigationStart) {
+        this.finishOverlayClose();
         this.resetReviewPanel();
         this.closeAllObservationForms();
       }
@@ -240,7 +335,9 @@ export class DepartamentoDetailComponent implements OnInit {
         this.configurePublicationValidators(tipo);
         this.fileError.set('');
       });
-    this.configurePublicationValidators('ARTICULO');
+    this.configurePublicationValidators(this.publicationForm.controls.tipo.value);
+    this.publicationForm.controls.estado.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.configureReviewObservation());
   }
 
   loadDepartamento(id: string): void {
@@ -276,8 +373,13 @@ export class DepartamentoDetailComponent implements OnInit {
     this.loadingPublicaciones.set(true);
     this.publicacionService.getAll(id).subscribe({
       next: (items) => {
-        this.publicaciones.set(items);
+        const visibleItems = this.isEditor()
+          ? items.filter(item => item.tipo !== 'ATLAS' && Number(item.creado_por) === this.authService.user()?.id)
+          : items;
+        this.publicaciones.set(visibleItems);
+        if (!this.showReviewPanel()) this.reviewPublicaciones.set(visibleItems.filter(item => item.estado === 'EN_REVISION'));
         this.loadingPublicaciones.set(false);
+        this.applyWorkspaceAction();
       },
       error: () => {
         this.publicaciones.set([]);
@@ -287,14 +389,34 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   openPublicationForm(tipo: TipoPublicacion): void {
+    if (!this.canManagePublications || (!this.isAdmin() && tipo === 'ATLAS')) return;
     this.closeAllObservationForms(tipo);
     this.configurePublicationValidators(tipo);
     this.showPublicationForm.set(true);
-    this.scrollToPublicationForm();
+    this.openPublicationOverlay();
+  }
+
+  private workspaceActionKey = '';
+  private applyWorkspaceAction(): void {
+    const params = this.route.snapshot?.queryParamMap;
+    if (!params || !this.canManagePublications) return;
+    const type = params.get('nuevo');
+    const id = params.get('editar_publicacion');
+    const key = `${this.departamento()?.id}:${type || ''}:${id || ''}`;
+    if (key === this.workspaceActionKey) return;
+    this.workspaceActionKey = key;
+    if (type && ['ARTICULO','REPORTE','LIBRO'].includes(type)) this.openPublicationForm(type as TipoPublicacion);
+    else if (id) {
+      const item = this.publicaciones().find(publication => publication.id === id);
+      if (item && this.canEditPublication(item)) this.editPublication(item);
+    }
   }
 
   openReviewPanel(): void {
+    if (!this.canManagePublications || this.savingPublication()) return;
     this.showReviewPanel.set(true);
+    this.reviewSelectedId.set(null);
+    this.openPublicationOverlay();
     const departamento = this.departamento();
     if (departamento) {
       this.loadReviewPublicaciones(departamento.id);
@@ -302,7 +424,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   closeReviewPanel(): void {
-    this.resetReviewPanel();
+    this.requestOverlayClose();
   }
 
   private resetReviewPanel(clearItems = false): void {
@@ -316,18 +438,22 @@ export class DepartamentoDetailComponent implements OnInit {
 
   loadReviewPublicaciones(id: string): void {
     this.loadingReviewPublicaciones.set(true);
+    this.reviewError.set('');
     this.publicacionService
       .getInReview(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
       next: (items) => {
         if (!this.showReviewPanel() || this.departamento()?.id !== id) return;
-        this.reviewPublicaciones.set(items);
+        this.reviewPublicaciones.set(this.isEditor()
+          ? items.filter(item => item.tipo !== 'ATLAS' && Number(item.creado_por) === this.authService.user()?.id)
+          : items);
         this.loadingReviewPublicaciones.set(false);
       },
       error: () => {
         if (!this.showReviewPanel() || this.departamento()?.id !== id) return;
         this.reviewPublicaciones.set([]);
+        this.reviewError.set('No se pudieron cargar las publicaciones en revisión.');
         this.loadingReviewPublicaciones.set(false);
         this.snackBar.open('No se pudieron cargar las publicaciones en revisión.', 'Cerrar', {
           duration: 4000,
@@ -337,36 +463,41 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   closePublicationForm(): void {
-    this.closeAllObservationForms();
+    this.requestOverlayClose();
   }
 
   closeAllObservationForms(tipo: TipoPublicacion = 'ARTICULO'): void {
+    this.editorStep.set(1); this.discardChanges.set(false);
     this.showPublicationForm.set(false);
     this.highlightPublicationForm.set(false);
     this.resetPublicationForm(tipo);
   }
 
   editPublication(publicacion: ObservatorioPublicacion): void {
+    if (!this.canEditPublication(publicacion) || this.savingPublication() || this.changingReviewStatus()) return;
     this.closeAllObservationForms(publicacion.tipo);
     this.editingPublication.set(publicacion);
     this.publicationForm.reset({
       tipo: publicacion.tipo,
       estado: publicacion.estado ?? 'PUBLICACION',
+      observacion_revision: publicacion.observacion_revision ?? '',
       solo_suscriptores: !!publicacion.solo_suscriptores,
       titulo: publicacion.titulo,
       fecha_publicacion: publicacion.fecha_publicacion,
       link_url: publicacion.link_url ?? '',
       descripcion: publicacion.descripcion ?? '',
-      autores: publicacion.autores ?? '',
       fuente: publicacion.fuente ?? '',
     });
+    this.setAutores(publicacion.autores);
     this.configurePublicationValidators(publicacion.tipo);
+    this.configureReviewObservation();
     this.selectedFile.set(null);
     this.isDraggingFile.set(false);
     this.fileError.set('');
     this.serverError.set('');
     this.showPublicationForm.set(true);
-    this.scrollToPublicationForm();
+    this.publicationForm.markAsPristine();
+    this.openPublicationOverlay();
   }
 
   onFileSelected(event: Event): void {
@@ -410,6 +541,21 @@ export class DepartamentoDetailComponent implements OnInit {
     this.fileError.set('');
   }
 
+  agregarAutor(): void {
+    this.autores.push(this.createAutorControl());
+    this.publicationForm.markAsDirty();
+  }
+
+  eliminarAutor(index: number): void {
+    this.publicationForm.markAsDirty();
+    if (this.autores.length === 1) {
+      this.autores.at(0).setValue('');
+      return;
+    }
+
+    this.autores.removeAt(index);
+  }
+
   formatFileSize(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -417,8 +563,9 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   private validateAndSetFile(file: File, input?: HTMLInputElement): void {
+    if (this.savingPublication()) return;
     this.fileError.set('');
-    if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
+    if ((file.type && !['application/pdf', 'application/x-pdf'].includes(file.type)) || !file.name.toLowerCase().endsWith('.pdf')) {
       this.selectedFile.set(null);
       this.fileError.set('Formato no válido. Solo se permiten archivos PDF.');
       if (input) input.value = '';
@@ -434,19 +581,34 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   savePublication(): void {
+    if (this.savingPublication() || this.changingReviewStatus() || !this.canManagePublications) return;
     this.publicationForm.markAllAsTouched();
     const editing = this.editingPublication();
-    const requiresPdf = this.shouldShowPdfUpload;
+    if (editing && !this.canEditPublication(editing)) return;
+    this.configureReviewObservation();
+    const requiresPdf = this.isArticulo || this.isLibro || this.tipo === 'ATLAS';
     if (!editing && requiresPdf && !this.selectedFile()) {
       this.fileError.set('Debe seleccionar un archivo PDF.');
     }
-    if (this.publicationForm.invalid || (!editing && requiresPdf && !this.selectedFile())) return;
+    if (this.publicationForm.invalid) { this.editorStep.set(this.informationValid() ? 2 : 1); return; }
+    if (this.fileError() || (!editing && requiresPdf && !this.selectedFile())) { this.editorStep.set(2); return; }
 
     const departamento = this.departamento();
     if (!departamento) return;
     const formData = new FormData();
     const values = this.publicationForm.getRawValue();
     Object.entries(values).forEach(([key, value]) => {
+      if (key === 'observacion_revision' && (!this.needsReviewObservation || !this.canChoosePublicationStatus)) return;
+      if (key === 'autores') {
+        (value as string[])
+          .map((autor) => autor.trim())
+          .filter(Boolean)
+          .forEach((autor) => formData.append('autores[]', autor));
+        return;
+      }
+      if (['descripcion', 'fuente'].includes(key) && !String(value).trim()) {
+        return;
+      }
       formData.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value));
     });
     if (this.selectedFile()) {
@@ -465,9 +627,9 @@ export class DepartamentoDetailComponent implements OnInit {
         this.loadPublicaciones(departamento.id);
         if (this.showReviewPanel()) {
           this.loadReviewPublicaciones(departamento.id);
-        }
+        } else this.finishOverlayClose();
         this.snackBar.open(
-          !this.isAdmin()
+          !this.canChoosePublicationStatus
             ? 'Contenido enviado a revisión.'
             : editing
             ? 'Publicación actualizada correctamente.'
@@ -485,11 +647,34 @@ export class DepartamentoDetailComponent implements OnInit {
             ? first
             : error?.error?.message || 'No se pudo guardar la publicación.',
         );
+        if (errors) this.editorStep.set(Object.keys(errors).some(key => !['archivo', 'estado', 'solo_suscriptores', 'observacion_revision'].includes(key)) ? 1 : 2);
       },
     });
   }
 
+  viewLibraryPublication(publicacion: ObservatorioPublicacion): void {
+    if (publicacion.bloqueado || publicacion.tipo === 'ATLAS') return;
+    // Management responses already resolve owner/subscriber access and supply
+    // the editor's ?context=management URL. Keep that URL intact for the reader.
+    const item = toPublicLibraryItem({...publicacion,
+      autor: publicacion.autores, nombre_indicador: publicacion.titulo,
+      descripcion_indicador: publicacion.descripcion,
+    } as ObservatorioPublicacion, publicacion.tipo, true);
+    // A SharePoint PDF report has an original source URL, not a Power BI link.
+    if (publicacion.sharepoint_file_id && publicacion.link_url === publicacion.sharepoint_url) item.reportUrl = null;
+    if (!item.reportUrl && !hasPublicPdf(item)) {
+      this.snackBar.open('No hay un recurso disponible para esta publicación.', 'Cerrar', {duration:3500});
+      return;
+    }
+    this.publicationViewer.open(item, this.departamento()?.nombre || '', item.reportUrl ? 'report' : 'pdf');
+  }
+
   openPdf(publicacion: ObservatorioPublicacion): void {
+    if (publicacion.bloqueado) return;
+    if (publicacion.tipo === 'ARTICULO' || publicacion.tipo === 'LIBRO') {
+      this.viewLibraryPublication(publicacion);
+      return;
+    }
     this.publicacionService.openPdf(publicacion).subscribe((opened) => {
       if (!opened) {
         this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
@@ -497,6 +682,34 @@ export class DepartamentoDetailComponent implements OnInit {
         });
       }
     });
+  }
+
+  get canPreviewEditorPdf(): boolean {
+    const current = this.editingPublication();
+    return this.showPublicationForm() && (this.isArticulo || this.isLibro) && !current?.bloqueado
+      && !!(this.selectedFile() || (current && this.hasPublicationPdf(current)));
+  }
+
+  previewEditorPdf(): void {
+    if (!this.canPreviewEditorPdf || !this.canManagePublications || this.savingPublication()) return;
+    const current = this.editingPublication();
+    const file = this.selectedFile();
+    const values = this.publicationForm.getRawValue();
+    const item: PublicLibraryPublication = {
+      id: current?.id || 'local-pdf-preview', type: this.isLibro ? 'LIBRO' : 'ARTICULO',
+      title: values.titulo.trim() || file?.name || current?.titulo || 'Documento PDF',
+      code: current?.codigo || 'Sin guardar', date: values.fecha_publicacion || null,
+      authors: values.autores.map(author => author.trim()).filter(Boolean).join(', '),
+      description: values.descripcion, source: values.fuente,
+      sourceUrl: publicHttpUrl(values.link_url) || publicHttpUrl(values.fuente), reportUrl: null,
+      // Preserve the permission-checked management URL for saved PDFs. A selected
+      // replacement stays in this browser and is not uploaded by the reader.
+      download_url: file ? null : current?.download_url || null,
+      sharepoint_url: file ? null : current?.sharepoint_url || null, locked: false,
+    };
+    const department = this.departamento()?.nombre || '';
+    if (file) this.publicationViewer.open(item, department, 'pdf', undefined, file);
+    else this.publicationViewer.open(item, department, 'pdf');
   }
 
   hasPublicationPdf(publicacion: ObservatorioPublicacion): boolean {
@@ -514,7 +727,9 @@ export class DepartamentoDetailComponent implements OnInit {
 
   openSource(publicacion: ObservatorioPublicacion): void {
     const url = publicacion.link_url;
-    if (!url) {
+    let validUrl = false;
+    try { validUrl = !!url && ['http:', 'https:'].includes(new URL(url).protocol); } catch { /* Missing or invalid source. */ }
+    if (!url || !validUrl || publicacion.bloqueado) {
       this.snackBar.open('No hay fuente disponible para esta publicación.', 'Cerrar', {
         duration: 3500,
       });
@@ -585,10 +800,18 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   changeReviewStatus(publicacion: ObservatorioPublicacion, estado: EstadoPublicacion): void {
-    if (!this.isAdmin()) {
-      this.snackBar.open('Solo ADMIN puede cambiar el estado de revisión.', 'Cerrar', {
+    if (this.changingReviewStatus() || this.savingPublication()) return;
+    if (!this.canChoosePublicationStatus) {
+      this.snackBar.open('No tienes permiso de edición y revisión en este observatorio.', 'Cerrar', {
         duration: 4000,
       });
+      return;
+    }
+
+    if (requiresReviewObservation(estado)) {
+      this.editPublication(publicacion);
+      this.publicationForm.controls.estado.setValue(estado);
+      this.editorStep.set(2);
       return;
     }
 
@@ -760,6 +983,8 @@ export class DepartamentoDetailComponent implements OnInit {
         return 'En revisión';
       case 'ARCHIVADO':
         return 'Archivado';
+      case 'RECHAZADO':
+        return 'Rechazado';
       default:
         return 'Publicación';
     }
@@ -777,6 +1002,8 @@ export class DepartamentoDetailComponent implements OnInit {
         return 'schedule';
       case 'ARCHIVADO':
         return 'archive';
+      case 'RECHAZADO':
+        return 'cancel';
       default:
         return 'visibility';
     }
@@ -811,13 +1038,40 @@ export class DepartamentoDetailComponent implements OnInit {
   deleteDepartamento(): void {
     const depto = this.departamento();
     if (!depto) return;
-    const message = this.translate.instant('departamentos.detail.confirmDelete', {
-      name: depto.nombre,
+
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: 'min(92vw, 520px)',
+      maxWidth: '92vw',
+      panelClass: 'app-confirm-dialog-panel',
+      backdropClass: 'app-confirm-dialog-backdrop',
+      autoFocus: 'first-tabbable',
+      restoreFocus: true,
+      data: {
+        title: 'Eliminar observatorio',
+        message: `¿Estás seguro de que deseas eliminar el observatorio “${depto.nombre}”? Esta acción eliminará permanentemente el observatorio y su información asociada. No se puede deshacer.`,
+        confirmText: 'Eliminar definitivamente',
+        cancelText: 'Cancelar',
+        processingText: 'Eliminando...',
+        confirmColor: 'warn',
+        icon: 'delete_forever',
+        confirmAction: () => this.deptoService.delete(depto.id),
+        onError: (error: unknown) => {
+          const apiError = error as { error?: { message?: string } };
+          this.snackBar.open(
+            apiError.error?.message || 'No se pudo eliminar el observatorio.',
+            'Cerrar',
+            { duration: 4500 },
+          );
+        },
+      },
     });
-    if (confirm(message))
-      this.deptoService
-        .delete(depto.id)
-        .subscribe({ next: () => this.router.navigate(['/admin/dashboard']) });
+
+    dialogRef
+      .afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((deleted) => {
+        if (deleted) this.router.navigate(['/admin/dashboard']);
+      });
   }
 
   deleteDataset(dataset: Dataset): void {
@@ -890,8 +1144,8 @@ export class DepartamentoDetailComponent implements OnInit {
     );
   }
 
-  private normalizeSearch(value?: string | null): string {
-    return (value || '')
+  private normalizeSearch(value?: string | string[] | null): string {
+    return (Array.isArray(value) ? value.join(' ') : value || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
@@ -901,19 +1155,16 @@ export class DepartamentoDetailComponent implements OnInit {
   private configurePublicationValidators(tipo: TipoPublicacion): void {
     this.publicationForm.controls.link_url.setValidators([
       ...(tipo === 'REPORTE' ? [Validators.required] : []),
-      Validators.pattern(/^https?:\/\/.+/i),
+      control => {
+        if (!control.value) return null;
+        try { return ['http:', 'https:'].includes(new URL(control.value).protocol) ? null : {url:true}; }
+        catch { return {url:true}; }
+      },
+      Validators.maxLength(2048),
     ]);
-    this.publicationForm.controls.descripcion.setValidators([
-      Validators.required,
-      Validators.maxLength(3000),
-    ]);
-    this.publicationForm.controls.autores.setValidators([
-      ...(tipo === 'ARTICULO' ? [Validators.required] : []),
-      Validators.maxLength(1000),
-    ]);
+    this.publicationForm.controls.descripcion.setValidators([Validators.maxLength(3000)]);
     this.publicationForm.controls.link_url.updateValueAndValidity();
     this.publicationForm.controls.descripcion.updateValueAndValidity();
-    this.publicationForm.controls.autores.updateValueAndValidity();
   }
 
   private resetPublicationForm(tipo: TipoPublicacion = 'ARTICULO'): void {
@@ -921,32 +1172,19 @@ export class DepartamentoDetailComponent implements OnInit {
     this.publicationForm.reset({
       tipo,
       estado: 'PUBLICACION',
+      observacion_revision: '',
       solo_suscriptores: false,
       titulo: '',
       fecha_publicacion: '',
       link_url: '',
       descripcion: '',
-      autores: '',
       fuente: '',
     });
+    this.setAutores([]);
     this.selectedFile.set(null);
     this.isDraggingFile.set(false);
     this.fileError.set('');
     this.serverError.set('');
-  }
-
-  private scrollToPublicationForm(): void {
-    window.setTimeout(() => {
-      const formSection = this.publicationFormSection?.nativeElement;
-      if (!formSection) return;
-
-      formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      this.highlightPublicationForm.set(true);
-
-      window.setTimeout(() => {
-        this.highlightPublicationForm.set(false);
-      }, 1800);
-    }, 100);
   }
 
   private buildPublicationFormData(
@@ -960,10 +1198,32 @@ export class DepartamentoDetailComponent implements OnInit {
     formData.append('titulo', publicacion.titulo);
     formData.append('fecha_publicacion', publicacion.fecha_publicacion);
     formData.append('link_url', publicacion.link_url ?? '');
-    formData.append('descripcion', publicacion.descripcion ?? '');
-    formData.append('autores', publicacion.autores ?? '');
-    formData.append('fuente', publicacion.fuente);
+    this.appendOptionalFormValue(formData, 'descripcion', publicacion.descripcion);
+    this.normalizeAutores(publicacion.autores).forEach((autor) => formData.append('autores[]', autor));
+    this.appendOptionalFormValue(formData, 'fuente', publicacion.fuente);
 
     return formData;
+  }
+
+  private appendOptionalFormValue(formData: FormData, key: string, value: string | null | undefined): void {
+    if (value?.trim()) {
+      formData.append(key, value);
+    }
+  }
+
+  private createAutorControl(value = ''): FormControl<string> {
+    return this.fb.nonNullable.control(value, Validators.maxLength(255));
+  }
+
+  private setAutores(value: string[] | string | null | undefined): void {
+    this.autores.clear();
+    const autores = this.normalizeAutores(value);
+    (autores.length ? autores : ['']).forEach((autor) => this.autores.push(this.createAutorControl(autor)));
+  }
+
+  private normalizeAutores(value: string[] | string | null | undefined): string[] {
+    const autores = Array.isArray(value) ? value : value ? [value] : [];
+
+    return autores.map((autor) => autor.trim()).filter(Boolean);
   }
 }

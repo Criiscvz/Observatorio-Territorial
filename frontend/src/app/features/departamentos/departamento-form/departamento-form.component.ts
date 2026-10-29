@@ -62,6 +62,9 @@ export class DepartamentoFormComponent implements OnInit {
     { value: 'engineering', labelKey: 'departamentos.icons.infrastructure' },
     { value: 'account_balance', labelKey: 'departamentos.icons.finance' },
     { value: 'eco', labelKey: 'departamentos.icons.environment' },
+    { value: 'favorite', labelKey: 'departamentos.icons.care' },
+    { value: 'auto_stories', labelKey: 'departamentos.icons.culture' },
+    { value: 'shield', labelKey: 'departamentos.icons.resilience' },
     { value: 'local_hospital', labelKey: 'departamentos.icons.health' },
     { value: 'science', labelKey: 'departamentos.icons.research' },
     { value: 'sports', labelKey: 'departamentos.icons.sports' },
@@ -79,6 +82,15 @@ export class DepartamentoFormComponent implements OnInit {
   loading = signal(false);
   error = signal<string | null>(null);
   success = signal<string | null>(null);
+  fetching = signal(false);
+  identityMode = signal<'icon'|'photo'>('icon');
+  photoPreview = signal('');
+  photoName = signal('');
+  photoError = signal('');
+  zoom = signal(1);
+  selectedPhoto: File | null = null;
+  private photoImage: HTMLImageElement | null = null;
+  private photoGeneration = 0;
 
   ngOnInit(): void {
     const id = this.route.snapshot.params['id'];
@@ -90,8 +102,13 @@ export class DepartamentoFormComponent implements OnInit {
   }
 
   loadDepartamento(id: string): void {
+    this.fetching.set(true);
     this.deptoService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (departamento) => {
+        this.fetching.set(false);
+        this.photoPreview.set(departamento.foto_url || '');
+        this.identityMode.set(departamento.foto_url ? 'photo' : 'icon');
+        this.photoName.set(departamento.foto_url ? 'Foto actual del observatorio' : '');
         this.form.patchValue({
           nombre: departamento.nombre,
           codigo_interno: departamento.codigo_interno,
@@ -100,7 +117,34 @@ export class DepartamentoFormComponent implements OnInit {
           publico: departamento.publico,
         });
       },
+      error: err => { this.fetching.set(false); this.error.set(this.getErrorMessage(err)); },
     });
+  }
+
+  setIdentityMode(mode:'icon'|'photo'):void {if(!this.loading()){this.identityMode.set(mode);this.photoError.set('');}}
+  removePhoto():void {
+    if(this.loading())return;
+    ++this.photoGeneration;this.selectedPhoto=null;this.photoImage=null;this.photoPreview.set('');this.photoName.set('');this.zoom.set(1);this.identityMode.set('icon');this.photoError.set('');
+  }
+  async selectPhoto(file?:File):Promise<void> {
+    if(!file || this.loading())return;
+    const generation=++this.photoGeneration;this.photoError.set('');
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size>2*1024*1024){this.photoError.set('Selecciona una imagen JPG, PNG o WebP de hasta 2 MB.');return;}
+    try {
+      const data=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(new Error());reader.readAsDataURL(file);});
+      const image=await new Promise<HTMLImageElement>((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error());img.src=data;});
+      if(generation!==this.photoGeneration)return;
+      if(image.naturalWidth>4096 || image.naturalHeight>4096){this.photoError.set('La imagen debe medir como máximo 4096 × 4096 píxeles.');return;}
+      this.selectedPhoto=file;this.photoImage=image;this.photoPreview.set(data);this.photoName.set(file.name);this.identityMode.set('photo');this.zoom.set(1);
+    } catch {if(generation===this.photoGeneration)this.photoError.set('No se pudo leer la imagen. Prueba con otro archivo.');}
+  }
+  onDrop(event:DragEvent):void {event.preventDefault();void this.selectPhoto(event.dataTransfer?.files[0]);}
+  private async croppedPhoto():Promise<File> {
+    const image=this.photoImage!;const canvas=document.createElement('canvas');canvas.width=400;canvas.height=400;
+    const ctx=canvas.getContext('2d');if(!ctx)throw new Error();ctx.fillStyle='#fff';ctx.fillRect(0,0,400,400);
+    const side=Math.min(image.naturalWidth,image.naturalHeight)/this.zoom();ctx.drawImage(image,(image.naturalWidth-side)/2,(image.naturalHeight-side)/2,side,side,0,0,400,400);
+    const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error()),'image/jpeg',.88));
+    return new File([blob],'observatorio.jpg',{type:'image/jpeg'});
   }
 
   getIconLabel(value: string): string {
@@ -108,18 +152,35 @@ export class DepartamentoFormComponent implements OnInit {
     return icon ? this.translate.instant(icon.labelKey) : value;
   }
 
-  onSubmit(): void {
+  get unlistedIcon(): string | null {
+    const icon = this.form.get('icono')?.value;
+    return icon && !this.availableIcons.some((option) => option.value === icon) ? icon : null;
+  }
+
+  async onSubmit(): Promise<void> {
+    if(this.loading() || this.fetching())return;
     // Marcar todos los campos como touched para mostrar errores
     this.form.markAllAsTouched();
 
-    if (this.form.invalid) {
+    if (this.form.invalid || !this.form.value.nombre.trim() || !this.form.value.codigo_interno.trim()) {
       this.error.set(this.translate.instant('departamentos.form.errors.formInvalid'));
       return;
     }
 
     this.loading.set(true);
+    if(this.identityMode()==='photo' && !this.photoPreview()){this.loading.set(false);this.photoError.set('Selecciona una foto o utiliza un icono.');return;}
+    if(this.photoError()){this.loading.set(false);return;}
     this.error.set(null);
     this.success.set(null);
+
+    let photo:File|null=null;
+    try {if(this.identityMode()==='photo' && this.selectedPhoto)photo=await this.croppedPhoto();}
+    catch {this.loading.set(false);this.photoError.set('No se pudo preparar la foto. Vuelve a seleccionarla.');return;}
+    const payload=(data:Record<string,any>):any=>{
+      data['eliminar_foto']=this.identityMode()==='icon' || !this.photoPreview();
+      if(!photo)return data;
+      const body=new FormData();Object.entries(data).forEach(([key,value])=>{if(value!==null&&value!==undefined)body.append(key,typeof value==='boolean'?(value?'1':'0'):String(value));});body.append('foto',photo);return body;
+    };
 
     if (this.isEdit()) {
       const updateData = {
@@ -130,7 +191,7 @@ export class DepartamentoFormComponent implements OnInit {
         publico: this.form.value.publico || false,
       };
 
-      this.deptoService.update(this.departamentoId()!, updateData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      this.deptoService.update(this.departamentoId()!, payload(updateData)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: () => {
           this.success.set(this.translate.instant('departamentos.form.success.updated'));
           setTimeout(() => {
@@ -151,7 +212,7 @@ export class DepartamentoFormComponent implements OnInit {
         publico: this.form.value.publico || false,
       };
 
-      this.deptoService.create(createData).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      this.deptoService.create(payload(createData)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (departamento) => {
           this.success.set(this.translate.instant('departamentos.form.success.created'));
           setTimeout(() => {

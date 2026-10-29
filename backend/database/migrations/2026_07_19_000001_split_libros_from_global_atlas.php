@@ -25,12 +25,17 @@ return new class extends Migration
                 'tipo' => 'LIBRO',
             ]);
 
-        DB::statement("UPDATE observatorio_publicaciones SET codigo = regexp_replace(codigo, '^ATL-', 'LIB-') WHERE tipo = 'LIBRO' AND codigo LIKE 'ATL-%'");
+        DB::statement("UPDATE observatorio_publicaciones SET codigo = replace(codigo, 'ATL-', 'LIB-') WHERE tipo = 'LIBRO' AND codigo LIKE 'ATL-%'");
 
-        $nextLibro = DB::table('observatorio_publicaciones')
-            ->where('tipo', 'LIBRO')
-            ->selectRaw("COALESCE(MAX(CAST(regexp_replace(codigo, '[^0-9]', '', 'g') AS INTEGER)), 0) + 1 AS next_number")
-            ->value('next_number') ?? 1;
+        $libros = DB::table('observatorio_publicaciones')->where('tipo', 'LIBRO');
+
+        $nextLibro = DB::getDriverName() === 'sqlite'
+            ? $libros
+                ->selectRaw('COALESCE(MAX(CAST(substr(codigo, 5) AS INTEGER)), 0) + 1 AS next_number')
+                ->value('next_number')
+            : $libros
+                ->selectRaw("COALESCE(MAX(CAST(regexp_replace(codigo, '[^0-9]', '', 'g') AS INTEGER)), 0) + 1 AS next_number")
+                ->value('next_number');
 
         DB::table('publicacion_contadores')->updateOrInsert(
             ['tipo' => 'LIBRO'],
@@ -46,7 +51,7 @@ return new class extends Migration
                 'tipo' => 'ATLAS',
             ]);
 
-        DB::statement("UPDATE observatorio_publicaciones SET codigo = regexp_replace(codigo, '^LIB-', 'ATL-') WHERE tipo = 'ATLAS' AND codigo LIKE 'LIB-%'");
+        DB::statement("UPDATE observatorio_publicaciones SET codigo = replace(codigo, 'LIB-', 'ATL-') WHERE tipo = 'ATLAS' AND codigo LIKE 'LIB-%'");
 
         if (DB::getDriverName() === 'pgsql') {
             DB::statement('ALTER TABLE observatorio_publicaciones DROP CONSTRAINT IF EXISTS observatorio_publicaciones_tipo_check');

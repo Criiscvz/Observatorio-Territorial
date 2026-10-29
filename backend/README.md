@@ -185,7 +185,7 @@ php artisan key:generate
 #    DB_PORT=5432
 #    DB_DATABASE=observatorio_uleam
 #    DB_USERNAME=postgres
-#    DB_PASSWORD=secret123
+#    DB_PASSWORD=<valor-protegido>
 
 # 4. Ejecutar migraciones y seeders
 php artisan migrate --seed

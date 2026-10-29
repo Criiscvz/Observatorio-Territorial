@@ -21,7 +21,10 @@ class DatabaseSeeder extends Seeder
             DepartamentoSeeder::class,
             CategoriaDatasetSeeder::class,
             DemoDataSeeder::class,
-            ReporteArticuloSeeder::class,
         ]);
+
+        if (! app()->environment('production')) {
+            $this->call(ReporteArticuloSeeder::class);
+        }
     }
 }

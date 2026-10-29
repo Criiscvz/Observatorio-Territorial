@@ -8,9 +8,11 @@ export interface Articulo {
   titulo: string;
   descripcion?: string | null;
   autor?: string | null;
+  codigo?: string | null;
   fuente?: string | null;
   estado?: string | null;
   enlace?: string | null;
+  link_url?: string | null;
   download_url?: string | null;
   sharepoint_url?: string | null;
   fecha_publicacion?: string | null;

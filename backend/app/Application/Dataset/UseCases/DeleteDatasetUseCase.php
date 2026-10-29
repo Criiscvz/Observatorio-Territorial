@@ -33,8 +33,9 @@ class DeleteDatasetUseCase
 
         // Eliminar archivo físico si existe
         $filePath = $dataset->nombreArchivo;
-        if ($filePath && Storage::disk('datasets')->exists($filePath)) {
-            Storage::disk('datasets')->delete($filePath);
+        $path = $filePath ? 'datasets/'.$filePath : null;
+        if ($path && Storage::disk(config('filesystems.default'))->exists($path)) {
+            Storage::disk(config('filesystems.default'))->delete($path);
         }
 
         // Eliminar dataset (esto también eliminará los registros relacionados por cascade)

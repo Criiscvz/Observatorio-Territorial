@@ -1,5 +1,13 @@
+import { isPlatformBrowser } from '@angular/common';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { ApplicationConfig, isDevMode, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  ApplicationConfig,
+  inject,
+  isDevMode,
+  PLATFORM_ID,
+  provideAppInitializer,
+  provideBrowserGlobalErrorListeners,
+} from '@angular/core';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter } from '@angular/router';
@@ -11,10 +19,17 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { routes } from './app.routes';
 import { repositoryProviders } from './core/di/providers';
 import { authInterceptor, retryInterceptor } from './core/interceptors';
+import { clearLegacyApiCaches } from './core/utils/pwa-cache';
+import { AuthSessionService } from './core/services/auth-session.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideAppInitializer(() => {
+      if (isPlatformBrowser(inject(PLATFORM_ID))) return clearLegacyApiCaches();
+      return undefined;
+    }),
+    provideAppInitializer(() => inject(AuthSessionService).initialize()),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, retryInterceptor])),

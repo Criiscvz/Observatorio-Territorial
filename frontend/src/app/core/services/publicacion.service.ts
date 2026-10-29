@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, catchError, map, of } from 'rxjs';
+import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ObservatorioPublicacion,
@@ -93,10 +93,11 @@ export class PublicacionService {
 
   importManyGlobalAtlasSharePoint(
     sharepointFileIds: string[],
+    categoriaId: string | null = null,
   ): Observable<SharePointAtlasImportResponse> {
     return this.api.post<SharePointAtlasImportResponse>(
       '/departamentos/publicaciones/atlas-global/sharepoint/import-many',
-      { sharepoint_file_ids: sharepointFileIds },
+      { sharepoint_file_ids: sharepointFileIds, atlas_categoria_id: categoriaId },
     );
   }
 
@@ -247,6 +248,15 @@ export class PublicacionService {
     }
 
     return `${this.apiUrl}${publicacion.download_url.replace('/api', '')}`;
+  }
+
+  loadPdf(publicacion: PdfSource): Observable<ArrayBuffer> {
+    // Always prefer our permission-checked endpoint over an original SharePoint link.
+    // Legacy remote links cannot be fetched securely from the browser (CORS/login).
+    const value = publicacion.download_url;
+    if (!value) return throwError(() => new Error('PDF_NOT_STORED'));
+    const url = value.startsWith('/api/') ? `${this.apiUrl.replace(/\/api\/?$/, '')}${value}` : value;
+    return this.http.get(url, {responseType: 'arraybuffer'});
   }
 
   openPdf(publicacion: PdfSource): Observable<boolean> {

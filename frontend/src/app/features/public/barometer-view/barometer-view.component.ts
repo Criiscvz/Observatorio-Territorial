@@ -233,6 +233,10 @@ export class BarometerViewComponent implements OnInit {
   }
 
   openReportPdf(reporte: Reporte): void {
+    if (!this.hasReportPdf(reporte)) {
+      return;
+    }
+
     this.publicacionService
       .openPdf({
         download_url: reporte.download_url ?? reporte.ficha_indicador ?? null,
@@ -245,5 +249,10 @@ export class BarometerViewComponent implements OnInit {
           });
         }
       });
+  }
+
+  hasReportPdf(reporte: Reporte): boolean {
+    return [reporte.download_url, reporte.ficha_indicador, reporte.sharepoint_url]
+      .some((url) => typeof url === 'string' && url.trim().length > 0);
   }
 }

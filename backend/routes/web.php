@@ -15,14 +15,15 @@ Route::get('/login', function () {
 
 // Ruta para servir archivos de storage con CORS (desarrollo)
 Route::get('/storage/{path}', function (string $path) {
-    $fullPath = storage_path('app/public/' . $path);
+    $disk = Storage::disk(config('filesystems.default'));
+    $path = 'public/' . ltrim($path, '/');
 
-    if (!file_exists($fullPath)) {
+    if (! $disk->exists($path)) {
         abort(404);
     }
 
-    $mimeType = mime_content_type($fullPath);
-    $content = file_get_contents($fullPath);
+    $mimeType = $disk->mimeType($path) ?: 'application/octet-stream';
+    $content = $disk->get($path);
 
     return response($content, 200)
         ->header('Content-Type', $mimeType)

@@ -1,0 +1,18 @@
+@use './public-observatory-shared';
+:host { display: flex; flex-direction: column; min-height: 0; max-height: calc(100dvh - 24px); background: var(--card-bg); color: var(--text-primary); }
+.details-heading { display: flex; align-items: flex-start; gap: 1rem; padding: 1.4rem 1.5rem; border-bottom: 1px solid var(--card-border); flex-shrink: 0; }
+.details-heading>div { min-width: 0; flex: 1; }
+.details-heading h2 { padding: 0; margin: 0 0 .5rem; font: inherit; color: var(--text-primary); font-weight: 750; font-size: 1.4rem; line-height: 1.35; overflow-wrap: anywhere; }
+.details-heading h2::before { display: none; }
+.department-name { margin: 0; color: var(--text-secondary); font-size: .8rem; }
+.close-button { flex-shrink: 0; display: grid; place-items: center; padding: .4rem; border: 1px solid var(--card-border); border-radius: 9px; background: var(--card-bg); color: var(--text-primary); cursor: pointer; }
+.details-content { min-height: 0; max-height: none; overflow-y: auto; padding: 1.5rem; color: var(--text-primary); }
+.publication-metadata { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 1.5rem; margin: 0 0 1.5rem; }
+.publication-metadata dt { font-size: .75rem; color: var(--text-secondary); margin-bottom: .35rem; }
+.publication-metadata dd { margin: 0; font-size: .85rem; overflow-wrap: anywhere; }
+.publication-summary { font-size: .85rem; line-height: 1.8; color: var(--text-secondary); margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+.missing-resource { display: flex; align-items: center; gap: .5rem; margin: 1rem 0 0; color: var(--text-secondary); font-size: .75rem; }
+.missing-resource mat-icon { font-size: 17px; width: 17px; height: 17px; }
+.resource-actions { flex-shrink: 0; display: flex; justify-content: flex-start; flex-wrap: wrap; gap: .6rem; padding: 1.2rem 1.5rem; border-top: 1px solid var(--card-border); }
+.resource-actions:empty { display: none; }
+@media(max-width: 520px) { .details-heading, .details-content, .resource-actions { padding: 1.1rem; } .publication-metadata { grid-template-columns: 1fr; gap: 1rem; } .details-heading h2 { font-size: 1.2rem; } }

@@ -5,4 +5,7 @@ export interface Perfil {
   cargo?: string;
   avatar?: string;
   bio?: string;
+  vinculo?: string | null;
+  institucion_tipo?: string | null;
+  institucion?: string | null;
 }

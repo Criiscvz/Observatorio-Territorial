@@ -6,6 +6,8 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Departamento;
+use App\Models\AtlasCategoria;
+use Illuminate\Validation\ValidationException;
 use App\Models\ObservatorioPublicacion;
 use App\Infrastructure\Services\SharePointService;
 use App\Presentation\Http\Requests\Publicacion\StorePublicacionRequest;
@@ -20,7 +22,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ObservatorioPublicacionController extends Controller
 {
@@ -36,7 +38,7 @@ class ObservatorioPublicacionController extends Controller
     {
         $filters = $request->validate([
             'tipo' => ['nullable', 'in:ARTICULO,REPORTE,LIBRO,ATLAS'],
-            'estado' => ['nullable', 'in:PUBLICACION,EN_REVISION,SUSPENDIDO,ARCHIVADO'],
+            'estado' => ['nullable', 'in:'.implode(',', ObservatorioPublicacion::ESTADOS)],
         ]);
 
         return $this->list($request, $departamento, $filters['tipo'] ?? null, $filters['estado'] ?? null);
@@ -47,7 +49,7 @@ class ObservatorioPublicacionController extends Controller
         abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para gestionar Atlas global.');
 
         $items = ObservatorioPublicacion::query()
-            ->with('creadoPor')
+            ->with(['creadoPor', 'atlasCategoria'])
             ->where('tipo', 'ATLAS')
             ->whereNull('departamento_id')
             ->orderByDesc('fecha_publicacion')
@@ -55,6 +57,21 @@ class ObservatorioPublicacionController extends Controller
             ->get();
 
         return PublicacionResource::collection($items);
+    }
+
+    public function recentAtlasReports(Request $request): AnonymousResourceCollection
+    {
+        $query = ObservatorioPublicacion::query()
+            ->where('tipo', 'ATLAS')
+            ->whereNull('departamento_id')
+            ->latest('created_at')
+            ->limit(6);
+
+        if ($request->user()->rol !== 'ADMIN') {
+            $query->where('estado', self::ESTADO_PUBLICACION)->inPublicAtlasCategories();
+        }
+
+        return PublicacionResource::collection($query->get());
     }
 
     public function showGlobalAtlas(Request $request, ObservatorioPublicacion $publicacion): JsonResponse
@@ -96,7 +113,7 @@ class ObservatorioPublicacionController extends Controller
             ->where('users.id', $user->id)
             ->first()?->pivot?->rol;
         $hasPermission = in_array($departamentoRole, ['ADMIN', 'EDITOR'], true);
-        $canUpload = $user->rol === 'ADMIN' || ($user->rol === 'EDITOR' && $hasPermission);
+        $canUpload = $user->canReviewObservatory($departamento->id) || ($user->rol === 'EDITOR' && $hasPermission);
 
         return response()->json([
             'can_upload' => $canUpload,
@@ -110,14 +127,15 @@ class ObservatorioPublicacionController extends Controller
     {
         $this->ensureCanManage($request, $departamento);
         $data = $request->validated();
-        $estado = $request->user()->rol === 'ADMIN' ? $data['estado'] : self::ESTADO_EN_REVISION;
+        $estado = $request->user()->canReviewObservatory($departamento->id) ? $data['estado'] : self::ESTADO_EN_REVISION;
         $file = $request->file('archivo');
         $path = $file
-            ? $file->storeAs('publicaciones/'.$departamento->id, Str::uuid().'.pdf', 'local')
+            ? $this->storePdf($file, 'publicaciones/'.$departamento->id)
             : null;
 
         try {
             $publicacion = DB::transaction(function () use ($data, $request, $departamento, $file, $path, $estado) {
+                $this->lockAtlasCategory($data);
                 $counter = DB::table('publicacion_contadores')->where('tipo', $data['tipo'])->lockForUpdate()->first();
                 abort_unless($counter, 500, 'No se pudo generar el código de publicación.');
                 $number = (int) $counter->siguiente_numero;
@@ -128,21 +146,23 @@ class ObservatorioPublicacionController extends Controller
                     'creado_por' => $request->user()->id,
                     'tipo' => $data['tipo'],
                     'estado' => $estado,
-                    'solo_suscriptores' => $request->user()->rol === 'ADMIN' && $request->boolean('solo_suscriptores'),
+                    ...$this->reviewObservation($data, $estado),
+                    'solo_suscriptores' => $request->user()->canReviewObservatory($departamento->id) && $request->boolean('solo_suscriptores'),
                     'codigo' => $this->codePrefix($data['tipo']).str_pad((string) $number, 4, '0', STR_PAD_LEFT),
+                    ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
                     'fecha_publicacion' => $data['fecha_publicacion'],
                     'link_url' => $data['link_url'] ?? null,
                     'descripcion' => $data['descripcion'] ?? null,
                     'autores' => $data['autores'] ?? null,
-                    'fuente' => $data['fuente'],
+                    'fuente' => $data['fuente'] ?? null,
                     'archivo_pdf' => $path,
                     'nombre_archivo_original' => $file?->getClientOriginalName(),
                 ]);
             });
         } catch (\Throwable $exception) {
             if ($path) {
-                Storage::disk('local')->delete($path);
+                Storage::disk(config('filesystems.default'))->delete($path);
             }
             throw $exception;
         }
@@ -158,11 +178,12 @@ class ObservatorioPublicacionController extends Controller
 
         $file = $request->file('archivo');
         $path = $file
-            ? $file->storeAs('publicaciones/atlas-global', Str::uuid().'.pdf', 'local')
+            ? $this->storePdf($file, 'publicaciones/atlas-global')
             : null;
 
         try {
             $publicacion = DB::transaction(function () use ($data, $request, $file, $path) {
+                $this->lockAtlasCategory($data);
                 $counter = DB::table('publicacion_contadores')->where('tipo', 'ATLAS')->lockForUpdate()->first();
                 abort_unless($counter, 500, 'No se pudo generar el código de publicación.');
                 $number = (int) $counter->siguiente_numero;
@@ -172,22 +193,23 @@ class ObservatorioPublicacionController extends Controller
                     'departamento_id' => null,
                     'creado_por' => $request->user()->id,
                     'tipo' => 'ATLAS',
-                    'estado' => $request->user()->rol === 'ADMIN' ? $data['estado'] : self::ESTADO_EN_REVISION,
+                    'estado' => $data['estado'],
                     'solo_suscriptores' => $request->boolean('solo_suscriptores'),
                     'codigo' => 'ATL-'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
+                    ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
                     'fecha_publicacion' => $data['fecha_publicacion'],
                     'link_url' => $data['link_url'] ?? null,
                     'descripcion' => $data['descripcion'] ?? null,
                     'autores' => $data['autores'] ?? null,
-                    'fuente' => $data['fuente'],
+                    'fuente' => $data['fuente'] ?? null,
                     'archivo_pdf' => $path,
                     'nombre_archivo_original' => $file?->getClientOriginalName(),
                 ]);
             });
         } catch (\Throwable $exception) {
             if ($path) {
-                Storage::disk('local')->delete($path);
+                Storage::disk(config('filesystems.default'))->delete($path);
             }
             throw $exception;
         }
@@ -195,24 +217,92 @@ class ObservatorioPublicacionController extends Controller
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response()->setStatusCode(201);
     }
 
-    public function download(Request $request, ObservatorioPublicacion $publicacion): BinaryFileResponse|\Illuminate\Http\RedirectResponse
+    public function download(Request $request, ObservatorioPublicacion $publicacion): StreamedResponse|\Illuminate\Http\RedirectResponse
     {
         if ($publicacion->departamento) {
             $this->ensureCanView($request, $publicacion->departamento);
         }
         $this->ensureCanViewPublication($request, $publicacion);
-        if (! $publicacion->archivo_pdf && $publicacion->sharepoint_url) {
-            return redirect()->away($publicacion->sharepoint_url);
-        }
-        abort_unless(Storage::disk('local')->exists($publicacion->archivo_pdf), 404, 'El PDF no está disponible.');
+        abort_if(! $publicacion->archivo_pdf && $publicacion->sharepoint_url, 409,
+            'Este PDF no tiene una copia guardada. Administración debe importarlo nuevamente desde SharePoint.');
+
+        abort_unless($publicacion->archivo_pdf, 404, 'Esta publicación no tiene un PDF guardado. Un administrador debe volver a subirlo.');
 
         $filename = $publicacion->nombre_archivo_original ?? $publicacion->titulo.'.pdf';
         $safeFilename = str_replace('"', '\"', $filename);
 
-        return response()->file(Storage::disk('local')->path($publicacion->archivo_pdf), [
+        $stream = $this->readPdfStream($publicacion->archivo_pdf);
+
+        return response()->stream(function () use ($stream): void {
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
             'Content-Type' => 'application/pdf',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
             'Content-Disposition' => 'inline; filename="'.$safeFilename.'"',
         ]);
+    }
+
+    /** @return resource */
+    private function readPdfStream(string $path)
+    {
+        $diskName = (string) config('filesystems.default');
+        $disk = null;
+        try {
+            $disk = Storage::disk($diskName);
+            // Laravel's throw=false wrapper discards the provider exception.
+            // Read through Flysystem so an outage is not mistaken for a missing PDF.
+            $stream = $disk->getDriver()->readStream($path);
+            if (! is_resource($stream)) {
+                throw new RuntimeException('Unconfirmed PDF read.');
+            }
+
+            return $stream;
+        } catch (\Throwable $exception) {
+            if ($this->isMissingPdf($exception, $disk, $path)) {
+                abort(404, 'Archivo no disponible. Un administrador debe volver a subir el PDF.');
+            }
+
+            $context = ['disk' => $diskName, 'exception' => get_class($exception)];
+            for ($cause = $exception; $cause !== null; $cause = $cause->getPrevious()) {
+                if ($cause instanceof \Aws\Exception\AwsException) {
+                    $code = $cause->getAwsErrorCode();
+                    $context['s3_code'] = is_string($code) && preg_match('/^[a-zA-Z0-9_]{1,100}$/D', $code) ? $code : 'Unknown';
+                    $context['s3_status'] = $cause->getStatusCode();
+                    break;
+                }
+            }
+            // Do not log the path, raw exception, response body, URL or credentials.
+            Log::error('ATLAS_STORAGE_READ_FAILED', $context);
+            abort(503, 'El almacenamiento no está disponible en este momento. Intenta descargar el PDF nuevamente más tarde.');
+        }
+    }
+
+    private function isMissingPdf(
+        \Throwable $exception,
+        ?\Illuminate\Filesystem\FilesystemAdapter $disk,
+        string $path,
+    ): bool {
+        if (! $exception instanceof \League\Flysystem\UnableToReadFile) {
+            return false;
+        }
+
+        for ($cause = $exception; $cause !== null; $cause = $cause->getPrevious()) {
+            if ($cause instanceof \Aws\Exception\AwsException) {
+                // A bare 404 can also mean NoSuchBucket or a gateway error.
+                return $cause->getStatusCode() === 404 && $cause->getAwsErrorCode() === 'NoSuchKey';
+            }
+        }
+
+        // Local disks (including Storage::fake) have no S3 error code. Confirm
+        // absence separately; permission/read failures on existing files are 503.
+        try {
+            return $disk?->getAdapter() instanceof \League\Flysystem\Local\LocalFilesystemAdapter
+                && ! $disk->getDriver()->fileExists($path);
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public function update(UpdatePublicacionRequest $request, ObservatorioPublicacion $publicacion): JsonResponse
@@ -223,12 +313,13 @@ class ObservatorioPublicacionController extends Controller
             abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para gestionar Atlas global.');
         }
         abort_unless(
-            $request->user()->rol === 'ADMIN' || (int) $publicacion->creado_por === (int) $request->user()->id,
+            $request->user()->canReviewObservatory($publicacion->departamento_id) || (int) $publicacion->creado_por === (int) $request->user()->id,
             403,
             'No puedes editar publicaciones de otros usuarios.'
         );
         $data = $request->validated();
-        $isAdmin = $request->user()->rol === 'ADMIN';
+        $isAdmin = $request->user()->canReviewObservatory($publicacion->departamento_id);
+        $this->ensureNotRejectedForEditor($request, $publicacion);
         $newFile = $request->file('archivo');
         $oldPath = $publicacion->archivo_pdf;
         $newPath = null;
@@ -237,46 +328,136 @@ class ObservatorioPublicacionController extends Controller
             $storageFolder = $publicacion->departamento_id
                 ? 'publicaciones/'.$publicacion->departamento_id
                 : 'publicaciones/atlas-global';
-            $newPath = $newFile->storeAs(
-                $storageFolder,
-                Str::uuid().'.pdf',
-                'local'
-            );
+            $newPath = $this->storePdf($newFile, $storageFolder);
         }
 
         try {
-            DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, $isAdmin) {
+            DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, $isAdmin, &$oldPath) {
+                $publicacion = ObservatorioPublicacion::whereKey($publicacion->id)->lockForUpdate()->firstOrFail();
+                $this->ensureNotRejectedForEditor($request, $publicacion);
+                $oldPath = $publicacion->archivo_pdf;
+                $this->lockAtlasCategory($data);
                 $publicacion->update([
                     'estado' => $isAdmin ? $data['estado'] : $publicacion->estado,
+                    ...($isAdmin ? $this->reviewObservation($data, $data['estado'], $publicacion) : []),
                     'solo_suscriptores' => $isAdmin ? $request->boolean('solo_suscriptores') : $publicacion->solo_suscriptores,
+                    ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
                     'fecha_publicacion' => $data['fecha_publicacion'],
                     'link_url' => $data['link_url'] ?? null,
-                    'descripcion' => $data['descripcion'],
-                    'autores' => $publicacion->tipo === 'ARTICULO' ? $data['autores'] : ($data['autores'] ?? null),
-                    'fuente' => $data['fuente'],
+                    'descripcion' => $data['descripcion'] ?? null,
+                    'autores' => $data['autores'] ?? null,
+                    'fuente' => $data['fuente'] ?? null,
                     ...($newFile ? [
                         'archivo_pdf' => $newPath,
                         'nombre_archivo_original' => $newFile->getClientOriginalName(),
+                        'sharepoint_url' => null,
+                        'sharepoint_file_id' => null,
+                        'sharepoint_file_name' => null,
+                        'sharepoint_file_type' => null,
+                        'sharepoint_file_size' => null,
+                        'sharepoint_last_modified_at' => null,
+                        'sharepoint_sync_status' => 'pendiente',
+                        'sharepoint_synced_at' => null,
+                        'sharepoint_error' => null,
                     ] : []),
                 ]);
             });
         } catch (\Throwable $exception) {
             if ($newPath) {
-                Storage::disk('local')->delete($newPath);
+                Storage::disk(config('filesystems.default'))->delete($newPath);
             }
             throw $exception;
         }
 
         if ($newPath && $oldPath && $oldPath !== $newPath) {
-            Storage::disk('local')->delete($oldPath);
+            Storage::disk(config('filesystems.default'))->delete($oldPath);
         }
 
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response();
     }
 
+    private function storePdf(\Illuminate\Http\UploadedFile $file, string $folder): string
+    {
+        $diskName = (string) config('filesystems.default');
+        $stream = null;
+        try {
+            if (config("filesystems.disks.{$diskName}.driver") === 's3') {
+                // Use Flysystem directly here: Laravel's throw=false adapter discards
+                // the S3 exception before this upload handler can diagnose it.
+                $path = $folder.'/'.Str::uuid().'.pdf';
+                $stream = fopen($file->getRealPath(), 'rb');
+                if (! is_resource($stream)) {
+                    throw new RuntimeException('No se pudo leer el archivo temporal.');
+                }
+                Storage::disk($diskName)->getDriver()->writeStream($path, $stream, ['mimetype' => 'application/pdf']);
+            } else {
+                $path = $file->storeAs($folder, Str::uuid().'.pdf', $diskName);
+            }
+        } catch (\Throwable $exception) {
+            $context = ['disk' => $diskName, 'exception' => get_class($exception)];
+            for ($cause = $exception; $cause !== null; $cause = $cause->getPrevious()) {
+                if ($cause instanceof \Aws\Exception\AwsException) {
+                    $code = $cause->getAwsErrorCode();
+                    $context['s3_code'] = is_string($code) && preg_match('/^[a-zA-Z0-9_]{1,100}$/D', $code) ? $code : 'Unknown';
+                    $context['s3_status'] = $cause->getStatusCode();
+                    break;
+                }
+            }
+            // Never log raw exception messages, URLs, request bodies or credentials.
+            Log::error('ATLAS_STORAGE_WRITE_FAILED', $context);
+            $path = false;
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }
+        if (! is_string($path) || $path === '') {
+            Log::error('ATLAS_STORAGE_WRITE_UNCONFIRMED', ['disk' => $diskName]);
+        }
+        abort_unless(is_string($path) && $path !== '', 503,
+            'No se pudo guardar el PDF en el almacenamiento. Revisa la configuración del servidor e intenta nuevamente. La publicación no se ha guardado.');
+
+        return $path;
+    }
+
+    private function ensureNotRejectedForEditor(Request $request, ObservatorioPublicacion $publicacion): void
+    {
+        abort_if($request->user()->rol === 'EDITOR' && $publicacion->estado === 'RECHAZADO', 403,
+            'Esta publicación fue rechazada. Solo puedes consultarla en la biblioteca.');
+    }
+
+    private function reviewObservation(array $data, string $estado, ?ObservatorioPublicacion $publication = null): array
+    {
+        $reason = in_array($estado, ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true)
+            ? trim($data['observacion_revision'] ?? '') : '';
+        $sameDecision = $publication && $publication->estado === $estado && $publication->observacion_revision === $reason;
+        return ['observacion_revision' => $reason !== '' ? $reason : null,
+            'fecha_revision' => $reason !== '' ? ($sameDecision ? ($publication->fecha_revision ?? now()) : now()) : null];
+    }
+
+    private function copySharePointPdf(array $file, ?Departamento $departamento): string
+    {
+        if ((int) ($file['size'] ?? 0) > 20 * 1024 * 1024) throw new RuntimeException('El PDF supera el máximo de 20 MB.');
+        $temporary = $this->sharePointService->downloadPdf((string) $file['id']);
+        try {
+            return $this->storePdf(new \Illuminate\Http\UploadedFile($temporary, (string) $file['name'], 'application/pdf', null, true),
+                'publicaciones/'.($departamento?->id ?? 'atlas').'/sharepoint');
+        } finally {
+            @unlink($temporary);
+        }
+    }
+
+    private function lockAtlasCategory(array $data): void
+    {
+        if (! empty($data['atlas_categoria_id']) && ! AtlasCategoria::whereKey($data['atlas_categoria_id'])->lockForUpdate()->first()) {
+            throw ValidationException::withMessages(['atlas_categoria_id' => 'La categoría ya no está disponible. Selecciona otra categoría.']);
+        }
+    }
+
     public function destroy(Request $request, ObservatorioPublicacion $publicacion): JsonResponse
     {
+        abort_if($publicacion->tipo === 'ATLAS' && $request->user()->rol !== 'ADMIN', 403, 'Solo administración gestiona Atlas.');
         if ($publicacion->departamento) {
             $this->ensureCanManage($request, $publicacion->departamento);
         } else {
@@ -284,21 +465,24 @@ class ObservatorioPublicacionController extends Controller
         }
 
         $user = $request->user();
+        $this->ensureNotRejectedForEditor($request, $publicacion);
         abort_unless(
-            $user->rol === 'ADMIN' || ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id),
+            $user->canReviewObservatory($publicacion->departamento_id) || ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id),
             403,
             'No tienes permiso para eliminar esta publicación.'
         );
 
-        $filePath = $publicacion->archivo_pdf;
-
-        DB::transaction(function () use ($publicacion) {
+        DB::transaction(function () use ($request, $publicacion) {
+            $publicacion = ObservatorioPublicacion::whereKey($publicacion->id)->lockForUpdate()->firstOrFail();
+            $this->ensureNotRejectedForEditor($request, $publicacion);
+            $filePath = $publicacion->archivo_pdf;
+            if ($filePath) {
+                $disk = Storage::disk(config('filesystems.default'));
+                abort_if($disk->exists($filePath) && ! $disk->delete($filePath), 503,
+                    'No se pudo eliminar el PDF del almacenamiento. El registro se conserva para volver a intentarlo.');
+            }
             $publicacion->delete();
         });
-
-        if ($filePath && Storage::disk('local')->exists($filePath)) {
-            Storage::disk('local')->delete($filePath);
-        }
 
         return response()->json([
             'message' => 'Publicación eliminada correctamente.',
@@ -408,68 +592,35 @@ class ObservatorioPublicacionController extends Controller
             'sharepoint_file_id' => ['required', 'string', 'max:1024'],
             'descripcion' => ['nullable', 'string', 'max:3000'],
         ]);
-
         $file = $this->sharePointService->getPdfFileInsideRoot($data['sharepoint_file_id']);
         $existing = $this->findSharePointPublication($departamento, (string) $file['id']);
-        if ($existing) {
-            $lastModified = $file['last_modified_at'] ? Carbon::parse($file['last_modified_at']) : $existing->sharepoint_last_modified_at;
-            $existing->update([
-                'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
-                'fecha_publicacion' => $lastModified?->toDateString() ?? $existing->fecha_publicacion,
-                'link_url' => $file['web_url'],
-                'descripcion' => $data['descripcion'] ?? $existing->descripcion,
-                'autores' => $file['created_by'] ?? $existing->autores,
-                'fuente' => 'SharePoint',
-                'nombre_archivo_original' => $file['name'],
-                'sharepoint_url' => $file['web_url'],
-                'sharepoint_file_name' => $file['name'],
-                'sharepoint_file_type' => $file['mime_type'],
-                'sharepoint_file_size' => $file['size'],
-                'sharepoint_last_modified_at' => $file['last_modified_at'],
-                'sharepoint_sync_status' => 'sincronizado',
-                'sharepoint_synced_at' => now(),
-                'sharepoint_error' => null,
-            ]);
+        $publication = $this->saveSharePointPdf($request, $departamento, $file, 'LIBRO');
+        if (isset($data['descripcion'])) $publication->update(['descripcion' => $data['descripcion']]);
+        return (new PublicacionResource($publication->refresh()))->response()->setStatusCode($existing ? 200 : 201);
+    }
 
-            return (new PublicacionResource($existing->refresh()))->response();
+    private function saveSharePointPdf(Request $request, ?Departamento $departamento, array $file, string $tipo, bool $refresh = false): ObservatorioPublicacion
+    {
+        $existing = $this->findSharePointPublication($departamento, (string) $file['id']);
+        if ($existing?->archivo_pdf && ! $refresh) return $existing;
+        $oldPath = $existing?->archivo_pdf;
+        $path = $this->copySharePointPdf($file, $departamento);
+        try {
+            $publication = DB::transaction(function () use ($existing, $request, $departamento, $file, $tipo, $path) {
+                if ($existing) {
+                    $existing->update(['archivo_pdf' => $path, 'nombre_archivo_original' => $file['name'],
+                        'sharepoint_last_modified_at' => $file['last_modified_at'] ?? $existing->sharepoint_last_modified_at,
+                        'sharepoint_synced_at' => now(), 'sharepoint_sync_status' => 'sincronizado', 'sharepoint_error' => null]);
+                    return $existing;
+                }
+                return $this->createSharePointPdfPublication($request, $departamento, $file, $tipo, pdfPath: $path);
+            });
+        } catch (\Throwable $error) {
+            Storage::disk(config('filesystems.default'))->delete($path);
+            throw $error;
         }
-
-        $publicacion = DB::transaction(function () use ($data, $request, $departamento, $file) {
-            $counter = DB::table('publicacion_contadores')->where('tipo', 'LIBRO')->lockForUpdate()->first();
-            abort_unless($counter, 500, 'No se pudo generar el código de publicación.');
-            $number = (int) $counter->siguiente_numero;
-            DB::table('publicacion_contadores')->where('tipo', 'LIBRO')->update(['siguiente_numero' => $number + 1]);
-
-            $lastModified = $file['last_modified_at'] ? Carbon::parse($file['last_modified_at']) : now();
-
-            return ObservatorioPublicacion::create([
-                'departamento_id' => $departamento->id,
-                'creado_por' => $request->user()->id,
-                'tipo' => 'LIBRO',
-                'estado' => self::ESTADO_PUBLICACION,
-                'solo_suscriptores' => false,
-                'codigo' => 'LIB-'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
-                'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
-                'fecha_publicacion' => $lastModified->toDateString(),
-                'link_url' => $file['web_url'],
-                'descripcion' => $data['descripcion'] ?? 'Libro PDF importado desde SharePoint.',
-                'autores' => $file['created_by'] ?? null,
-                'fuente' => 'SharePoint',
-                'archivo_pdf' => null,
-                'nombre_archivo_original' => $file['name'],
-                'sharepoint_url' => $file['web_url'],
-                'sharepoint_file_id' => $file['id'],
-                'sharepoint_file_name' => $file['name'],
-                'sharepoint_file_type' => $file['mime_type'],
-                'sharepoint_file_size' => $file['size'],
-                'sharepoint_last_modified_at' => $file['last_modified_at'],
-                'sharepoint_sync_status' => 'sincronizado',
-                'sharepoint_synced_at' => now(),
-                'sharepoint_error' => null,
-            ]);
-        });
-
-        return (new PublicacionResource($publicacion))->response()->setStatusCode(201);
+        if ($oldPath && $oldPath !== $path) Storage::disk(config('filesystems.default'))->delete($oldPath);
+        return $publication;
     }
 
     public function importManySharePointAtlas(Request $request, Departamento $departamento): JsonResponse
@@ -505,6 +656,7 @@ class ObservatorioPublicacionController extends Controller
     {
         abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para importar Atlas global.');
         $data = $request->validate([
+            'atlas_categoria_id' => ['nullable', 'uuid', \Illuminate\Validation\Rule::exists('atlas_categorias', 'id')->whereNull('deleted_at')],
             'sharepoint_file_ids' => ['required', 'array', 'min:1', 'max:50'],
             'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
         ]);
@@ -515,6 +667,7 @@ class ObservatorioPublicacionController extends Controller
             fileIds: $data['sharepoint_file_ids'],
             tipo: 'ATLAS',
             resolveFile: fn(string $fileId) => $this->sharePointService->getPdfFileInsideRoot($fileId),
+            categoriaId: $data['atlas_categoria_id'] ?? null,
         );
     }
 
@@ -558,6 +711,7 @@ class ObservatorioPublicacionController extends Controller
         array $fileIds,
         string $tipo,
         callable $resolveFile,
+        ?string $categoriaId = null,
     ): JsonResponse {
 
         $summary = [
@@ -568,10 +722,18 @@ class ObservatorioPublicacionController extends Controller
         ];
 
         foreach ($fileIds as $fileId) {
+            $copiedPath = null;
             try {
                 $file = $resolveFile($fileId);
                 $existing = $this->findSharePointPublication($departamento, (string) $file['id']);
                 if ($existing) {
+                    // Re-importing an old URL-only record materializes its PDF without
+                    // changing its visibility, status, author or publication code.
+                    if (! $existing->archivo_pdf) {
+                        $copiedPath = $this->copySharePointPdf($file, $departamento);
+                        $existing->update(['archivo_pdf' => $copiedPath]);
+                        $copiedPath = null;
+                    }
                     $summary['duplicates'][] = [
                         'sharepoint_file_id' => $file['id'],
                         'name' => $file['name'],
@@ -581,14 +743,24 @@ class ObservatorioPublicacionController extends Controller
                     continue;
                 }
 
+                $copiedPath = $this->copySharePointPdf($file, $departamento);
                 $publicacion = DB::transaction(fn() => $this->createSharePointPdfPublication(
                     request: $request,
                     departamento: $departamento,
                     file: $file,
                     tipo: $tipo,
+                    categoriaId: $categoriaId,
+                    pdfPath: $copiedPath,
                 ));
 
+                $copiedPath = null;
+
                 $summary['imported'][] = (new PublicacionResource($publicacion->refresh()))->resolve($request);
+            } catch (ValidationException $exception) {
+                $summary['errors'][] = [
+                    'sharepoint_file_id' => $fileId,
+                    'message' => 'La categoría ya no está disponible. Selecciona otra categoría.',
+                ];
             } catch (RuntimeException $exception) {
                 $message = $exception->getMessage();
                 $bucket = str_contains(strtolower($message), 'pdf') ? 'rejected' : 'errors';
@@ -608,6 +780,8 @@ class ObservatorioPublicacionController extends Controller
                     'sharepoint_file_id' => $fileId,
                     'message' => 'No se pudo importar el archivo seleccionado.',
                 ];
+            } finally {
+                if ($copiedPath) Storage::disk(config('filesystems.default'))->delete($copiedPath);
             }
         }
 
@@ -626,85 +800,11 @@ class ObservatorioPublicacionController extends Controller
     {
         $this->ensureCanView($request, $departamento);
         $items = collect();
-
         foreach ($this->sharePointService->listPdfFiles() as $file) {
-            $existing = $this->findSharePointPublication($departamento, (string) $file['id']);
-            if ($existing) {
-                $lastModified = $file['last_modified_at'] ? Carbon::parse($file['last_modified_at']) : $existing->sharepoint_last_modified_at;
-                $existing->update([
-                    'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
-                    'fecha_publicacion' => $lastModified?->toDateString() ?? $existing->fecha_publicacion,
-                    'link_url' => $file['web_url'],
-                    'autores' => $file['created_by'] ?? $existing->autores,
-                    'fuente' => 'SharePoint',
-                    'nombre_archivo_original' => $file['name'],
-                    'sharepoint_url' => $file['web_url'],
-                    'sharepoint_file_name' => $file['name'],
-                    'sharepoint_file_type' => $file['mime_type'],
-                    'sharepoint_file_size' => $file['size'],
-                    'sharepoint_last_modified_at' => $file['last_modified_at'],
-                    'sharepoint_sync_status' => 'sincronizado',
-                    'sharepoint_synced_at' => now(),
-                    'sharepoint_error' => null,
-                ]);
-                $items->push($existing->refresh());
-                continue;
-            }
-
-            $items->push(DB::transaction(function () use ($request, $departamento, $file) {
-                $counter = DB::table('publicacion_contadores')->where('tipo', 'LIBRO')->lockForUpdate()->first();
-                abort_unless($counter, 500, 'No se pudo generar el codigo de publicacion.');
-                $number = (int) $counter->siguiente_numero;
-                DB::table('publicacion_contadores')->where('tipo', 'LIBRO')->update(['siguiente_numero' => $number + 1]);
-                $lastModified = $file['last_modified_at'] ? Carbon::parse($file['last_modified_at']) : now();
-
-                return ObservatorioPublicacion::create([
-                    'departamento_id' => $departamento->id,
-                    'creado_por' => $request->user()->id,
-                    'tipo' => 'LIBRO',
-                    'estado' => self::ESTADO_PUBLICACION,
-                    'solo_suscriptores' => false,
-                    'codigo' => 'LIB-'.str_pad((string) $number, 4, '0', STR_PAD_LEFT),
-                    'titulo' => pathinfo((string) $file['name'], PATHINFO_FILENAME) ?: (string) $file['name'],
-                    'fecha_publicacion' => $lastModified->toDateString(),
-                    'link_url' => $file['web_url'],
-                    'descripcion' => 'Libro PDF importado desde SharePoint.',
-                    'autores' => $file['created_by'] ?? null,
-                    'fuente' => 'SharePoint',
-                    'archivo_pdf' => null,
-                    'nombre_archivo_original' => $file['name'],
-                    'sharepoint_url' => $file['web_url'],
-                    'sharepoint_file_id' => $file['id'],
-                    'sharepoint_file_name' => $file['name'],
-                    'sharepoint_file_type' => $file['mime_type'],
-                    'sharepoint_file_size' => $file['size'],
-                    'sharepoint_last_modified_at' => $file['last_modified_at'],
-                    'sharepoint_sync_status' => 'sincronizado',
-                    'sharepoint_synced_at' => now(),
-                    'sharepoint_error' => null,
-                ]);
-            }));
+            $file = $this->sharePointService->getPdfFileInsideRoot((string) $file['id']);
+            $items->push($this->saveSharePointPdf($request, $departamento, $file, 'LIBRO', refresh: true)->refresh());
         }
-
-        return response()->json([
-            'data' => PublicacionResource::collection($items),
-            'synced' => $items->count(),
-        ]);
-    }
-
-    public function recentAtlasReports(Request $request): AnonymousResourceCollection
-    {
-        $query = ObservatorioPublicacion::query()
-            ->where('tipo', 'ATLAS')
-            ->whereNull('departamento_id')
-            ->latest('created_at')
-            ->limit(6);
-
-        if ($request->user()->rol !== 'ADMIN') {
-            $query->where('estado', self::ESTADO_PUBLICACION);
-        }
-
-        return PublicacionResource::collection($query->get());
+        return response()->json(['data' => PublicacionResource::collection($items), 'synced' => $items->count()]);
     }
 
     private function upsertSharePointPublication(
@@ -781,7 +881,10 @@ class ObservatorioPublicacionController extends Controller
         ?Departamento $departamento,
         array $file,
         string $tipo,
+        ?string $categoriaId = null,
+        ?string $pdfPath = null,
     ): ObservatorioPublicacion {
+        $this->lockAtlasCategory(['atlas_categoria_id' => $categoriaId]);
         $counter = DB::table('publicacion_contadores')->where('tipo', $tipo)->lockForUpdate()->first();
         abort_unless($counter, 500, 'No se pudo generar el codigo de publicacion.');
         $number = (int) $counter->siguiente_numero;
@@ -792,6 +895,7 @@ class ObservatorioPublicacionController extends Controller
 
         return ObservatorioPublicacion::create([
             'departamento_id' => $departamento?->id,
+            ...($tipo === 'ATLAS' ? ['atlas_categoria_id' => $categoriaId] : []),
             'creado_por' => $request->user()->id,
             'tipo' => $tipo,
             'estado' => self::ESTADO_PUBLICACION,
@@ -808,7 +912,7 @@ class ObservatorioPublicacionController extends Controller
             },
             'autores' => $file['created_by'] ?? ($isArticulo ? 'ULEAM' : null),
             'fuente' => 'SharePoint',
-            'archivo_pdf' => null,
+            'archivo_pdf' => $pdfPath,
             'nombre_archivo_original' => $file['name'],
             'sharepoint_url' => $file['web_url'],
             'sharepoint_file_id' => $file['id'],
@@ -873,6 +977,10 @@ class ObservatorioPublicacionController extends Controller
     private function ensureCanView(Request $request, Departamento $departamento): void
     {
         $user = $request->user('sanctum') ?: $request->user();
+        if ($user?->isObservatoryAdmin()) {
+            abort_unless(in_array($departamento->id, $user->observatoryIds(), true), 403, 'Observatorio fuera de tu alcance.');
+            return;
+        }
         $hasAccess = ($user?->rol === 'ADMIN')
             || $departamento->publico
             || ($user && $departamento->usuarios()->where('users.id', $user->id)->exists());
@@ -882,6 +990,10 @@ class ObservatorioPublicacionController extends Controller
     private function applyVisibilityFilter($query, Request $request): void
     {
         $user = $request->user();
+        if ($user->isObservatoryAdmin()) {
+            $query->whereIn('departamento_id', $user->observatoryIds())->whereIn('tipo', ['ARTICULO', 'REPORTE', 'LIBRO']);
+            return;
+        }
         if ($user->rol === 'ADMIN') {
             return;
         }
@@ -889,11 +1001,16 @@ class ObservatorioPublicacionController extends Controller
         if ($user->rol === 'EDITOR') {
             $query->where(function ($visibilityQuery) use ($user) {
                 $visibilityQuery
-                    ->where('estado', self::ESTADO_PUBLICACION)
+                    ->where(fn ($publishedQuery) => $publishedQuery
+                        ->where('estado', self::ESTADO_PUBLICACION)
+                        ->where(fn ($categoryQuery) => $categoryQuery->where('tipo', '!=', 'ATLAS')
+                            ->orWhere(fn ($atlasQuery) => $atlasQuery->inPublicAtlasCategories())))
                     ->orWhere('creado_por', $user->id);
             });
         } else {
-            $query->where('estado', self::ESTADO_PUBLICACION);
+            $query->where('estado', self::ESTADO_PUBLICACION)
+                ->where(fn ($categoryQuery) => $categoryQuery->where('tipo', '!=', 'ATLAS')
+                    ->orWhere(fn ($atlasQuery) => $atlasQuery->inPublicAtlasCategories()));
         }
 
     }
@@ -902,6 +1019,10 @@ class ObservatorioPublicacionController extends Controller
     {
         $user = $request->user('sanctum') ?: $request->user();
         if ($user?->rol === 'ADMIN') {
+            return;
+        }
+        if ($user?->isObservatoryAdmin() && $request->query('context') === 'management') {
+            abort_unless($publicacion->tipo !== 'ATLAS' && in_array($publicacion->departamento_id, $user->observatoryIds(), true), 403);
             return;
         }
 
@@ -915,6 +1036,10 @@ class ObservatorioPublicacionController extends Controller
 
         abort_unless($publicacion->estado === self::ESTADO_PUBLICACION, 404, 'La publicación no está disponible.');
 
+        if ($publicacion->tipo === 'ATLAS' && $publicacion->atlas_categoria_id) {
+            abort_unless($publicacion->atlasCategoria?->publico === true, 404, 'La publicación no está disponible.');
+        }
+
         if ($publicacion->solo_suscriptores) {
             abort_unless($this->isSubscriber($user), 403, 'Esta publicación es solo para suscriptores.');
         }
@@ -927,6 +1052,10 @@ class ObservatorioPublicacionController extends Controller
             return;
         }
 
+        if ($user->isObservatoryAdmin()) {
+            abort_unless($user->canReviewObservatory($departamento->id), 403, 'No tienes permiso de edición y revisión en este observatorio.');
+            return;
+        }
         abort_unless($user->rol === 'EDITOR', 403, 'No tienes permisos para gestionar publicaciones.');
         abort_unless(
             $departamento->usuarios()

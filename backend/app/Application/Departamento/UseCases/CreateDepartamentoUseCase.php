@@ -33,7 +33,9 @@ class CreateDepartamentoUseCase
             nombre: $dto->nombre,
             codigoInterno: $dto->codigoInterno,
             descripcion: $dto->descripcion,
+            icono: $dto->icono,
             publico: $dto->publico,
+            foto: $dto->foto,
         );
 
         // Guardar en repositorio

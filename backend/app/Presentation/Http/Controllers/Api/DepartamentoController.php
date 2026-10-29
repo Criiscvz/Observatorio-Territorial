@@ -48,6 +48,9 @@ class DepartamentoController extends Controller
             $departamentos = $this->getDepartamentosUseCase->getAll();
         } else {
             $departamentos = $this->getDepartamentosUseCase->execute($user->id);
+            if (in_array($user->rol, ['EDITOR', 'ADMIN_OBSERVATORIO'], true)) {
+                $departamentos = $departamentos->filter(fn ($item) => in_array($item->userRole, ['ADMIN', 'EDITOR'], true))->values();
+            }
         }
 
         return response()->json(
@@ -97,7 +100,7 @@ class DepartamentoController extends Controller
     public function store(CreateDepartamentoRequest $request): JsonResponse
     {
         $dto = CreateDepartamentoDTO::fromArray(
-            $request->validated(),
+            array_replace($request->validated(), ['foto' => app(\App\Infrastructure\Services\ObservatoryPhoto::class)->data($request)]),
             $request->user()->id
         );
 
@@ -121,6 +124,10 @@ class DepartamentoController extends Controller
     )]
     public function show(Request $request, string $id): JsonResponse
     {
+        if (in_array($request->user()->rol, ['EDITOR', 'ADMIN_OBSERVATORIO'], true)) {
+            abort_unless($request->user()->departamentos()->where('departamentos.id', $id)
+                ->wherePivotIn('rol', ['ADMIN', 'EDITOR'])->exists(), 403, 'No tienes acceso a este observatorio.');
+        }
         $result = $this->getDepartamentoUseCase->execute($id, $request->user()->id);
 
         return response()->json($result->toArray());
@@ -151,7 +158,7 @@ class DepartamentoController extends Controller
     public function update(UpdateDepartamentoRequest $request, string $id): JsonResponse
     {
         $dto = UpdateDepartamentoDTO::fromArray(
-            $request->validated(),
+            array_replace($request->validated(), ['foto' => app(\App\Infrastructure\Services\ObservatoryPhoto::class)->data($request)]),
             $id,
             $request->user()->id
         );

@@ -7,9 +7,12 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Departamento } from '@core/models';
 import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
+import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
+import { atlasCategoryPresentation } from '@core/utils/atlas-category-presentation';
+import { catchError, of, startWith, switchMap } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { IsAdminDirective } from '../../directives/is-admin.directive';
-import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 interface NavItem {
   label: string;
@@ -66,19 +69,6 @@ interface NavItem {
           </a>
         }
 
-        <a
-          *isAdmin
-          class="nav-item"
-          routerLink="/admin/atlas/subir"
-          routerLinkActive="active"
-          (click)="navigate.emit()"
-        >
-          <div class="nav-icon-wrapper">
-            <mat-icon class="nav-icon">map</mat-icon>
-          </div>
-          <span class="nav-text">Subir Atlas</span>
-        </a>
-
         <!-- Gestión de Usuarios - solo admin -->
         <a
           *isAdmin
@@ -115,16 +105,25 @@ interface NavItem {
           <a
             *isAdmin
             class="add-btn"
-            routerLink="/admin/departamentos/nuevo"
-            [matTooltip]="'layout.sidebar.newDepartment' | translate"
+            routerLink="/admin/departamentos"
+            [matTooltip]="'layout.sidebar.manageDepartments' | translate"
+            [attr.aria-label]="'layout.sidebar.manageDepartments' | translate"
             (click)="navigate.emit()"
           >
-            <mat-icon>add</mat-icon>
+            <mat-icon>settings</mat-icon>
           </a>
         </div>
 
+        <input
+          class="nav-search observatorio-search"
+          type="search"
+          [attr.aria-label]="'layout.sidebar.searchDepartments' | translate"
+          [placeholder]="'layout.sidebar.searchDepartments' | translate"
+          [value]="observatorioSearch()"
+          (input)="observatorioSearch.set($any($event.target).value)"
+        />
         <div class="deptos-list">
-          @for (depto of departamentos(); track depto.id) {
+          @for (depto of filteredDepartamentos(); track depto.id) {
             <a
               class="nav-item depto-item"
               [routerLink]="['/admin/departamentos', depto.id]"
@@ -139,10 +138,11 @@ interface NavItem {
                 }
               </div>
               <div class="depto-info">
-                <span class="depto-name">{{ depto.nombre }}</span>
-                @if (depto.datasets) {
+                <span class="depto-name" [title]="depto.nombre">{{ depto.nombre }}</span>
+                @if (depto.datasets || depto.datasets_count !== undefined) {
                   <span class="depto-count"
-                    >{{ depto.datasets.length }} {{ 'common.units.datasets' | translate }}</span
+                    >{{ depto.datasets_count ?? depto.datasets?.length ?? 0 }}
+                    {{ 'common.units.datasets' | translate }}</span
                   >
                 }
               </div>
@@ -155,19 +155,130 @@ interface NavItem {
           } @empty {
             <div class="empty-state">
               <mat-icon>folder_off</mat-icon>
-              <span>{{ 'layout.sidebar.noDepartments' | translate }}</span>
-              <a
-                *isAdmin
-                routerLink="/admin/departamentos/nuevo"
-                class="empty-action"
-                (click)="navigate.emit()"
-              >
-                {{ 'layout.sidebar.createOne' | translate }}
-              </a>
+              <span>{{
+                (observatorioSearch()
+                  ? 'common.messages.noResults'
+                  : 'layout.sidebar.noDepartments'
+                ) | translate
+              }}</span>
+              @if (observatorioSearch()) {
+                <button type="button" class="empty-action" (click)="observatorioSearch.set('')">
+                  {{ 'layout.sidebar.clearSearch' | translate }}
+                </button>
+              } @else {
+                <a
+                  *isAdmin
+                  routerLink="/admin/departamentos/nuevo"
+                  class="empty-action"
+                  (click)="navigate.emit()"
+                >
+                  {{ 'layout.sidebar.createOne' | translate }}
+                </a>
+              }
             </div>
           }
         </div>
       </div>
+
+      @if (isAdmin()) {
+        <section class="nav-section" aria-labelledby="atlas-nav-title">
+          <div class="nav-label-row">
+            <span class="nav-label" id="atlas-nav-title">Atlas</span>
+            <a
+              class="add-btn"
+              routerLink="/admin/atlas/categorias"
+              matTooltip="Gestionar categorías de Atlas"
+              aria-label="Gestionar categorías de Atlas"
+              (click)="navigate.emit()"
+            >
+              <mat-icon>settings</mat-icon>
+            </a>
+          </div>
+          @if (!atlasLoading() && !atlasError()) {
+            <input
+              class="nav-search atlas-category-search"
+              type="search"
+              aria-label="Buscar categorías de Atlas"
+              placeholder="Buscar categoría…"
+              [value]="atlasCategorySearch()"
+              (input)="atlasCategorySearch.set($any($event.target).value)"
+            />
+          }
+          <div class="deptos-list">
+            @if (atlasLoading()) {
+              <p class="empty-state" role="status">Cargando categorías…</p>
+            } @else if (atlasError()) {
+              <div class="empty-state" role="alert">
+                <span>No se pudieron cargar las categorías.</span>
+                <button type="button" class="empty-action" (click)="loadAtlasCategorias()">
+                  Reintentar
+                </button>
+              </div>
+            } @else {
+              @for (categoria of filteredAtlasCategorias(); track categoria.id) {
+                <a
+                  class="nav-item depto-item"
+                  routerLink="/admin/atlas"
+                  [queryParams]="{ categoria: categoria.id }"
+                  routerLinkActive="active"
+                  [routerLinkActiveOptions]="{ exact: true }"
+                  (click)="navigate.emit()"
+                >
+                  <div
+                    class="depto-icon atlas-category-icon"
+                    [style.--atlas-category-color]="
+                      categoryVisual(categoria.nombre, categoria.icono).color
+                    "
+                  >
+                    <mat-icon>{{
+                      categoryVisual(categoria.nombre, categoria.icono).icon
+                    }}</mat-icon>
+                  </div>
+                  <div class="depto-info">
+                    <span class="depto-name" [title]="categoria.nombre">{{
+                      categoria.nombre
+                    }}</span>
+                  </div>
+                </a>
+              } @empty {
+                <div class="empty-state"><span>No se encontraron categorías.</span></div>
+              }
+            }
+          </div>
+          <div class="atlas-nav-actions" aria-label="Accesos de Atlas">
+            <a
+              class="nav-item"
+              routerLink="/admin/atlas"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: true }"
+              (click)="navigate.emit()"
+            >
+              <div class="nav-icon-wrapper">
+                <mat-icon class="nav-icon">library_books</mat-icon>
+              </div>
+              <span class="nav-text">Todos los archivos</span>
+            </a>
+            <a
+              class="nav-item"
+              routerLink="/admin/atlas/subir"
+              routerLinkActive="active"
+              (click)="navigate.emit()"
+            >
+              <div class="nav-icon-wrapper"><mat-icon class="nav-icon">upload_file</mat-icon></div>
+              <span class="nav-text">Subir PDF de Atlas</span>
+            </a>
+            <a
+              class="nav-item"
+              routerLink="/admin/atlas/categorias"
+              routerLinkActive="active"
+              (click)="navigate.emit()"
+            >
+              <div class="nav-icon-wrapper"><mat-icon class="nav-icon">category</mat-icon></div>
+              <span class="nav-text">Gestionar categorías</span>
+            </a>
+          </div>
+        </section>
+      }
 
       <!-- Footer -->
       <div class="sidebar-footer">
@@ -203,6 +314,7 @@ interface NavItem {
 
       .nav-section {
         margin-bottom: 1.5rem;
+        flex-shrink: 0;
       }
 
       .nav-label {
@@ -329,7 +441,17 @@ interface NavItem {
       .deptos-list {
         max-height: 300px;
         overflow-y: auto;
-        padding-right: 0.25rem;
+        overflow-x: hidden;
+        padding: 0.25rem 0.25rem 0.5rem 0;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
+        scroll-padding-block: 0.5rem;
+      }
+
+      .atlas-nav-actions {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-color);
       }
 
       .depto-item {
@@ -411,6 +533,9 @@ interface NavItem {
         color: var(--primary-600);
         text-decoration: none;
         font-weight: 500;
+        background: none;
+        border: 0;
+        cursor: pointer;
       }
 
       .empty-action:hover {
@@ -419,19 +544,66 @@ interface NavItem {
 
       /* Footer */
       .sidebar-footer {
+        flex-shrink: 0;
         margin-top: auto;
         padding-top: 1rem;
         border-top: 1px solid var(--border-color);
+      }
+      .atlas-category-icon {
+        color: var(--atlas-category-color);
+        background: color-mix(in srgb, var(--atlas-category-color) 12%, transparent);
+      }
+      .nav-search {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 0.65rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+      }
+      .nav-search:focus-visible {
+        outline: 2px solid var(--primary-500);
+        outline-offset: 2px;
       }
     `,
   ],
 })
 export class SidebarComponent implements OnInit {
-    private readonly destroyRef = inject(DestroyRef);
+  readonly categoryVisual = atlasCategoryPresentation;
+  private readonly destroyRef = inject(DestroyRef);
   private readonly deptoService = inject(DepartamentoService);
   private readonly authService = inject(AuthService);
+  private readonly atlasCategoriaService = inject(AtlasCategoriaService);
+  readonly atlasCategorias = signal<AtlasCategoria[]>([]);
+  readonly atlasCategorySearch = signal('');
+  readonly filteredAtlasCategorias = computed(() => {
+    const normalize = (value: string) =>
+      value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('es')
+        .trim();
+    return this.atlasCategorias().filter((item) =>
+      normalize(item.nombre).includes(normalize(this.atlasCategorySearch())),
+    );
+  });
+  readonly atlasLoading = signal(false);
+  readonly atlasError = signal(false);
 
   departamentos = signal<Departamento[]>([]);
+  readonly observatorioSearch = signal('');
+  readonly filteredDepartamentos = computed(() => {
+    const normalize = (value: string) =>
+      value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('es')
+        .trim();
+    const query = normalize(this.observatorioSearch());
+    return this.departamentos().filter((item) => normalize(item.nombre).includes(query));
+  });
   navigate = output<void>();
 
   // Computed para verificar si el usuario es admin
@@ -454,18 +626,63 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartamentos();
+    if (this.isAdmin()) {
+      this.atlasCategoriaService.onCategoriasChanged$
+        .pipe(
+          startWith(undefined),
+          switchMap(() => {
+            this.atlasLoading.set(true);
+            this.atlasError.set(false);
+            return this.atlasCategoriaService.list().pipe(
+              catchError(() => {
+                this.atlasError.set(true);
+                return of([]);
+              }),
+            );
+          }),
+          takeUntilDestroyed(this.destroyRef),
+        )
+        .subscribe((items) => {
+          this.atlasCategorias.set(items);
+          this.atlasLoading.set(false);
+        });
+    }
 
     // Suscribirse a cambios en departamentos para actualizar automáticamente
-    this.deptoService.onDepartamentosChanged$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.loadDepartamentos();
-    });
+    this.deptoService.onDepartamentosChanged$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.loadDepartamentos();
+      });
   }
 
   loadDepartamentos(): void {
-    this.deptoService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (departamentos) => this.departamentos.set(departamentos || []),
-      error: () => this.departamentos.set([]),
-    });
+    this.deptoService
+      .getAll()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (departamentos) => this.departamentos.set(departamentos || []),
+        error: () => this.departamentos.set([]),
+      });
+  }
+
+  loadAtlasCategorias(): void {
+    if (!this.isAdmin() || this.atlasLoading()) return;
+    this.atlasLoading.set(true);
+    this.atlasError.set(false);
+    this.atlasCategoriaService
+      .list()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (items) => {
+          this.atlasCategorias.set(items);
+          this.atlasLoading.set(false);
+        },
+        error: () => {
+          this.atlasError.set(true);
+          this.atlasLoading.set(false);
+        },
+      });
   }
 
   getDeptoColor(depto: Departamento): string {

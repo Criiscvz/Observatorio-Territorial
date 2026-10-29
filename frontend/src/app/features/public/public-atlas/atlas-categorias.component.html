@@ -1,0 +1,250 @@
+<section class="atlas-page" aria-label="Gestión de categorías de Atlas">
+  <header class="page-header">
+    <div>
+      <a class="back-link" routerLink="/admin/atlas"
+        ><mat-icon>arrow_back</mat-icon>Volver a Atlas</a
+      >
+      <h1>Categorías de Atlas</h1>
+      <p>Organiza los documentos por tema y gestiona los archivos de cada categoría.</p>
+    </div>
+    <div class="page-actions">
+      <a mat-stroked-button routerLink="/admin/atlas"
+        ><mat-icon>library_books</mat-icon>Ver archivos</a
+      >
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="create()"
+        [disabled]="saving() || deleting()"
+      >
+        <mat-icon>add</mat-icon>Nueva categoría
+      </button>
+    </div>
+  </header>
+  <section class="atlas-card" aria-labelledby="category-directory-title">
+    <div class="directory-toolbar">
+      <div class="card-heading">
+        <span class="section-icon"><mat-icon>category</mat-icon></span>
+        <div>
+          <h2 id="category-directory-title">Categorías disponibles</h2>
+          <p role="status">
+            {{ filteredCategorias().length }} de {{ categorias().length }} categorías
+          </p>
+        </div>
+      </div>
+      <div class="toolbar-actions">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="category-search"
+          ><mat-label>Buscar categorías</mat-label><mat-icon matPrefix>search</mat-icon
+          ><input
+            matInput
+            type="search"
+            [value]="search()"
+            (input)="search.set($any($event.target).value)"
+            placeholder="Nombre o descripción"
+          />
+          @if (search()) {
+            <button
+              mat-icon-button
+              matSuffix
+              type="button"
+              aria-label="Limpiar búsqueda"
+              (click)="search.set('')"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="load()"
+          [disabled]="loading() || saving() || deleting()"
+        >
+          <mat-icon>refresh</mat-icon>Actualizar
+        </button>
+      </div>
+    </div>
+    @if (error()) {
+      <div class="alert directory-alert" role="alert">
+        <mat-icon>error_outline</mat-icon>{{ error() }}
+      </div>
+    }
+    @if (loading()) {
+      <div class="atlas-state" role="status">
+        <mat-spinner diameter="36" />
+        <p>Cargando categorías…</p>
+      </div>
+    } @else {
+      <div class="categories">
+        @for (item of filteredCategorias(); track item.id) {
+          <article class="category-card" [attr.aria-label]="item.nombre">
+            <div class="category-heading">
+              <span
+                class="category-icon"
+                [style.--category-color]="categoryVisual(item.nombre, item.icono).color"
+                ><mat-icon>{{ categoryVisual(item.nombre, item.icono).icon }}</mat-icon></span
+              >
+              <h3>{{ item.nombre }}</h3>
+            </div>
+            <span class="visibility-badge" [class.private]="item.publico === false">
+              <mat-icon>{{ item.publico === false ? 'lock_outline' : 'public' }}</mat-icon>
+              {{ item.publico === false ? 'Privada' : 'Pública' }}
+            </span>
+            <p class="category-description">
+              {{ item.descripcion || 'Consulta y organiza los documentos de esta categoría.' }}
+            </p>
+            <div class="category-file-actions">
+              <a
+                mat-stroked-button
+                routerLink="/admin/atlas"
+                [queryParams]="{ categoria: item.id }"
+                [attr.aria-label]="'Ver archivos de ' + item.nombre"
+                ><mat-icon>folder_open</mat-icon>Ver archivos</a
+              >
+              <a
+                mat-stroked-button
+                class="upload-action"
+                routerLink="/admin/atlas/subir"
+                [queryParams]="{ categoria: item.id }"
+                [attr.aria-label]="'Subir archivo a ' + item.nombre"
+                ><mat-icon>upload_file</mat-icon>Subir PDF</a
+              >
+            </div>
+            <div class="category-edit-actions">
+              <button
+                mat-button
+                type="button"
+                [disabled]="saving() || deleting()"
+                (click)="edit(item)"
+                [attr.aria-label]="'Editar categoría ' + item.nombre"
+              >
+                <mat-icon>edit</mat-icon>Editar categoría
+              </button>
+              <button
+                mat-button
+                type="button"
+                class="danger-action"
+                [disabled]="saving() || deleting()"
+                (click)="remove(item)"
+                [attr.aria-label]="'Eliminar categoría ' + item.nombre"
+              >
+                <mat-icon>delete_outline</mat-icon>Eliminar
+              </button>
+            </div>
+          </article>
+        } @empty {
+          @if (!error()) {
+            <div class="atlas-state category-empty">
+              <mat-icon>{{ search() ? 'search_off' : 'create_new_folder' }}</mat-icon>
+              <h3>{{ search() ? 'Sin coincidencias' : 'Crea tu primera categoría' }}</h3>
+              <p>
+                {{
+                  search()
+                    ? 'Prueba con otro nombre o limpia la búsqueda.'
+                    : 'Agrupa los documentos de Atlas para encontrarlos con más facilidad.'
+                }}
+              </p>
+              @if (search()) {
+                <button mat-stroked-button type="button" (click)="search.set('')">
+                  Limpiar búsqueda
+                </button>
+              } @else {
+                <button mat-flat-button color="primary" type="button" (click)="create()">
+                  <mat-icon>add</mat-icon>Nueva categoría
+                </button>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+  </section>
+</section>
+<ng-template #categoryEditor>
+  <form class="category-editor" [formGroup]="form" (ngSubmit)="save()">
+    <h2 mat-dialog-title id="category-editor-title">
+      {{ editing() ? 'Editar categoría' : 'Nueva categoría de Atlas' }}
+    </h2>
+    <mat-dialog-content>
+      <p class="editor-description">
+        Define el tema de los documentos. Podrás subir los PDF desde el listado de categorías.
+      </p>
+      @if (error()) {
+        <div class="alert" role="alert"><mat-icon>error_outline</mat-icon>{{ error() }}</div>
+      }
+      <mat-form-field appearance="outline"
+        ><mat-label>Nombre de la categoría</mat-label><mat-icon matPrefix>folder_open</mat-icon
+        ><input
+          matInput
+          formControlName="nombre"
+          maxlength="150"
+          placeholder="Ej. Ambiente"
+        /><mat-error>Escribe un nombre de hasta 150 caracteres.</mat-error></mat-form-field
+      >
+      <mat-form-field appearance="outline"
+        ><mat-label>Descripción opcional</mat-label
+        ><textarea
+          matInput
+          formControlName="descripcion"
+          rows="3"
+          maxlength="3000"
+          placeholder="¿Qué documentos reúne esta categoría?"
+        ></textarea
+        ><mat-error>La descripción no debe superar los 3000 caracteres.</mat-error></mat-form-field
+      >
+      <mat-form-field appearance="outline">
+        <mat-label>Icono de la categoría</mat-label>
+        <mat-select formControlName="icono">
+          <mat-select-trigger>
+            <span class="selected-icon">
+              <mat-icon>{{
+                categoryVisual(form.controls.nombre.value, form.controls.icono.value).icon
+              }}</mat-icon>
+              {{ iconLabel(form.controls.icono.value) }}
+            </span>
+          </mat-select-trigger>
+          <mat-option value=""
+            ><mat-icon>auto_awesome</mat-icon>Automático según el nombre</mat-option
+          >
+          @for (icon of availableIcons; track icon.value) {
+            <mat-option [value]="icon.value"
+              ><mat-icon>{{ icon.value }}</mat-icon
+              >{{ icon.label }}</mat-option
+            >
+          }
+        </mat-select>
+        <mat-hint>Se mostrará en el menú, la biblioteca y el portal público.</mat-hint>
+      </mat-form-field>
+      <div class="visibility-setting">
+        <mat-slide-toggle
+          formControlName="publico"
+          color="primary"
+          aria-describedby="category-visibility-help"
+        >
+          Categoría pública
+        </mat-slide-toggle>
+        <p id="category-visibility-help">
+          {{
+            form.controls.publico.value
+              ? 'La categoría y sus PDF publicados aparecerán en el portal público. Los archivos para suscriptores conservan su restricción.'
+              : 'La categoría y sus documentos permanecerán privados y no aparecerán en el portal público.'
+          }}
+        </p>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-stroked-button type="button" [disabled]="saving()" (click)="reset()">
+        Cancelar
+      </button>
+      <button mat-flat-button color="primary" type="submit" [disabled]="saving() || deleting()">
+        @if (saving()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          <mat-icon>save</mat-icon>
+        }
+        {{ saving() ? 'Guardando…' : editing() ? 'Guardar cambios' : 'Crear categoría' }}
+      </button>
+    </mat-dialog-actions>
+  </form>
+</ng-template>

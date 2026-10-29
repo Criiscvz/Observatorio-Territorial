@@ -37,6 +37,7 @@ class UpdateDepartamentoUseCase
             descripcion: $dto->descripcion,
             icono: $dto->icono,
             publico: $dto->publico,
+            foto: $dto->foto,
         );
 
         // Guardar cambios

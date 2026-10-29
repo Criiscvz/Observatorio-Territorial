@@ -84,16 +84,36 @@ Route::get('/avatars/{filename}', function (string $filename) {
         ->header('Cache-Control', 'public, max-age=31536000')
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Cross-Origin-Resource-Policy', 'cross-origin');
-})->where('filename', '.*');
+})->where('filename', '(?i:[a-z0-9_-]+\\.(jpg|jpeg|png|webp))');
 
 // ============ AUTH ============
+Route::get('/publico/configuracion', [\App\Presentation\Http\Controllers\Api\AdminWorkspaceController::class, 'configuration']);
+Route::prefix('admin')->middleware(['auth:sanctum', 'role:ADMIN'])->group(function () {
+    $controller = \App\Presentation\Http\Controllers\Api\AdminWorkspaceController::class;
+    Route::get('/configuracion', [$controller, 'configuration']);
+    Route::put('/configuracion', [$controller, 'updateConfiguration']);
+    Route::get('/inicio', [$controller, 'summary']);
+    Route::get('/publicaciones', [$controller, 'indexPublications']);
+});
 require __DIR__ . '/modules/auth.php';
+Route::prefix('editor')->middleware(['auth:sanctum', 'role:EDITOR'])->group(function () {
+    $controller = \App\Presentation\Http\Controllers\Api\EditorWorkspaceController::class;
+    Route::get('/inicio', [$controller, 'summary']);
+    Route::get('/publicaciones', [$controller, 'indexPublications']);
+});
+Route::prefix('observatorio-admin')->middleware(['auth:sanctum', 'role:ADMIN_OBSERVATORIO'])->group(function () {
+    $workspace = \App\Presentation\Http\Controllers\Api\ObservatoryWorkspaceController::class;
+    $access = \App\Presentation\Http\Controllers\Api\ObservatoryAccessController::class;
+    Route::get('/inicio', [$workspace, 'summary']);
+    Route::get('/publicaciones', [$workspace, 'indexPublications']);
+    Route::get('/users', [$access, 'users']);
+    Route::get('/users/{user}/permisos', [$access, 'show']);
+    Route::put('/users/{user}/permisos', [$access, 'save']);
+});
+require __DIR__ . '/modules/atlas.php';
 
 // ============ PROFILE ============
 require __DIR__ . '/modules/profile.php';
-
-// ============ SEED (Inicialización) ============
-require __DIR__ . '/modules/seed.php';
 
 // ============ RUTAS PÚBLICAS ============
 Route::prefix('publico')->group(__DIR__ . '/modules/publico.php');
