@@ -87,7 +87,9 @@ try {
   docker(['run', '--rm', '--pull', 'never', '--network', 'none', '--entrypoint', 'tar',
     '--mount', `type=bind,source=${sourceFiles},target=/files,readonly`, '--mount', `type=bind,source=${output},target=/backup`,
     dbImage, '-cf', '/backup/before-files.tar', '-C', '/files', '.']);
-  assert.equal(php(dbName, storage, 'apply').repeat_unchanged, 2);
+  const applied = php(dbName, storage, 'apply');
+  assert.equal(applied.repeat_unchanged, 2);
+  assert.equal(applied.catalog_handoff_verified, true);
   assert.equal(php(dbName, storage, 'rollback').removed, 2);
   assert.deepEqual(manifest(dbName), before, 'Rollback changed the source/target/counter manifests.');
   assert.deepEqual(fileManifest(sourceFiles), filesBefore, 'Rollback changed the original files.');
@@ -101,11 +103,13 @@ try {
     '--mount', `type=bind,source=${restoredFiles},target=/restore`, '--mount', `type=bind,source=${output},target=/backup,readonly`,
     dbImage, '-xf', '/backup/before-files.tar', '-C', '/restore']);
   assert.deepEqual(fileManifest(restoredFiles), filesBefore);
-  assert.equal(php(restoredDb, restoreStorage, 'verify-restored').reapply_after_restore, true);
+  const restored = php(restoredDb, restoreStorage, 'verify-restored');
+  assert.equal(restored.reapply_after_restore, true);
+  assert.equal(restored.catalog_handoff_verified, true);
   assert.deepEqual(manifest(restoredDb), before); assert.deepEqual(fileManifest(restoredFiles), filesBefore);
   const result = {ok: true, syntheticLegacyRecords: 2, syntheticPdfs: 1, repeatWithoutDuplicates: true,
     rollbackRowsAndFilesMatch: true, restoredIntoEmptyDatabase: true, restoredRowsAndFilesMatch: true,
-    reapplyAfterRestore: true, productionRequests: 0, externalNetworking: false,
+    reapplyAfterRestore: true, catalogHandoffAfterRestore: true, productionRequests: 0, externalNetworking: false,
     checkedAt: new Date().toISOString(), before, filesBefore};
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(result, null, 2));
   fs.writeFileSync(path.join(root, 'storage/codex-local/phase2-recovery-latest.json'), JSON.stringify({ok: true, output, checkedAt: result.checkedAt}, null, 2));

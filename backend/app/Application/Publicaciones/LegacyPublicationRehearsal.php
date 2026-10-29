@@ -57,6 +57,9 @@ class LegacyPublicationRehearsal
                 $table->string('decision_hash', 64);
                 $table->string('manifest_hash', 64);
                 $table->unsignedInteger('batch_size');
+                $table->uuid('categoria_id')->nullable();
+                $table->date('fecha_recepcion')->nullable();
+                $table->string('metadata_hash', 64);
                 $table->json('source_snapshot');
                 $table->json('decisions');
                 $table->json('file_manifest')->nullable();
@@ -64,7 +67,7 @@ class LegacyPublicationRehearsal
                 $table->unique(['source_table', 'source_id']);
             });
         }
-        if (! Schema::hasColumn(self::TABLE, 'manifest_hash')) {
+        if (! Schema::hasColumns(self::TABLE, ['manifest_hash', 'batch_size', 'categoria_id', 'fecha_recepcion', 'metadata_hash'])) {
             throw new LegacyRehearsalBlocked('Rehearsal schema version differs; use a fresh disposable database.');
         }
     }
@@ -164,6 +167,8 @@ class LegacyPublicationRehearsal
                         'decision_hash' => self::fingerprint($decision),
                         'manifest_hash' => $this->manifestHash($manifest),
                         'batch_size' => count($manifest['records']),
+                        ...self::catalogMetadata($source),
+                        'metadata_hash' => self::fingerprint(self::catalogMetadata($source)),
                         'source_snapshot' => json_encode($source, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                         'decisions' => json_encode($decision, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                         'file_manifest' => $file ? json_encode($file, JSON_THROW_ON_ERROR) : null, 'created_at' => now(),
@@ -323,8 +328,12 @@ class LegacyPublicationRehearsal
 
     private function verifyReceipt(object $receipt, string $batchId, array $decision, array $source): void
     {
+        $metadata = ['categoria_id' => $receipt->categoria_id,
+            'fecha_recepcion' => $receipt->fecha_recepcion ? substr((string) $receipt->fecha_recepcion, 0, 10) : null];
         if ($receipt->batch_id !== $batchId || $receipt->decision_hash !== self::fingerprint($decision)
             || $receipt->source_hash !== self::fingerprint($source)
+            || $receipt->metadata_hash !== self::fingerprint($metadata)
+            || $metadata !== self::catalogMetadata($source)
             || $receipt->source_hash !== self::fingerprint(json_decode($receipt->source_snapshot, true, 512, JSON_THROW_ON_ERROR))) {
             throw new LegacyRehearsalBlocked('Receipt or decisions differ from the original batch.');
         }
@@ -338,6 +347,12 @@ class LegacyPublicationRehearsal
             }
             $this->verifyFile($file['source'], $file['sha256']); $this->verifyFile($file['target'], $file['sha256']);
         }
+    }
+
+    private static function catalogMetadata(array $source): array
+    {
+        return ['categoria_id' => $source['categoria_id'] ?? null,
+            'fecha_recepcion' => filled($source['fecha_recepcion'] ?? null) ? substr((string) $source['fecha_recepcion'], 0, 10) : null];
     }
 
     private function lockRehearsal(): void

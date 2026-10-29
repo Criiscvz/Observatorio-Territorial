@@ -107,3 +107,7 @@ Verificación del cliente: **497 pruebas aprobadas en 54 archivos**, incluidas s
 ## Tercera entrega: mecánica de conversión y recuperación
 
 El [ensayo reversible de publicaciones antiguas](ENSAYO_MIGRACION_PUBLICACIONES_FASE2.md) documenta el ejecutor CLI desactivado por defecto, las decisiones trazables, la repetición sin duplicados, el bloqueo de conflictos y la recuperación desde respaldos en una base vacía. Se verificó con fuentes y archivos sintéticos separados de la aplicación local y de producción. No introduce migraciones automáticas ni habilita una conversión real; quedan pendientes la identidad de lectura al cortar fuentes, los campos sin equivalente y la transición de consumidores/escrituras.
+
+## Cuarta entrega: identidad y metadatos en el ensayo
+
+La [proyección de cambio de fuente del ensayo](ENSAYO_IDENTIDAD_PUBLICACIONES_FASE2.md) conserva categoría y fecha de recepción, y evita contar a la vez el origen y su copia convertida. Verifica conversiones parciales, filtros, páginas de 20, recursos de suscriptores y la no reaparición de orígenes archivados. También se comprueba tras restaurar respaldos. No se enlaza al catálogo desplegado: privacidad/eliminación lógica, compatibilidad de escrituras/detalles/fichas y el corte productivo siguen pendientes.

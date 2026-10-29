@@ -15,6 +15,16 @@ $action = $argv[1] ?? '';
 $disk = Illuminate\Support\Facades\Storage::disk('phase2-rehearsal');
 $db = Illuminate\Support\Facades\DB::class;
 
+function verifyCatalogHandoff(bool $converted): void
+{
+    $rows = app(App\Application\Publicaciones\RehearsalPublicationCatalog::class)->query()->get();
+    if ($rows->count() !== 2 || $rows->where('categoria_codigo', 'recovery')->count() !== 2
+        || $rows->where('tipo', 'ARTICULO')->first()->fecha_recepcion !== '2026-08-30'
+        || $rows->where('origen', 'publicaciones')->count() !== ($converted ? 2 : 0)) {
+        throw new RuntimeException('Synthetic catalog handoff did not preserve counts/category/received date.');
+    }
+}
+
 if ($action === 'seed') {
     if ($db::selectOne("SELECT count(*) AS n FROM information_schema.tables WHERE table_schema='public'")->n !== 0) {
         throw new RuntimeException('Fixture seeding requires an empty disposable database.');
@@ -22,16 +32,18 @@ if ($action === 'seed') {
     Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
     $service->prepare();
     $department = App\Models\Departamento::create(['nombre' => 'Synthetic recovery', 'codigo_interno' => 'RECOVERY', 'publico' => true]);
+    $category = (string) Illuminate\Support\Str::uuid();
+    $db::table('categorias_dataset')->insert(['id' => $category, 'nombre' => 'Synthetic recovery category', 'codigo' => 'recovery']);
     $owner = App\Models\User::withoutEvents(fn () => App\Models\User::factory()->create(['rol' => 'ADMIN', 'email' => 'recovery@example.test']));
     $article = App\Infrastructure\Persistence\Eloquent\Models\ArticuloModel::create([
         'titulo' => 'Synthetic article', 'descripcion' => 'Recovery fixture description', 'autor' => 'Synthetic author',
-        'fuente' => 'Synthetic source', 'departamento_id' => $department->id, 'estado' => 'PUBLICADO',
+        'fuente' => 'Synthetic source', 'departamento_id' => $department->id, 'categoria_id' => $category, 'estado' => 'PUBLICADO',
         'visibilidad' => 'suscriptor', 'fecha_publicacion' => '2026-09-01', 'fecha_recepcion' => '2026-08-30',
         'enlace' => 'https://example.test/reference',
     ]);
     $report = App\Infrastructure\Persistence\Eloquent\Models\ReporteModel::create([
         'nombre_indicador' => 'Synthetic report', 'descripcion_indicador' => 'Full indicator description', 'fuente' => 'Synthetic source',
-        'departamento_id' => $department->id, 'visibilidad' => 'publico', 'fecha_publicacion' => '2026-09-02',
+        'departamento_id' => $department->id, 'categoria_id' => $category, 'visibilidad' => 'publico', 'fecha_publicacion' => '2026-09-02',
         'link_url' => 'https://app.powerbi.com/view?r=synthetic', 'ficha_indicador' => '/api/reportes/fichas/recovery.pdf',
     ]);
     $pdf = "%PDF-1.4\nSynthetic recovery fixture\n%%EOF";
@@ -48,6 +60,7 @@ if ($action === 'seed') {
     }
     $plan = ['version' => 1, 'batch_id' => (string) Illuminate\Support\Str::uuid(), 'records' => $records];
     $disk->put('manifest.private.json', json_encode($plan, JSON_THROW_ON_ERROR));
+    verifyCatalogHandoff(false);
     echo json_encode(['seeded' => true, 'legacy_records' => 2, 'fixture_pdfs' => 1]);
 } else {
     $plan = json_decode($disk->get('manifest.private.json'), true, 512, JSON_THROW_ON_ERROR);
@@ -56,17 +69,21 @@ if ($action === 'seed') {
         if (! $before['ready']) { throw new RuntimeException('Fixture manifest unexpectedly blocked.'); }
         $first = $service->apply($plan); $repeat = $service->apply($plan);
         if ($first['imported'] !== 2 || $repeat['unchanged'] !== 2) { throw new RuntimeException('Idempotence failed.'); }
-        echo json_encode(['applied' => 2, 'repeat_unchanged' => 2]);
+        verifyCatalogHandoff(true);
+        echo json_encode(['applied' => 2, 'repeat_unchanged' => 2, 'catalog_handoff_verified' => true]);
     } elseif ($action === 'rollback') {
         $result = $service->rollback($plan['batch_id']);
         if ($result['removed'] !== 2 || ! $result['copied_files_removed']) { throw new RuntimeException('Rollback failed.'); }
+        verifyCatalogHandoff(false);
         echo json_encode(['removed' => 2, 'original_pdf_retained' => $disk->exists('public/fichas/recovery.pdf')]);
     } elseif ($action === 'verify-restored') {
         if ($db::table('articulos')->count() !== 1 || $db::table('reportes')->count() !== 1
             || $db::table('observatorio_publicaciones')->count() !== 0 || $db::table('phase2_publication_imports')->count() !== 0) {
             throw new RuntimeException('Restored source/target counts differ.');
         }
-        $service->apply($plan); $service->rollback($plan['batch_id']);
-        echo json_encode(['restored_fixture_verified' => true, 'reapply_after_restore' => true]);
+        verifyCatalogHandoff(false);
+        $service->apply($plan); verifyCatalogHandoff(true);
+        $service->rollback($plan['batch_id']); verifyCatalogHandoff(false);
+        echo json_encode(['restored_fixture_verified' => true, 'reapply_after_restore' => true, 'catalog_handoff_verified' => true]);
     } else { throw new RuntimeException('Unknown fixture action.'); }
 }
