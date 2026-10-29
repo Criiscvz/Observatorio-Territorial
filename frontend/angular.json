@@ -99,6 +99,18 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "rehearsal": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "serviceWorker": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.rehearsal.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -111,6 +123,9 @@
             },
             "development": {
               "buildTarget": "frontend:build:development"
+            },
+            "rehearsal": {
+              "buildTarget": "frontend:build:rehearsal"
             }
           },
           "defaultConfiguration": "development"

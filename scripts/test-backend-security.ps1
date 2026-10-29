@@ -2,6 +2,8 @@ param(
     [ValidateSet('all', 'sqlite', 'postgres')]
     [string]$Suite = 'all',
     [string]$PhpImage = 'observatorio-backend-atlas:test',
+    [ValidateSet('/atlas', '/app', '/var/www/html')]
+    [string]$PhpWorkdir = '/atlas',
     [string]$PostgresImage = 'postgres:16-alpine'
 )
 
@@ -11,7 +13,7 @@ $securityBackendPath = (Resolve-Path -LiteralPath (Join-Path $securityRepoPath '
 $securityLockHash = (Get-FileHash -LiteralPath (Join-Path $securityBackendPath 'composer.lock') -Algorithm SHA256).Hash.ToLowerInvariant()
 
 # Never build/pull, execute the deployment entrypoint, or mount .env / user data.
-$securityImageHash = & docker run --rm --pull never --network none --entrypoint sha256sum $PhpImage /atlas/composer.lock
+$securityImageHash = & docker run --rm --pull never --network none --entrypoint sha256sum $PhpImage "$PhpWorkdir/composer.lock"
 if ($LASTEXITCODE -ne 0 -or ($securityImageHash -split '\s+')[0] -ne $securityLockHash) {
     throw 'The existing test image must contain vendor dependencies matching backend/composer.lock.'
 }
@@ -21,17 +23,17 @@ function Invoke-IsolatedBackendTests {
 
     $securityDockerArgs = @(
         'run', '--rm', '--pull', 'never', '--network', $NetworkMode,
-        '--entrypoint', 'sh', '--workdir', '/atlas',
-        '--tmpfs', '/atlas/storage', '--tmpfs', '/atlas/bootstrap/cache'
+        '--entrypoint', 'sh', '--workdir', $PhpWorkdir,
+        '--tmpfs', "$PhpWorkdir/storage", '--tmpfs', "$PhpWorkdir/bootstrap/cache"
     )
     foreach ($securityEntry in $Environment) {
         $securityDockerArgs += @('-e', $securityEntry)
     }
     foreach ($securityFolder in @('app', 'bootstrap', 'config', 'database', 'resources', 'routes', 'tests')) {
-        $securityDockerArgs += @('--mount', "type=bind,source=$securityBackendPath/$securityFolder,target=/atlas/$securityFolder,readonly")
+        $securityDockerArgs += @('--mount', "type=bind,source=$securityBackendPath/$securityFolder,target=$PhpWorkdir/$securityFolder,readonly")
     }
     foreach ($securityFile in @('artisan', 'phpunit.xml', 'composer.json', 'composer.lock')) {
-        $securityDockerArgs += @('--mount', "type=bind,source=$securityBackendPath/$securityFile,target=/atlas/$securityFile,readonly")
+        $securityDockerArgs += @('--mount', "type=bind,source=$securityBackendPath/$securityFile,target=$PhpWorkdir/$securityFile,readonly")
     }
     $securityCommand = 'if test -f .env || test -f .env.testing; then echo "Refusing a test image containing an environment file"; exit 1; fi; mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache && php vendor/bin/phpunit --no-progress'
     if ($Filter) {
