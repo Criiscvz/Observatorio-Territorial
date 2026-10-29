@@ -12,6 +12,7 @@ La lectura de publicaciones en contexto de gestión ahora exige permisos vigente
 - Supervisor: el permiso `puede_revisar` controla el acceso al contenido pendiente o privado por gestión. Si se desactiva, quedan disponibles las publicaciones publicadas que le corresponden por lectura ordinaria; no puede eludir la restricción mediante `context=management`. El permiso independiente para agregar editores se conserva.
 - Un observatorio eliminado lógicamente, o una publicación ordinaria sin observatorio, no se convierte en una descarga global. Administración mantiene el acceso de recuperación. Atlas global conserva sus reglas de categoría/estado y Administración.
 - Las cuentas desactivadas ya no pueden continuar operando con cookies o tokens anteriores. Se devuelve 401 y se invalida la sesión de navegador presente. Las solicitudes públicas anónimas siguen funcionando.
+- Se verifica también que una cookie válida antes de cambiar la contraseña recibe 401 al reutilizarla después de la rotación. La comprobación usa el driver de cookies de producción y el middleware de Sanctum existente.
 - Se retira el registro temporal de usuario/rol/ruta de `CheckRole` y se elimina la escritura para todos (`777`) de storage/cache en el Dockerfile de desarrollo, usando `775`.
 
 No hay migración de datos ni cambios de diseño. Los fixtures se ajustaron al estado de cuenta activa y a la regla de que ser antiguo propietario de Atlas no concede gestión a un Editor.
@@ -39,7 +40,7 @@ Guarda metadatos en `storage/codex-local/phase1/secret-history-metadata.json` y 
 | Control | Resultado |
 |---|---|
 | Nuevas regresiones antes de corregir | Reprodujeron acceso tras revocación, bypass sin revisión, descarga con padre eliminado y sesión/token de cuenta inactiva. |
-| Backend SQLite | 278 casos, 2.254 aserciones; 8 omisiones que requieren PostgreSQL. |
+| Backend SQLite | 279 casos, 2.258 aserciones; 8 omisiones que requieren PostgreSQL. |
 | PostgreSQL/JSONB/aislamiento | 77 pruebas y 183 aserciones aprobadas. Hay solapamiento con la suite general; no sumar como casos únicos. |
 | Frontend | 494 pruebas aprobadas en 53 archivos. |
 | Escáner/higiene/workflow | 35 pruebas aprobadas, incluidos canarios históricos y candidatos eliminados de documentación. |
