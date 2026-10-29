@@ -6,13 +6,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, combineLatest, forkJoin, map, of, startWith, Subject, switchMap, tap } from 'rxjs';
+import { catchError, combineLatest, of, startWith, Subject, switchMap, tap } from 'rxjs';
 import { Departamento } from '@core/models';
 import { DepartamentoService } from '@core/services/departamento.service';
-import { ArticulosService } from '@core/services/articulos.service';
-import { ReportesService } from '@core/services/reportes.service';
+import { PublicCatalogService } from '@core/services/public-catalog.service';
+import { CatalogPage } from '@core/models/publicacion/public-catalog.interface';
 import { AuthService } from '@core/services/auth.service';
-import { PublicacionService } from '@core/services/publicacion.service';
 import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
 import { hasPublicPdf, PublicLibraryPublication, PublicLibraryType, toPublicLibraryItem } from '../components/public-library-publication';
 import { PublicPublicationDetailsComponent } from '../components/public-publication-details.component';
@@ -28,23 +27,25 @@ export class PublicDepartamentoDetailComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly route = inject(ActivatedRoute);
   private readonly departments = inject(DepartamentoService);
-  private readonly articles = inject(ArticulosService);
-  private readonly reports = inject(ReportesService);
+  private readonly catalog = inject(PublicCatalogService);
   private readonly auth = inject(AuthService);
-  private readonly publications = inject(PublicacionService);
   private readonly viewer = inject(PublicationViewerService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly reload = new Subject<void>();
+  private readonly retryDepartment = new Subject<void>();
   readonly departamento = signal<Departamento | null>(null);
   readonly items = signal<PublicLibraryPublication[]>([]);
   readonly loading = signal(true);
+  readonly resultsLoading = signal(false);
   readonly loadError = signal(false);
   readonly publicationErrors = signal<string[]>([]);
   readonly type = signal<PublicLibraryType>('ARTICULO');
   readonly query = signal('');
   readonly page = signal(0);
   readonly pageSize = 20;
+  readonly total = signal(0);
+  readonly counts = signal({ARTICULO: 0, REPORTE: 0, LIBRO: 0});
   readonly hasPdf = hasPublicPdf;
   readonly types: {value: PublicLibraryType; label: string; singular: string; icon: string}[] = [
     {value: 'ARTICULO', label: 'Artículos', singular: 'artículo', icon: 'article'},
@@ -52,57 +53,64 @@ export class PublicDepartamentoDetailComponent implements OnInit {
     {value: 'LIBRO', label: 'Libros', singular: 'libro', icon: 'menu_book'},
   ];
   readonly typeLabel = computed(() => this.types.find(t => t.value === this.type())!);
-  readonly filtered = computed(() => {
-    const query = this.normalize(this.query());
-    return this.items().filter(item => item.type === this.type()).filter(item => !query || this.normalize([item.title, item.code, item.authors, item.source].join(' ')).includes(query));
-  });
-  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize)));
+  readonly filtered = computed(() => this.items());
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize)));
   readonly currentPage = computed(() => Math.min(this.page(), this.pageCount() - 1));
-  readonly visible = computed(() => this.filtered().slice(this.currentPage() * this.pageSize, (this.currentPage() + 1) * this.pageSize));
-  readonly rangeStart = computed(() => this.filtered().length ? this.currentPage() * this.pageSize + 1 : 0);
-  readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.filtered().length));
+  readonly visible = computed(() => this.items());
+  readonly rangeStart = computed(() => this.total() ? this.currentPage() * this.pageSize + 1 : 0);
+  readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.total()));
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) { this.loading.set(false); return; }
-    combineLatest([this.route.params, this.reload.pipe(startWith(undefined))]).pipe(
+    combineLatest([this.route.params, this.retryDepartment.pipe(startWith(undefined))]).pipe(
       switchMap(([params]) => {
         const id = params['id'];
         this.loading.set(true); this.loadError.set(false); this.publicationErrors.set([]);
         this.departamento.set(null); this.items.set([]); this.query.set(''); this.page.set(0);
+        this.total.set(0); this.counts.set({ARTICULO: 0, REPORTE: 0, LIBRO: 0}); this.type.set('ARTICULO');
         if (!id) return of(null);
-        const fail = (name: string) => { this.publicationErrors.update(errors => [...errors, name]); return of([]); };
+        let initial = true;
         return this.departments.getPublicById(id).pipe(
-          tap(department => this.departamento.set(department)),
-          switchMap(() => forkJoin({
-            articles: this.articles.getAll(id).pipe(catchError(() => fail('artículos'))),
-            reports: this.reports.getAll(id).pipe(catchError(() => fail('reportes'))),
-            books: this.publications.getPublicAtlasByDepartamento(id).pipe(catchError(() => fail('libros'))),
-          })),
-          map(data => {
-            const role = String(this.auth.user()?.rol || '').toUpperCase();
-            const subscriber = this.auth.isAuthenticated() && ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
-            return [
-              ...data.articles.filter(item => item.departamento_id === id).map(item => toPublicLibraryItem(item, 'ARTICULO', subscriber)),
-              ...data.reports.filter(item => item.departamento_id === id).map(item => toPublicLibraryItem(item, 'REPORTE', subscriber)),
-              ...data.books.filter(item => item.departamento_id === id && item.tipo === 'LIBRO').map(item => toPublicLibraryItem(item, 'LIBRO', subscriber)),
-            ].sort((a, b) => (b.date || '').localeCompare(a.date || '') || a.title.localeCompare(b.title, 'es'));
-          }),
+          tap(department => { this.departamento.set(department); this.loading.set(false); }),
+          switchMap(() => this.reload.pipe(startWith(undefined), switchMap(() => {
+            this.resultsLoading.set(true); this.items.set([]); this.publicationErrors.set([]);
+            return this.catalog.getPage(id, this.type(), this.page() + 1, this.query()).pipe(
+              switchMap(result => {
+                const choose = initial; initial = false;
+                const first = this.types.find(t => result.counts[t.value] > 0)?.value;
+                if (choose && !result.counts[this.type()] && first) {
+                  this.type.set(first);
+                  return this.catalog.getPage(id, first, 1, '');
+                }
+                if (this.page() + 1 > result.meta.last_page) {
+                  this.page.set(Math.max(0, result.meta.last_page - 1));
+                  return this.catalog.getPage(id, this.type(), this.page() + 1, this.query());
+                }
+                return of(result);
+              }),
+              catchError(() => { this.publicationErrors.set(['publicaciones']); this.total.set(0); return of(null); }),
+            );
+          }))),
           catchError(() => { this.loadError.set(true); this.departamento.set(null); return of(null); }),
         );
       }),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(items => {
-      this.items.set(items || []);
-      this.type.set(this.types.find(type => this.count(type.value))?.value || 'ARTICULO');
-      this.loading.set(false);
+    ).subscribe((result: CatalogPage | null) => {
+      if (result) {
+        this.total.set(result.meta.total); this.counts.set(result.counts);
+        const role = String(this.auth.user()?.rol || '').toUpperCase();
+        const subscriber = this.auth.isAuthenticated() && ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'].includes(role);
+        this.items.set(result.data.map(item => toPublicLibraryItem(item, item.tipo, subscriber)));
+      }
+      this.loading.set(false); this.resultsLoading.set(false);
     });
   }
 
-  retry(): void { this.reload.next(); }
-  count(type: PublicLibraryType): number { return this.items().filter(item => item.type === type).length; }
-  selectType(type: PublicLibraryType): void { this.type.set(type); this.query.set(''); this.page.set(0); }
-  search(value: string): void { this.query.set(value); this.page.set(0); }
-  changePage(delta: number): void { this.page.set(Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1))); }
+  retry(): void { if (this.departamento()) this.reload.next(); else this.retryDepartment.next(); }
+  count(type: PublicLibraryType): number { return this.counts()[type]; }
+  selectType(type: PublicLibraryType): void { this.type.set(type); this.query.set(''); this.page.set(0); this.reload.next(); }
+  search(value: string): void { this.query.set(value); this.page.set(0); this.reload.next(); }
+  changePage(delta: number): void { this.page.set(Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1))); this.reload.next(); }
   icon(item: PublicLibraryPublication): string { return this.types.find(type => type.value === item.type)!.icon; }
   readLabel(item: PublicLibraryPublication): string {
     if (item.locked) return 'Suscribirse';
@@ -132,5 +140,4 @@ export class PublicDepartamentoDetailComponent implements OnInit {
       data: {title: 'Contenido exclusivo para suscriptores', message: 'Inicia sesión con una cuenta suscriptora para consultar esta publicación.', icon: 'lock', closeText: 'Entendido'},
     });
   }
-  private normalize(value: string): string { return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim(); }
 }

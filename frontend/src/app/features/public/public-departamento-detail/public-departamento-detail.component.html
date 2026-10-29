@@ -10,9 +10,11 @@
       <div class="library-tabs" role="tablist" aria-label="Tipo de publicación">
         @for (tab of types; track tab.value) {<button role="tab" [id]="'public-tab-' + tab.value" aria-controls="public-library-results" [attr.aria-selected]="type() === tab.value" (click)="selectType(tab.value)"><mat-icon aria-hidden="true">{{ tab.icon }}</mat-icon>{{ tab.label }}<span>{{ count(tab.value) }}</span></button>}
       </div>
-      <div class="library-tools"><label class="public-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" aria-label="Buscar publicaciones" placeholder="Buscar por título, autor o fuente…" [value]="query()" (input)="search($any($event.target).value)"></label><span class="result-count" aria-live="polite">{{ filtered().length }} {{ filtered().length === 1 ? typeLabel().singular : typeLabel().label.toLocaleLowerCase('es') }}</span></div>
+      <div class="library-tools"><label class="public-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" aria-label="Buscar publicaciones" placeholder="Buscar por título, autor o fuente…" [value]="query()" (input)="search($any($event.target).value)"></label><span class="result-count" aria-live="polite">{{ total() }} {{ total() === 1 ? typeLabel().singular : typeLabel().label.toLocaleLowerCase('es') }}</span></div>
       <div id="public-library-results" role="tabpanel" [attr.aria-labelledby]="'public-tab-' + type()">
-        @if (visible().length) {
+        @if (resultsLoading()) {
+          <div class="library-empty" role="status"><mat-spinner diameter="28"/><p>Cargando publicaciones…</p></div>
+        } @else if (visible().length) {
           <div class="library-columns" aria-hidden="true"><span>Publicación</span><span>Fecha</span><span>Recursos disponibles</span><span>Consultar</span></div>
           @for (item of visible(); track item.id) {
             <article class="public-library-row">
@@ -31,7 +33,7 @@
           <div class="library-empty"><mat-icon>{{ query() ? 'search_off' : 'library_books' }}</mat-icon><h3>{{ query() ? 'No se encontraron publicaciones' : 'Aún no hay ' + typeLabel().label.toLocaleLowerCase('es') + ' publicados' }}</h3><p>{{ query() ? 'Prueba con otro título, autor o fuente.' : 'Puedes consultar las otras secciones de la biblioteca.' }}</p>@if (query()) {<button class="public-button" (click)="search('')">Limpiar búsqueda</button>}</div>
         }
       </div>
-      <nav class="public-pagination" aria-label="Paginación de publicaciones"><span>{{ rangeStart() }}–{{ rangeEnd() }} de {{ filtered().length }} · 20 por página</span><div><button class="page-button" aria-label="Página anterior" [disabled]="currentPage() === 0" (click)="changePage(-1)"><mat-icon>chevron_left</mat-icon></button><span class="page-index" aria-live="polite">{{ currentPage() + 1 }} / {{ pageCount() }}</span><button class="page-button" aria-label="Página siguiente" [disabled]="currentPage() + 1 >= pageCount()" (click)="changePage(1)"><mat-icon>chevron_right</mat-icon></button></div></nav>
+      <nav class="public-pagination" aria-label="Paginación de publicaciones"><span>{{ rangeStart() }}–{{ rangeEnd() }} de {{ total() }} · 20 por página</span><div><button class="page-button" aria-label="Página anterior" [disabled]="resultsLoading() || currentPage() === 0" (click)="changePage(-1)"><mat-icon>chevron_left</mat-icon></button><span class="page-index" aria-live="polite">{{ currentPage() + 1 }} / {{ pageCount() }}</span><button class="page-button" aria-label="Página siguiente" [disabled]="resultsLoading() || currentPage() + 1 >= pageCount()" (click)="changePage(1)"><mat-icon>chevron_right</mat-icon></button></div></nav>
     </section>
   } @else {
     <div class="library-empty" role="alert"><mat-icon>info_outline</mat-icon><h1>{{ loadError() ? 'No se pudo cargar el observatorio' : 'Observatorio no disponible' }}</h1><p>Comprueba la conexión o vuelve al directorio de observatorios.</p><div><button class="public-button" (click)="retry()">Reintentar</button> <a class="public-button" routerLink="/publico/departamentos">Volver a observatorios</a></div></div>
