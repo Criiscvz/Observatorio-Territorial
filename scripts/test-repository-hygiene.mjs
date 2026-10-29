@@ -98,7 +98,7 @@ test('the environment template contains no literal credentials', async () => {
   const example = await readFile(resolve(root, 'backend/.env.example'), 'utf8');
   const values = new Map(example.split(/\r?\n/).map(line => line.match(/^([A-Z][A-Z0-9_]*)=(.*)$/))
     .filter(Boolean).map(match => [match[1], match[2].trim()]));
-  const keys = ['APP_KEY', 'DATABASE_URL', 'DB_PASSWORD', 'MONGODB_URI',
+  const keys = ['APP_KEY', 'DATABASE_URL', 'DB_PASSWORD', 'MONGODB_URI', 'MONGODB_ROOT_PASSWORD',
     'REDIS_PASSWORD', 'MAIL_PASSWORD', 'GOOGLE_CLIENT_SECRET', 'AWS_ACCESS_KEY_ID',
     'AWS_SECRET_ACCESS_KEY', 'ADMIN_PASSWORD', 'INITIAL_USER_PASSWORD',
     'SUBSCRIBER_PASSWORD', 'MICROSOFT_CLIENT_SECRET'];
