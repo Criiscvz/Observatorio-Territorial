@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const source = await readFile(new URL('../.github/workflows/security.yml', import.meta.url), 'utf8');
+const source = (await readFile(new URL('../.github/workflows/security.yml', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 const config = await readFile(new URL('../.gitleaks.toml', import.meta.url), 'utf8');
 const installer = await readFile(new URL('./install-gitleaks.mjs', import.meta.url), 'utf8');
 const scanner = await readFile(new URL('./scan-secrets.mjs', import.meta.url), 'utf8');
@@ -11,7 +11,7 @@ const backendDocker = await readFile(new URL('../backend/Dockerfile', import.met
 const backendDevDocker = await readFile(new URL('../backend/Dockerfile.dev', import.meta.url), 'utf8');
 
 test('CI uses normal pull requests and selected branch pushes, not privileged PR events', () => {
-  assert.match(source, /^on:\n  pull_request:\n  push:\n    branches: \[main, deploy-gratis\]/m);
+  assert.match(source, /^on:\n  pull_request:\n  push:\n    branches: \[main, deploy-gratis, pruebas-rediseno\]/m);
   assert(!/pull_request_target|workflow_run|paths-ignore|continue-on-error/.test(source));
   assert.match(source, /cancel-in-progress: true/);
 });

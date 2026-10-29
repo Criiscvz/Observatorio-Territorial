@@ -87,12 +87,13 @@ describe('Administrador de observatorio: permisos y formularios', () => {
     const fixture=TestBed.createComponent(PublicationDestinationComponent);fixture.detectChanges();
     const component=fixture.componentInstance;
     expect(component.observatories().map(d=>d.id)).toEqual(['salud']);expect(component.form.controls.departamento.value).toBe('salud');
-    component.openForm();component.publicationForm.patchValue({titulo:'Reporte',fecha_publicacion:'2026-10-27',link_url:'https://app.powerbi.com/view?r=test',estado:'ARCHIVADO'});
+    component.openForm();component.publicationForm.patchValue({titulo:'Reporte',fecha_publicacion:'2026-10-27',link_url:'https://app.powerbi.com/view?r=test',estado:'ARCHIVADO',observacion_revision:'Archivo solicitado por el observatorio'});
     component.goToStep(2);fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('select[formControlName=estado]')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.sharepoint-action')).toBeNull();
     component.submit();expect(create).toHaveBeenCalledOnce();
     expect((create.mock.calls[0] as any)[1].get('estado')).toBe('ARCHIVADO');
+    expect((create.mock.calls[0] as any)[1].get('observacion_revision')).toBe('Archivo solicitado por el observatorio');
   });
 
   it('el menú incluye Usuarios y Permisos y excluye administración global, Atlas y Barómetro',()=>{

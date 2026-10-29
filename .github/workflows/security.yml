@@ -3,7 +3,7 @@ name: CI seguridad
 on:
   pull_request:
   push:
-    branches: [main, deploy-gratis]
+    branches: [main, deploy-gratis, pruebas-rediseno]
   workflow_dispatch:
 
 # PR code never receives deployment secrets, write tokens or OIDC credentials.
