@@ -37,7 +37,8 @@ class LegacyPublicationRehearsal
     public function prepare(): void
     {
         $this->assertDisposable();
-        if (! Schema::hasColumns('observatorio_publicaciones', ['visibilidad_legada', 'eliminado_legado_at'])) {
+        if (! Schema::hasColumns('observatorio_publicaciones', ['visibilidad_legada', 'eliminado_legado_at'])
+            || ! Schema::hasTable('publication_origins')) {
             throw new LegacyRehearsalBlocked('Apply the preservation schema to the disposable database before rehearsal.');
         }
         // The old nullable-file migration only handled PostgreSQL. Match that
@@ -63,6 +64,7 @@ class LegacyPublicationRehearsal
                 $table->uuid('categoria_id')->nullable();
                 $table->date('fecha_recepcion')->nullable();
                 $table->string('metadata_hash', 64);
+                $table->string('origin_hash', 64);
                 $table->json('source_snapshot');
                 $table->json('decisions');
                 $table->json('file_manifest')->nullable();
@@ -70,7 +72,7 @@ class LegacyPublicationRehearsal
                 $table->unique(['source_table', 'source_id']);
             });
         }
-        if (! Schema::hasColumns(self::TABLE, ['manifest_hash', 'batch_size', 'categoria_id', 'fecha_recepcion', 'metadata_hash'])) {
+        if (! Schema::hasColumns(self::TABLE, ['manifest_hash', 'batch_size', 'categoria_id', 'fecha_recepcion', 'metadata_hash', 'origin_hash'])) {
             throw new LegacyRehearsalBlocked('Rehearsal schema version differs; use a fresh disposable database.');
         }
     }
@@ -162,6 +164,14 @@ class LegacyPublicationRehearsal
                         $target['nombre_archivo_original'] = basename($file['source']);
                     }
                     (new ObservatorioPublicacion())->forceFill($target)->saveOrFail();
+                    $originId = (string) Str::uuid();
+                    DB::table('publication_origins')->insert([
+                        'id' => $originId, 'source_table' => $decision['source'], 'source_id' => $decision['id'],
+                        'target_id' => $target['id'], ...self::catalogMetadata($source),
+                        'legacy_file_name' => $decision['source'] === 'reportes' && $file ? basename($file['source']) : null,
+                        'created_at' => now(), 'updated_at' => now(),
+                    ]);
+                    $origin = (array) DB::table('publication_origins')->where('id', $originId)->first();
                     $stored = (array) DB::table('observatorio_publicaciones')->where('id', $target['id'])->first();
                     DB::table(self::TABLE)->insert([
                         'id' => (string) Str::uuid(), 'batch_id' => $manifest['batch_id'],
@@ -172,6 +182,7 @@ class LegacyPublicationRehearsal
                         'batch_size' => count($manifest['records']),
                         ...self::catalogMetadata($source),
                         'metadata_hash' => self::fingerprint(self::catalogMetadata($source)),
+                        'origin_hash' => self::fingerprint($origin),
                         'source_snapshot' => json_encode($source, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                         'decisions' => json_encode($decision, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                         'file_manifest' => $file ? json_encode($file, JSON_THROW_ON_ERROR) : null, 'created_at' => now(),
@@ -205,6 +216,7 @@ class LegacyPublicationRehearsal
             foreach ($receipts as $receipt) {
                 $file = $receipt->file_manifest ? json_decode($receipt->file_manifest, true, 512, JSON_THROW_ON_ERROR) : null;
                 DB::table(self::TABLE)->where('id', $receipt->id)->delete();
+                DB::table('publication_origins')->where('target_id', $receipt->target_id)->delete();
                 DB::table('observatorio_publicaciones')->where('id', $receipt->target_id)->delete();
                 if ($file) { $files[] = $file['target']; }
             }
@@ -278,6 +290,9 @@ class LegacyPublicationRehearsal
         $type = $article ? 'ARTICULO' : 'REPORTE';
         if (! str_starts_with($d['codigo'], $article ? 'ART-MIG-' : 'REP-MIG-')) { throw new LegacyRehearsalBlocked('An explicit migration code with the correct type prefix is required.'); }
         if (DB::table('observatorio_publicaciones')->where('id', $d['target_id'])->orWhere('codigo', $d['codigo'])->exists()) { throw new LegacyRehearsalBlocked('Target ID or code collision requires an explicit resolution.'); }
+        if (DB::table('publication_origins')->where('source_table', $d['source'])->where('source_id', $d['id'])->exists()) {
+            throw new LegacyRehearsalBlocked('Source already has a permanent destination; reconcile its existing map.');
+        }
         $owner = DB::table('users')->where('id', $d['owner_id'])->whereNull('deleted_at')->where('is_active', true)->first();
         if (! $owner || ! in_array($owner->rol, ['ADMIN', 'ADMIN_OBSERVATORIO', 'EDITOR'], true)) { throw new LegacyRehearsalBlocked('Explicit active authoring-account mapping required.'); }
         $department = $source['departamento_id'] ?: ($d['departamento_id'] ?? null);
@@ -338,6 +353,11 @@ class LegacyPublicationRehearsal
 
     private function verifyReceipt(object $receipt, string $batchId, array $decision, array $source): void
     {
+        $origin = DB::table('publication_origins')->where('source_table', $decision['source'])
+            ->where('source_id', $decision['id'])->first();
+        if (! $origin || $origin->target_id !== $receipt->target_id || $receipt->origin_hash !== self::fingerprint((array) $origin)) {
+            throw new LegacyRehearsalBlocked('Permanent origin changed; refuse destructive recovery.');
+        }
         $metadata = ['categoria_id' => $receipt->categoria_id,
             'fecha_recepcion' => $receipt->fecha_recepcion ? substr((string) $receipt->fecha_recepcion, 0, 10) : null];
         if ($receipt->batch_id !== $batchId || $receipt->decision_hash !== self::fingerprint($decision)

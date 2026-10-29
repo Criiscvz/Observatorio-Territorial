@@ -22,7 +22,7 @@ function sql(database, statement) {
   return docker(['exec', databaseId, 'psql', '-X', '-qAt', '-U', 'recovery_test', '-d', database, '-v', 'ON_ERROR_STOP=1', '-c', statement]);
 }
 function manifest(database) {
-  const tables = ['articulos', 'reportes', 'observatorio_publicaciones', 'phase2_publication_imports',
+  const tables = ['articulos', 'reportes', 'observatorio_publicaciones', 'publication_origins', 'phase2_publication_imports',
     'publicacion_contadores', 'users', 'departamentos', 'categorias_dataset', 'migrations'];
   const entries = tables.map(t => `'${t}', (SELECT jsonb_build_object('rows',count(*),'hash',md5(coalesce(string_agg(md5(to_jsonb(r)::text),'' ORDER BY md5(to_jsonb(r)::text)),''))) FROM ${t} r)`);
   return JSON.parse(sql(database, `SELECT jsonb_build_object(${entries.join(',')})::text;`));
@@ -95,6 +95,10 @@ try {
   assert.deepEqual(fileManifest(sourceFiles), filesBefore, 'Rollback changed the original files.');
   // Leave the first DB imported; recovery must use the pre-import backup into a NEW DB.
   assert.equal(php(dbName, storage, 'apply').applied, 4);
+  const adapters = php(dbName, storage, 'verify-adapters');
+  assert.equal(adapters.adapters_verified, true);
+  assert.equal(adapters.source_rows_unchanged, true);
+  assert.equal(adapters.edited_target_rollback_blocked, true);
   docker(['exec', databaseId, 'createdb', '-U', 'recovery_test', restoredDb]);
   docker(['exec', databaseId, 'pg_restore', '-U', 'recovery_test', '-d', restoredDb, '--exit-on-error', '--no-owner', '--no-privileges', '/tmp/before.dump']);
   assert.deepEqual(manifest(restoredDb), before, 'Restored rows differ from pre-import backup.');
@@ -109,7 +113,8 @@ try {
   assert.deepEqual(manifest(restoredDb), before); assert.deepEqual(fileManifest(restoredFiles), filesBefore);
   const result = {ok: true, syntheticLegacyRecords: 4, syntheticPdfs: 1, repeatWithoutDuplicates: true,
     rollbackRowsAndFilesMatch: true, restoredIntoEmptyDatabase: true, restoredRowsAndFilesMatch: true,
-    reapplyAfterRestore: true, catalogHandoffAfterRestore: true, privateAndDeletedPreserved: true, productionRequests: 0, externalNetworking: false,
+    reapplyAfterRestore: true, catalogHandoffAfterRestore: true, privateAndDeletedPreserved: true,
+    oldAndNewFormsSingleDestination: true, editedTargetRollbackBlocked: true, productionRequests: 0, externalNetworking: false,
     checkedAt: new Date().toISOString(), before, filesBefore};
   fs.writeFileSync(path.join(output, 'results.json'), JSON.stringify(result, null, 2));
   fs.writeFileSync(path.join(root, 'storage/codex-local/phase2-recovery-latest.json'), JSON.stringify({ok: true, output, checkedAt: result.checkedAt}, null, 2));

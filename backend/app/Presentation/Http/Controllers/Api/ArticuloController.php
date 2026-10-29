@@ -49,6 +49,9 @@ class ArticuloController extends Controller
     )]
     public function show(Request $request, string $id): JsonResponse
     {
+        if ($response = app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->show($request, 'articulos', $id)) {
+            return $response;
+        }
         $articulo = ArticuloModel::with(['categoria', 'departamento'])->find($id);
 
         if (!$articulo) {
@@ -97,39 +100,7 @@ class ArticuloController extends Controller
     )]
     public function store(Request $request): JsonResponse
     {
-        $input = $request->all();
-
-        $validator = Validator::make($input, [
-            'titulo' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'autor' => 'nullable|string|max:255',
-            'fuente' => 'nullable|string|max:255',
-            'estado' => 'nullable|string',
-            'enlace' => 'nullable|string',
-            'visibilidad' => 'sometimes|string|in:publico,suscriptor,privado',
-            'fecha_publicacion' => 'nullable|date',
-            'fecha_recepcion' => 'nullable|date',
-            'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
-            'departamento_id' => 'nullable|uuid|exists:departamentos,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Datos de validación inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $data = $validator->validated();
-        $this->resourceAuthorizer->ensureCanManageDepartamento(
-            $request->user(),
-            $data['departamento_id'] ?? null,
-        );
-
-        $articulo = ArticuloModel::create($data);
-        $articulo->load(['categoria', 'departamento']);
-
-        return response()->json($articulo, 201);
+        return app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->create($request, 'articulos');
     }
 
     #[OA\Put(
@@ -164,6 +135,12 @@ class ArticuloController extends Controller
         ]
     )]
     public function update(Request $request, string $id): JsonResponse
+    {
+        return app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->write(
+            $request, 'articulos', $id, fn () => $this->updateLegacy($request, $id));
+    }
+
+    private function updateLegacy(Request $request, string $id): JsonResponse
     {
         $articulo = ArticuloModel::find($id);
 
@@ -221,6 +198,12 @@ class ArticuloController extends Controller
         ]
     )]
     public function destroy(Request $request, string $id): JsonResponse
+    {
+        return app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->write(
+            $request, 'articulos', $id, fn () => $this->destroyLegacy($request, $id), delete: true);
+    }
+
+    private function destroyLegacy(Request $request, string $id): JsonResponse
     {
         $articulo = ArticuloModel::find($id);
 

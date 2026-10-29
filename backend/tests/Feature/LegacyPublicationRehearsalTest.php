@@ -276,8 +276,8 @@ class LegacyPublicationRehearsalTest extends TestCase
         $catalog = app(RehearsalPublicationCatalog::class);
         $this->assertSame(2, $catalog->query(['categoria_id' => $category])->count());
         $this->service->apply($plan);
-        // The production read model remains unchanged until a later, explicit cutover.
-        $this->assertSame(4, app(PublicPublicationCatalog::class)->query()->count());
+        // The permanent map is shared by the runtime catalog and rehearsal.
+        $this->assertSame(2, app(PublicPublicationCatalog::class)->query()->count());
         $this->app->bind(PublicPublicationCatalog::class, RehearsalPublicationCatalog::class);
         $response = $this->getJson('/api/publico/publicaciones?categoria_id='.$category)->assertOk()
             ->assertJsonPath('meta.total', 2)->assertJsonPath('counts.ARTICULO', 1)->assertJsonPath('counts.REPORTE', 1);

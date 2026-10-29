@@ -370,7 +370,8 @@ class ObservatorioPublicacionController extends Controller
             throw $exception;
         }
 
-        if ($newPath && $oldPath && $oldPath !== $newPath) {
+        if ($newPath && $oldPath && $oldPath !== $newPath
+            && ! \App\Application\Publicaciones\PublicationOrigins::hasTarget($publicacion->id)) {
             Storage::disk(config('filesystems.default'))->delete($oldPath);
         }
 
@@ -475,6 +476,10 @@ class ObservatorioPublicacionController extends Controller
         DB::transaction(function () use ($request, $publicacion) {
             $publicacion = ObservatorioPublicacion::whereKey($publicacion->id)->lockForUpdate()->firstOrFail();
             $this->ensureNotRejectedForEditor($request, $publicacion);
+            if (\App\Application\Publicaciones\PublicationOrigins::hasTarget($publicacion->id)) {
+                $publicacion->forceFill(['eliminado_legado_at' => now()])->saveOrFail();
+                return;
+            }
             $filePath = $publicacion->archivo_pdf;
             if ($filePath) {
                 $disk = Storage::disk(config('filesystems.default'));
