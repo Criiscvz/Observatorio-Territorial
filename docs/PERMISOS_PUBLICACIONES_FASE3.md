@@ -1,8 +1,10 @@
 # Fase 3: política de publicaciones y capacidades
 
-Entregas de permisos y flujo de revisión de la fase 3. La fase continúa abierta: no incluye todavía la
-extracción de importaciones SharePoint, archivos o coordinación de formularios,
-ni una política de asignación de editores. Barómetro conserva su contrato.
+Entregas de permisos y flujo de revisión de la fase 3. La extracción posterior
+de archivos e importación SharePoint se documenta en
+[ARCHIVOS_SHAREPOINT_FASE3.md](ARCHIVOS_SHAREPOINT_FASE3.md). La fase continúa
+abierta: falta coordinación de formularios y política de asignación de editores.
+Barómetro conserva su contrato.
 
 ## Autoridad y alcance
 

@@ -10,7 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
+use App\Infrastructure\Services\PublicationPdfStorage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -18,7 +18,7 @@ use Throwable;
 /** Routes old identities to their single destination. Never creates a conversion. */
 final class LegacyPublicationBridge
 {
-    public function __construct(private readonly PublicationReviewWorkflow $reviewWorkflow) {}
+    public function __construct(private readonly PublicationReviewWorkflow $reviewWorkflow, private readonly PublicationPdfStorage $pdfStorage) {}
 
     public function resolve(string $source, string $id, bool $lock = false): ?array
     {
@@ -106,8 +106,7 @@ final class LegacyPublicationBridge
                 $file = $request->file('ficha');
                 if ($file) {
                     abort_if($article, 422);
-                    $newPath = 'publicaciones/compatibilidad/'.$id.'/'.Str::uuid().'.pdf';
-                    abort_unless(Storage::disk(config('filesystems.default'))->putFileAs(dirname($newPath), $file, basename($newPath)) === $newPath, 503);
+                    $newPath = $this->pdfStorage->storeUploaded($file, 'publicaciones/compatibilidad/'.$id);
                 }
                 $p = (new ObservatorioPublicacion())->forceFill([
                     'id' => $id, 'tipo' => $type, 'codigo' => ($article ? 'ART-' : 'REP-').str_pad((string) $counter->siguiente_numero, 4, '0', STR_PAD_LEFT),
@@ -129,7 +128,7 @@ final class LegacyPublicationBridge
                     'origin' => DB::table('publication_origins')->where('id', $originId)->first()]), 201);
             });
         } catch (Throwable $e) {
-            if ($newPath) { Storage::disk(config('filesystems.default'))->delete($newPath); }
+            if ($newPath) { $this->pdfStorage->discard($newPath); }
             throw $e;
         }
     }
@@ -211,9 +210,7 @@ final class LegacyPublicationBridge
                 if ($request->hasFile('ficha')) {
                     abort_unless(! $article, 422);
                     $file = $request->file('ficha');
-                    $newPath = 'publicaciones/compatibilidad/'.$p->id.'/'.Str::uuid().'.pdf';
-                    $stored = Storage::disk(config('filesystems.default'))->putFileAs(dirname($newPath), $file, basename($newPath));
-                    abort_unless(is_string($stored) && $stored === $newPath, 503, 'No se pudo guardar el PDF.');
+                    $newPath = $this->pdfStorage->storeUploaded($file, 'publicaciones/compatibilidad/'.$p->id);
                     $updates += ['archivo_pdf' => $newPath, 'nombre_archivo_original' => $file->getClientOriginalName(),
                         'sharepoint_url' => null, 'sharepoint_file_id' => null];
                 }
@@ -228,7 +225,7 @@ final class LegacyPublicationBridge
                 return response()->json($this->row($request, $source, $resolved))->header('Cache-Control', 'private, no-store');
             });
         } catch (Throwable $e) {
-            if ($newPath) { Storage::disk(config('filesystems.default'))->delete($newPath); }
+            if ($newPath) { $this->pdfStorage->discard($newPath); }
             throw $e;
         }
     }

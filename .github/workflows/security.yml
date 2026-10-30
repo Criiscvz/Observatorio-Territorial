@@ -119,7 +119,7 @@ jobs:
           TEST_DB_DATABASE: observatorio_ci_test
           TEST_DB_USERNAME: ci_test
           TEST_DB_PASSWORD: synthetic-disposable-ci-only
-        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest'
+        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest|SharePointPublicationImporterTest|PublicationPdfStorageTest|SharePointArticleImportTest|PublicationPdfReaderTest'
 
   frontend:
     name: Frontend
