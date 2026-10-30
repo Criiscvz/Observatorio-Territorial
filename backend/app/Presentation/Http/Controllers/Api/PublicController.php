@@ -130,6 +130,20 @@ class PublicController extends Controller
         return PublicacionResource::collection($query->get());
     }
 
+    public function atlasLibrary(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    {
+        $filters = $request->validate([
+            'categoria_id' => ['required', 'uuid'], 'q' => ['nullable', 'string', 'max:200'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'], 'per_page' => ['sometimes', 'integer', 'in:20'],
+        ]);
+        \App\Models\AtlasCategoria::where('publico', true)->findOrFail($filters['categoria_id']);
+        $query = ObservatorioPublicacion::with('atlasCategoria')->publicLegacyAccess()->where('tipo', 'ATLAS')
+            ->whereNull('departamento_id')->where('estado', 'PUBLICACION')->where('atlas_categoria_id', $filters['categoria_id']);
+        \App\Application\Publicaciones\PublicationLibrarySearch::apply($query, $filters['q'] ?? '');
+        return \App\Presentation\Http\Resources\Publicacion\LibraryPublicationResource::collection(
+            $query->orderByRaw('fecha_publicacion DESC NULLS LAST')->orderByDesc('created_at')->orderBy('id')->paginate(20)->withQueryString());
+    }
+
     private function isSubscriber($user): bool
     {
         return $user && in_array($user->rol, ['ADMIN', 'EDITOR', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
