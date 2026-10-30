@@ -13,7 +13,7 @@ import { DepartamentoDetailComponent } from './departamento-detail.component';
 
 describe('Accesos operativos a los formularios existentes', () => {
   function setup(query: Record<string, string>, admin = true, editor = false) {
-    const publication = {id:'publication',tipo:'ARTICULO',titulo:'Pendiente',estado:'EN_REVISION',fecha_publicacion:'2026-10-20',autores:[],creado_por:1};
+    const publication = {capabilities:{can_view:true,can_edit:admin||editor,can_delete:admin||editor,can_review:admin},id:'publication',tipo:'ARTICULO',titulo:'Pendiente',estado:'EN_REVISION',fecha_publicacion:'2026-10-20',autores:[],creado_por:1};
     const records=[publication,{...publication,id:'other',creado_por:2,estado:'PUBLICACION'},{...publication,id:'atlas',tipo:'ATLAS'}];
     TestBed.configureTestingModule({providers:[
       {provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:convertToParamMap(query)},params:of({id:'salud'}),queryParamMap:new Subject()}},

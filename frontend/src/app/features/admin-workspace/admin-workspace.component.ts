@@ -53,8 +53,7 @@ export class WorkspacePublicationsComponent implements OnInit {
     readonly statuses = STATUS_LABELS;
     readonly tabs = [{ value: '', label: 'Todas' }, { value: 'EN_REVISION', label: 'En revisión' }, { value: 'PUBLICACION', label: 'Publicadas' }, { value: 'SUSPENDIDO', label: 'Suspendidas' }, { value: 'ARCHIVADO', label: 'Archivadas' }, { value: 'RECHAZADO', label: 'Rechazadas' }];
     canEditItem(item: WorkspacePublication): boolean {
-        return !(this.isEditor() && item.estado === 'RECHAZADO')
-            && (!this.auth.isObservatoryAdmin() || this.auth.canReviewObservatory(item.departamento_id));
+        return item.capabilities?.can_edit === true;
     }
     ngOnInit() {
         this.requests.pipe(switchMap(() => { this.loading.set(true); this.error.set(false); return this.service.publications({ ...this.form.getRawValue(), estado: this.status(), page: this.page() }, this.isEditor()).pipe(catchError(() => { this.error.set(true); return of(null); })); }), takeUntilDestroyed(this.destroyRef)).subscribe(value => { this.items.set(value); this.loading.set(false); });

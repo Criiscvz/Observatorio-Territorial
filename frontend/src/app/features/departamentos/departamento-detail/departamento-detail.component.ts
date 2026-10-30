@@ -282,6 +282,8 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   get canChoosePublicationStatus(): boolean {
+    const editing = this.editingPublication();
+    if (editing) return editing.capabilities?.can_review === true;
     return this.authService.canReviewObservatory(this.departamento()?.id);
   }
 
@@ -294,13 +296,11 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   canEditPublication(publicacion: ObservatorioPublicacion): boolean {
-    if (this.isEditor() && publicacion.estado === 'RECHAZADO') return false;
-    const user = this.authService.user();
-    return this.isAdmin() || (publicacion.tipo !== 'ATLAS' && this.authService.canReviewObservatory(publicacion.departamento_id)) || (this.isEditor() && !!user && publicacion.tipo !== 'ATLAS' && Number(publicacion.creado_por) === user.id);
+    return publicacion.capabilities?.can_edit === true;
   }
 
   canDeletePublication(publicacion: ObservatorioPublicacion): boolean {
-    return this.canEditPublication(publicacion);
+    return publicacion.capabilities?.can_delete === true;
   }
 
   isPublicationExpanded(publicacion: ObservatorioPublicacion): boolean {
@@ -827,7 +827,7 @@ export class DepartamentoDetailComponent implements OnInit {
 
   changeReviewStatus(publicacion: ObservatorioPublicacion, estado: EstadoPublicacion): void {
     if (this.changingReviewStatus() || this.savingPublication()) return;
-    if (!this.canChoosePublicationStatus) {
+    if (publicacion.capabilities?.can_review !== true) {
       this.snackBar.open('No tienes permiso de edición y revisión en este observatorio.', 'Cerrar', {
         duration: 4000,
       });
