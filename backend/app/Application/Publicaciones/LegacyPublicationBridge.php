@@ -18,6 +18,8 @@ use Throwable;
 /** Routes old identities to their single destination. Never creates a conversion. */
 final class LegacyPublicationBridge
 {
+    public function __construct(private readonly PublicationReviewWorkflow $reviewWorkflow) {}
+
     public function resolve(string $source, string $id, bool $lock = false): ?array
     {
         $type = PublicationOrigins::TYPES[$source] ?? throw new \InvalidArgumentException('Invalid publication source.');
@@ -86,7 +88,7 @@ final class LegacyPublicationBridge
         ]);
         abort_unless($this->canCreate($request, $source), 403);
         $user = $request->user(); $reviewer = $user->canReviewObservatory($values['departamento_id']);
-        $state = match ($values['estado'] ?? 'EN_REVISION') { 'PUBLICADO' => 'PUBLICACION', 'BORRADOR' => 'EN_REVISION', default => $values['estado'] ?? 'EN_REVISION' };
+        $state = PublicationReviewWorkflow::legacyState($values['estado'] ?? 'EN_REVISION');
         if (! $reviewer && ($state !== 'EN_REVISION' || isset($values['observacion_revision']) || ($values['visibilidad'] ?? 'publico') !== 'publico')) { abort(403); }
         if (in_array($state, ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true) && strlen(trim($values['observacion_revision'] ?? '')) < 3) {
             throw ValidationException::withMessages(['observacion_revision' => 'Indica el motivo de revisión.']);
@@ -96,6 +98,8 @@ final class LegacyPublicationBridge
             return DB::transaction(function () use ($request, $source, $article, $title, $values, $user, $state, &$newPath): JsonResponse {
                 abort_unless($this->canCreate($request, $source), 403);
                 $id = (string) Str::uuid(); $type = PublicationOrigins::TYPES[$source];
+                $decision = $this->reviewWorkflow->forCreation($user, \App\Models\Departamento::findOrFail($values['departamento_id']),
+                    $type, [...$values, 'estado' => $state]);
                 $counter = DB::table('publicacion_contadores')->where('tipo', $type)->lockForUpdate()->first();
                 abort_unless($counter, 503);
                 DB::table('publicacion_contadores')->where('tipo', $type)->increment('siguiente_numero');
@@ -110,8 +114,8 @@ final class LegacyPublicationBridge
                     'departamento_id' => $values['departamento_id'], 'creado_por' => $user->id, 'titulo' => $values[$title],
                     'fecha_publicacion' => $values['fecha_publicacion'], 'descripcion' => $values[$article ? 'descripcion' : 'descripcion_indicador'] ?? null,
                     'autores' => $article && filled($values['autor'] ?? null) ? [$values['autor']] : [], 'fuente' => $values['fuente'] ?? null,
-                    'link_url' => $values[$article ? 'enlace' : 'link_url'] ?? null, 'estado' => $state,
-                    'observacion_revision' => in_array($state, ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true) ? $values['observacion_revision'] : null,
+                    'link_url' => $values[$article ? 'enlace' : 'link_url'] ?? null,
+                    ...$decision->attributes(),
                     'solo_suscriptores' => ($values['visibilidad'] ?? 'publico') === 'suscriptor',
                     'visibilidad_legada' => ($values['visibilidad'] ?? 'publico') === 'privado' ? 'privado' : null,
                     'archivo_pdf' => $newPath, 'nombre_archivo_original' => $file?->getClientOriginalName(),
@@ -186,12 +190,13 @@ final class LegacyPublicationBridge
                 if (isset($values['visibilidad']) && $values['visibilidad'] !== $visibility) {
                     throw ValidationException::withMessages(['visibilidad' => 'Gestiona el acceso desde el formulario de revisión actual.']);
                 }
-                $state = match ($values['estado'] ?? $p->estado) { 'PUBLICADO' => 'PUBLICACION', 'BORRADOR' => 'EN_REVISION', default => $values['estado'] ?? $p->estado };
-                if (($state !== $p->estado || array_key_exists('observacion_revision', $values)) && ! $user->canReviewObservatory($p->departamento_id)) { abort(403); }
+                $state = PublicationReviewWorkflow::legacyState($values['estado'] ?? $p->estado);
+                if (($state !== $p->estado || array_key_exists('observacion_revision', $values)) && ! $user->can('review', $p)) { abort(403); }
                 $reason = $values['observacion_revision'] ?? $p->observacion_revision;
                 if (in_array($state, ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true) && strlen(trim($reason ?? '')) < 3) {
                     throw ValidationException::withMessages(['observacion_revision' => 'Indica el motivo de la decisión de revisión.']);
                 }
+                $decision = $this->reviewWorkflow->forUpdate($user, $p, [...$values, 'estado' => $state]);
                 $article = $source === 'articulos';
                 $updates = array_intersect_key($values, array_flip(['fuente', 'fecha_publicacion']));
                 foreach ([($article ? 'titulo' : 'nombre_indicador') => 'titulo',
@@ -212,14 +217,7 @@ final class LegacyPublicationBridge
                     $updates += ['archivo_pdf' => $newPath, 'nombre_archivo_original' => $file->getClientOriginalName(),
                         'sharepoint_url' => null, 'sharepoint_file_id' => null];
                 }
-                $p->fill($updates);
-                if ($user->canReviewObservatory($p->departamento_id)) {
-                    $p->estado = $state;
-                    if ($state !== $p->getOriginal('estado') || array_key_exists('observacion_revision', $values)) {
-                        $p->observacion_revision = in_array($state, ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true) ? $reason : null;
-                        $p->fecha_revision = now();
-                    }
-                }
+                $p->fill([...$updates, ...$decision->attributes()]);
                 $p->saveOrFail();
                 $metadata = array_intersect_key($values, array_flip(['categoria_id', 'fecha_recepcion']));
                 if ($metadata) {

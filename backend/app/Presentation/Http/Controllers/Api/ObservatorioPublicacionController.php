@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Application\Publicaciones\PublicationReviewWorkflow;
 use App\Models\Departamento;
 use App\Models\AtlasCategoria;
 use Illuminate\Validation\ValidationException;
@@ -27,10 +28,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ObservatorioPublicacionController extends Controller
 {
     private const ESTADO_PUBLICACION = 'PUBLICACION';
-    private const ESTADO_EN_REVISION = 'EN_REVISION';
     private const SUBSCRIBER_ROLE = 'SUBSCRIBER';
 
-    public function __construct(private readonly SharePointService $sharePointService)
+    public function __construct(private readonly SharePointService $sharePointService, private readonly PublicationReviewWorkflow $reviewWorkflow)
     {
     }
 
@@ -193,7 +193,7 @@ class ObservatorioPublicacionController extends Controller
         try {
             $publicacion = DB::transaction(function () use ($data, $request, $departamento, $file, $path) {
                 $this->ensureCanManage($request, $departamento);
-                $estado = $request->user()->canReviewObservatory($departamento->id) ? $data['estado'] : self::ESTADO_EN_REVISION;
+                $decision = $this->reviewWorkflow->forCreation($request->user(), $departamento, $data['tipo'], $data);
                 $this->lockAtlasCategory($data);
                 $counter = DB::table('publicacion_contadores')->where('tipo', $data['tipo'])->lockForUpdate()->first();
                 abort_unless($counter, 500, 'No se pudo generar el código de publicación.');
@@ -204,8 +204,7 @@ class ObservatorioPublicacionController extends Controller
                     'departamento_id' => $departamento->id,
                     'creado_por' => $request->user()->id,
                     'tipo' => $data['tipo'],
-                    'estado' => $estado,
-                    ...$this->reviewObservation($data, $estado),
+                    ...$decision->attributes(),
                     'solo_suscriptores' => $request->user()->canReviewObservatory($departamento->id) && $request->boolean('solo_suscriptores'),
                     'codigo' => $this->codePrefix($data['tipo']).str_pad((string) $number, 4, '0', STR_PAD_LEFT),
                     ...array_intersect_key($data, ['atlas_categoria_id' => true]),
@@ -382,13 +381,12 @@ class ObservatorioPublicacionController extends Controller
         try {
             DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, &$oldPath) {
                 $publicacion = ObservatorioPublicacion::whereKey($publicacion->id)->lockForUpdate()->firstOrFail();
-                abort_unless($request->user()->can('update', $publicacion), 403);
+                $decision = $this->reviewWorkflow->forUpdate($request->user(), $publicacion, $data);
                 $isAdmin = $request->user()->canReviewObservatory($publicacion->departamento_id);
                 $oldPath = $publicacion->archivo_pdf;
                 $this->lockAtlasCategory($data);
                 $publicacion->update([
-                    'estado' => $isAdmin ? $data['estado'] : $publicacion->estado,
-                    ...($isAdmin ? $this->reviewObservation($data, $data['estado'], $publicacion) : []),
+                    ...$decision->attributes(),
                     'solo_suscriptores' => $isAdmin ? $request->boolean('solo_suscriptores') : $publicacion->solo_suscriptores,
                     ...array_intersect_key($data, ['atlas_categoria_id' => true]),
                     'titulo' => $data['titulo'],
@@ -469,15 +467,6 @@ class ObservatorioPublicacionController extends Controller
             'No se pudo guardar el PDF en el almacenamiento. Revisa la configuración del servidor e intenta nuevamente. La publicación no se ha guardado.');
 
         return $path;
-    }
-
-    private function reviewObservation(array $data, string $estado, ?ObservatorioPublicacion $publication = null): array
-    {
-        $reason = in_array($estado, ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true)
-            ? trim($data['observacion_revision'] ?? '') : '';
-        $sameDecision = $publication && $publication->estado === $estado && $publication->observacion_revision === $reason;
-        return ['observacion_revision' => $reason !== '' ? $reason : null,
-            'fecha_revision' => $reason !== '' ? ($sameDecision ? ($publication->fecha_revision ?? now()) : now()) : null];
     }
 
     private function copySharePointPdf(array $file, ?Departamento $departamento): string

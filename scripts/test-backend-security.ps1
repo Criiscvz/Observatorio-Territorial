@@ -81,7 +81,7 @@ if ($Suite -in @('all', 'postgres')) {
             'TEST_DB_CONNECTION=pgsql', 'TEST_DB_HOST=127.0.0.1',
             'TEST_DB_DATABASE=observatorio_jsonb_test', 'TEST_DB_USERNAME=jsonb_test',
             'TEST_DB_PASSWORD=synthetic-disposable-jsonb-test-only'
-        ) -Filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest'
+        ) -Filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest'
     } finally {
         if ($securityDatabaseId -match '^[a-f0-9]{64}$') {
             # --rm removes only the exact disposable container started by this run.
