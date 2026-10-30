@@ -52,8 +52,7 @@ final class LegacyPublicationBridge
     {
         $resolved = $this->resolve($source, $id);
         $user = $request->user();
-        return $resolved !== null && $user?->canReadPublicationForManagement($resolved['publication'])
-            && ! ($user->isEditor() && $resolved['publication']->estado === 'RECHAZADO');
+        return $resolved !== null && $user?->can($request->isMethod('DELETE') ? 'delete' : 'update', $resolved['publication']);
     }
 
     public function canCreate(Request $request, string $source): bool
@@ -62,7 +61,7 @@ final class LegacyPublicationBridge
         if (! $user || ! isset(PublicationOrigins::TYPES[$source]) || ! is_string($department) || ! Str::isUuid($department)) { return false; }
         $probe = new ObservatorioPublicacion(['departamento_id' => $department, 'creado_por' => $user->id,
             'tipo' => PublicationOrigins::TYPES[$source]]);
-        return $probe->departamento !== null && $user->canReadPublicationForManagement($probe);
+        return $probe->departamento !== null && $user->can('create', [ObservatorioPublicacion::class, $probe->departamento]);
     }
 
     /** Old creation payload, new storage. No legacy row is inserted. */
@@ -159,8 +158,7 @@ final class LegacyPublicationBridge
                 $resolved = $this->resolve($source, $id, true);
                 if (! $resolved) { return $fallback(); }
                 $p = $resolved['publication']; $user = $request->user();
-                abort_unless($p->departamento && $user?->canReadPublicationForManagement($p), 403);
-                abort_if($user->isEditor() && $p->estado === 'RECHAZADO', 403);
+                abort_unless($p->departamento && $user?->can($delete ? 'delete' : 'update', $p), 403);
                 if ($delete) {
                     // Retain the destination/map/files so the old source cannot resurface.
                     $p->forceFill(['eliminado_legado_at' => now()])->saveOrFail();

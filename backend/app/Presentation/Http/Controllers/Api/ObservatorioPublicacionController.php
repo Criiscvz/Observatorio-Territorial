@@ -171,7 +171,7 @@ class ObservatorioPublicacionController extends Controller
             ->where('users.id', $user->id)
             ->first()?->pivot?->rol;
         $hasPermission = in_array($departamentoRole, ['ADMIN', 'EDITOR'], true);
-        $canUpload = $user->canReviewObservatory($departamento->id) || ($user->rol === 'EDITOR' && $hasPermission);
+        $canUpload = $user->can('create', [ObservatorioPublicacion::class, $departamento]);
 
         return response()->json([
             'can_upload' => $canUpload,
@@ -185,14 +185,15 @@ class ObservatorioPublicacionController extends Controller
     {
         $this->ensureCanManage($request, $departamento);
         $data = $request->validated();
-        $estado = $request->user()->canReviewObservatory($departamento->id) ? $data['estado'] : self::ESTADO_EN_REVISION;
         $file = $request->file('archivo');
         $path = $file
             ? $this->storePdf($file, 'publicaciones/'.$departamento->id)
             : null;
 
         try {
-            $publicacion = DB::transaction(function () use ($data, $request, $departamento, $file, $path, $estado) {
+            $publicacion = DB::transaction(function () use ($data, $request, $departamento, $file, $path) {
+                $this->ensureCanManage($request, $departamento);
+                $estado = $request->user()->canReviewObservatory($departamento->id) ? $data['estado'] : self::ESTADO_EN_REVISION;
                 $this->lockAtlasCategory($data);
                 $counter = DB::table('publicacion_contadores')->where('tipo', $data['tipo'])->lockForUpdate()->first();
                 abort_unless($counter, 500, 'No se pudo generar el código de publicación.');
@@ -365,19 +366,8 @@ class ObservatorioPublicacionController extends Controller
 
     public function update(UpdatePublicacionRequest $request, ObservatorioPublicacion $publicacion): JsonResponse
     {
-        if ($publicacion->departamento) {
-            $this->ensureCanManage($request, $publicacion->departamento);
-        } else {
-            abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para gestionar Atlas global.');
-        }
-        abort_unless(
-            $request->user()->canReviewObservatory($publicacion->departamento_id) || (int) $publicacion->creado_por === (int) $request->user()->id,
-            403,
-            'No puedes editar publicaciones de otros usuarios.'
-        );
+        abort_unless($request->user()->can('update', $publicacion), 403);
         $data = $request->validated();
-        $isAdmin = $request->user()->canReviewObservatory($publicacion->departamento_id);
-        $this->ensureNotRejectedForEditor($request, $publicacion);
         $newFile = $request->file('archivo');
         $oldPath = $publicacion->archivo_pdf;
         $newPath = null;
@@ -390,9 +380,10 @@ class ObservatorioPublicacionController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, $isAdmin, &$oldPath) {
+            DB::transaction(function () use ($data, $request, $publicacion, $newFile, $newPath, &$oldPath) {
                 $publicacion = ObservatorioPublicacion::whereKey($publicacion->id)->lockForUpdate()->firstOrFail();
-                $this->ensureNotRejectedForEditor($request, $publicacion);
+                abort_unless($request->user()->can('update', $publicacion), 403);
+                $isAdmin = $request->user()->canReviewObservatory($publicacion->departamento_id);
                 $oldPath = $publicacion->archivo_pdf;
                 $this->lockAtlasCategory($data);
                 $publicacion->update([
@@ -480,12 +471,6 @@ class ObservatorioPublicacionController extends Controller
         return $path;
     }
 
-    private function ensureNotRejectedForEditor(Request $request, ObservatorioPublicacion $publicacion): void
-    {
-        abort_if($request->user()->rol === 'EDITOR' && $publicacion->estado === 'RECHAZADO', 403,
-            'Esta publicación fue rechazada. Solo puedes consultarla en la biblioteca.');
-    }
-
     private function reviewObservation(array $data, string $estado, ?ObservatorioPublicacion $publication = null): array
     {
         $reason = in_array($estado, ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true)
@@ -516,24 +501,11 @@ class ObservatorioPublicacionController extends Controller
 
     public function destroy(Request $request, ObservatorioPublicacion $publicacion): JsonResponse
     {
-        abort_if($publicacion->tipo === 'ATLAS' && $request->user()->rol !== 'ADMIN', 403, 'Solo administración gestiona Atlas.');
-        if ($publicacion->departamento) {
-            $this->ensureCanManage($request, $publicacion->departamento);
-        } else {
-            abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para eliminar Atlas global.');
-        }
-
-        $user = $request->user();
-        $this->ensureNotRejectedForEditor($request, $publicacion);
-        abort_unless(
-            $user->canReviewObservatory($publicacion->departamento_id) || ($user->rol === 'EDITOR' && (int) $publicacion->creado_por === (int) $user->id),
-            403,
-            'No tienes permiso para eliminar esta publicación.'
-        );
+        abort_unless($request->user()->can('delete', $publicacion), 403);
 
         DB::transaction(function () use ($request, $publicacion) {
             $publicacion = ObservatorioPublicacion::whereKey($publicacion->id)->lockForUpdate()->firstOrFail();
-            $this->ensureNotRejectedForEditor($request, $publicacion);
+            abort_unless($request->user()->can('delete', $publicacion), 403);
             if (\App\Application\Publicaciones\PublicationOrigins::hasTarget($publicacion->id)) {
                 $publicacion->forceFill(['eliminado_legado_at' => now()])->saveOrFail();
                 return;
@@ -1112,24 +1084,8 @@ class ObservatorioPublicacionController extends Controller
 
     private function ensureCanManage(Request $request, Departamento $departamento): void
     {
-        $user = $request->user();
-        if ($user->rol === 'ADMIN') {
-            return;
-        }
-
-        if ($user->isObservatoryAdmin()) {
-            abort_unless($user->canReviewObservatory($departamento->id), 403, 'No tienes permiso de edición y revisión en este observatorio.');
-            return;
-        }
-        abort_unless($user->rol === 'EDITOR', 403, 'No tienes permisos para gestionar publicaciones.');
-        abort_unless(
-            $departamento->usuarios()
-                ->where('users.id', $user->id)
-                ->wherePivotIn('rol', ['ADMIN', 'EDITOR'])
-                ->exists(),
-            403,
-            'No tienes acceso de edición a este observatorio.'
-        );
+        abort_unless($request->user()->can('create', [ObservatorioPublicacion::class, $departamento]), 403,
+            'No tienes acceso de edición a este observatorio.');
     }
 
     private function isSubscriber($user): bool

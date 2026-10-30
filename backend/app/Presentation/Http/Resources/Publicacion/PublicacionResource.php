@@ -51,6 +51,7 @@ class PublicacionResource extends JsonResource
             'tipo' => $this->tipo,
             'estado' => $this->estado,
             ...($isManagementRequest ? [
+                'capabilities' => app(\App\Policies\ObservatorioPublicacionPolicy::class)->capabilities($user, $this->resource),
                 'observacion_revision' => $this->observacion_revision,
                 'fecha_revision' => $this->fecha_revision?->toIso8601String(),
             ] : []),

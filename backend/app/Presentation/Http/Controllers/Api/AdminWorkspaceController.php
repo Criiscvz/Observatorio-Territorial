@@ -40,6 +40,7 @@ class AdminWorkspaceController extends Controller
         return ['id' => $item->id, 'departamento_id' => $item->departamento_id,
             'departamento_nombre' => $item->departamento?->nombre, 'titulo' => $item->titulo,
             'tipo' => $item->tipo, 'estado' => $item->estado, 'codigo' => $item->codigo,
+            'capabilities' => app(\App\Policies\ObservatorioPublicacionPolicy::class)->capabilities(request()->user(), $item),
             'observacion_revision' => $item->observacion_revision,
             'fecha_revision' => $item->fecha_revision?->toIso8601String(),
             'fecha_publicacion' => $item->fecha_publicacion?->format('Y-m-d')];

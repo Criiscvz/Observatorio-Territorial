@@ -12,10 +12,9 @@ class UpdatePublicacionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        if ($this->user()?->rol === 'EDITOR' && $this->route('publicacion')?->estado === 'RECHAZADO') {
-            return false;
-        }
-        return $this->route('publicacion')?->tipo !== 'ATLAS' || $this->user()?->rol === 'ADMIN';
+        $publication = $this->route('publicacion');
+        return $publication instanceof ObservatorioPublicacion
+            && $this->user()?->can('update', $publication);
     }
 
     protected function prepareForValidation(): void
