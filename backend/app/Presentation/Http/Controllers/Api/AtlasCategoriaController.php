@@ -22,6 +22,42 @@ class AtlasCategoriaController extends Controller
         return response()->json(['data' => AtlasCategoria::where('publico', true)->orderBy('nombre')->get()]);
     }
 
+    public function directory(Request $request)
+    {
+        return $this->directoryResponse($request, false);
+    }
+
+    public function publicDirectory(Request $request)
+    {
+        return $this->directoryResponse($request, true);
+    }
+
+    private function directoryResponse(Request $request, bool $public)
+    {
+        $filters = $request->validate(['q' => ['nullable', 'string', 'max:200']]);
+        $scope = function ($q) use ($public): void {
+            $q->where('tipo', 'ATLAS')->whereNull('departamento_id');
+            if ($public) { $q->publicLegacyAccess()->where('estado', 'PUBLICACION'); }
+        };
+        $categories = AtlasCategoria::query()->when($public, fn ($q) => $q->where('publico', true))
+            ->withCount(['publicaciones as publicaciones_total' => $scope]);
+        if (filled($filters['q'] ?? null)) {
+            // Category/name and publication matches are evaluated in SQL without returning all publications.
+            $categories->where(function ($q) use ($scope, $filters): void {
+                \App\Application\Publicaciones\PublicationLibrarySearch::apply($q, $filters['q'], false, ['nombre', 'descripcion']);
+                $q->orWhereHas('publicaciones', function ($p) use ($scope, $filters): void {
+                    $scope($p); \App\Application\Publicaciones\PublicationLibrarySearch::apply($p, $filters['q']);
+                });
+            });
+        }
+        $data = $categories->orderBy('nombre')->orderBy('id')->get()->map(fn ($category) => [
+            'id' => $category->id, 'nombre' => $category->nombre, 'descripcion' => $category->descripcion,
+            'icono' => $category->icono, 'publico' => $category->publico, 'publicaciones_total' => (int) $category->publicaciones_total,
+        ]);
+        $unassigned = $public ? 0 : \App\Models\ObservatorioPublicacion::where('tipo', 'ATLAS')->whereNull('departamento_id')->whereNull('atlas_categoria_id')->count();
+        return response()->json(['data' => $data, 'unassigned_total' => $unassigned]);
+    }
+
     public function store(Request $request)
     {
         return $this->save($request, new AtlasCategoria(), 201);

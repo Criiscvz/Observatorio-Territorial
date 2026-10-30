@@ -44,6 +44,64 @@ class ObservatorioPublicacionController extends Controller
         return $this->list($request, $departamento, $filters['tipo'] ?? null, $filters['estado'] ?? null);
     }
 
+    private function libraryQuery(Request $request, Departamento $departamento)
+    {
+        $this->ensureCanView($request, $departamento);
+        $user = $request->user();
+        $query = $departamento->publicaciones()->with('creadoPor')->whereIn('tipo', ['ARTICULO', 'REPORTE', 'LIBRO']);
+        $this->applyVisibilityFilter($query, $request);
+        // Management library editors see their own work only, before counting/paging.
+        if ($user->isEditor()) {
+            $query->where('creado_por', $user->id)->whereIn('departamento_id',
+                $user->departamentos()->wherePivotIn('rol', ['ADMIN', 'EDITOR'])->pluck('departamentos.id'));
+        }
+        return $query;
+    }
+
+    public function library(Request $request, Departamento $departamento): AnonymousResourceCollection
+    {
+        $filters = $request->validate([
+            'tipo' => ['nullable', 'in:ARTICULO,REPORTE,LIBRO'],
+            'estado' => ['nullable', 'in:'.implode(',', ObservatorioPublicacion::ESTADOS)],
+            'q' => ['nullable', 'string', 'max:200'], 'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'in:20'],
+        ]);
+        $query = $this->libraryQuery($request, $departamento);
+        $counts = (clone $query)->selectRaw('tipo, COUNT(*) total')->groupBy('tipo')->pluck('total', 'tipo');
+        $reviewCount = (clone $query)->where('estado', 'EN_REVISION')->count();
+        foreach (['tipo', 'estado'] as $key) { if (filled($filters[$key] ?? null)) { $query->where($key, $filters[$key]); } }
+        \App\Application\Publicaciones\PublicationLibrarySearch::apply($query, $filters['q'] ?? '', true);
+        $page = $query->orderByRaw('fecha_publicacion DESC NULLS LAST')->orderByDesc('created_at')->orderBy('id')->paginate(20)->withQueryString();
+        return \App\Presentation\Http\Resources\Publicacion\LibraryPublicationResource::collection($page)->additional([
+            'counts' => array_replace(['ARTICULO' => 0, 'REPORTE' => 0, 'LIBRO' => 0], $counts->map(fn ($n) => (int) $n)->all()),
+            'review_total' => $reviewCount,
+        ]);
+    }
+
+    public function libraryShow(Request $request, Departamento $departamento, string $id): JsonResponse
+    {
+        $publication = $this->libraryQuery($request, $departamento)->whereKey($id)->firstOrFail();
+        return (new \App\Presentation\Http\Resources\Publicacion\LibraryPublicationResource($publication))->response();
+    }
+
+    public function atlasLibrary(Request $request): AnonymousResourceCollection
+    {
+        abort_unless($request->user()?->isAdmin(), 403);
+        $filters = $request->validate([
+            'categoria_id' => ['nullable', 'uuid', 'exists:atlas_categorias,id'], 'sin_categoria' => ['sometimes', 'boolean'],
+            'q' => ['nullable', 'string', 'max:200'], 'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
+            'per_page' => ['sometimes', 'integer', 'in:20'],
+        ]);
+        $query = ObservatorioPublicacion::with(['creadoPor', 'atlasCategoria'])->where('tipo', 'ATLAS')->whereNull('departamento_id');
+        if ($filters['sin_categoria'] ?? false) { $query->whereNull('atlas_categoria_id'); }
+        elseif ($filters['categoria_id'] ?? null) {
+            AtlasCategoria::findOrFail($filters['categoria_id']); $query->where('atlas_categoria_id', $filters['categoria_id']);
+        }
+        \App\Application\Publicaciones\PublicationLibrarySearch::apply($query, $filters['q'] ?? '');
+        return \App\Presentation\Http\Resources\Publicacion\LibraryPublicationResource::collection(
+            $query->orderByRaw('fecha_publicacion DESC NULLS LAST')->orderByDesc('created_at')->orderBy('id')->paginate(20)->withQueryString());
+    }
+
     public function indexGlobalAtlas(Request $request): AnonymousResourceCollection
     {
         abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para gestionar Atlas global.');
