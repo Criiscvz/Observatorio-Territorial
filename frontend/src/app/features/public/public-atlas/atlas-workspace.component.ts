@@ -7,7 +7,7 @@ import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dial
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { Observable, combineLatest, forkJoin, tap } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, combineLatest, forkJoin, of, switchMap, tap } from 'rxjs';
 import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
 import { AtlasEnlaceService } from '@core/services/atlas-enlace.service';
 import { PublicacionService } from '@core/services/publicacion.service';
@@ -45,7 +45,10 @@ export class AtlasWorkspaceComponent implements OnInit {
   readonly publications = signal<ObservatorioPublicacion[]>([]);
   readonly categoryId = signal('');
   readonly category = computed(() => this.categories().find(c => c.id === this.categoryId()));
-  readonly unassigned = computed(() => this.publications().filter(p => !p.atlas_categoria_id));
+  readonly unassignedTotal = signal(0);
+  readonly publicationTotal = signal(0);
+  private readonly requests = new Subject<{done?:()=>void}>();
+  private editRequest?: Subscription;
   readonly inCategory = computed(() => !!this.categoryId());
   readonly loading = signal(true);
   readonly error = signal('');
@@ -57,12 +60,11 @@ export class AtlasWorkspaceComponent implements OnInit {
   readonly normalize = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('es').trim();
   readonly filteredCategories = computed(() => this.categories().filter(c => this.normalize(`${c.nombre} ${c.descripcion||''}`).includes(this.normalize(this.search()))));
   readonly categoryItems = computed(() => this.publications().filter(p => this.categoryId() === 'sin-categoria' ? !p.atlas_categoria_id : p.atlas_categoria_id === this.categoryId()));
-  readonly filteredItems = computed(() => this.categoryItems().filter(p => this.normalize(`${p.titulo} ${p.codigo} ${p.fuente||''}`).includes(this.normalize(this.search()))));
-  readonly total = computed(() => this.inCategory() ? this.filteredItems().length : this.filteredCategories().length);
+  readonly total = computed(() => this.inCategory() ? this.publicationTotal() : this.filteredCategories().length);
   readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total()/this.pageSize())));
   readonly currentPage = computed(() => Math.min(this.page(), this.pageCount()-1));
   readonly visibleCategories = computed(() => this.filteredCategories().slice(this.currentPage()*10, (this.currentPage()+1)*10));
-  readonly visibleItems = computed(() => this.filteredItems().slice(this.currentPage()*20, (this.currentPage()+1)*20));
+  readonly visibleItems = this.publications;
   readonly rangeStart = computed(() => this.total() ? this.currentPage()*this.pageSize()+1 : 0);
   readonly rangeEnd = computed(() => Math.min((this.currentPage()+1)*this.pageSize(),this.total()));
   readonly icon = atlasCategoryPresentation;
@@ -86,26 +88,33 @@ export class AtlasWorkspaceComponent implements OnInit {
 
   constructor() { this.destroyRef.onDestroy(() => this.editorRef?.close()); }
   ngOnInit() {
+    this.requests.pipe(switchMap(({done})=>{
+      this.loading.set(true);this.error.set('');this.publications.set([]);this.publicationTotal.set(0);
+      const page=()=>this.publicationService.atlasPage(this.categoryId(),this.page()+1,this.search(),true);
+      return forkJoin({directory:this.categoryService.directory(),page:this.inCategory()?page().pipe(switchMap(result=>{
+        if(this.page()+1>result.meta.last_page){this.page.set(Math.max(0,result.meta.last_page-1));return page();}return of(result);
+      })):of(null)}).pipe(tap(result=>{
+        this.categories.set(result.directory.data);this.unassignedTotal.set(result.directory.unassigned_total);
+        if(result.page){this.publications.set(result.page.data);this.publicationTotal.set(result.page.meta.total);this.page.set(result.page.meta.current_page-1);}
+        this.loading.set(false);done?.();
+      }),catchError(()=>{this.categories.set([]);this.publications.set([]);this.error.set('No se pudo cargar Atlas. Intenta actualizar.');return of(null);}));
+    }),takeUntilDestroyed(this.destroyRef)).subscribe(()=>this.loading.set(false));
     combineLatest([this.route.paramMap,this.route.queryParamMap]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(([params,query]) => {
-      this.categoryId.set(params.get('categoria') || query.get('categoria') || ''); this.updateSearch('');
-    });
-    this.load(() => {
-      const query=this.route.snapshot.queryParamMap;
+      this.editRequest?.unsubscribe();this.editorRef?.close();
+      this.categoryId.set(params.get('categoria') || query.get('categoria') || ''); this.search.set('');this.page.set(0);
+      this.load(()=>{
       const editId=query.get('editar');
-      if(editId) { const item=this.publications().find(p=>p.id===editId); if(item)this.openLink(item); }
+      if(editId) { this.editRequest=this.publicationService.getGlobalAtlasById(editId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({next:item=>this.openLink(item),error:()=>this.error.set('El Atlas no está disponible.')}); }
       else if(this.route.snapshot.url.some(s=>s.path==='subir')) this.openLink();
+      });
     });
   }
   load(done?:()=>void) {
-    this.loading.set(true); this.error.set('');
-    forkJoin([this.categoryService.list(),this.publicationService.getGlobalAtlas()]).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next:([categories,publications])=>{this.categories.set(categories);this.publications.set(publications);this.loading.set(false);done?.();},
-      error:()=>{this.loading.set(false);this.error.set('No se pudo cargar Atlas. Intenta actualizar.');},
-    });
+    this.requests.next({done});
   }
-  updateSearch(value:string) { this.search.set(value);this.page.set(0); }
-  changePage(delta:number) { this.page.set(Math.max(0,Math.min(this.currentPage()+delta,this.pageCount()-1))); }
-  count(category:AtlasCategoria) { return this.publications().filter(p=>p.atlas_categoria_id===category.id).length; }
+  updateSearch(value:string) { this.search.set(value);this.page.set(0);if(this.inCategory())this.load(); }
+  changePage(delta:number) { this.page.set(Math.max(0,Math.min(this.currentPage()+delta,this.pageCount()-1)));if(this.inCategory())this.load(); }
+  count(category:AtlasCategoria) { return category.publicaciones_total || 0; }
   openAtlas(item:ObservatorioPublicacion) {
     const current=this.categoryItems().find(publication=>publication.id===item.id);
     if(!current || current.bloqueado)return;

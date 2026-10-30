@@ -1,3 +1,4 @@
+import { publicationPage } from '../../../testing/publication-page.fixture';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -19,7 +20,7 @@ describe('Accesos operativos a los formularios existentes', () => {
       {provide:Router,useValue:{events:new Subject()}},
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Salud',datasets:[]})}},
       {provide:DatasetService,useValue:{}},
-      {provide:PublicacionService,useValue:{getAll:()=>of(records),getInReview:()=>of(records.filter(x=>x.estado==='EN_REVISION')),canUpload:()=>of({can_upload:admin||editor})}},
+      {provide:PublicacionService,useValue:{libraryPage:(_id:string,filters:any)=>of(publicationPage(records.filter(x=>x.tipo!=='ATLAS'&&(!editor||x.creado_por===1)),filters)),libraryById:(_id:string,id:string)=>of(records.find(x=>x.id===id)),canUpload:()=>of({can_upload:admin||editor})}},
       {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>editor,canReviewObservatory:()=>admin,user:()=>({id:1}),hasRoleInDepartamento:()=>editor}},
       {provide:TranslateService,useValue:{instant:(value:string)=>value}},
       {provide:MatDialog,useValue:{}},{provide:MatSnackBar,useValue:{}},

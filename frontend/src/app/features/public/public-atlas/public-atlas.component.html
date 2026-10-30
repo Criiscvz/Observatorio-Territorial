@@ -16,8 +16,10 @@
     </header>
     <section class="atlas-category-library" aria-labelledby="atlas-library-title">
       <div class="library-heading"><h2 id="atlas-library-title">Biblioteca de Atlas</h2><span>Visualizaciones e indicadores</span></div>
-      <div class="atlas-library-tools"><label class="public-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" aria-label="Buscar Atlas en la categoría" placeholder="Buscar por título, autor o fuente…" [value]="libraryQuery()" (input)="searchLibrary($any($event.target).value)"></label><span class="result-count" aria-live="polite">{{libraryItems().length}} {{libraryItems().length === 1 ? 'publicación' : 'publicaciones'}}</span></div>
+      <div class="atlas-library-tools"><label class="public-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" aria-label="Buscar Atlas en la categoría" placeholder="Buscar por título, autor o fuente…" [value]="libraryQuery()" (input)="searchLibrary($any($event.target).value)"></label><span class="result-count" aria-live="polite">{{libraryTotal()}} {{libraryTotal() === 1 ? 'publicación' : 'publicaciones'}}</span></div>
       <div class="atlas-library-list">
+        @if(libraryLoading()){<p class="directory-empty" role="status">Cargando publicaciones…</p>}
+        @if(libraryError()){<div class="directory-empty" role="alert">No se pudo cargar la biblioteca.<button type="button" class="public-button" (click)="retryLibrary()">Reintentar</button></div>}
         @if (visibleLibrary().length) {
           <div class="library-columns" aria-hidden="true"><span>Publicación</span><span>Fecha</span><span>Recursos disponibles</span><span>Consultar</span></div>
         }
@@ -43,9 +45,9 @@
               <button class="details-button" type="button" [disabled]="publication.bloqueado" [attr.aria-label]="'Ver detalles de ' + publication.titulo" (click)="openDetails(publication)"><mat-icon>info_outline</mat-icon></button>
             </div>
           </article>
-        } @empty {<div class="directory-empty"><mat-icon>search_off</mat-icon><h2>{{libraryQuery() ? 'No encontramos publicaciones' : 'Aún no hay Atlas publicados'}}</h2><p>{{libraryQuery() ? 'Prueba con otro título o fuente.' : 'Los Atlas de esta categoría aparecerán aquí cuando se publiquen.'}}</p></div>}
+        } @empty {@if(!libraryLoading() && !libraryError()){<div class="directory-empty"><mat-icon>search_off</mat-icon><h2>{{libraryQuery() ? 'No encontramos publicaciones' : 'Aún no hay Atlas publicados'}}</h2><p>{{libraryQuery() ? 'Prueba con otro título o fuente.' : 'Los Atlas de esta categoría aparecerán aquí cuando se publiquen.'}}</p></div>}}
       </div>
-      <nav class="public-pagination" aria-label="Paginación de publicaciones de Atlas"><span>{{libraryStart()}}–{{libraryEnd()}} de {{libraryItems().length}} {{libraryItems().length === 1 ? 'publicación' : 'publicaciones'}} · {{libraryPageSize}} por página</span><div><button class="page-button" type="button" aria-label="Página anterior de publicaciones" [disabled]="currentLibraryPage()===0" (click)="changeLibraryPage(-1)"><mat-icon>chevron_left</mat-icon></button><span class="page-index" aria-live="polite">{{currentLibraryPage()+1}} / {{libraryPageCount()}}</span><button class="page-button" type="button" aria-label="Página siguiente de publicaciones" [disabled]="currentLibraryPage()+1>=libraryPageCount()" (click)="changeLibraryPage(1)"><mat-icon>chevron_right</mat-icon></button></div></nav>
+      <nav class="public-pagination" aria-label="Paginación de publicaciones de Atlas"><span>{{libraryStart()}}–{{libraryEnd()}} de {{libraryTotal()}} {{libraryTotal() === 1 ? 'publicación' : 'publicaciones'}} · {{libraryPageSize}} por página</span><div><button class="page-button" type="button" aria-label="Página anterior de publicaciones" [disabled]="currentLibraryPage()===0" (click)="changeLibraryPage(-1)"><mat-icon>chevron_left</mat-icon></button><span class="page-index" aria-live="polite">{{currentLibraryPage()+1}} / {{libraryPageCount()}}</span><button class="page-button" type="button" aria-label="Página siguiente de publicaciones" [disabled]="currentLibraryPage()+1>=libraryPageCount()" (click)="changeLibraryPage(1)"><mat-icon>chevron_right</mat-icon></button></div></nav>
     </section>
   } @else {
   <div class="directory-tools">
@@ -73,7 +75,7 @@
             <h2>{{ entry.nombre }}</h2>
             <p class="atlas-summary">{{ entry.descripcion || 'Consulta las visualizaciones de esta categoría.' }}</p>
             <div class="atlas-meta">
-              <span class="atlas-availability" [class.is-available]="entry.available"><mat-icon aria-hidden="true">{{entry.available ? 'check_circle_outline' : 'remove_circle_outline'}}</mat-icon>{{entry.publications.length}} {{entry.publications.length === 1 ? 'publicación' : 'publicaciones'}}</span>
+              <span class="atlas-availability" [class.is-available]="entry.available"><mat-icon aria-hidden="true">{{entry.available ? 'check_circle_outline' : 'remove_circle_outline'}}</mat-icon>{{entry.total}} {{entry.total === 1 ? 'publicación' : 'publicaciones'}}</span>
             </div>
           </div>
           <button class="public-button public-button--soft explore-category" type="button" [attr.aria-label]="'Explorar ' + entry.nombre" (click)="openCategory(entry)">

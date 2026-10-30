@@ -24,6 +24,8 @@
 
     <app-observatory-library
       [publications]="publicaciones()" [loading]="loadingPublicaciones()"
+      [total]="libraryTotal()" [totals]="libraryCounts()" [type]="libraryType()" [query]="libraryQuery()" [page]="libraryPage()"
+      [error]="libraryError()" (retry)="retryLibrary()" (filtersChange)="libraryFiltersChanged($event)"
       [canEdit]="canEditLibraryPublication" [canDelete]="canDeleteLibraryPublication"
       (edit)="editPublication($event)" (remove)="deletePublication($event)"
       (viewPublication)="viewLibraryPublication($event)"
@@ -94,6 +96,7 @@
         <div class="dialog-review-grid">
           <aside class="review-queue" aria-label="Publicaciones pendientes"><span class="queue-label">PENDIENTES · {{reviewCount}}</span>
             @for(publication of reviewPublicaciones(); track publication.id){<button class="review-queue-item" type="button" [attr.aria-pressed]="item.id === publication.id" (click)="reviewSelectedId.set(publication.id)" [disabled]="!!changingReviewStatus()"><span class="queue-type"><mat-icon>{{getPublicacionIcon(publication.tipo)}}</mat-icon>{{getPublicacionTipoLabel(publication.tipo)}} · {{publication.codigo}}</span><strong>{{publication.titulo}}</strong><small>{{publication.creador?.name || 'No disponible'}} · {{publication.fecha_publicacion | date:'dd/MM/yyyy'}}</small></button>}
+            <nav aria-label="Páginas de revisión"><button class="dialog-icon" type="button" aria-label="Revisión anterior" [disabled]="reviewPage()===0 || !!changingReviewStatus()" (click)="changeReviewPage(-1)"><mat-icon>chevron_left</mat-icon></button><span>{{reviewPage()+1}} / {{reviewLastPage()}}</span><button class="dialog-icon" type="button" aria-label="Revisión siguiente" [disabled]="reviewPage()+1>=reviewLastPage() || !!changingReviewStatus()" (click)="changeReviewPage(1)"><mat-icon>chevron_right</mat-icon></button></nav>
           </aside>
           <section class="review-detail" aria-label="Publicación seleccionada">
             <span class="review-status"><mat-icon>schedule</mat-icon>En revisión</span><div class="review-title"><h3>{{item.titulo}}</h3>@if(canEditPublication(item)){<button class="dialog-button" type="button" (click)="editPublication(item)" [disabled]="!!changingReviewStatus()"><mat-icon>edit</mat-icon>Editar</button>}</div>

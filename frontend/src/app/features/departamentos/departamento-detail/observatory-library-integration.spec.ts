@@ -1,3 +1,4 @@
+import { publicationPage } from '../../../testing/publication-page.fixture';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -20,7 +21,7 @@ describe('Biblioteca integrada en el observatorio', () => {
       {provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:convertToParamMap({})},params:of({id:'salud'}),queryParamMap:of(convertToParamMap({}))}},
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Observatorio de la Salud',publico:true,datasets:[{id:'antiguo',nombre:'Datos antiguos'}]})}},
       {provide:DatasetService,useValue:{}},
-      {provide:PublicacionService,useValue:{getAll:()=>of([publication]),canUpload:()=>of({can_upload:true}),openPdf}},
+      {provide:PublicacionService,useValue:{libraryPage:(_id:string,filters:any)=>of(publicationPage([publication],filters)),canUpload:()=>of({can_upload:true}),openPdf}},
       {provide:AuthService,useValue:{isAdmin:()=>!editor,isEditor:()=>editor,canReviewObservatory:()=>!editor,user:()=>({id:1}),hasRoleInDepartamento:()=>editor}},
       {provide:PublicationViewerService,useValue:viewer},
       {provide:MatDialog,useValue:{}},{provide:MatSnackBar,useValue:{open:vi.fn()}},
