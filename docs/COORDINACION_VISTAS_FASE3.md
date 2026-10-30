@@ -51,5 +51,33 @@ Sin cambios de API, esquema, variables o archivos almacenados. Las lecturas de
 producción se verifican tras integrar el cliente; las pruebas de escritura usan
 dobles locales y las bases desechables de CI. Barómetro conserva sus contratos.
 
-Esta entrega se concentra en biblioteca, revisión y editor del observatorio;
-la fase 3 continúa abierta para revisar el alcance restante de las vistas.
+## Nueva publicación, Atlas y Permisos
+
+La siguiente entrega completa la separación de los otros tres bloques activos:
+
+- `PublicationDestinationFacade`: carga de observatorios, destino fijado,
+  borrador de artículo/reporte/libro, archivo local, validaciones, guardado y
+  resultado de SharePoint. El componente abre el importador y visor y atiende
+  foco, confirmación de salida y controles de pantalla.
+- `AtlasDestinationFacade`: categorías, destino, formulario de enlace Power BI,
+  validación y guardado. La vista mantiene la navegación compatible de enlaces
+  antiguos de edición y la previsualización en el visor. El formulario antiguo
+  de PDF no es la ruta activa y se conserva sin modificar.
+- `PermissionsWorkspaceFacade`: carga de páginas de usuarios, sincronización
+  de información visual, búsqueda/pestaña y guardado/revocación con capacidades
+  de API. Los diálogos, navegación por teclado y avisos permanecen en la vista.
+
+Estas tres facades también se proveen por componente. Reintentar la carga cancela
+la anterior. Guardar accesos termina una sincronización visual pendiente para
+que no sobrescriba el resultado; capacidades ausentes o una revocación sin
+confirmación no habilitan escrituras. Si falla el listado, se retiran las filas y
+acciones anteriores hasta recargarlo. La caché de permisos conservada para
+etiquetas y contadores visuales no autoriza acciones ni configura formularios.
+
+Durante un guardado no se reinicia el borrador. La destrucción termina las
+suscripciones pendientes. Los errores conservan los campos/PDF; ningún flujo
+reintenta automáticamente una escritura. Se conserva el mismo límite de esa
+cancelación HTTP explicado anteriormente.
+
+El cierre del alcance técnico y los límites de la fase se describen en
+[CIERRE_TECNICO_FASE3.md](CIERRE_TECNICO_FASE3.md).

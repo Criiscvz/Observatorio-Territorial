@@ -49,5 +49,6 @@ Publicar primero el backend y verificarlo antes de integrar el cliente. Los
 endpoints anteriores permanecen disponibles durante esa transición. No hay
 migraciones, nuevas variables ni escrituras masivas sobre asignaciones actuales.
 
-Esta entrega no cierra la fase 3: queda separar coordinación de las vistas grandes.
-Barómetro mantiene sus contratos y su rediseño continúa aplazado.
+La separación posterior de vistas y el cierre del alcance técnico se documentan
+en `COORDINACION_VISTAS_FASE3.md` y `CIERRE_TECNICO_FASE3.md`. Barómetro mantiene
+sus contratos y su rediseño continúa aplazado.

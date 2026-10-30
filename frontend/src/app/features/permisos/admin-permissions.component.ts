@@ -1,4 +1,5 @@
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { PermissionsWorkspaceFacade } from './permissions-workspace.facade';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,11 +15,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { forkJoin, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { PermisosService } from '@core/services/permisos.service';
-import { UserService } from '@core/services/user.service';
-import { AuthService } from '@core/services/auth.service';
 import { User } from '@core/models';
 import {
   ModuloPermiso,
@@ -30,6 +26,7 @@ import { EditorPickerDialogComponent } from './editor-picker-dialog.component';
 
 @Component({
   selector: 'app-admin-permissions',
+  providers: [PermissionsWorkspaceFacade],
   standalone: true,
   imports: [
     CommonModule,
@@ -51,14 +48,13 @@ import { EditorPickerDialogComponent } from './editor-picker-dialog.component';
   styleUrl: './admin-permissions.component.scss',
 })
 export class AdminPermissionsComponent implements OnInit {
-  readonly auth = inject(AuthService);
-  readonly selectedRole = signal<'EDITOR' | 'ADMIN_OBSERVATORIO'>(this.auth.user()?.rol === 'ADMIN_OBSERVATORIO' ? 'EDITOR' : 'ADMIN_OBSERVATORIO');
+  private readonly state=inject(PermissionsWorkspaceFacade);
+  readonly auth=this.state.auth;
+  readonly selectedRole=this.state.selectedRole;
   readonly roleTabs = [{ value: 'ADMIN_OBSERVATORIO' as const, label: 'Supervisor', icon: 'manage_accounts' },
     { value: 'EDITOR' as const, label: 'Editor', icon: 'edit_note' }];
-  roleCount(role: string): number { return this.users().filter(user => user.rol === role).length; }
-  changeRoleTab(role: 'EDITOR' | 'ADMIN_OBSERVATORIO'): void {
-    this.selectedRole.set(role); this.resetConfirmationId.set(null);
-  }
+  roleCount(role: string): number {return this.state.roleCount(role);}
+  changeRoleTab(role: 'EDITOR' | 'ADMIN_OBSERVATORIO'): void {return this.state.changeRoleTab(role);}
   roleTabKeydown(event: KeyboardEvent): void {
     const buttons = Array.from((event.currentTarget as HTMLElement).parentElement!.querySelectorAll<HTMLButtonElement>('[role=tab]'));
     const current = buttons.indexOf(event.currentTarget as HTMLButtonElement);
@@ -67,8 +63,7 @@ export class AdminPermissionsComponent implements OnInit {
     if (next < 0) return;
     event.preventDefault(); buttons[next].click(); buttons[next].focus();
   }
-  private readonly permisosService = inject(PermisosService);
-  private readonly userService = inject(UserService);
+
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
@@ -113,84 +108,30 @@ export class AdminPermissionsComponent implements OnInit {
     },
   ];
 
-  readonly canAssignEditors = signal(false);
-  users = signal<User[]>([]);
-  loadingUsers = signal(true);
-  searchTerm = signal('');
-  resetConfirmationId = signal<number | null>(null);
-  savingUserId = signal<number | null>(null);
-  saveStatus = signal('');
+  readonly canAssignEditors=this.state.canAssignEditors;
+  readonly users=this.state.users;
+  readonly loadingUsers=this.state.loadingUsers;
+  readonly searchTerm=this.state.searchTerm;
+  readonly resetConfirmationId=this.state.resetConfirmationId;
+  readonly savingUserId=this.state.savingUserId;
+  readonly saveStatus=this.state.saveStatus;
 
-  filteredUsers = computed(() => {
-    const term = this.searchTerm().trim().toLowerCase();
-    return this.users().filter((user) => {
-      const matchesTerm =
-        !term ||
-        user.name?.toLowerCase().includes(term) ||
-        user.email?.toLowerCase().includes(term);
-      return user.rol === this.selectedRole() && matchesTerm;
-    });
-  });
+  readonly filteredUsers=this.state.filteredUsers;
 
   ngOnInit(): void {
+    this.state.loadErrors.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.snackBar.open(
+      this.translate.instant('users.messages.loadError') || 'No se pudieron cargar los usuarios.',
+      this.translate.instant('common.buttons.close') || 'Cerrar', {duration:3000}));
     this.loadUsers();
   }
 
-  loadUsers(): void {
-    this.loadingUsers.set(true); this.canAssignEditors.set(false);
-    this.userService
-      .getUsers(100, 1, undefined, 'permissions')
-      .pipe(
-        switchMap((first) => {
-          const lastPage = first.meta.last_page;
-          if (lastPage <= 1) {
-            return of([first]);
-          }
-          const requests = [of(first)];
-          for (let page = 2; page <= lastPage; page++) {
-            requests.push(this.userService.getUsers(100, page, undefined, 'permissions'));
-          }
-          return forkJoin(requests);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe({
-        next: (responses) => {
-          const all = responses.flatMap((r) => r.data);
-          this.canAssignEditors.set(responses[0]?.meta.access_capabilities?.can_assign_editors === true);
-          this.users.set(all);
-          this.loadingUsers.set(false);
-
-          const editors = all.filter((user) => ['EDITOR', 'ADMIN_OBSERVATORIO'].includes(user.rol));
-          if (editors.length > 0) {
-            forkJoin(editors.map((user) => this.permisosService.syncFromBackend(user.id)))
-              .pipe(takeUntilDestroyed(this.destroyRef))
-              .subscribe({
-                next: () => this.users.set([...this.users()]),
-                error: () => this.users.set([...this.users()]),
-              });
-          }
-        },
-        error: () => {
-          this.snackBar.open(
-            this.translate.instant('users.messages.loadError') || 'No se pudieron cargar los usuarios.',
-            this.translate.instant('common.buttons.close') || 'Cerrar',
-            { duration: 3000 },
-          );
-          this.loadingUsers.set(false);
-        },
-      });
-  }
+  loadUsers():void {this.state.loadUsers();}
 
   // ─── helpers de UI ───
 
-  getUserPermisos(user: User): PermisoConfig[] {
-    return this.permisosService.getUserPermisos(user.id);
-  }
+  getUserPermisos(user: User): PermisoConfig[] {return this.state.getUserPermisos(user);}
 
-  getModuloNivel(user: User, modulo: ModuloPermiso): NivelPermiso {
-    return this.permisosService.getNivel(user.id, modulo);
-  }
+  getModuloNivel(user: User, modulo: ModuloPermiso): NivelPermiso {return this.state.getModuloNivel(user,modulo);}
 
   getNivelChipClass(nivel: NivelPermiso): string {
     const map: Record<NivelPermiso, string> = {
@@ -210,42 +151,19 @@ export class AdminPermissionsComponent implements OnInit {
     return user.name?.charAt(0)?.toUpperCase() || 'U';
   }
 
-  getActivePermissionsCount(user: User): number {
-    return this.getAssignedObservatoriosCount(user);
-  }
+  getActivePermissionsCount(user: User): number {return this.state.getActivePermissionsCount(user);}
 
-  getAssignedObservatoriosCount(user: User): number {
-    return this.getUserPermisos(user).filter(
-      (permiso) => permiso.modulo === 'observatorios' && permiso.nivel !== 'ninguno',
-    ).length;
-  }
+  getAssignedObservatoriosCount(user: User): number {return this.state.getAssignedObservatoriosCount(user);}
 
-  hasAllObservatorios(user: User): boolean {
-    return this.getUserPermisos(user).some(
-      (permiso) => permiso.modulo === 'observatorios' && permiso.nivel !== 'ninguno'
-        && permiso.departamento_id === null,
-    );
-  }
+  hasAllObservatorios(user: User): boolean {return this.state.hasAllObservatorios(user);}
 
-  getAssignedObservatoriosNames(user: User): string[] {
-    if (this.hasAllObservatorios(user)) return [];
-    const assignedIds = new Set(this.getUserPermisos(user)
-      .filter((permiso) => permiso.modulo === 'observatorios' && permiso.nivel !== 'ninguno')
-      .map((permiso) => permiso.departamento_id));
-    return (user.departamentos || [])
-      .filter((departamento) => assignedIds.has(departamento.id))
-      .map((departamento) => departamento.nombre);
-  }
+  getAssignedObservatoriosNames(user: User): string[] {return this.state.getAssignedObservatoriosNames(user);}
 
-  tienePermisosPersonalizados(user: User): boolean {
-    return this.permisosService.getUserPermisos(user.id).length > 0;
-  }
+  tienePermisosPersonalizados(user: User): boolean {return this.state.tienePermisosPersonalizados(user);}
 
   // ─── acciones ───
 
-  canManageUser(user: User): boolean {
-    return user.access_capabilities?.can_manage_access === true;
-  }
+  canManageUser(user: User): boolean {return this.state.canManageUser(user);}
 
   addEditor(): void {
     if (this.auth.user()?.rol !== 'ADMIN_OBSERVATORIO' || !this.canAssignEditors() || this.savingUserId() !== null) return;
@@ -274,32 +192,15 @@ export class AdminPermissionsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result: PermisoConfig[] | undefined) => {
         if (result) {
-          this.savingUserId.set(user.id);
-          this.saveStatus.set('');
-          this.permisosService
-            .saveUserPermisos(user.id, result)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
+          this.state.saveAccess(user,result).subscribe({
               next: (response) => {
-                this.savingUserId.set(null);
-                this.saveStatus.set('Asignación de observatorios actualizada.');
-                if (response.user) {
-                  this.users.update((users) =>
-                    users.map((item) => (item.id === response.user!.id ? response.user! : item))
-                  );
-                } else {
-                  this.users.set([...this.users()]);
-                }
                 this.snackBar.open(
                   response.message || 'Permisos guardados correctamente.',
                   'Cerrar',
                   { duration: 3000 },
                 );
-                if (!this.auth.isAdmin()) this.loadUsers();
               },
               error: () => {
-                this.savingUserId.set(null);
-                this.saveStatus.set('No se pudieron guardar los permisos. Puedes volver a intentarlo.');
                 this.snackBar.open(
                   'No se pudieron guardar los permisos.',
                   'Cerrar',
@@ -312,43 +213,9 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   resetUserPermissions(user: User): void {
-    if (user.access_capabilities?.can_revoke_access !== true || this.resetConfirmationId() !== user.id || this.savingUserId() !== null) return;
-    this.savingUserId.set(user.id);
-    this.saveStatus.set('');
-    const emptyPermissions: PermisoConfig[] = [
-      {
-        modulo: 'observatorios',
-        nivel: 'ninguno',
-        departamento_id: null,
-      },
-    ];
-
-    this.permisosService
-      .saveUserPermisos(user.id, emptyPermissions)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (response) => {
-          this.savingUserId.set(null);
-          this.resetConfirmationId.set(null);
-          this.saveStatus.set(`Accesos de ${user.name} retirados.`);
-          this.users.update((users) => users.map((item) =>
-            item.id === response.user?.id ? response.user : item));
-          this.snackBar.open(
-            `Permisos de ${user.name} restablecidos.`,
-            'Cerrar',
-            { duration: 3000 },
-          );
-          if (!this.auth.isAdmin()) this.loadUsers();
-        },
-        error: () => {
-          this.savingUserId.set(null);
-          this.saveStatus.set('No se pudieron quitar los accesos. Puedes volver a intentarlo.');
-          this.snackBar.open(
-            'No se pudieron restablecer los permisos.',
-            'Cerrar',
-            { duration: 4000 },
-          );
-        },
-      });
+    this.state.saveAccess(user,[{modulo:'observatorios',nivel:'ninguno',departamento_id:null}],true).subscribe({
+      next:()=>this.snackBar.open(`Permisos de ${user.name} restablecidos.`,'Cerrar',{duration:3000}),
+      error:()=>this.snackBar.open('No se pudieron restablecer los permisos.','Cerrar',{duration:4000}),
+    });
   }
 }
