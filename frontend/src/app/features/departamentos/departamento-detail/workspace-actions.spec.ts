@@ -10,12 +10,15 @@ import { DepartamentoService } from '@core/services/departamento.service';
 import { DatasetService } from '@core/services/dataset.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { DepartamentoDetailComponent } from './departamento-detail.component';
+import { ObservatoryWorkspaceFacade } from './observatory-workspace.facade';
+import { PublicationEditorFacade } from './publication-editor.facade';
 
 describe('Accesos operativos a los formularios existentes', () => {
   function setup(query: Record<string, string>, admin = true, editor = false) {
     const publication = {capabilities:{can_view:true,can_edit:admin||editor,can_delete:admin||editor,can_review:admin},id:'publication',tipo:'ARTICULO',titulo:'Pendiente',estado:'EN_REVISION',fecha_publicacion:'2026-10-20',autores:[],creado_por:1};
     const records=[publication,{...publication,id:'other',creado_por:2,estado:'PUBLICACION'},{...publication,id:'atlas',tipo:'ATLAS'}];
     TestBed.configureTestingModule({providers:[
+      ObservatoryWorkspaceFacade, PublicationEditorFacade,
       {provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:convertToParamMap(query)},params:of({id:'salud'}),queryParamMap:new Subject()}},
       {provide:Router,useValue:{events:new Subject()}},
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Salud',datasets:[]})}},

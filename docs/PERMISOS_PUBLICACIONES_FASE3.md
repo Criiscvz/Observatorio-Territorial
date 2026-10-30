@@ -3,7 +3,10 @@
 Entregas de permisos y flujo de revisión de la fase 3. La extracción posterior
 de archivos e importación SharePoint se documenta en
 [ARCHIVOS_SHAREPOINT_FASE3.md](ARCHIVOS_SHAREPOINT_FASE3.md). La fase continúa
-abierta: falta coordinación de formularios y política de asignación de editores.
+abierta. Las asignaciones se documentan en
+[ASIGNACIONES_OBSERVATORIOS_FASE3.md](ASIGNACIONES_OBSERVATORIOS_FASE3.md) y la
+separación de biblioteca/editor en
+[COORDINACION_VISTAS_FASE3.md](COORDINACION_VISTAS_FASE3.md).
 Barómetro conserva su contrato.
 
 ## Autoridad y alcance

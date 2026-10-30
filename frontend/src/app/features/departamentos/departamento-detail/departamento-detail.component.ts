@@ -1,22 +1,23 @@
-﻿import { CommonModule } from '@angular/common';
+﻿import { PublicationEditorFacade } from './publication-editor.facade';
+import { ObservatoryWorkspaceFacade } from './observatory-workspace.facade';
+import { CommonModule } from '@angular/common';
 import { Component, computed, DestroyRef, TemplateRef, ViewChild, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, Subscription, catchError, of, switchMap } from 'rxjs';
-import { AbstractControl, FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subscription } from 'rxjs';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { ActivatedRoute, NavigationStart, Router, RouterLink } from '@angular/router';
-import { Dataset, Departamento } from '@core/models';
+import { Dataset } from '@core/models';
 import {
   ObservatorioPublicacion,
   EstadoPublicacion,
   TipoPublicacion,
   requiresReviewObservation,
 } from '@core/models/publicacion/publicacion.interface';
-import { AuthService } from '@core/services/auth.service';
 import { DatasetService } from '@core/services/dataset.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import {
@@ -26,12 +27,13 @@ import {
 import { SharePointAtlasImportDialogComponent } from '@features/public/public-atlas/sharepoint-atlas-import-dialog.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
-import { LibraryFilters, LibraryType, ObservatoryLibraryComponent } from './observatory-library.component';
+import { LibraryFilters, ObservatoryLibraryComponent } from './observatory-library.component';
 import { PublicationViewerService } from '@features/public/components/publication-viewer.service';
 import { hasPublicPdf, publicHttpUrl, PublicLibraryPublication, toPublicLibraryItem } from '@features/public/components/public-library-publication';
 
 @Component({
   selector: 'app-departamento-detail',
+  providers: [ObservatoryWorkspaceFacade, PublicationEditorFacade],
   standalone: true,
   imports: [
     CommonModule,
@@ -52,66 +54,65 @@ export class DepartamentoDetailComponent implements OnInit {
   @ViewChild('publicationOverlay', {static:true}) private publicationOverlay?: TemplateRef<unknown>;
   private publicationDialog?: MatDialogRef<unknown>;
 
+  private readonly workspace = inject(ObservatoryWorkspaceFacade);
+  private readonly editor = inject(PublicationEditorFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly deptoService = inject(DepartamentoService);
   private readonly datasetService = inject(DatasetService);
   private readonly publicacionService = inject(PublicacionService);
   private readonly publicationViewer = inject(PublicationViewerService);
-  private readonly authService = inject(AuthService);
+
   private readonly translate = inject(TranslateService);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly fb = inject(FormBuilder);
 
-  readonly isAdmin = this.authService.isAdmin;
-  readonly isEditor = this.authService.isEditor;
-  readonly libraryType = signal<LibraryType>('ARTICULO');
-  readonly libraryQuery = signal('');
-  readonly libraryPage = signal(0);
-  readonly libraryTotal = signal(0);
-  readonly libraryCounts = signal<Partial<Record<LibraryType,number>>>({});
-  readonly libraryError = signal('');
-  readonly reviewTotal = signal(0);
-  readonly reviewPage = signal(0);
-  readonly reviewLastPage = signal(1);
-  private readonly libraryRequests = new Subject<string|null>();
-  private readonly reviewRequests = new Subject<string|null>();
-  private departmentRequest?: Subscription;
+  readonly isAdmin = this.workspace.isAdmin;
+  readonly isEditor = this.workspace.isEditor;
+  readonly libraryType = this.workspace.libraryType;
+  readonly libraryQuery = this.workspace.libraryQuery;
+  readonly libraryPage = this.workspace.libraryPage;
+  readonly libraryTotal = this.workspace.libraryTotal;
+  readonly libraryCounts = this.workspace.libraryCounts;
+  readonly libraryError = this.workspace.libraryError;
+  readonly reviewTotal = this.workspace.reviewTotal;
+  readonly reviewPage = this.workspace.reviewPage;
+  readonly reviewLastPage = this.workspace.reviewLastPage;
+
   private workspaceEditRequest?: Subscription;
   readonly canEditLibraryPublication = (item: ObservatorioPublicacion) => this.canEditPublication(item);
   readonly canDeleteLibraryPublication = (item: ObservatorioPublicacion) => this.canDeletePublication(item);
-  departamento = signal<Departamento | null>(null);
-  datasets = signal<Dataset[]>([]);
-  publicaciones = signal<ObservatorioPublicacion[]>([]);
-  editingPublication = signal<ObservatorioPublicacion | null>(null);
-  loading = signal(true);
-  loadingPublicaciones = signal(false);
-  loadingReviewPublicaciones = signal(false);
+  readonly departamento = this.workspace.departamento;
+  readonly datasets = this.workspace.datasets;
+  readonly publicaciones = this.workspace.publicaciones;
+  readonly editingPublication = this.editor.editingPublication;
+  readonly loading = this.workspace.loading;
+  readonly loadingPublicaciones = this.workspace.loadingPublicaciones;
+  readonly loadingReviewPublicaciones = this.workspace.loadingReviewPublicaciones;
   showPublicationForm = signal(false);
   showReviewPanel = signal(false);
-  savingPublication = signal(false);
-  changingReviewStatus = signal<string | null>(null);
-  syncingSharePoint = signal<TipoPublicacion | null>(null);
-  canUploadPublications = signal(false);
-  reviewPublicaciones = signal<ObservatorioPublicacion[]>([]);
-  selectedFile = signal<File | null>(null);
-  isDraggingFile = signal(false);
-  fileError = signal('');
-  serverError = signal('');
+  readonly savingPublication = this.editor.savingPublication;
+  readonly changingReviewStatus = this.workspace.changingReviewStatus;
+  readonly syncingSharePoint = this.workspace.syncingSharePoint;
+  readonly canUploadPublications = this.workspace.canUploadPublications;
+  readonly reviewPublicaciones = this.workspace.reviewPublicaciones;
+  readonly selectedFile = this.editor.selectedFile;
+  readonly isDraggingFile = this.editor.isDraggingFile;
+  readonly fileError = this.editor.fileError;
+  readonly serverError = this.editor.serverError;
   highlightPublicationForm = signal(false);
   expandedPublicationId = signal<string | null>(null);
   datasetSearchTerm = signal('');
   articleSearchTerm = signal('');
   reportSearchTerm = signal('');
   bookSearchTerm = signal('');
-  readonly editorStep = signal(1);
+  readonly editorStep = this.editor.editorStep;
   readonly discardChanges = signal(false);
   readonly discardTarget = signal<'close' | 'review'>('close');
-  readonly reviewSelectedId = signal<string | null>(null);
-  readonly reviewError = signal('');
-  readonly selectedReview = computed(() => this.reviewPublicaciones().find(item => item.id === this.reviewSelectedId()) || this.reviewPublicaciones()[0] || null);
+  readonly reviewSelectedId = this.workspace.reviewSelectedId;
+  readonly reviewError = this.workspace.reviewError;
+  readonly selectedReview = this.workspace.selectedReview;
 
   constructor() {
     this.destroyRef.onDestroy(() => this.publicationDialog?.close());
@@ -163,39 +164,16 @@ export class DepartamentoDetailComponent implements OnInit {
     else this.finishOverlayClose();
   }
 
-  continuePublication(): void {
-    this.publicationForm.markAllAsTouched();
-    if (this.informationValid()) this.editorStep.set(2);
-  }
+  continuePublication(): void { return this.editor.continuePublication(); }
 
-  private informationValid(): boolean {
-    return ['titulo', 'fecha_publicacion', 'link_url', 'descripcion', 'autores', 'fuente']
-      .every(name => this.publicationForm.get(name)?.valid);
-  }
-
-  get needsReviewObservation(): boolean {
-    return this.canChoosePublicationStatus && requiresReviewObservation(this.publicationForm.controls.estado.value);
-  }
-
-  private configureReviewObservation(): void {
-    const control = this.publicationForm.controls.observacion_revision;
-    control.setValidators([Validators.maxLength(2000), ...(this.needsReviewObservation
-      ? [Validators.required, (field: AbstractControl) => String(field.value ?? '').trim() ? null : {required:true}] : [])]);
-    control.updateValueAndValidity({emitEvent:false});
-  }
+  get needsReviewObservation() { return this.editor.needsReviewObservation; }
 
   submitPublication(): void {
     if (this.editorStep() === 1) this.continuePublication();
     else this.savePublication();
   }
 
-  publicationFieldError(name: 'titulo' | 'fecha_publicacion' | 'link_url' | 'descripcion' | 'fuente' | 'observacion_revision'): string {
-    const control = this.publicationForm.controls[name];
-    if (!control.touched || !control.invalid) return '';
-    if (control.hasError('required')) return 'Este campo es obligatorio.';
-    if (control.hasError('maxlength')) return `Máximo ${control.errors?.['maxlength'].requiredLength} caracteres.`;
-    return name === 'link_url' ? 'Ingresa una URL válida con http o https.' : 'Ingresa un valor válido.';
-  }
+  publicationFieldError(name: 'titulo' | 'fecha_publicacion' | 'link_url' | 'descripcion' | 'fuente' | 'observacion_revision'): string { return this.editor.publicationFieldError(name); }
 
   filteredDatasets = computed(() => {
     const term = this.normalizeSearch(this.datasetSearchTerm());
@@ -212,18 +190,7 @@ export class DepartamentoDetailComponent implements OnInit {
   filteredReportes = computed(() => this.filterPublications(this.reportes, this.reportSearchTerm()));
   filteredLibros = computed(() => this.filterPublications(this.libros, this.bookSearchTerm()));
 
-  readonly publicationForm = this.fb.nonNullable.group({
-    tipo: ['ARTICULO' as TipoPublicacion, Validators.required],
-    estado: ['PUBLICACION' as EstadoPublicacion, Validators.required],
-    observacion_revision: ['', Validators.maxLength(2000)],
-    solo_suscriptores: [false],
-    titulo: ['', [Validators.required, (control: AbstractControl) => String(control.value ?? '').trim() ? null : {required:true}, Validators.maxLength(255)]],
-    fecha_publicacion: ['', [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]],
-    link_url: ['', Validators.pattern(/^https?:\/\/.+/i)],
-    descripcion: ['', Validators.maxLength(3000)],
-    autores: this.fb.nonNullable.array([this.createAutorControl()]),
-    fuente: ['', Validators.maxLength(255)],
-  });
+  readonly publicationForm = this.editor.publicationForm;
 
   get articulos(): ObservatorioPublicacion[] {
     return this.publicaciones().filter((item) => item.tipo === 'ARTICULO');
@@ -241,51 +208,23 @@ export class DepartamentoDetailComponent implements OnInit {
     return this.reviewTotal();
   }
 
-  get tipo(): TipoPublicacion {
-    return this.publicationForm.controls.tipo.value;
-  }
+  get tipo() { return this.editor.tipo; }
 
-  get isArticulo(): boolean {
-    return this.tipo === 'ARTICULO';
-  }
+  get isArticulo() { return this.editor.isArticulo; }
 
-  get isReporte(): boolean {
-    return this.tipo === 'REPORTE';
-  }
+  get isReporte() { return this.editor.isReporte; }
 
-  get isLibro(): boolean {
-    return this.tipo === 'LIBRO';
-  }
+  get isLibro() { return this.editor.isLibro; }
 
-  get autores(): FormArray<FormControl<string>> {
-    return this.publicationForm.controls.autores;
-  }
+  get autores() { return this.editor.autores; }
 
-  get shouldShowPdfUpload(): boolean {
-    return this.isArticulo || this.isReporte || this.isLibro || this.tipo === 'ATLAS';
-  }
+  get shouldShowPdfUpload() { return this.editor.shouldShowPdfUpload; }
 
-  get canManagePublications(): boolean {
-    const departamento = this.departamento();
-    if (!departamento) return false;
+  get canManagePublications(): boolean { return this.workspace.canManagePublications; }
 
-    const hasObservatorioPermission =
-      this.canUploadPublications() ||
-      ['ADMIN', 'EDITOR'].includes(String(departamento.user_role ?? '').toUpperCase()) ||
-      this.authService.hasRoleInDepartamento(departamento.id, ['ADMIN', 'EDITOR']);
+  get canUploadButtonGroup(): boolean { return this.workspace.canUploadButtonGroup; }
 
-    return this.isAdmin() || this.authService.canReviewObservatory(this.departamento()?.id) || (this.isEditor() && hasObservatorioPermission);
-  }
-
-  get canUploadButtonGroup(): boolean {
-    return this.canManagePublications;
-  }
-
-  get canChoosePublicationStatus(): boolean {
-    const editing = this.editingPublication();
-    if (editing) return editing.capabilities?.can_review === true;
-    return this.authService.canReviewObservatory(this.departamento()?.id);
-  }
+  get canChoosePublicationStatus() { return this.editor.canChoosePublicationStatus; }
 
   get panelTitle(): string {
     return this.isEditor() && !this.isAdmin() ? 'Panel de Editor' : 'Panel de Administrador';
@@ -324,31 +263,9 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.libraryRequests.pipe(switchMap(id => {
-      this.publicaciones.set([]); this.libraryError.set('');
-      if (!id) return of(null);
-      this.loadingPublicaciones.set(true);
-      const request = () => this.publicacionService.libraryPage(id,{tipo:this.libraryType(),q:this.libraryQuery(),page:this.libraryPage()+1});
-      return request().pipe(switchMap(result => {
-        if(this.libraryPage()+1>result.meta.last_page){this.libraryPage.set(Math.max(0,result.meta.last_page-1));return request();}
-        return of(result);
-      }),catchError(()=>{this.libraryTotal.set(0);this.libraryCounts.set({});this.reviewTotal.set(0);this.libraryError.set('No se pudieron cargar las publicaciones.');return of(null);}));
-    }),takeUntilDestroyed(this.destroyRef)).subscribe(result=>{
-      if(result){this.publicaciones.set(result.data);this.libraryTotal.set(result.meta.total);this.libraryCounts.set(result.counts||{});this.reviewTotal.set(result.review_total||0);this.libraryPage.set(result.meta.current_page-1);}
-      this.loadingPublicaciones.set(false); if(result)this.applyWorkspaceAction();
-    });
-    this.reviewRequests.pipe(switchMap(id=>{
-      this.reviewPublicaciones.set([]);this.reviewSelectedId.set(null);this.reviewError.set('');
-      if(!id)return of(null);
-      this.loadingReviewPublicaciones.set(true);
-      const request=()=>this.publicacionService.libraryPage(id,{estado:'EN_REVISION',page:this.reviewPage()+1});
-      return request().pipe(switchMap(result=>{
-        if(this.reviewPage()+1>result.meta.last_page){this.reviewPage.set(Math.max(0,result.meta.last_page-1));return request();}return of(result);
-      }),catchError(()=>{this.reviewError.set('No se pudieron cargar las publicaciones en revisión.');return of(null);}));
-    }),takeUntilDestroyed(this.destroyRef)).subscribe(result=>{
-      if(result){this.reviewPublicaciones.set(result.data);this.reviewTotal.set(result.meta.total);this.reviewPage.set(result.meta.current_page-1);this.reviewLastPage.set(result.meta.last_page);}
-      this.loadingReviewPublicaciones.set(false);
-    });
+    this.workspace.ready.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.applyWorkspaceAction());
+    this.workspace.start();
+    this.editor.start();
     this.route.queryParamMap?.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.workspaceActionKey = '';
       if (!this.loadingPublicaciones()) this.applyWorkspaceAction();
@@ -367,66 +284,21 @@ export class DepartamentoDetailComponent implements OnInit {
       this.closeAllObservationForms();
       if (params['id']) this.loadDepartamento(params['id']);
     });
-    this.publicationForm.controls.tipo.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((tipo) => {
-        this.configurePublicationValidators(tipo);
-        this.fileError.set('');
-      });
-    this.configurePublicationValidators(this.publicationForm.controls.tipo.value);
-    this.publicationForm.controls.estado.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.configureReviewObservation());
   }
 
-  loadDepartamento(id: string): void {
-    this.departmentRequest?.unsubscribe();this.workspaceEditRequest?.unsubscribe();
-    this.libraryRequests.next(null);this.reviewRequests.next(null);this.departamento.set(null);
-    this.libraryPage.set(0);this.libraryQuery.set('');this.libraryType.set('ARTICULO');this.libraryTotal.set(0);this.libraryCounts.set({});this.reviewTotal.set(0);
-    this.canUploadPublications.set(false);
-    this.loading.set(true);
-    this.departmentRequest = this.deptoService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (departamento) => {
-        this.departamento.set(departamento);
-        this.datasets.set(departamento?.datasets || []);
-        this.loading.set(false);
-        this.loadCanUpload(id);
-        this.loadPublicaciones(id);
-      },
-      error: () => {
-        this.canUploadPublications.set(false);
-        this.loading.set(false);
-      },
-    });
-  }
+  loadDepartamento(id: string): void { this.workspaceEditRequest?.unsubscribe(); this.workspace.loadDepartamento(id); }
 
-  loadCanUpload(id: string): void {
-    this.publicacionService.canUpload(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (response) => {
-        if(this.departamento()?.id!==id)return;
-        const canUpload =
-          !!response.can_upload ||
-          (String(response.role ?? '').toUpperCase() === 'EDITOR' && !!response.has_permission);
-        this.canUploadPublications.set(canUpload);
-        if(this.departamento()?.id===id)this.applyWorkspaceAction();
-      },
-      error: () => {if(this.departamento()?.id===id)this.canUploadPublications.set(false);},
-    });
-  }
+  loadCanUpload(id: string): void { this.workspace.loadCanUpload(id); }
 
-  loadPublicaciones(id: string): void {
-    this.libraryRequests.next(id);
-  }
+  loadPublicaciones(id: string): void { this.workspace.loadPublicaciones(id); }
 
-  libraryFiltersChanged(filters:LibraryFilters):void {
-    this.libraryType.set(filters.tipo);this.libraryQuery.set(filters.q);this.libraryPage.set(filters.page);
-    if(this.departamento())this.loadPublicaciones(this.departamento()!.id);
-  }
-  retryLibrary():void {if(this.departamento())this.loadPublicaciones(this.departamento()!.id);}
+  libraryFiltersChanged(filters: LibraryFilters): void { this.workspace.libraryFiltersChanged(filters); }
+  retryLibrary(): void { this.workspace.retryLibrary(); }
 
   openPublicationForm(tipo: TipoPublicacion): void {
     if (!this.canManagePublications || (!this.isAdmin() && tipo === 'ATLAS')) return;
     this.closeAllObservationForms(tipo);
-    this.configurePublicationValidators(tipo);
+    this.editor.configurePublicationValidators(tipo);
     this.showPublicationForm.set(true);
     this.openPublicationOverlay();
   }
@@ -468,7 +340,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   private resetReviewPanel(clearItems = false): void {
-    this.reviewRequests.next(null);
+    this.workspace.resetReview();
     this.showReviewPanel.set(false);
     this.loadingReviewPublicaciones.set(false);
     this.changingReviewStatus.set(null);
@@ -477,14 +349,9 @@ export class DepartamentoDetailComponent implements OnInit {
     }
   }
 
-  loadReviewPublicaciones(id: string): void {
-    this.reviewRequests.next(id);
-  }
+  loadReviewPublicaciones(id: string): void { this.workspace.loadReviewPublicaciones(id); }
 
-  changeReviewPage(delta:number):void {
-    this.reviewPage.set(Math.max(0,Math.min(this.reviewPage()+delta,this.reviewLastPage()-1)));
-    if(this.departamento())this.loadReviewPublicaciones(this.departamento()!.id);
-  }
+  changeReviewPage(delta: number): void { this.workspace.changeReviewPage(delta); }
 
   closePublicationForm(): void {
     this.requestOverlayClose();
@@ -494,185 +361,42 @@ export class DepartamentoDetailComponent implements OnInit {
     this.editorStep.set(1); this.discardChanges.set(false);
     this.showPublicationForm.set(false);
     this.highlightPublicationForm.set(false);
-    this.resetPublicationForm(tipo);
+    this.editor.resetPublicationForm(tipo);
   }
 
   editPublication(publicacion: ObservatorioPublicacion): void {
-    if (!this.canEditPublication(publicacion) || this.savingPublication() || this.changingReviewStatus()) return;
-    this.closeAllObservationForms(publicacion.tipo);
-    this.editingPublication.set(publicacion);
-    this.publicationForm.reset({
-      tipo: publicacion.tipo,
-      estado: publicacion.estado ?? 'PUBLICACION',
-      observacion_revision: publicacion.observacion_revision ?? '',
-      solo_suscriptores: !!publicacion.solo_suscriptores,
-      titulo: publicacion.titulo,
-      fecha_publicacion: publicacion.fecha_publicacion,
-      link_url: publicacion.link_url ?? '',
-      descripcion: publicacion.descripcion ?? '',
-      fuente: publicacion.fuente ?? '',
-    });
-    this.setAutores(publicacion.autores);
-    this.configurePublicationValidators(publicacion.tipo);
-    this.configureReviewObservation();
-    this.selectedFile.set(null);
-    this.isDraggingFile.set(false);
-    this.fileError.set('');
-    this.serverError.set('');
-    this.showPublicationForm.set(true);
-    this.publicationForm.markAsPristine();
-    this.openPublicationOverlay();
+    if (!this.editor.edit(publicacion)) return;
+    this.editorStep.set(1); this.discardChanges.set(false); this.highlightPublicationForm.set(false);
+    this.showPublicationForm.set(true); this.openPublicationOverlay();
   }
 
-  onFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0] ?? null;
-    if (!file) {
-      return;
-    }
-    this.validateAndSetFile(file, input);
-  }
+  onFileSelected(event: Event): void { return this.editor.onFileSelected(event); }
 
-  onFileDragOver(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDraggingFile.set(true);
-  }
+  onFileDragOver(event: DragEvent): void { return this.editor.onFileDragOver(event); }
 
-  onFileDragLeave(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    const target = event.currentTarget as HTMLElement;
-    if (!target.contains(event.relatedTarget as Node | null)) {
-      this.isDraggingFile.set(false);
-    }
-  }
+  onFileDragLeave(event: DragEvent): void { return this.editor.onFileDragLeave(event); }
 
-  onFileDropped(event: DragEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isDraggingFile.set(false);
-    const file = event.dataTransfer?.files?.[0];
-    if (file) {
-      this.validateAndSetFile(file);
-    }
-  }
+  onFileDropped(event: DragEvent): void { return this.editor.onFileDropped(event); }
 
-  removeSelectedFile(input: HTMLInputElement, event: Event): void {
-    event.stopPropagation();
-    input.value = '';
-    this.selectedFile.set(null);
-    this.fileError.set('');
-  }
+  removeSelectedFile(input: HTMLInputElement, event: Event): void { return this.editor.removeSelectedFile(input, event); }
 
-  agregarAutor(): void {
-    this.autores.push(this.createAutorControl());
-    this.publicationForm.markAsDirty();
-  }
+  agregarAutor(): void { return this.editor.agregarAutor(); }
 
-  eliminarAutor(index: number): void {
-    this.publicationForm.markAsDirty();
-    if (this.autores.length === 1) {
-      this.autores.at(0).setValue('');
-      return;
-    }
+  eliminarAutor(index: number): void { return this.editor.eliminarAutor(index); }
 
-    this.autores.removeAt(index);
-  }
-
-  formatFileSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  private validateAndSetFile(file: File, input?: HTMLInputElement): void {
-    if (this.savingPublication()) return;
-    this.fileError.set('');
-    if ((file.type && !['application/pdf', 'application/x-pdf'].includes(file.type)) || !file.name.toLowerCase().endsWith('.pdf')) {
-      this.selectedFile.set(null);
-      this.fileError.set('Formato no válido. Solo se permiten archivos PDF.');
-      if (input) input.value = '';
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      this.selectedFile.set(null);
-      this.fileError.set('El PDF no debe superar los 20 MB.');
-      if (input) input.value = '';
-      return;
-    }
-    this.selectedFile.set(file);
-  }
+  formatFileSize(bytes: number): string { return this.editor.formatFileSize(bytes); }
 
   savePublication(): void {
-    if (this.savingPublication() || this.changingReviewStatus() || !this.canManagePublications) return;
-    this.publicationForm.markAllAsTouched();
+    const departmentId = this.departamento()?.id;
     const editing = this.editingPublication();
-    if (editing && !this.canEditPublication(editing)) return;
-    this.configureReviewObservation();
-    const requiresPdf = this.isArticulo || this.isLibro || this.tipo === 'ATLAS';
-    if (!editing && requiresPdf && !this.selectedFile()) {
-      this.fileError.set('Debe seleccionar un archivo PDF.');
-    }
-    if (this.publicationForm.invalid) { this.editorStep.set(this.informationValid() ? 2 : 1); return; }
-    if (this.fileError() || (!editing && requiresPdf && !this.selectedFile())) { this.editorStep.set(2); return; }
-
-    const departamento = this.departamento();
-    if (!departamento) return;
-    const formData = new FormData();
-    const values = this.publicationForm.getRawValue();
-    Object.entries(values).forEach(([key, value]) => {
-      if (key === 'observacion_revision' && (!this.needsReviewObservation || !this.canChoosePublicationStatus)) return;
-      if (key === 'autores') {
-        (value as string[])
-          .map((autor) => autor.trim())
-          .filter(Boolean)
-          .forEach((autor) => formData.append('autores[]', autor));
-        return;
-      }
-      if (['descripcion', 'fuente'].includes(key) && !String(value).trim()) {
-        return;
-      }
-      formData.append(key, typeof value === 'boolean' ? (value ? '1' : '0') : String(value));
-    });
-    if (this.selectedFile()) {
-      formData.append('archivo', this.selectedFile()!);
-    }
-
-    this.savingPublication.set(true);
-    this.serverError.set('');
-    const request = editing
-      ? this.publicacionService.update(editing.id, formData)
-      : this.publicacionService.create(departamento.id, formData);
-    request.subscribe({
-      next: () => {
-        this.savingPublication.set(false);
-        this.closeAllObservationForms();
-        this.loadPublicaciones(departamento.id);
-        if (this.showReviewPanel()) {
-          this.loadReviewPublicaciones(departamento.id);
-        } else this.finishOverlayClose();
-        this.snackBar.open(
-          !this.canChoosePublicationStatus
-            ? 'Contenido enviado a revisión.'
-            : editing
-            ? 'Publicación actualizada correctamente.'
-            : 'Publicación guardada correctamente.',
-          'Cerrar',
-          { duration: 4000 },
-        );
-      },
-      error: (error) => {
-        this.savingPublication.set(false);
-        const errors = error?.error?.errors;
-        const first = errors ? Object.values(errors).flat()[0] : null;
-        this.serverError.set(
-          typeof first === 'string'
-            ? first
-            : error?.error?.message || 'No se pudo guardar la publicación.',
-        );
-        if (errors) this.editorStep.set(Object.keys(errors).some(key => !['archivo', 'estado', 'solo_suscriptores', 'observacion_revision'].includes(key)) ? 1 : 2);
-      },
+    const canReview = this.canChoosePublicationStatus;
+    this.editor.savePublication().subscribe(() => {
+      this.closeAllObservationForms();
+      if (departmentId) this.loadPublicaciones(departmentId);
+      if (this.showReviewPanel() && departmentId) this.loadReviewPublicaciones(departmentId);
+      else this.finishOverlayClose();
+      this.snackBar.open(!canReview ? 'Contenido enviado a revisión.' : editing
+        ? 'Publicación actualizada correctamente.' : 'Publicación guardada correctamente.', 'Cerrar', {duration:4000});
     });
   }
 
@@ -699,7 +423,7 @@ export class DepartamentoDetailComponent implements OnInit {
       this.viewLibraryPublication(publicacion);
       return;
     }
-    this.publicacionService.openPdf(publicacion).subscribe((opened) => {
+    this.publicacionService.openPdf(publicacion).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((opened) => {
       if (!opened) {
         this.snackBar.open('No hay PDF disponible para esta publicación.', 'Cerrar', {
           duration: 3500,
@@ -799,17 +523,9 @@ export class DepartamentoDetailComponent implements OnInit {
       .subscribe((confirmed) => {
         if (!confirmed) return;
 
-        this.publicacionService
-          .delete(publicacion.id)
-          .pipe(takeUntilDestroyed(this.destroyRef))
+        this.workspace.remove(publicacion, this.showReviewPanel())
           .subscribe({
             next: () => {
-              this.publicaciones.update((items) => items.filter((item) => item.id !== publicacion.id));
-              this.reviewPublicaciones.update((items) =>
-                items.filter((item) => item.id !== publicacion.id),
-              );
-              this.retryLibrary();
-              if(this.showReviewPanel()&&this.departamento())this.loadReviewPublicaciones(this.departamento()!.id);
               this.snackBar.open('Publicación eliminada correctamente.', 'Cerrar', {
                 duration: 3500,
               });
@@ -841,26 +557,13 @@ export class DepartamentoDetailComponent implements OnInit {
       return;
     }
 
-    this.changingReviewStatus.set(`${publicacion.id}:${estado}`);
-    this.publicacionService.update(publicacion.id, this.buildPublicationFormData(publicacion, estado)).subscribe({
-      next: (updated) => {
-        this.changingReviewStatus.set(null);
-        this.publicaciones.update((items) =>
-          items.map((item) => (item.id === updated.id ? updated : item)),
-        );
-        this.reviewPublicaciones.update((items) =>
-          estado === 'EN_REVISION'
-            ? items.map((item) => (item.id === updated.id ? updated : item))
-            : items.filter((item) => item.id !== updated.id),
-        );
-        this.retryLibrary();
-        if(this.showReviewPanel()&&this.departamento())this.loadReviewPublicaciones(this.departamento()!.id);
+    this.workspace.review(publicacion, estado, this.editor.buildPublicationFormData(publicacion, estado), this.showReviewPanel()).subscribe({
+      next: () => {
         this.snackBar.open(`Estado cambiado a ${this.getEstadoPublicacionLabel(estado)}.`, 'Cerrar', {
           duration: 3500,
         });
       },
       error: (error) => {
-        this.changingReviewStatus.set(null);
         this.snackBar.open(error?.error?.message || 'No se pudo cambiar el estado.', 'Cerrar', {
           duration: 4500,
         });
@@ -869,19 +572,13 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   syncSharePointReportes(): void {
-    const departamento = this.departamento();
-    if (!departamento || this.syncingSharePoint()) return;
-    this.syncingSharePoint.set('REPORTE');
-    this.publicacionService.syncSharePointReportes(departamento.id).subscribe({
+    this.workspace.sync('REPORTE').subscribe({
       next: (items) => {
-        this.syncingSharePoint.set(null);
-        this.loadPublicaciones(departamento.id);
         this.snackBar.open(`Reportes Power BI sincronizados: ${items.length}.`, 'Cerrar', {
           duration: 4000,
         });
       },
       error: (error) => {
-        this.syncingSharePoint.set(null);
         this.snackBar.open(error?.error?.message || 'No se pudo sincronizar Power BI.', 'Cerrar', {
           duration: 5000,
         });
@@ -890,19 +587,13 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   syncSharePointAtlas(): void {
-    const departamento = this.departamento();
-    if (!departamento || this.syncingSharePoint()) return;
-    this.syncingSharePoint.set('LIBRO');
-    this.publicacionService.syncSharePointAtlas(departamento.id).subscribe({
+    this.workspace.sync('LIBRO').subscribe({
       next: (items) => {
-        this.syncingSharePoint.set(null);
-        this.loadPublicaciones(departamento.id);
         this.snackBar.open(`PDF de Libros sincronizados: ${items.length}.`, 'Cerrar', {
           duration: 4000,
         });
       },
       error: (error) => {
-        this.syncingSharePoint.set(null);
         this.snackBar.open(error?.error?.message || 'No se pudo sincronizar Libros.', 'Cerrar', {
           duration: 5000,
         });
@@ -944,7 +635,7 @@ export class DepartamentoDetailComponent implements OnInit {
       .afterClosed()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
-        if (!result) return;
+        if (!result || this.departamento()?.id !== departamento.id) return;
         const totals = result.totals;
         this.loadPublicaciones(departamento.id);
         this.snackBar.open(
@@ -1180,78 +871,4 @@ export class DepartamentoDetailComponent implements OnInit {
       .trim();
   }
 
-  private configurePublicationValidators(tipo: TipoPublicacion): void {
-    this.publicationForm.controls.link_url.setValidators([
-      ...(tipo === 'REPORTE' ? [Validators.required] : []),
-      control => {
-        if (!control.value) return null;
-        try { return ['http:', 'https:'].includes(new URL(control.value).protocol) ? null : {url:true}; }
-        catch { return {url:true}; }
-      },
-      Validators.maxLength(2048),
-    ]);
-    this.publicationForm.controls.descripcion.setValidators([Validators.maxLength(3000)]);
-    this.publicationForm.controls.link_url.updateValueAndValidity();
-    this.publicationForm.controls.descripcion.updateValueAndValidity();
-  }
-
-  private resetPublicationForm(tipo: TipoPublicacion = 'ARTICULO'): void {
-    this.editingPublication.set(null);
-    this.publicationForm.reset({
-      tipo,
-      estado: 'PUBLICACION',
-      observacion_revision: '',
-      solo_suscriptores: false,
-      titulo: '',
-      fecha_publicacion: '',
-      link_url: '',
-      descripcion: '',
-      fuente: '',
-    });
-    this.setAutores([]);
-    this.selectedFile.set(null);
-    this.isDraggingFile.set(false);
-    this.fileError.set('');
-    this.serverError.set('');
-  }
-
-  private buildPublicationFormData(
-    publicacion: ObservatorioPublicacion,
-    estado: EstadoPublicacion,
-  ): FormData {
-    const formData = new FormData();
-    formData.append('tipo', publicacion.tipo);
-    formData.append('estado', estado);
-    formData.append('solo_suscriptores', publicacion.solo_suscriptores ? '1' : '0');
-    formData.append('titulo', publicacion.titulo);
-    formData.append('fecha_publicacion', publicacion.fecha_publicacion);
-    formData.append('link_url', publicacion.link_url ?? '');
-    this.appendOptionalFormValue(formData, 'descripcion', publicacion.descripcion);
-    this.normalizeAutores(publicacion.autores).forEach((autor) => formData.append('autores[]', autor));
-    this.appendOptionalFormValue(formData, 'fuente', publicacion.fuente);
-
-    return formData;
-  }
-
-  private appendOptionalFormValue(formData: FormData, key: string, value: string | null | undefined): void {
-    if (value?.trim()) {
-      formData.append(key, value);
-    }
-  }
-
-  private createAutorControl(value = ''): FormControl<string> {
-    return this.fb.nonNullable.control(value, Validators.maxLength(255));
-  }
-
-  private setAutores(value: string[] | string | null | undefined): void {
-    this.autores.clear();
-    const autores = this.normalizeAutores(value);
-    (autores.length ? autores : ['']).forEach((autor) => this.autores.push(this.createAutorControl(autor)));
-  }
-
-  private normalizeAutores(value: string[] | string | null | undefined): string[] {
-    const autores = Array.isArray(value) ? value : value ? [value] : [];
-
-    return autores.map((autor) => autor.trim()).filter(Boolean);
-  }
 }

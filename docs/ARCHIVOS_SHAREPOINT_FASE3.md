@@ -67,5 +67,7 @@ producción. La comprobación desplegada es de solo lectura; no crea publicacion
 
 No requiere migraciones, cambios de variables ni conversiones. Se integra en
 `pruebas-rediseno` tras CI y se confirma el commit activo en Render. Esta entrega
-no cierra la fase 3: quedan gestión de asignaciones y coordinación de vistas.
+no cierra la fase 3. Las entregas posteriores de asignaciones y coordinación
+se documentan en `ASIGNACIONES_OBSERVATORIOS_FASE3.md` y
+`COORDINACION_VISTAS_FASE3.md`.
 Barómetro conserva sus contratos y queda pendiente del rediseño del usuario.
