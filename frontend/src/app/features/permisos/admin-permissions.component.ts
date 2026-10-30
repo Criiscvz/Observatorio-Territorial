@@ -113,6 +113,7 @@ export class AdminPermissionsComponent implements OnInit {
     },
   ];
 
+  readonly canAssignEditors = signal(false);
   users = signal<User[]>([]);
   loadingUsers = signal(true);
   searchTerm = signal('');
@@ -136,7 +137,7 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   loadUsers(): void {
-    this.loadingUsers.set(true);
+    this.loadingUsers.set(true); this.canAssignEditors.set(false);
     this.userService
       .getUsers(100, 1, undefined, 'permissions')
       .pipe(
@@ -156,6 +157,7 @@ export class AdminPermissionsComponent implements OnInit {
       .subscribe({
         next: (responses) => {
           const all = responses.flatMap((r) => r.data);
+          this.canAssignEditors.set(responses[0]?.meta.access_capabilities?.can_assign_editors === true);
           this.users.set(all);
           this.loadingUsers.set(false);
 
@@ -242,13 +244,11 @@ export class AdminPermissionsComponent implements OnInit {
   // ─── acciones ───
 
   canManageUser(user: User): boolean {
-    return this.auth.isAdmin() || (this.auth.user()?.rol === 'ADMIN_OBSERVATORIO'
-      && !!this.auth.user()?.departamentos?.some(department => department.puede_agregar_editores
-        && (user.rol === 'USER' || user.departamentos?.some(assigned => assigned.id === department.id))));
+    return user.access_capabilities?.can_manage_access === true;
   }
 
   addEditor(): void {
-    if (this.auth.user()?.rol !== 'ADMIN_OBSERVATORIO' || !this.auth.canAssignEditors() || this.savingUserId() !== null) return;
+    if (this.auth.user()?.rol !== 'ADMIN_OBSERVATORIO' || !this.canAssignEditors() || this.savingUserId() !== null) return;
     this.dialog.open(EditorPickerDialogComponent, {
       width: '620px', maxWidth: 'calc(100vw - 24px)', maxHeight: 'calc(100dvh - 32px)',
       panelClass: 'access-management-dialog-panel', autoFocus: false,
@@ -258,7 +258,7 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   openPermissionsDialog(user: User): void {
-    if (this.savingUserId() !== null) return;
+    if (user.access_capabilities?.can_view_access !== true || this.savingUserId() !== null) return;
     this.resetConfirmationId.set(null);
     const dialogRef = this.dialog.open(UserPermissionsDialogComponent, {
       width: '760px',
@@ -312,7 +312,7 @@ export class AdminPermissionsComponent implements OnInit {
   }
 
   resetUserPermissions(user: User): void {
-    if (!this.canManageUser(user) || this.resetConfirmationId() !== user.id || this.savingUserId() !== null) return;
+    if (user.access_capabilities?.can_revoke_access !== true || this.resetConfirmationId() !== user.id || this.savingUserId() !== null) return;
     this.savingUserId.set(user.id);
     this.saveStatus.set('');
     const emptyPermissions: PermisoConfig[] = [

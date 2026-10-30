@@ -4,8 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { PermisosService } from '@core/services/permisos.service';
-import { DepartamentoService } from '@core/services/departamento.service';
+import { ObservatoryAccessService } from '@core/services/observatory-access.service';
 import { User, Departamento } from '@core/models';
 import { PermisoConfig } from '@core/models/permisos';
 import { AuthService } from '@core/services/auth.service';
@@ -24,8 +23,8 @@ import { AuthService } from '@core/services/auth.service';
 })
 export class UserPermissionsDialogComponent implements OnInit {
   readonly auth = inject(AuthService);
-  private readonly permisosService = inject(PermisosService);
-  private readonly departamentoService = inject(DepartamentoService);
+
+  private readonly accessService = inject(ObservatoryAccessService);
   private readonly dialogRef = inject(MatDialogRef<UserPermissionsDialogComponent>);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -33,8 +32,7 @@ export class UserPermissionsDialogComponent implements OnInit {
   readonly isObservatoryAdmin = this.user.rol === 'ADMIN_OBSERVATORIO';
   readonly promotingEditor = this.user.rol === 'USER' && this.auth.user()?.rol === 'ADMIN_OBSERVATORIO';
   readonly delegated = this.auth.user()?.rol === 'ADMIN_OBSERVATORIO';
-  readonly readOnly = this.delegated && !this.auth.user()?.departamentos?.some(dep => dep.puede_agregar_editores
-    && (this.user.rol === 'USER' || this.user.departamentos?.some(assigned => assigned.id === dep.id)));
+  readOnly = true;
   permissionsReady = false;
   capabilities: Record<string, { puede_revisar: boolean; puede_agregar_editores: boolean }> = {};
 
@@ -54,42 +52,29 @@ export class UserPermissionsDialogComponent implements OnInit {
     return !this.originalDepartamentoIds.has(id);
   }
 
+  private currentPermissions: PermisoConfig[] = [];
   ngOnInit(): void {
     this.loadingDepartamentos = true;
-    this.loadDepartamentosError = '';
-    this.departamentoService.getAll().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (deps) => {
-        this.departamentos = this.auth.user()?.rol === 'ADMIN_OBSERVATORIO'
-          ? deps.filter(dep => this.auth.user()?.departamentos?.some(assignment => assignment.id === dep.id && (this.readOnly || assignment.puede_agregar_editores))) : deps;
-        this.updateFilteredDepartamentos();
+    this.accessService.context(this.user.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: context => {
+        this.readOnly = context.capabilities?.can_manage_access !== true;
+        this.departamentos = context.observatorios;
+        this.currentPermissions = context.permisos;
+        this.permissionsReady = context.capabilities?.can_view_access === true;
         this.loadingDepartamentos = false;
-        this.loadAssignedObservatorios();
-        this.cdr.detectChanges();
+        this.updateFilteredDepartamentos(); this.applyCurrentSelection();
       },
       error: () => {
-        this.departamentos = [];
-        this.filteredDepartamentosList = [];
-        this.loadDepartamentosError = 'No se pudieron cargar los Observatorios.';
-        this.loadingDepartamentos = false;
-        this.cdr.detectChanges();
-      },
-    });
-  }
-
-  private loadAssignedObservatorios(): void {
-    this.permisosService.syncFromBackend(this.user.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => { this.permissionsReady = true; this.applyCurrentSelection(); },
-      error: () => {
-        this.permissionsReady = false;
-        this.loadDepartamentosError = 'No se pudieron cargar los permisos actuales. Cierra y vuelve a abrir para reintentar.';
+        this.readOnly = true; this.permissionsReady = false; this.loadingDepartamentos = false;
+        this.departamentos = []; this.filteredDepartamentosList = [];
+        this.loadDepartamentosError = 'No se pudieron cargar los accesos actuales. Cierra y vuelve a abrir para reintentar.';
         this.cdr.detectChanges();
       },
     });
   }
 
   private applyCurrentSelection(): void {
-    const observatorioPermisos = this.permisosService
-      .getUserPermisos(this.user.id)
+    const observatorioPermisos = this.currentPermissions
       .filter((permiso) => permiso.modulo === 'observatorios' && permiso.nivel !== 'ninguno');
 
     const allObservatorios = observatorioPermisos.some((permiso) => permiso.departamento_id === null);
