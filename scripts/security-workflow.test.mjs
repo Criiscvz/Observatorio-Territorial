@@ -86,6 +86,14 @@ test('scanner retains default rules, redaction and no broad fixture or history s
   assert(installer.includes('Gitleaks checksum mismatch; refusing to extract or execute.'));
 });
 
+test('quality gates run before application tests and remain required by Resultado', () => {
+  for (const command of ['run: composer analyse', 'run: npm run lint', 'run: npm run test:quality']) {
+    assert(source.includes(command));
+  }
+  assert(source.indexOf('run: composer analyse') < source.indexOf('run: php vendor/bin/phpunit --no-progress'));
+  assert(source.indexOf('run: npm run lint') < source.indexOf('run: npm test -- --watch=false'));
+});
+
 test('the locked MongoDB library has a compatible, identical PHP driver in Docker and CI', () => {
   const library = backendLock.packages.find(pkg => pkg.name === 'mongodb/mongodb');
   const required = /^\^(\d+)\.(\d+)$/.exec(library.require['ext-mongodb']);

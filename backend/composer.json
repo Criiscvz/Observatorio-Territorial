@@ -23,6 +23,8 @@
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
+        "nikic/php-parser": "5.7.0",
+        "phpstan/phpstan": "2.3.4",
         "phpunit/phpunit": "^11.5.3"
     },
     "autoload": {
@@ -38,6 +40,8 @@
         }
     },
     "scripts": {
+        "analyse": "phpstan analyse --no-progress --memory-limit=512M",
+        "test:architecture": "@php vendor/bin/phpunit --no-progress --filter ArchitectureTest",
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
