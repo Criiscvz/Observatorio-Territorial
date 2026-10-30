@@ -58,6 +58,10 @@ jobs:
         run: node --test scripts/test-repository-hygiene.mjs scripts/security-workflow.test.mjs
       - name: Synthetic Docker context only
         run: node scripts/test-docker-context-hygiene.mjs
+      - name: Portable rehearsal contracts
+        run: node --test scripts/portable-runtime.test.mjs
+      - name: Portable synthetic build contexts
+        run: node scripts/test-portable-build-contexts.mjs
 
   backend:
     name: Backend

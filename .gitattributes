@@ -1,0 +1,4 @@
+backend/docker/portable-* text eol=lf
+deploy/portable/*.sh text eol=lf
+deploy/portable/*.js text eol=lf
+frontend/docker/*.conf text eol=lf
