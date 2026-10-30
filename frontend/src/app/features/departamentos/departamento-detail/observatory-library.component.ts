@@ -5,6 +5,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ObservatorioPublicacion, requiresReviewObservation } from '@core/models/publicacion/publicacion.interface';
 
 export type LibraryType = 'ARTICULO' | 'REPORTE' | 'LIBRO';
+export interface LibraryFilters {tipo: LibraryType; q: string; page: number;}
 
 @Component({
   selector: 'app-observatory-library',
@@ -17,6 +18,11 @@ export class ObservatoryLibraryComponent {
   readonly hasReviewObservation = (item: ObservatorioPublicacion) => requiresReviewObservation(item.estado);
   readonly publications = input<ObservatorioPublicacion[]>([]);
   readonly loading = input(false);
+  readonly total = input(0);
+  readonly totals = input<Partial<Record<LibraryType, number>>>({});
+  readonly error = input('');
+  readonly retry = output<void>();
+  readonly filtersChange = output<LibraryFilters>();
   readonly canEdit = input<(item: ObservatorioPublicacion) => boolean>(() => false);
   readonly canDelete = input<(item: ObservatorioPublicacion) => boolean>(() => false);
   readonly edit = output<ObservatorioPublicacion>();
@@ -28,31 +34,24 @@ export class ObservatoryLibraryComponent {
     {value: 'REPORTE', label: 'Reportes', icon: 'bar_chart'},
     {value: 'LIBRO', label: 'Libros', icon: 'menu_book'},
   ];
-  readonly type = signal<LibraryType>('ARTICULO');
-  readonly query = signal('');
-  readonly page = signal(0);
+  readonly type = input<LibraryType>('ARTICULO');
+  readonly query = input('');
+  readonly page = input(0);
   readonly expandedId = signal<string | null>(null);
   readonly pageSize = 20;
-  readonly typeItems = computed(() => this.publications().filter(item => item.tipo === this.type()));
-  readonly filtered = computed(() => {
-    const query = this.normalize(this.query());
-    return this.typeItems().filter(item => !query || this.normalize([
-      item.titulo, item.codigo, item.fuente, this.authors(item), item.creador?.name, item.observacion_revision, this.stateLabel(item),
-    ].join(' ')).includes(query));
-  });
-  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize)));
+  readonly pageCount = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize)));
   readonly currentPage = computed(() => Math.min(this.page(), this.pageCount() - 1));
-  readonly visible = computed(() => this.filtered().slice(this.currentPage() * this.pageSize, (this.currentPage() + 1) * this.pageSize));
-  readonly rangeStart = computed(() => this.filtered().length ? this.currentPage() * this.pageSize + 1 : 0);
-  readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.filtered().length));
+  readonly visible = this.publications;
+  readonly rangeStart = computed(() => this.total() ? this.currentPage() * this.pageSize + 1 : 0);
+  readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.total()));
 
-  count(type: LibraryType): number { return this.publications().filter(item => item.tipo === type).length; }
+  count(type: LibraryType): number { return this.totals()[type] || 0; }
   selectType(type: LibraryType): void {
-    this.type.set(type); this.query.set(''); this.page.set(0); this.expandedId.set(null); this.typeChange.emit(type);
+    this.expandedId.set(null); this.typeChange.emit(type); this.filtersChange.emit({tipo:type,q:'',page:0});
   }
-  search(value: string): void { this.query.set(value); this.page.set(0); this.expandedId.set(null); }
+  search(value: string): void { this.expandedId.set(null); this.filtersChange.emit({tipo:this.type(),q:value,page:0}); }
   changePage(delta: number): void {
-    this.page.set(Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1)));
+    this.filtersChange.emit({tipo:this.type(),q:this.query(),page:Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1))});
     this.expandedId.set(null);
   }
   toggle(item: ObservatorioPublicacion): void { this.expandedId.update(id => id === item.id ? null : item.id); }
@@ -74,5 +73,4 @@ export class ObservatoryLibraryComponent {
   stateIcon(item: ObservatorioPublicacion): string {
     return {PUBLICACION: 'check_circle', EN_REVISION: 'schedule', SUSPENDIDO: 'pause_circle', ARCHIVADO: 'archive', RECHAZADO: 'cancel'}[item.estado] || 'help_outline';
   }
-  private normalize(value: string): string { return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim(); }
 }

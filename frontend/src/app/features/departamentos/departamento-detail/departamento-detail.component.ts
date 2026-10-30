@@ -1,6 +1,7 @@
 ﻿import { CommonModule } from '@angular/common';
 import { Component, computed, DestroyRef, TemplateRef, ViewChild, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, Subscription, catchError, of, switchMap } from 'rxjs';
 import { AbstractControl, FormArray, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
@@ -25,7 +26,7 @@ import {
 import { SharePointAtlasImportDialogComponent } from '@features/public/public-atlas/sharepoint-atlas-import-dialog.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
-import { LibraryType, ObservatoryLibraryComponent } from './observatory-library.component';
+import { LibraryFilters, LibraryType, ObservatoryLibraryComponent } from './observatory-library.component';
 import { PublicationViewerService } from '@features/public/components/publication-viewer.service';
 import { hasPublicPdf, publicHttpUrl, PublicLibraryPublication, toPublicLibraryItem } from '@features/public/components/public-library-publication';
 
@@ -67,6 +68,18 @@ export class DepartamentoDetailComponent implements OnInit {
   readonly isAdmin = this.authService.isAdmin;
   readonly isEditor = this.authService.isEditor;
   readonly libraryType = signal<LibraryType>('ARTICULO');
+  readonly libraryQuery = signal('');
+  readonly libraryPage = signal(0);
+  readonly libraryTotal = signal(0);
+  readonly libraryCounts = signal<Partial<Record<LibraryType,number>>>({});
+  readonly libraryError = signal('');
+  readonly reviewTotal = signal(0);
+  readonly reviewPage = signal(0);
+  readonly reviewLastPage = signal(1);
+  private readonly libraryRequests = new Subject<string|null>();
+  private readonly reviewRequests = new Subject<string|null>();
+  private departmentRequest?: Subscription;
+  private workspaceEditRequest?: Subscription;
   readonly canEditLibraryPublication = (item: ObservatorioPublicacion) => this.canEditPublication(item);
   readonly canDeleteLibraryPublication = (item: ObservatorioPublicacion) => this.canDeletePublication(item);
   departamento = signal<Departamento | null>(null);
@@ -225,7 +238,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   get reviewCount(): number {
-    return this.reviewPublicaciones().length;
+    return this.reviewTotal();
   }
 
   get tipo(): TipoPublicacion {
@@ -311,6 +324,31 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.libraryRequests.pipe(switchMap(id => {
+      this.publicaciones.set([]); this.libraryError.set('');
+      if (!id) return of(null);
+      this.loadingPublicaciones.set(true);
+      const request = () => this.publicacionService.libraryPage(id,{tipo:this.libraryType(),q:this.libraryQuery(),page:this.libraryPage()+1});
+      return request().pipe(switchMap(result => {
+        if(this.libraryPage()+1>result.meta.last_page){this.libraryPage.set(Math.max(0,result.meta.last_page-1));return request();}
+        return of(result);
+      }),catchError(()=>{this.libraryTotal.set(0);this.libraryCounts.set({});this.reviewTotal.set(0);this.libraryError.set('No se pudieron cargar las publicaciones.');return of(null);}));
+    }),takeUntilDestroyed(this.destroyRef)).subscribe(result=>{
+      if(result){this.publicaciones.set(result.data);this.libraryTotal.set(result.meta.total);this.libraryCounts.set(result.counts||{});this.reviewTotal.set(result.review_total||0);this.libraryPage.set(result.meta.current_page-1);}
+      this.loadingPublicaciones.set(false); if(result)this.applyWorkspaceAction();
+    });
+    this.reviewRequests.pipe(switchMap(id=>{
+      this.reviewPublicaciones.set([]);this.reviewSelectedId.set(null);this.reviewError.set('');
+      if(!id)return of(null);
+      this.loadingReviewPublicaciones.set(true);
+      const request=()=>this.publicacionService.libraryPage(id,{estado:'EN_REVISION',page:this.reviewPage()+1});
+      return request().pipe(switchMap(result=>{
+        if(this.reviewPage()+1>result.meta.last_page){this.reviewPage.set(Math.max(0,result.meta.last_page-1));return request();}return of(result);
+      }),catchError(()=>{this.reviewError.set('No se pudieron cargar las publicaciones en revisión.');return of(null);}));
+    }),takeUntilDestroyed(this.destroyRef)).subscribe(result=>{
+      if(result){this.reviewPublicaciones.set(result.data);this.reviewTotal.set(result.meta.total);this.reviewPage.set(result.meta.current_page-1);this.reviewLastPage.set(result.meta.last_page);}
+      this.loadingReviewPublicaciones.set(false);
+    });
     this.route.queryParamMap?.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.workspaceActionKey = '';
       if (!this.loadingPublicaciones()) this.applyWorkspaceAction();
@@ -341,8 +379,12 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   loadDepartamento(id: string): void {
+    this.departmentRequest?.unsubscribe();this.workspaceEditRequest?.unsubscribe();
+    this.libraryRequests.next(null);this.reviewRequests.next(null);this.departamento.set(null);
+    this.libraryPage.set(0);this.libraryQuery.set('');this.libraryType.set('ARTICULO');this.libraryTotal.set(0);this.libraryCounts.set({});this.reviewTotal.set(0);
+    this.canUploadPublications.set(false);
     this.loading.set(true);
-    this.deptoService.getById(id).subscribe({
+    this.departmentRequest = this.deptoService.getById(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (departamento) => {
         this.departamento.set(departamento);
         this.datasets.set(departamento?.datasets || []);
@@ -358,35 +400,28 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   loadCanUpload(id: string): void {
-    this.publicacionService.canUpload(id).subscribe({
+    this.publicacionService.canUpload(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
+        if(this.departamento()?.id!==id)return;
         const canUpload =
           !!response.can_upload ||
           (String(response.role ?? '').toUpperCase() === 'EDITOR' && !!response.has_permission);
         this.canUploadPublications.set(canUpload);
+        if(this.departamento()?.id===id)this.applyWorkspaceAction();
       },
-      error: () => this.canUploadPublications.set(false),
+      error: () => {if(this.departamento()?.id===id)this.canUploadPublications.set(false);},
     });
   }
 
   loadPublicaciones(id: string): void {
-    this.loadingPublicaciones.set(true);
-    this.publicacionService.getAll(id).subscribe({
-      next: (items) => {
-        const visibleItems = this.isEditor()
-          ? items.filter(item => item.tipo !== 'ATLAS' && Number(item.creado_por) === this.authService.user()?.id)
-          : items;
-        this.publicaciones.set(visibleItems);
-        if (!this.showReviewPanel()) this.reviewPublicaciones.set(visibleItems.filter(item => item.estado === 'EN_REVISION'));
-        this.loadingPublicaciones.set(false);
-        this.applyWorkspaceAction();
-      },
-      error: () => {
-        this.publicaciones.set([]);
-        this.loadingPublicaciones.set(false);
-      },
-    });
+    this.libraryRequests.next(id);
   }
+
+  libraryFiltersChanged(filters:LibraryFilters):void {
+    this.libraryType.set(filters.tipo);this.libraryQuery.set(filters.q);this.libraryPage.set(filters.page);
+    if(this.departamento())this.loadPublicaciones(this.departamento()!.id);
+  }
+  retryLibrary():void {if(this.departamento())this.loadPublicaciones(this.departamento()!.id);}
 
   openPublicationForm(tipo: TipoPublicacion): void {
     if (!this.canManagePublications || (!this.isAdmin() && tipo === 'ATLAS')) return;
@@ -407,8 +442,12 @@ export class DepartamentoDetailComponent implements OnInit {
     this.workspaceActionKey = key;
     if (type && ['ARTICULO','REPORTE','LIBRO'].includes(type)) this.openPublicationForm(type as TipoPublicacion);
     else if (id) {
-      const item = this.publicaciones().find(publication => publication.id === id);
-      if (item && this.canEditPublication(item)) this.editPublication(item);
+      const departmentId=this.departamento()!.id;
+      this.workspaceEditRequest?.unsubscribe();
+      this.workspaceEditRequest=this.publicacionService.libraryById(departmentId,id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next:item=>{if(this.departamento()?.id===departmentId&&this.canEditPublication(item))this.editPublication(item);},
+        error:()=>this.snackBar.open('La publicación no está disponible o ya no tienes acceso.','Cerrar',{duration:4500}),
+      });
     }
   }
 
@@ -416,6 +455,7 @@ export class DepartamentoDetailComponent implements OnInit {
     if (!this.canManagePublications || this.savingPublication()) return;
     this.showReviewPanel.set(true);
     this.reviewSelectedId.set(null);
+    this.reviewPage.set(0);
     this.openPublicationOverlay();
     const departamento = this.departamento();
     if (departamento) {
@@ -428,6 +468,7 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   private resetReviewPanel(clearItems = false): void {
+    this.reviewRequests.next(null);
     this.showReviewPanel.set(false);
     this.loadingReviewPublicaciones.set(false);
     this.changingReviewStatus.set(null);
@@ -437,29 +478,12 @@ export class DepartamentoDetailComponent implements OnInit {
   }
 
   loadReviewPublicaciones(id: string): void {
-    this.loadingReviewPublicaciones.set(true);
-    this.reviewError.set('');
-    this.publicacionService
-      .getInReview(id)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-      next: (items) => {
-        if (!this.showReviewPanel() || this.departamento()?.id !== id) return;
-        this.reviewPublicaciones.set(this.isEditor()
-          ? items.filter(item => item.tipo !== 'ATLAS' && Number(item.creado_por) === this.authService.user()?.id)
-          : items);
-        this.loadingReviewPublicaciones.set(false);
-      },
-      error: () => {
-        if (!this.showReviewPanel() || this.departamento()?.id !== id) return;
-        this.reviewPublicaciones.set([]);
-        this.reviewError.set('No se pudieron cargar las publicaciones en revisión.');
-        this.loadingReviewPublicaciones.set(false);
-        this.snackBar.open('No se pudieron cargar las publicaciones en revisión.', 'Cerrar', {
-          duration: 4000,
-        });
-      },
-      });
+    this.reviewRequests.next(id);
+  }
+
+  changeReviewPage(delta:number):void {
+    this.reviewPage.set(Math.max(0,Math.min(this.reviewPage()+delta,this.reviewLastPage()-1)));
+    if(this.departamento())this.loadReviewPublicaciones(this.departamento()!.id);
   }
 
   closePublicationForm(): void {
@@ -784,6 +808,8 @@ export class DepartamentoDetailComponent implements OnInit {
               this.reviewPublicaciones.update((items) =>
                 items.filter((item) => item.id !== publicacion.id),
               );
+              this.retryLibrary();
+              if(this.showReviewPanel()&&this.departamento())this.loadReviewPublicaciones(this.departamento()!.id);
               this.snackBar.open('Publicación eliminada correctamente.', 'Cerrar', {
                 duration: 3500,
               });
@@ -827,6 +853,8 @@ export class DepartamentoDetailComponent implements OnInit {
             ? items.map((item) => (item.id === updated.id ? updated : item))
             : items.filter((item) => item.id !== updated.id),
         );
+        this.retryLibrary();
+        if(this.showReviewPanel()&&this.departamento())this.loadReviewPublicaciones(this.departamento()!.id);
         this.snackBar.open(`Estado cambiado a ${this.getEstadoPublicacionLabel(estado)}.`, 'Cerrar', {
           duration: 3500,
         });

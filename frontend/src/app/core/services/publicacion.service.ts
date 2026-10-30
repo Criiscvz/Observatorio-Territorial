@@ -4,6 +4,7 @@ import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ObservatorioPublicacion,
+  PublicationPage,
   SharePointAtlasImportResponse,
   SharePointBrowseResponse,
   SharePointFile,
@@ -29,6 +30,20 @@ export class PublicacionService {
   private readonly api = inject(ApiService);
   private readonly http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
+
+  libraryPage(departmentId: string, filters: {tipo?: string; estado?: string; q?: string; page?: number} = {}): Observable<PublicationPage> {
+    return this.api.get<PublicationPage>(`/departamentos/${departmentId}/biblioteca/publicaciones`, {...filters, per_page: 20});
+  }
+
+  libraryById(departmentId: string, id: string): Observable<ObservatorioPublicacion> {
+    return this.api.get<ResourceResponse<ObservatorioPublicacion>>(`/departamentos/${departmentId}/biblioteca/publicaciones/${id}`).pipe(map(response => response.data));
+  }
+
+  atlasPage(categoryId: string, page = 1, q = '', management = false): Observable<PublicationPage> {
+    return this.api.get<PublicationPage>(management ? '/departamentos/publicaciones/atlas-biblioteca' : '/publico/atlas/biblioteca', {
+      ...(categoryId === 'sin-categoria' && management ? {sin_categoria: '1'} : {categoria_id: categoryId}), page, per_page: 20, q,
+    });
+  }
 
   getAll(departamentoId: string): Observable<ObservatorioPublicacion[]> {
     return this.api

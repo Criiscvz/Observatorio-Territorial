@@ -1,3 +1,4 @@
+import { publicationPage } from '../../../testing/publication-page.fixture';
 import { TestBed } from '@angular/core/testing';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { MatDialog } from '@angular/material/dialog';
@@ -24,7 +25,7 @@ describe('Ventana central de revisión y edición', () => {
   async function setup(admin=true, supervisor=false) {
     let items=[publication(),publication('art-2',{tipo:'ARTICULO',codigo:'ART-0002',titulo:'Atención primaria'})];
     const service={
-      getAll:vi.fn(()=>of(items)),getInReview:vi.fn(()=>of(items.filter(x=>x.estado==='EN_REVISION'))),
+      libraryPage:vi.fn((_id:string,filters:any)=>of(publicationPage(items,filters))),libraryById:vi.fn((_id:string,id:string)=>of(items.find(x=>x.id===id)!)),
       canUpload:vi.fn(()=>of({can_upload:true})),openPdf:vi.fn(()=>of(true)),loadPdf:vi.fn(()=>of(new ArrayBuffer(8))),
       update:vi.fn((id:string, data:FormData)=>{
         const updated={...items.find(x=>x.id===id)!,titulo:String(data.get('titulo')),estado:data.get('estado') as ObservatorioPublicacion['estado'],solo_suscriptores:data.get('solo_suscriptores')==='1'};
@@ -51,7 +52,7 @@ describe('Ventana central de revisión y edición', () => {
     const change=async(name:string,value:string)=>{const input=overlay().querySelector<HTMLInputElement>(`[name=${name}]`)!;input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));await refresh();};
     const review=async()=>{component.openReviewPanel();await refresh();};
     const edit=async(item=publication())=>{component.editPublication(item);await refresh();};
-    return {fixture,component,service,container,overlay,click,change,refresh,review,edit,engine};
+    return {fixture,component,service,container,overlay,click,change,refresh,review,edit,engine,setItems:(value:ObservatorioPublicacion[])=>items=value};
   }
 
   it.each(['ARTICULO','LIBRO'] as const)('abre el visor para el PDF de %s en revisión y conserva el formulario al cerrarlo',async(tipo)=>{
@@ -158,7 +159,7 @@ describe('Ventana central de revisión y edición', () => {
     expect(service.update).toHaveBeenCalledOnce();const [id,data]=service.update.mock.calls[0];
     expect(id).toBe('rep-1');expect(data.get('archivo')).toBe(pdf);expect(data.get('solo_suscriptores')).toBe('1');
     expect(component.showPublicationForm()).toBe(false);expect(component.showReviewPanel()).toBe(true);
-    expect(overlay().textContent).toContain('Reporte actualizado');expect(component.publicaciones()[0].titulo).toBe('Reporte actualizado');
+    expect(overlay().textContent).toContain('Reporte actualizado');component.libraryFiltersChanged({tipo:'REPORTE',q:'',page:0});expect(component.publicaciones()[0].titulo).toBe('Reporte actualizado');
   });
 
   it('protege los cambios ante cerrar y volver, y permite continuar o descartarlos', async()=>{
@@ -193,14 +194,14 @@ describe('Ventana central de revisión y edición', () => {
     const pending=new Subject<ObservatorioPublicacion>();service.update.mockReturnValueOnce(pending as any);
     const item=component.selectedReview()!;component.changeReviewStatus(item,'PUBLICACION');component.changeReviewStatus(item,'PUBLICACION');await refresh();
     expect(service.update).toHaveBeenCalledOnce();expect(overlay().querySelector<HTMLButtonElement>('.publish-button')!.disabled).toBe(true);
-    pending.next({...item,estado:'PUBLICACION'});pending.complete();await refresh();
-    expect(component.reviewPublicaciones().map(x=>x.id)).toEqual(['art-2']);expect(component.publicaciones().find(x=>x.id==='rep-1')?.estado).toBe('PUBLICACION');
+    service.libraryPage.mockImplementation((_id:string,filters:any)=>of(publicationPage([publication('art-2',{tipo:'ARTICULO'})],filters)));pending.next({...item,estado:'PUBLICACION'});pending.complete();await refresh();
+    expect(component.reviewPublicaciones().map(x=>x.id)).toEqual(['art-2']);expect(service.libraryPage).toHaveBeenCalledWith('salud',expect.objectContaining({tipo:'ARTICULO'}));
   });
 
   it('distingue errores de carga de una cola vacía y permite reintentar', async()=>{
-    const {component,service,refresh,overlay}=await setup();service.getInReview.mockReturnValueOnce(throwError(()=>new Error('offline')));component.openReviewPanel();await refresh();
+    const {component,service,refresh,overlay}=await setup();service.libraryPage.mockReturnValueOnce(throwError(()=>new Error('offline')));component.openReviewPanel();await refresh();
     expect(overlay().textContent).toContain('Reintentar');expect(overlay().textContent).not.toContain('La biblioteca está al día');
-    service.getInReview.mockReturnValueOnce(of([]));component.loadReviewPublicaciones('salud');await refresh();expect(overlay().textContent).toContain('No hay publicaciones pendientes');
+    service.libraryPage.mockReturnValueOnce(of(publicationPage([])));component.loadReviewPublicaciones('salud');await refresh();expect(overlay().textContent).toContain('No hay publicaciones pendientes');
   });
 
   it('mantiene permisos del editor sin ofrecer publicar ni cambiar suscriptores', async()=>{

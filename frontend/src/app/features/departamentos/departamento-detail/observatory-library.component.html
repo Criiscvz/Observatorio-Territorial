@@ -11,9 +11,10 @@
     <div class="library-toolbar">
       <label class="library-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" aria-label="Buscar en la biblioteca" placeholder="Buscar título, código, autor o fuente…" [value]="query()" (input)="search($any($event.target).value)">
         @if(query()) {<button class="library-icon" type="button" aria-label="Limpiar búsqueda" (click)="search('')"><mat-icon>close</mat-icon></button>}
-      </label><span class="library-total" role="status">{{filtered().length}} publicaciones</span>
+      </label><span class="library-total" role="status">{{total()}} publicaciones</span>
     </div>
     @if(loading()) {<p class="library-empty" role="status">Cargando publicaciones…</p>}
+    @else if(error()) {<div class="library-empty" role="alert"><p>{{error()}}</p><button type="button" class="library-button" (click)="retry.emit()">Reintentar</button></div>}
     @else {
       <table class="library-table" aria-label="Publicaciones del observatorio">
         <thead><tr><th scope="col">Publicación</th><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col">Fuente</th><th scope="col">Archivo disponible</th><th scope="col">Acciones</th></tr></thead>
@@ -40,7 +41,7 @@
           } @empty {<tr><td colspan="6"><div class="library-empty"><mat-icon>{{query() ? 'search_off' : 'folder_open'}}</mat-icon><p>{{query() ? 'No se encontraron publicaciones. Prueba con otro título, código, autor o fuente.' : 'Todavía no hay publicaciones de este tipo en el observatorio.'}}</p></div></td></tr>}
         </tbody>
       </table>
-      <footer class="library-pagination"><span role="status">{{rangeStart()}}–{{rangeEnd()}} de {{filtered().length}} publicaciones <span class="page-size">· 20 por página</span></span><div class="page-actions"><button class="library-icon" type="button" aria-label="Página anterior" [disabled]="currentPage() === 0" (click)="changePage(-1)"><mat-icon>chevron_left</mat-icon></button><span>{{currentPage()+1}} / {{pageCount()}}</span><button class="library-icon" type="button" aria-label="Página siguiente" [disabled]="currentPage()+1 >= pageCount()" (click)="changePage(1)"><mat-icon>chevron_right</mat-icon></button></div></footer>
+      <footer class="library-pagination"><span role="status">{{rangeStart()}}–{{rangeEnd()}} de {{total()}} publicaciones <span class="page-size">· 20 por página</span></span><div class="page-actions"><button class="library-icon" type="button" aria-label="Página anterior" [disabled]="currentPage() === 0" (click)="changePage(-1)"><mat-icon>chevron_left</mat-icon></button><span>{{currentPage()+1}} / {{pageCount()}}</span><button class="library-icon" type="button" aria-label="Página siguiente" [disabled]="currentPage()+1 >= pageCount()" (click)="changePage(1)"><mat-icon>chevron_right</mat-icon></button></div></footer>
     }
   </section>
 </section>

@@ -17,8 +17,8 @@ export interface ObservatorioPublicacion {
   creador?: {
     id: number;
     name: string;
-    email: string;
-    rol: string;
+    email?: string;
+    rol?: string;
   } | null;
   tipo: TipoPublicacion;
   estado: EstadoPublicacion;
@@ -46,6 +46,14 @@ export interface ObservatorioPublicacion {
   sharepoint_error?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface PublicationPage {
+  data: ObservatorioPublicacion[];
+  meta: {total: number; per_page: number; current_page: number; last_page: number};
+  links: {first: string | null; last: string | null; prev: string | null; next: string | null};
+  counts?: Partial<Record<TipoPublicacion, number>>;
+  review_total?: number;
 }
 
 export interface SharePointFile {
