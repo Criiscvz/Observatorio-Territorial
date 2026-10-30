@@ -8,6 +8,7 @@ import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { PermisosService } from '@core/services/permisos.service';
 import { UserService } from '@core/services/user.service';
+import { ObservatoryAccessService } from '@core/services/observatory-access.service';
 import { AdminPermissionsComponent } from './admin-permissions.component';
 import { EditorPickerDialogComponent } from './editor-picker-dialog.component';
 import { UserPermissionsDialogComponent } from './user-permissions-dialog.component';
@@ -15,18 +16,32 @@ import { UserPermissionsDialogComponent } from './user-permissions-dialog.compon
 const departments = [{id:'salud',nombre:'Salud',codigo_interno:'SAL',rol:'ADMIN' as const,puede_agregar_editores:false},
   {id:'laboral',nombre:'Laboral',codigo_interno:'LAB',rol:'ADMIN' as const,puede_agregar_editores:true}];
 const supervisor: User = {id:1,name:'Supervisor',email:'supervisor@example.test',rol:'ADMIN_OBSERVATORIO',departamentos:departments};
-const normal: User = {id:2,name:'Nuevo editor',email:'nuevo@example.test',rol:'USER',is_active:true};
-const editor: User = {...normal,rol:'EDITOR',departamentos:[departments[0]]};
+const normal: User = {access_capabilities:{can_view_access:true,can_manage_access:true,can_assign_editors:true,can_revoke_access:true},id:2,name:'Nuevo editor',email:'nuevo@example.test',rol:'USER',is_active:true};
+const editor: User = {...normal,access_capabilities:{can_view_access:true,can_manage_access:false,can_assign_editors:false,can_revoke_access:false},rol:'EDITOR',departamentos:[departments[0]]};
 const auth = {user:()=>supervisor,isAdmin:()=>false,canAssignEditors:()=>true};
 const assigned = [{modulo:'observatorios',nivel:'escritura',departamento_id:'salud'}];
 
 describe('Accesos del supervisor',()=>{
+  it('deniega edición mientras carga el contexto y no amplía un contexto de solo consulta aunque el rol local sea administrador',()=>{
+    const context=new Subject<any>(),close=vi.fn();
+    TestBed.configureTestingModule({providers:[
+      {provide:AuthService,useValue:{...auth,user:()=>({...supervisor,rol:'ADMIN'}),isAdmin:()=>true}},
+      {provide:MAT_DIALOG_DATA,useValue:editor},{provide:MatDialogRef,useValue:{close}},
+      {provide:ObservatoryAccessService,useValue:{context:()=>context}},
+    ]});
+    const fixture=TestBed.createComponent(UserPermissionsDialogComponent);fixture.detectChanges();const component=fixture.componentInstance;
+    component.toggleDepartamento('laboral',true);component.save();expect(close).not.toHaveBeenCalled();expect(component.permissionsReady).toBe(false);
+    context.next({capabilities:{can_view_access:true,can_manage_access:false,can_assign_editors:false,can_revoke_access:false},observatorios:[departments[0]],permisos:assigned});
+    fixture.detectChanges();expect(component.readOnly).toBe(true);expect(component.departamentos).toEqual([departments[0]]);
+    component.clearDepartamentos();component.toggleDepartamento('laboral',true);component.save();expect(close).not.toHaveBeenCalled();
+    expect(component.selectedDepartamentoIds).toEqual(['salud']);expect(fixture.nativeElement.querySelector('.access-button.primary')).toBeNull();
+  });
   function dialog(user: User) {
     const close=vi.fn();
     TestBed.configureTestingModule({providers:[
       {provide:AuthService,useValue:auth},{provide:MAT_DIALOG_DATA,useValue:user},{provide:MatDialogRef,useValue:{close}},
       {provide:DepartamentoService,useValue:{getAll:()=>of(departments)}},
-      {provide:PermisosService,useValue:{syncFromBackend:()=>of(user.rol==='USER'?[]:assigned),getUserPermisos:()=>user.rol==='USER'?[]:assigned}},
+      {provide:ObservatoryAccessService,useValue:{context:()=>of({capabilities:user.access_capabilities,observatorios:user.rol==='USER'?[departments[1]]:departments,permisos:user.rol==='USER'?[]:assigned})}},
     ]});
     const fixture=TestBed.createComponent(UserPermissionsDialogComponent);fixture.detectChanges();
     return {fixture,component:fixture.componentInstance,close};
@@ -70,7 +85,7 @@ describe('Accesos del supervisor',()=>{
   it('ofrece agregar editor desde Permisos y conserva la consulta para accesos no editables',()=>{
     const open=vi.fn(()=>({afterClosed:()=>of(undefined)}));
     TestBed.configureTestingModule({providers:[provideTranslateService(),
-      {provide:AuthService,useValue:auth},{provide:UserService,useValue:{getUsers:()=>of({data:[editor],meta:{last_page:1}})}},
+      {provide:AuthService,useValue:auth},{provide:UserService,useValue:{getUsers:()=>of({data:[editor],meta:{last_page:1,access_capabilities:{can_assign_editors:true}}})}},
       {provide:PermisosService,useValue:{getUserPermisos:()=>assigned,syncFromBackend:()=>of(assigned)}},
       {provide:MatDialog,useValue:{open}},{provide:MatSnackBar,useValue:{open:vi.fn()}},
     ]});
@@ -92,7 +107,7 @@ describe('Accesos del supervisor',()=>{
       {provide:AuthService,useValue:{...auth,user:()=>({...supervisor,rol:'ADMIN'}),isAdmin:()=>true}},
       {provide:MAT_DIALOG_DATA,useValue:supervisor},{provide:MatDialogRef,useValue:{close}},
       {provide:DepartamentoService,useValue:{getAll:()=>of(departments)}},
-      {provide:PermisosService,useValue:{syncFromBackend:()=>of(previous),getUserPermisos:()=>previous}},
+      {provide:ObservatoryAccessService,useValue:{context:()=>of({capabilities:{can_view_access:true,can_manage_access:true,can_assign_editors:true,can_revoke_access:true},observatorios:departments,permisos:previous})}},
     ]});
     const fixture=TestBed.createComponent(UserPermissionsDialogComponent);fixture.detectChanges();
     const component=fixture.componentInstance;
@@ -110,7 +125,7 @@ describe('Accesos del supervisor',()=>{
       {provide:AuthService,useValue:{...auth,user:()=>({...supervisor,rol:'ADMIN'}),isAdmin:()=>true}},
       {provide:MAT_DIALOG_DATA,useValue:supervisor},{provide:MatDialogRef,useValue:{close}},
       {provide:DepartamentoService,useValue:{getAll:()=>of(departments)}},
-      {provide:PermisosService,useValue:{syncFromBackend:()=>of([]),getUserPermisos:()=>[]}},
+      {provide:ObservatoryAccessService,useValue:{context:()=>of({capabilities:{can_view_access:true,can_manage_access:true,can_assign_editors:true,can_revoke_access:true},observatorios:departments,permisos:[]})}},
     ]});
     const fixture=TestBed.createComponent(UserPermissionsDialogComponent);fixture.detectChanges();
     const checkbox=fixture.nativeElement.querySelector('input[aria-label="Asignar Laboral"]');
@@ -139,7 +154,7 @@ describe('Selector de nuevos editores',()=>{
     const {component,getUsers,close,fixture}=setup();
     expect(fixture.nativeElement.querySelectorAll('.candidate')).toHaveLength(1);
     component.load(2);expect(getUsers).toHaveBeenLastCalledWith(15,2,'');
-    component.choose({...normal,is_active:false});component.choose(editor);expect(close).not.toHaveBeenCalled();
+    component.choose({...normal,is_active:false,access_capabilities:{can_view_access:true,can_manage_access:false,can_assign_editors:false,can_revoke_access:false}});component.choose(editor);expect(close).not.toHaveBeenCalled();
     component.choose(normal);expect(close).toHaveBeenCalledWith(normal);
   });
   it('cancela respuestas anteriores al cambiar la búsqueda y permite reintentar errores',()=>{
@@ -151,5 +166,11 @@ describe('Selector de nuevos editores',()=>{
     expect(component.users()[0].rol).toBe('USER');
     component.load(1);fixture.detectChanges();expect(component.error()).toContain('No se pudieron cargar');
     component.load(1);expect(component.error()).toBe('');expect(component.users()).toEqual([normal]);
+  });
+  it('no selecciona candidatos con capacidades ausentes o denegadas aunque la cuenta local pueda asignar editores',()=>{
+    const {component,close}=setup();
+    component.choose({...normal,access_capabilities:undefined});
+    component.choose({...normal,access_capabilities:{can_view_access:true,can_manage_access:false,can_assign_editors:false,can_revoke_access:false}});
+    expect(close).not.toHaveBeenCalled();
   });
 });

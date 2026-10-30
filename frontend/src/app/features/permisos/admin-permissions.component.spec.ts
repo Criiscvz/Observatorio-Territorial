@@ -12,7 +12,14 @@ import { AdminPermissionsComponent } from './admin-permissions.component';
 import { UserPermissionsDialogComponent } from './user-permissions-dialog.component';
 
 describe('Lista compacta de editores', () => {
-  const editor: User = { id: 1, name: 'Carlos Mendoza Reyes', email: 'carlos@uleam.edu.ec', rol: 'EDITOR',
+  it('usa capacidades explícitas para gestionar y quitar accesos; si faltan no abre ni guarda',()=>{
+    const {component,dialog,service}=setup();
+    const denied={...editor,access_capabilities:undefined};
+    expect(component.canManageUser(denied)).toBe(false);
+    component.openPermissionsDialog(denied);component.resetConfirmationId.set(denied.id);component.resetUserPermissions(denied);
+    expect(dialog.open).not.toHaveBeenCalled();expect(service.saveUserPermisos).not.toHaveBeenCalled();
+  });
+  const editor: User = { access_capabilities:{can_view_access:true,can_manage_access:true,can_assign_editors:true,can_revoke_access:true}, id: 1, name: 'Carlos Mendoza Reyes', email: 'carlos@uleam.edu.ec', rol: 'EDITOR',
     departamentos: [{id: 'salud', nombre: 'Observatorio de la Salud', codigo_interno: 'SAL', rol: 'EDITOR'}] };
   const initial: PermisoConfig[] = [{modulo: 'observatorios', nivel: 'escritura', departamento_id: 'salud'}];
   function setup() {

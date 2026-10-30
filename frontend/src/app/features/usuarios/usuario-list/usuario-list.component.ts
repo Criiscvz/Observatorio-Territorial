@@ -89,8 +89,7 @@ export class UsuarioListComponent implements OnInit {
       });
   }
   canManagePermissions(user:User):boolean {
-    return this.auth.isAdmin() ? ['EDITOR','ADMIN_OBSERVATORIO'].includes(user.rol)
-      : this.auth.user()?.rol==='ADMIN_OBSERVATORIO' && this.auth.canAssignEditors() && user.rol==='USER';
+    return user.access_capabilities?.can_manage_access === true;
   }
   openPermissionsDialog(user:User):void {
     if(!this.canManagePermissions(user)||this.busyUserId()!==null)return;

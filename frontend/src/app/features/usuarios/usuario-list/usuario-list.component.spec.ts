@@ -13,6 +13,11 @@ import { UsuarioListComponent } from './usuario-list.component';
 const user:User={id:8,name:'Carlos Mendoza',email:'carlos@example.test',rol:'ADMIN_OBSERVATORIO',is_active:true};
 const page=(users:User[]=[user])=>({data:users,meta:{current_page:1,last_page:1,per_page:15,total:users.length}});
 describe('Usuarios con acciones directas',()=>{
+  it('usa la capacidad de gestión del usuario y no concede el acceso por el rol local administrador',()=>{
+    const {component}=setup();
+    expect(component.canManagePermissions(user)).toBe(false);
+    expect(component.canManagePermissions({...user,access_capabilities:{can_view_access:true,can_manage_access:true,can_assign_editors:true,can_revoke_access:true}})).toBe(true);
+  });
   function setup(admin=true){
     const auth={isAdmin:()=>admin,user:()=>({id:1,rol:admin?'ADMIN':'ADMIN_OBSERVATORIO'}),canAssignEditors:()=>true,clearAuthSilent:vi.fn(),getCurrentUser:()=>of(user)};
     const api={getUsers:vi.fn(()=>of(page(admin?[user]:[{...user,rol:'USER'}])))};

@@ -9,6 +9,7 @@ import { AuthService } from '@core/services/auth.service';
 import { UserService } from '@core/services/user.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { PermisosService } from '@core/services/permisos.service';
+import { ObservatoryAccessService } from '@core/services/observatory-access.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { AdminPermissionsComponent } from './admin-permissions.component';
 import { UserPermissionsDialogComponent } from './user-permissions-dialog.component';
@@ -33,7 +34,7 @@ describe('Administrador de observatorio: permisos y formularios', () => {
     TestBed.configureTestingModule({providers:[provideRouter([]),provideTranslateService(),
       {provide:AuthService,useValue:auth(actor)},{provide:MAT_DIALOG_DATA,useValue:manager},{provide:MatDialogRef,useValue:{close}},
       {provide:DepartamentoService,useValue:{getAll:()=>of(departments)}},
-      {provide:PermisosService,useValue:{getUserPermisos:()=>permissions,syncFromBackend:()=>failure?throwError(()=>new Error('offline')):of(permissions)}},
+      {provide:ObservatoryAccessService,useValue:{context:()=>failure?throwError(()=>new Error('offline')):of({capabilities:{can_view_access:true,can_manage_access:true,can_assign_editors:true,can_revoke_access:true},observatorios:departments,permisos:permissions})}},
     ]});
     const fixture=TestBed.createComponent(UserPermissionsDialogComponent);fixture.detectChanges();
     return {fixture,component:fixture.componentInstance,close};
@@ -54,7 +55,7 @@ describe('Administrador de observatorio: permisos y formularios', () => {
 
   it('no permite sobrescribir permisos cuando falla la carga del estado actual',()=>{
     const {fixture,component,close}=permissionDialog(undefined,true);
-    expect(fixture.nativeElement.querySelector('.access-button.primary').disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('.access-button.primary')).toBeNull();
     component.save();expect(close).not.toHaveBeenCalled();
   });
 
