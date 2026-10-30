@@ -10,12 +10,15 @@ import { DatasetService } from '@core/services/dataset.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { PublicationViewerService } from '@features/public/components/publication-viewer.service';
 import { DepartamentoDetailComponent } from './departamento-detail.component';
+import { ObservatoryWorkspaceFacade } from './observatory-workspace.facade';
+import { PublicationEditorFacade } from './publication-editor.facade';
 import { publicationPage } from '../../../testing/publication-page.fixture';
 
 describe('Solicitudes remotas de la biblioteca de gestión',()=>{
  function setup(){
   const params=new Subject<any>();const service={libraryPage:vi.fn((_id:string,_filters:any)=>of(publicationPage([]))),libraryById:vi.fn(),canUpload:()=>of({can_upload:true})};
   TestBed.configureTestingModule({providers:[
+   ObservatoryWorkspaceFacade, PublicationEditorFacade,
    {provide:ActivatedRoute,useValue:{params,snapshot:{queryParamMap:convertToParamMap({})},queryParamMap:new Subject()}},
    {provide:Router,useValue:{events:new Subject()}},{provide:DepartamentoService,useValue:{getById:(id:string)=>of({id,nombre:id,datasets:[]})}},
    {provide:DatasetService,useValue:{}},{provide:PublicacionService,useValue:service},{provide:PublicationViewerService,useValue:{}},
