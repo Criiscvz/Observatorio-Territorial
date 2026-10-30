@@ -112,6 +112,12 @@ Route::prefix('observatorio-admin')->middleware(['auth:sanctum', 'role:ADMIN_OBS
 });
 require __DIR__ . '/modules/atlas.php';
 
+Route::middleware(['auth:sanctum', 'role:ADMIN,ADMIN_OBSERVATORIO'])->prefix('accesos')->group(function () {
+    $controller = \App\Presentation\Http\Controllers\Api\ObservatoryAccessController::class;
+    Route::get('/contexto', [$controller, 'overview']);
+    Route::get('/usuarios/{user}', [$controller, 'context']);
+});
+
 // ============ PROFILE ============
 require __DIR__ . '/modules/profile.php';
 

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Presentation\Http\Controllers\Api;
 
 use App\Application\Permiso\UseCases\GetPermisosUseCase;
-use App\Application\Permiso\UseCases\SavePermisoUseCase;
+use App\Application\Permiso\UseCases\ManageObservatoryAccess;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Presentation\Http\Requests\Permiso\SavePermisosRequest;
@@ -17,7 +17,6 @@ class PermisoController extends Controller
 {
     public function __construct(
         private readonly GetPermisosUseCase $getPermisosUseCase,
-        private readonly SavePermisoUseCase $savePermisoUseCase,
     ) {}
 
     /**
@@ -43,12 +42,13 @@ class PermisoController extends Controller
      */
     public function save(int $userId, SavePermisosRequest $request): JsonResponse
     {
-        $results = $this->savePermisoUseCase->saveAll($userId, $request->validated()['permisos']);
+        app(ManageObservatoryAccess::class)->save($request->user()->id, $userId, $request->validated()['permisos'], delegated: false);
+        $results = $this->getPermisosUseCase->execute($userId);
         $user = User::with(['perfil', 'departamentos'])->findOrFail($userId);
 
         return response()->json([
             'message' => 'Permisos guardados correctamente.',
-            'permisos' => $this->withCapabilities($userId, array_map(fn($r) => $r->toArray(), $results)),
+            'permisos' => $this->withCapabilities($userId, $results->map(fn($r) => $r->toArray())->all()),
             'user' => new UserResource($user),
         ]);
     }

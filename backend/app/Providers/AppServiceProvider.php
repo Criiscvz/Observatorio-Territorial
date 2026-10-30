@@ -23,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\User::class, \App\Policies\ObservatoryAccessPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\ObservatorioPublicacion::class, \App\Policies\ObservatorioPublicacionPolicy::class);
         RateLimiter::for('email-verification', function (Request $request) {
             $email = Str::lower((string) $request->input('email', ''));

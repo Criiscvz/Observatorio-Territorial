@@ -12,7 +12,9 @@ class SavePermisosRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $target = $this->route('user');
+        if (! $target instanceof \App\Models\User) $target = \App\Models\User::findOrFail($target);
+        return $this->user()?->can('assignAccess', $target) === true;
     }
 
     public function rules(): array
@@ -21,7 +23,7 @@ class SavePermisosRequest extends FormRequest
             'permisos' => ['required', 'array'],
             'permisos.*.modulo' => ['required', 'string', Rule::in(Permiso::MODULOS)],
             'permisos.*.nivel' => ['required', 'string', Rule::in(Permiso::NIVELES)],
-            'permisos.*.departamento_id' => ['nullable', 'string', 'exists:departamentos,id'],
+            'permisos.*.departamento_id' => ['nullable', 'uuid', Rule::exists('departamentos', 'id')->whereNull('deleted_at')],
             'permisos.*.puede_revisar' => ['sometimes', 'boolean'],
             'permisos.*.puede_agregar_editores' => ['sometimes', 'boolean'],
         ];
