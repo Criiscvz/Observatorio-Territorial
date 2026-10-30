@@ -14,7 +14,7 @@ import { DepartamentoDetailComponent } from './departamento-detail.component';
 
 describe('Biblioteca integrada en el observatorio', () => {
   function setup(extra:any={},editor=false) {
-    const publication={id:'rep-1',tipo:'REPORTE',titulo:'Reporte de salud',estado:'PUBLICACION',codigo:'REP-1',fecha_publicacion:'2026-10-20',fuente:'ULEAM',autores:['Ana','Luis'],download_url:null,link_url:'https://app.powerbi.com/view?r=publico',...extra};
+    const publication={capabilities:{can_view:true,can_edit:!editor,can_delete:!editor,can_review:!editor},id:'rep-1',tipo:'REPORTE',titulo:'Reporte de salud',estado:'PUBLICACION',codigo:'REP-1',fecha_publicacion:'2026-10-20',fuente:'ULEAM',autores:['Ana','Luis'],download_url:null,link_url:'https://app.powerbi.com/view?r=publico',...extra};
     const openPdf=vi.fn(()=>of(true)); const viewer={open:vi.fn()};
     TestBed.configureTestingModule({imports:[DepartamentoDetailComponent],providers:[
       provideRouter([]),provideTranslateService({fallbackLang:'es'}),

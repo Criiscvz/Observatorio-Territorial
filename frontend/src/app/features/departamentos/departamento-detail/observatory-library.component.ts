@@ -57,7 +57,7 @@ export class ObservatoryLibraryComponent {
   toggle(item: ObservatorioPublicacion): void { this.expandedId.update(id => id === item.id ? null : item.id); }
   hasPdf(item: ObservatorioPublicacion): boolean { return !item.bloqueado && !!(item.download_url || item.sharepoint_url); }
   canView(item: ObservatorioPublicacion): boolean {
-    return !item.bloqueado && (item.tipo === 'REPORTE' ? !!this.sourceUrl(item) || this.hasPdf(item) : this.hasPdf(item));
+    return item.capabilities?.can_view === true && !item.bloqueado && (item.tipo === 'REPORTE' ? !!this.sourceUrl(item) || this.hasPdf(item) : this.hasPdf(item));
   }
   sourceUrl(item: ObservatorioPublicacion): string | null {
     if (item.bloqueado || !item.link_url) return null;

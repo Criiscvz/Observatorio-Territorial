@@ -17,13 +17,13 @@ import { PdfEngineService } from '@features/public/components/pdf-engine.service
 
 describe('Ventana central de revisión y edición', () => {
   const publication = (id='rep-1', extra: Partial<ObservatorioPublicacion> = {}): ObservatorioPublicacion => ({
-    id, departamento_id:'salud', creado_por:1, creador:{id:1,name:'Administrador',email:'qa@example.test',rol:'ADMIN'},
+    capabilities:{can_view:true,can_edit:true,can_delete:true,can_review:true}, id, departamento_id:'salud', creado_por:1, creador:{id:1,name:'Administrador',email:'qa@example.test',rol:'ADMIN'},
     tipo:'REPORTE', codigo:'REP-0016', titulo:'Diabetes Mellitus', fecha_publicacion:'2026-09-23',
     estado:'EN_REVISION', solo_suscriptores:false, descripcion:'Descripción actual', fuente:'ULEAM', autores:['Ana Pérez'],
     link_url:'https://app.powerbi.com/view?r=ejemplo', download_url:'/api/publicaciones/'+id+'/download', nombre_archivo_original:'diabetes.pdf', created_at:'',updated_at:'',...extra,
   });
   async function setup(admin=true, supervisor=false) {
-    let items=[publication(),publication('art-2',{tipo:'ARTICULO',codigo:'ART-0002',titulo:'Atención primaria'})];
+    let items: ObservatorioPublicacion[]=[publication(),publication('art-2',{tipo:'ARTICULO',codigo:'ART-0002',titulo:'Atención primaria'})].map(item=>({...item,capabilities:{...item.capabilities!,can_review:admin||supervisor}}));
     const service={
       libraryPage:vi.fn((_id:string,filters:any)=>of(publicationPage(items,filters))),libraryById:vi.fn((_id:string,id:string)=>of(items.find(x=>x.id===id)!)),
       canUpload:vi.fn(()=>of({can_upload:true})),openPdf:vi.fn(()=>of(true)),loadPdf:vi.fn(()=>of(new ArrayBuffer(8))),
@@ -208,7 +208,7 @@ describe('Ventana central de revisión y edición', () => {
     const {review,overlay,click,component,service}=await setup(false);await review();
     expect(overlay().querySelector('.publish-button')).toBeNull();await click('.review-title button');await click('.dialog-footer button[type=submit]');
     expect(overlay().querySelector('.subscriber-option')).toBeNull();expect(overlay().querySelector('select[name=estado]')).toBeNull();
-    component.changeReviewStatus(publication(),'PUBLICACION');expect(service.update).not.toHaveBeenCalled();
+    component.changeReviewStatus(component.selectedReview()!,'PUBLICACION');expect(service.update).not.toHaveBeenCalled();
   });
 
   it.each(['SUSPENDIDO','ARCHIVADO','RECHAZADO'] as const)('exige y envía observación para %s sin ocultar el campo en el segundo paso', async estado => {
@@ -234,11 +234,23 @@ describe('Ventana central de revisión y edición', () => {
   });
   it('el editor no puede abrir edición ni guardar o eliminar una publicación rechazada',async()=>{
     const {component,service,refresh,overlay}=await setup(false);
-    const rejected=publication('rejected',{estado:'RECHAZADO',observacion_revision:'No cumple los requisitos.'});
+    const rejected=publication('rejected',{capabilities:{can_view:true,can_edit:false,can_delete:false,can_review:false},estado:'RECHAZADO',observacion_revision:'No cumple los requisitos.'});
     expect(component.canEditPublication(rejected)).toBe(false);expect(component.canDeletePublication(rejected)).toBe(false);
     component.editPublication(rejected);await refresh();expect(overlay()).toBeNull();
     component.editingPublication.set(rejected);component.savePublication();expect(service.update).not.toHaveBeenCalled();
     expect(component.canEditPublication(publication('suspended',{estado:'SUSPENDIDO'}))).toBe(true);
+  });
+  it('separa editar, eliminar y revisar según la API, sin ampliarlos por ser administrador',async()=>{
+    const {component,service,refresh,overlay}=await setup();
+    const item=publication('limited',{capabilities:{can_view:true,can_edit:true,can_delete:false,can_review:false}});
+    expect(component.canEditPublication(item)).toBe(true);expect(component.canDeletePublication(item)).toBe(false);
+    component.editPublication(item);await refresh();
+    expect(component.canChoosePublicationStatus).toBe(false);
+    component.changeReviewStatus(item,'PUBLICACION');expect(service.update).not.toHaveBeenCalled();
+    component.closePublicationForm();await refresh();
+    component.editPublication(publication('missing',{capabilities:undefined}));await refresh();
+    expect(component.showPublicationForm()).toBe(false);
+    expect(component.editingPublication()).toBeNull();
   });
   afterEach(()=>{TestBed.inject(MatDialog).closeAll();});
 });

@@ -4,8 +4,14 @@ import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.in
 import { ObservatoryLibraryComponent } from './observatory-library.component';
 
 describe('Biblioteca compacta por pestañas', () => {
+  it('no abre un recurso con URL si la API deniega su visualización o no devuelve permisos',()=>{
+    const {component}=setup([article(1)]);
+    expect(component.canView(article(1))).toBe(true);
+    expect(component.canView(article(1,{capabilities:undefined}))).toBe(false);
+    expect(component.canView(article(1,{capabilities:{can_view:false,can_edit:false,can_delete:false,can_review:false}}))).toBe(false);
+  });
   const article = (index: number, extra: Partial<ObservatorioPublicacion> = {}): ObservatorioPublicacion => ({
-    id: 'art-' + index, tipo: 'ARTICULO', titulo: 'Publicación ' + index, codigo: 'ART-' + index,
+    capabilities:{can_view:true,can_edit:false,can_delete:false,can_review:false}, id: 'art-' + index, tipo: 'ARTICULO', titulo: 'Publicación ' + index, codigo: 'ART-' + index,
     estado: 'PUBLICACION', solo_suscriptores: false, fecha_publicacion: '2026-10-20',
     fuente: 'ULEAM', autores: ['Ana Pérez'], download_url: '/api/pdf/' + index,
     link_url: 'https://www.uleam.edu.ec/', created_at: '', updated_at: '', ...extra,
