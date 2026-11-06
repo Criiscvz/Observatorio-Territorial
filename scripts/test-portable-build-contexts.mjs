@@ -13,15 +13,19 @@ const excluded=['.env','.env.production','app/.env.local','src/.env.local','publ
 const cases=[
   {name:'web',ignore:'frontend/.dockerignore',included:['package.json','package-lock.json','angular.json','src/app/app.ts','public/ULEAM.png','docker/portable-nginx.conf','scripts/set-api-url.mjs']},
   {name:'api',ignore:'backend/Dockerfile.portable.dockerignore',included:['artisan','composer.json','composer.lock','app/Models/User.php','config/app.php','database/migrations/fixture.php','public/index.php','resources/views/fixture.blade.php','routes/api.php','docker/portable-entrypoint.sh']},
+  {name:'e2e',ignore:'backend/Dockerfile.e2e.dockerignore',included:['tests/E2E/E2EGraphProvider.php','tests/E2E/providers.php']},
 ];
 async function inventory(dir,prefix=''){const files=[];for(const entry of await readdir(dir,{withFileTypes:true})){const file=prefix?prefix+'/'+entry.name:entry.name;if(entry.isDirectory())files.push(...await inventory(join(dir,entry.name),file));else files.push(file);}return files;}
+let excludedCount=0;
 try{
   for(const item of cases){const context=join(temporary,item.name),output=join(temporary,item.name+'-result');await mkdir(context);await writeFile(join(context,'.dockerignore'),await readFile(resolve(root,item.ignore)));
-    for(const file of [...excluded,...item.included]){const target=resolve(context,file);assert(!relative(context,target).startsWith('..'));await mkdir(dirname(target),{recursive:true});await writeFile(target,'synthetic-only\n');}
+    const rejected=[...excluded,...(item.name==='e2e'?['app/Models/User.php','bootstrap/providers.php']:['tests/E2E/E2EGraphProvider.php','tests/E2E/providers.php','e2e/fixtures.ts'])];
+    for(const file of [...rejected,...item.included]){const target=resolve(context,file);assert(!relative(context,target).startsWith('..'));await mkdir(dirname(target),{recursive:true});await writeFile(target,'synthetic-only\n');}
     docker(['build','--builder','default','--pull=false','--network=none','--no-cache','--provenance=false','--file','-','--output',`type=local,dest=${output}`,context],'FROM scratch\nCOPY . /\n');
-    const files=new Set(await inventory(output));assert.deepEqual(excluded.filter(file=>files.has(file)),[],item.name);assert.deepEqual(item.included.filter(file=>!files.has(file)),[],item.name);
+    const files=new Set(await inventory(output));assert.deepEqual(rejected.filter(file=>files.has(file)),[],item.name);assert.deepEqual(item.included.filter(file=>!files.has(file)),[],item.name);
+    excludedCount+=rejected.length;
   }
-  console.log(JSON.stringify({ok:true,contexts:cases.length,syntheticOnly:true,excludedFixtures:excluded.length*cases.length,includedFixtures:cases.reduce((sum,item)=>sum+item.included.length,0)}));
+  console.log(JSON.stringify({ok:true,contexts:cases.length,syntheticOnly:true,excludedFixtures:excludedCount,includedFixtures:cases.reduce((sum,item)=>sum+item.included.length,0)}));
 }finally{
   assert.equal(dirname(await realpath(temporary)),parent,'Unexpected cleanup target.');
   await rm(temporary,{recursive:true,force:true});

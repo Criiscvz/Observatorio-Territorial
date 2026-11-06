@@ -140,7 +140,7 @@ jobs:
   frontend:
     name: Frontend
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: frontend
@@ -170,6 +170,12 @@ jobs:
         env:
           SECURITY_CHECK_BUILD: '1'
         run: npm run test:security-headers
+      - name: Type-check browser journeys
+        run: node node_modules/typescript/bin/tsc -p tsconfig.e2e.json
+      - name: Install isolated Chromium test runtime
+        run: npx --no-install playwright install --with-deps chromium --only-shell
+      - name: Desktop and mobile journeys with disposable local services
+        run: npm run test:e2e
 
   result:
     name: Resultado

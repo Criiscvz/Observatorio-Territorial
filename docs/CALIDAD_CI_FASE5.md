@@ -125,8 +125,10 @@ esta entrega queda en una rama local para su integración posterior mediante PR.
 - Ampliar análisis de PHP y tipos de payloads de forma gradual y comprobada.
 - El bloque de dependencias del 5 de noviembre retira `install`, unifica npm y
   añade auditorías al CI; ver [resultado y aviso pendiente de ECharts](DEPENDENCIAS_FASE5.md).
-- Completar E2E en escritorio y móvil, cobertura de reglas críticas,
-  observabilidad sin datos sensibles y manual técnico de operación.
+- El bloque [E2E en escritorio y móvil](E2E_FASE5.md) añade recorridos con API,
+  bases y archivos sintéticos reales, sin credenciales de producción.
+- Continuar con cobertura de reglas críticas, observabilidad sin datos
+  sensibles y manual técnico de operación.
 - Validar alojamiento y controles de publicación cuando DIIT confirme el host.
 
 Referencias: [configuración de typescript-eslint](https://typescript-eslint.io/users/configs/),

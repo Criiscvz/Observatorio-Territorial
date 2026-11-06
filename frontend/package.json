@@ -11,6 +11,7 @@
     "lint": "eslint src --max-warnings=0",
     "audit:dependencies": "node ../scripts/audit-dependencies.mjs frontend",
     "test:quality": "node --test scripts/quality/*.test.mjs",
+    "test:e2e": "node ../scripts/run-e2e.mjs",
     "test:security-headers": "node --test scripts/security-headers.test.mjs",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },
@@ -59,6 +60,7 @@
     "@angular/cli": "21.2.29",
     "@angular/compiler-cli": "21.2.26",
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",

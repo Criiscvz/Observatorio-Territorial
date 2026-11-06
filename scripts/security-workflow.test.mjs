@@ -69,6 +69,14 @@ test('frontend uses the lockfile, non-watch tests, header regressions and produc
   assert(!/npm update|npm install/.test(source));
 });
 
+test('browser journeys are type-checked and required by the frontend gate', () => {
+  const frontend = source.slice(source.indexOf('\n  frontend:'), source.indexOf('\n  result:'));
+  for (const command of ['node node_modules/typescript/bin/tsc -p tsconfig.e2e.json',
+    'npx --no-install playwright install --with-deps chromium --only-shell', 'npm run test:e2e']) assert(frontend.includes(command));
+  assert(frontend.indexOf('tsc -p tsconfig.e2e.json') < frontend.indexOf('run: npm run test:e2e'));
+  assert(!/upload-artifact|storage\/codex-local/.test(frontend), 'Browser traces stay private.');
+});
+
 test('scanner retains default rules, redaction and no broad fixture or history suppression', () => {
   assert.match(config, /useDefault = true/);
   assert.match(config, /targetRules = \["grafana-api-key"\]/);

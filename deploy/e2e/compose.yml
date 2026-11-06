@@ -1,0 +1,29 @@
+# Applied after deploy/portable/compose.yml, under a separate fixed project.
+services:
+  api:
+    image: observatorio-e2e-api:phase5
+    environment: {OBSERVATORIO_E2E: '1'}
+    labels: {observatorio.purpose: e2e-fase5}
+  schema:
+    image: observatorio-e2e-api:phase5
+    environment: {OBSERVATORIO_E2E: '1'}
+    labels: {observatorio.purpose: e2e-fase5}
+  web:
+    image: observatorio-e2e-web:phase5
+    labels: {observatorio.purpose: e2e-fase5}
+  postgres:
+    labels: {observatorio.purpose: e2e-fase5}
+  mongo:
+    labels: {observatorio.purpose: e2e-fase5}
+volumes:
+  pg-data:
+    labels: {observatorio.purpose: e2e-fase5}
+  mongo-data:
+    labels: {observatorio.purpose: e2e-fase5}
+  app-storage:
+    labels: {observatorio.purpose: e2e-fase5}
+networks:
+  edge:
+    labels: {observatorio.purpose: e2e-fase5}
+  portable:
+    labels: {observatorio.purpose: e2e-fase5}
