@@ -2,22 +2,13 @@
 # ============================================
 # Frontend Scripts (Angular)
 # Uso: ./scripts/frontend.sh <comando>
-# Detecta automáticamente bun o npm
+# Usa npm y el lockfile del proyecto.
 # ============================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRONTEND_PATH="$SCRIPT_DIR/../frontend"
 
-# Detectar package manager
-get_package_manager() {
-    if command -v bun &> /dev/null; then
-        echo "bun"
-    else
-        echo "npm"
-    fi
-}
-
-PM=$(get_package_manager)
+PM="npm"
 echo "📦 Usando: $PM"
 
 cd "$FRONTEND_PATH" || exit 1
@@ -29,7 +20,7 @@ case "$1" in
         ;;
     install)
         echo "📥 Instalando dependencias..."
-        $PM install
+        $PM ci
         ;;
     build)
         echo "🏗️ Construyendo para producción..."

@@ -1,0 +1,32 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule: {interval: weekly}
+    open-pull-requests-limit: 5
+    target-branch: pruebas-rediseno
+    groups:
+      angular:
+        patterns: ['@angular/*']
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
+  - package-ecosystem: npm
+    directory: /backend
+    schedule: {interval: weekly}
+    open-pull-requests-limit: 3
+    target-branch: pruebas-rediseno
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
+  - package-ecosystem: composer
+    directory: /backend
+    schedule: {interval: weekly}
+    open-pull-requests-limit: 5
+    target-branch: pruebas-rediseno
+    groups:
+      symfony:
+        patterns: ['symfony/*']
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]

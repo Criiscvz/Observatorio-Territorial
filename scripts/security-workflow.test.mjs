@@ -94,6 +94,12 @@ test('quality gates run before application tests and remain required by Resultad
   assert(source.indexOf('run: npm run lint') < source.indexOf('run: npm test -- --watch=false'));
 });
 
+test('locked dependency audits cannot be omitted or replaced by a force update in CI', () => {
+  for (const command of ['composer audit --locked --no-interaction', 'npm run audit:dependencies',
+    'npm --prefix backend run audit:dependencies', 'node --test scripts/audit-dependencies.test.mjs']) assert(source.includes(command));
+  assert(!/audit fix|--force|legacy-peer-deps/.test(source));
+});
+
 test('the locked MongoDB library has a compatible, identical PHP driver in Docker and CI', () => {
   const library = backendLock.packages.find(pkg => pkg.name === 'mongodb/mongodb');
   const required = /^\^(\d+)\.(\d+)$/.exec(library.require['ext-mongodb']);

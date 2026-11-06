@@ -35,6 +35,12 @@ describe('ChartOptionsService rendering regressions', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
+  it('keeps the vulnerable Lines series unregistered while preserving ordinary Line charts', () => {
+    const registry = echarts.SeriesModel as unknown as { getClass(main: string, sub: string): unknown };
+    expect(registry.getClass('series', 'line')).toBeTruthy();
+    expect(registry.getClass('series', 'lines')).toBeUndefined();
+  });
+
   function render(type: string, values: number[]) {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});

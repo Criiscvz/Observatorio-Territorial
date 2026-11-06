@@ -123,7 +123,8 @@ esta entrega queda en una rama local para su integración posterior mediante PR.
 ## Siguientes bloques
 
 - Ampliar análisis de PHP y tipos de payloads de forma gradual y comprobada.
-- Auditar dependencias y retirar `install` en una entrega separada.
+- El bloque de dependencias del 5 de noviembre retira `install`, unifica npm y
+  añade auditorías al CI; ver [resultado y aviso pendiente de ECharts](DEPENDENCIAS_FASE5.md).
 - Completar E2E en escritorio y móvil, cobertura de reglas críticas,
   observabilidad sin datos sensibles y manual técnico de operación.
 - Validar alojamiento y controles de publicación cuando DIIT confirme el host.

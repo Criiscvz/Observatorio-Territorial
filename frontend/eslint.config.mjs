@@ -21,6 +21,7 @@ export default defineConfig(
       'no-empty': ['error', { allowEmptyCatch: true }],
       '@typescript-eslint/no-unused-expressions': ['error', { allowShortCircuit: true, allowTernary: true }],
       'architecture/dependency-direction': 'error',
+      'architecture/echarts-modular-imports': 'error',
     },
   },
   {

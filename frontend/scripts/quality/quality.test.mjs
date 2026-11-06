@@ -52,3 +52,13 @@ test('inline Angular templates receive the same checks', async () => {
   const code = "import { Component } from '@angular/core'; @Component({template: '<button title=\"A\" title=\"B\">Save</button>'}) export class QualityProbe {}";
   assert((await lint(code, 'src/app/features/quality-probe.component.ts')).some(m => m.ruleId === '@angular-eslint/template/no-duplicate-attributes'));
 });
+
+test('ECharts full runtime bundles and LinesChart cannot bypass the modular registry', async () => {
+  const file = 'src/app/features/quality-probe.ts';
+  for (const code of [
+    "import * as charts from 'echarts';", "const charts = import('echarts');",
+    "import { LinesChart as Series } from 'echarts/charts';", "export * from 'echarts/charts';",
+    "import * as charts from 'echarts/charts';", "const charts = require('echarts/dist/echarts');",
+  ]) assert((await lint(code, file)).some(m => m.ruleId === 'architecture/echarts-modular-imports'), code);
+  assert.deepEqual(await lint("import type { EChartsOption } from 'echarts'; import { LineChart } from 'echarts/charts';", file), []);
+});

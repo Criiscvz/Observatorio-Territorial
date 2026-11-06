@@ -100,7 +100,6 @@ function Stop-AllServices {
     Invoke-Script $DockerScript 'down'
 
     Get-Process -Name 'node' -ErrorAction SilentlyContinue | Stop-Process -Force
-    Get-Process -Name 'bun' -ErrorAction SilentlyContinue | Stop-Process -Force
 
     Write-Host 'Servicios detenidos.' -ForegroundColor Green
 }
