@@ -2,7 +2,7 @@
 services:
   api:
     image: observatorio-e2e-api:phase5
-    environment: {OBSERVATORIO_E2E: '1'}
+    environment: {OBSERVATORIO_E2E: '1', OBSERVABILITY_ENABLED: 'true', OBSERVABILITY_SAMPLE_RATE: '1', LOG_LEVEL: info}
     labels: {observatorio.purpose: e2e-fase5}
   schema:
     image: observatorio-e2e-api:phase5

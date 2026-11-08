@@ -1,6 +1,11 @@
 name: observatorio-portable-ensayo
 
+x-logs: &bounded-logs
+  driver: json-file
+  options: {max-size: '10m', max-file: '3'}
+
 x-api: &api
+  logging: *bounded-logs
   image: observatorio-portable-api:phase4
   build:
     context: ../../backend
@@ -33,7 +38,7 @@ x-api: &api
     QUEUE_CONNECTION: sync
     MAIL_MAILER: array
     LOG_CHANNEL: stderr
-    LOG_LEVEL: warning
+    LOG_LEVEL: info
     L5_SWAGGER_GENERATE_ALWAYS: 'false'
     LEGACY_PUBLICATION_REHEARSAL_ENABLED: 'false'
   volumes:
@@ -50,6 +55,7 @@ x-api: &api
 
 services:
   postgres:
+    logging: *bounded-logs
     image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
     environment:
       POSTGRES_DB: observatorio_portable_test
@@ -68,6 +74,7 @@ services:
     labels:
       observatorio.purpose: portable-rehearsal
   mongo:
+    logging: *bounded-logs
     image: mongo:7@sha256:35a5926f71f8b6cb19206bee928c5a85f241a8be99f20c81abe35ae78a73415d
     environment:
       MONGO_INITDB_ROOT_USERNAME: portable_root
@@ -101,6 +108,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
   web:
+    logging: *bounded-logs
     image: observatorio-portable-web:phase4
     build:
       context: ../../frontend

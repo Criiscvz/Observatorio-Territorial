@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { checkHealth } from './check-operational-health.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = resolve(root, 'storage/codex-local/e2e');
@@ -88,6 +89,8 @@ async function main() {
     writeFileSync(resolve(output, 'fixture.json'), JSON.stringify({ ...fixture, ...seeded }, null, 2), { mode: 0o600 });
     const health = await (await fetch(origin + '/api/health?deep=1')).json();
     assert.equal(health.ok, true); assert.deepEqual(health.services, { postgres: 'ok', mongodb: 'ok' });
+    const operational = await checkHealth(origin);
+    assert(operational.ok && operational.checks.every(check=>check.correlation_available), 'Operational health/correlation failed.');
     // Prove production CSRF remains enabled even in the test-only image.
     const denied = await fetch(origin + '/api/login', { method: 'POST', headers: { Origin: origin, Referer: origin + '/',
       'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ email: 'admin@example.test', password: fixture.password }) });
@@ -103,6 +106,21 @@ async function main() {
       console.log(JSON.stringify({ e2e: report.stats, projects: ['escritorio', 'movil'], syntheticOnly: true }));
     }
     assert(!result.error && result.status === 0, 'Browser journeys failed; private report: storage/codex-local/e2e/playwright-results.json');
+    const observed = compose(['logs', '--no-color', '--no-log-prefix', 'api']);
+    const log = observed.stdout + observed.stderr;
+    for (const sensitive of [fixture.password, fixture.health, 'admin@example.test', 'Importacion E2E.pdf'])
+      assert(!log.includes(sensitive), 'Sensitive synthetic value reached runtime logs; diagnostics remain private.');
+    const records = log.split('\n').flatMap(line => { try { return [JSON.parse(line)]; } catch { return []; } });
+    const spans = records.filter(r => r.message === 'OTEL_SPAN').map(r => r.context);
+    for (const system of ['postgresql','mongodb']) assert(spans.some(s => s.db_system === system), 'Missing database trace: ' + system);
+    for (const target of ['microsoft_graph','microsoft_identity']) assert(spans.some(s => s.target === target), 'Missing SharePoint trace: ' + target);
+    assert(records.some(r => r.message === 'HTTP_REQUEST_COMPLETED' && r.context.status === 419));
+    const summary = {structuredRecords:records.length, databaseSystems:['postgresql','mongodb'],
+      externalTargets:['microsoft_graph','microsoft_identity'], sensitiveFixturesFound:0};
+    for (const service of Object.values(config.services)) assert.deepEqual(service.logging,
+      {driver:'json-file',options:{'max-size':'10m','max-file':'3'}});
+    writeFileSync(resolve(output, 'observability-results.json'), JSON.stringify(summary,null,2));
+    console.log('E2E: structured telemetry and redaction verified for real SQL/MongoDB and simulated Graph.');
   } catch (error) {
     compose(['logs', '--no-color', '--tail', '200'], {allowFailure:true});
     throw error;

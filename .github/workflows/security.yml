@@ -64,6 +64,8 @@ jobs:
         run: node scripts/test-portable-build-contexts.mjs
       - name: Dependency audit policy regressions
         run: node --test scripts/audit-dependencies.test.mjs
+      - name: Operational health probe regressions
+        run: node --test scripts/check-operational-health.test.mjs
       - name: Audit backend JavaScript tools from their lockfile
         run: npm --prefix backend run audit:dependencies
       - name: Install backend asset tools from their lockfile

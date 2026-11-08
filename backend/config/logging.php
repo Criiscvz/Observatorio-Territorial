@@ -5,7 +5,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
 use Monolog\Processor\PsrLogMessageProcessor;
 
-return [
+$config = [
 
     /*
     |--------------------------------------------------------------------------
@@ -54,7 +54,7 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', (string) env('LOG_STACK', 'single')),
+            'channels' => explode(',', (string) env('LOG_STACK', 'daily')),
             'ignore_exceptions' => false,
         ],
 
@@ -69,7 +69,7 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => env('LOG_DAILY_DAYS', 14),
+            'days' => max(1, min(30, (int) env('LOG_DAILY_DAYS', 14))),
             'replace_placeholders' => true,
         ],
 
@@ -130,3 +130,11 @@ return [
     ],
 
 ];
+
+foreach ($config['channels'] as $name => &$channel) {
+    if (! in_array($name, ['stack', 'null', 'emergency'], true)) {
+        $channel['tap'] = [App\Infrastructure\Observability\ConfigureSafeLogging::class];
+    }
+}
+unset($channel);
+return $config;

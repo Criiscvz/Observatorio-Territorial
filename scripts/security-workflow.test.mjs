@@ -77,6 +77,11 @@ test('browser journeys are type-checked and required by the frontend gate', () =
   assert(!/upload-artifact|storage\/codex-local/.test(frontend), 'Browser traces stay private.');
 });
 
+test('operational health regressions remain required without a production endpoint in CI', () => {
+  assert(source.includes('run: node --test scripts/check-operational-health.test.mjs'));
+  assert(!source.includes('check-operational-health.mjs --url'), 'CI probes must stay synthetic, not call a hosted service.');
+});
+
 test('scanner retains default rules, redaction and no broad fixture or history suppression', () => {
   assert.match(config, /useDefault = true/);
   assert.match(config, /targetRules = \["grafana-api-key"\]/);

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\ObserveRequest::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
@@ -36,6 +37,11 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontReportDuplicates();
+        $exceptions->report(function (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::error('APPLICATION_EXCEPTION', ['exception' => $exception::class]);
+            return false; // Never pass raw exception messages, SQL/bindings or traces to Laravel's default reporter.
+        });
         // Handle ApiException - structured error responses
         $exceptions->render(function (ApiException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {

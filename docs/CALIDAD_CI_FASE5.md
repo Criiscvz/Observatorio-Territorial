@@ -127,8 +127,11 @@ esta entrega queda en una rama local para su integración posterior mediante PR.
   añade auditorías al CI; ver [resultado y aviso pendiente de ECharts](DEPENDENCIAS_FASE5.md).
 - El bloque [E2E en escritorio y móvil](E2E_FASE5.md) añade recorridos con API,
   bases y archivos sintéticos reales, sin credenciales de producción.
-- Continuar con cobertura de reglas críticas, observabilidad sin datos
-  sensibles y manual técnico de operación.
+- Continuar con cobertura de reglas críticas y aceptación operativa de la
+  topología definitiva.
+- El bloque [de observabilidad](OBSERVABILIDAD_FASE5.md) incorpora trazas locales
+  y amplía PHPStan al middleware y su infraestructura; el
+  [manual de operación](MANUAL_TECNICO_OPERACION.md) reúne los procedimientos.
 - Validar alojamiento y controles de publicación cuando DIIT confirme el host.
 
 Referencias: [configuración de typescript-eslint](https://typescript-eslint.io/users/configs/),

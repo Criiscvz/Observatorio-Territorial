@@ -13,7 +13,8 @@
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.30",
         "maatwebsite/excel": "^3.1",
-        "mongodb/laravel-mongodb": "^5.8"
+        "mongodb/laravel-mongodb": "^5.8",
+        "open-telemetry/sdk": "^1.16.1"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.6",
@@ -88,7 +89,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "tbachert/spi": false
         }
     },
     "minimum-stability": "stable",
