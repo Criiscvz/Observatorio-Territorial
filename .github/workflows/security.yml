@@ -109,7 +109,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: shivammathur/setup-php@4424c9aab975b57bd706ee5a39c6b4334d6e4f60 # 2.40.0
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0 (commit, not annotated tag object)
         with:
           php-version: '8.4'
           extensions: mbstring, dom, xml, xmlwriter, simplexml, sqlite3, pdo_sqlite, pdo_pgsql, gd, zip, intl, bcmath, mongodb-2.5.2
@@ -156,6 +156,8 @@ jobs:
           package-manager-cache: false
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
+      - name: Repeatable API build configuration
+        run: npm run test:api-build
       - name: Audit all locked frontend dependencies
         run: npm run audit:dependencies
       - name: TypeScript, Angular templates and dependency direction

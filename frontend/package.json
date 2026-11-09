@@ -12,6 +12,7 @@
     "audit:dependencies": "node ../scripts/audit-dependencies.mjs frontend",
     "test:quality": "node --test scripts/quality/*.test.mjs",
     "test:e2e": "node ../scripts/run-e2e.mjs",
+    "test:api-build": "node --test scripts/api-url-build.test.mjs",
     "test:security-headers": "node --test scripts/security-headers.test.mjs",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },

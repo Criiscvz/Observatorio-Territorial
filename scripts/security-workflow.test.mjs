@@ -69,6 +69,11 @@ test('frontend uses the lockfile, non-watch tests, header regressions and produc
   assert(!/npm update|npm install/.test(source));
 });
 
+test('the API build setter is checked before compiling the SPA and Docker image', () => {
+  assert(source.includes('run: npm run test:api-build'));
+  assert(source.indexOf('run: npm run test:api-build') < source.indexOf('run: npm run build:vercel'));
+});
+
 test('browser journeys are type-checked and required by the frontend gate', () => {
   const frontend = source.slice(source.indexOf('\n  frontend:'), source.indexOf('\n  result:'));
   for (const command of ['node node_modules/typescript/bin/tsc -p tsconfig.e2e.json',

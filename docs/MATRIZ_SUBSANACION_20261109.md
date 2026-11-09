@@ -45,6 +45,8 @@ Los estados distinguen implementación técnica, prueba reproducible y aceptaci�
 
 ## Puerta de integración
 
+El primer CI del PR identificó dos problemas de ejecución que no deben confundirse con omisiones aceptadas: el setter de API rechazaba aplicar de nuevo el mismo origen después del build SPA, y la referencia de `setup-php` era el objeto de etiqueta anotada en vez del commit. Se añadieron pruebas de doble ejecución y se conserva exactamente la versión 2.40.0 de PHP setup, fijada al commit verificado de esa etiqueta. No se retiraron trabajos ni se debilitaron sus condiciones para aprobarlos.
+
 Antes de publicar, registrar para el **mismo commit**:
 
 - `Resultado` verde con Secretos, Higiene, Backend y Frontend; el check no se elude ni se debilita para aprobar un fallo.
