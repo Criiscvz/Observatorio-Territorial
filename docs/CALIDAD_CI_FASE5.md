@@ -44,7 +44,8 @@ construidas dinámicamente en ejecución.
 ## Backend
 
 `composer analyse` ejecuta PHPStan 2.3.4 en nivel 5 sobre `app/Domain` y
-`PublicationReviewDecision`. No arranca Laravel ni consulta bases. No usa
+`PublicationReviewDecision`; desde el bloque del 8 de noviembre incluye también
+`Infrastructure/Observability` y el middleware `ObserveRequest`. No arranca Laravel ni consulta bases. No usa
 baseline, exclusiones de archivos ni `ignoreErrors`. El alcance es explícito:
 todavía no equivale a analizar todos los controladores, modelos y casos de uso.
 
