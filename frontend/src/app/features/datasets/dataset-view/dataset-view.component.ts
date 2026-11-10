@@ -131,7 +131,6 @@ export class DatasetViewComponent implements OnInit {
     }));
   });
   columnNames = computed(() => this.visibleColumns().map((v) => v._uniqueId));
-  analysableVariables = computed(() => this.variables().filter((v) => v.es_visible));
 
   ngOnInit(): void {
     this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -247,10 +246,6 @@ export class DatasetViewComponent implements OnInit {
     }
   }
 
-  /** Navigate to variable analysis page */
-  onVariableSelected(variable: VariableMetadato): void {
-    this.router.navigate(['/admin/datasets', this.datasetId(), 'variable', variable.id]);
-  }
 
   // =========== SOURCES MANAGEMENT ===========
 

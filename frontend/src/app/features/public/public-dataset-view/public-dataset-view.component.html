@@ -55,20 +55,6 @@
         </div>
       </mat-tab>
 
-      <!-- Tab: Análisis -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon class="tab-icon">analytics</mat-icon>
-          {{ 'public.datasetView.tabs.analysis' | translate }}
-        </ng-template>
-        <div class="tab-content">
-          <app-variable-list
-            [variables]="analysableVariables()"
-            (variableSelected)="onVariableSelected($event)"
-          />
-        </div>
-      </mat-tab>
-
       <!-- Tab: Fuentes -->
       @if (fuentes().length > 0) {
         <mat-tab>

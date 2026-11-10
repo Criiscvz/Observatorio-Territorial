@@ -65,7 +65,7 @@ El comando termina con código distinto de cero ante errores de preparación, ai
 | Cabeceras/PWA | 20 comprobaciones aprobadas, incluidas las de artefactos generados. |
 | Seguridad, higiene, runtime y política de auditoría | 41 pruebas aprobadas. |
 | Contextos Docker | 3 contextos sintéticos: 59 exclusiones y 19 inclusiones verificadas. Contexto Render: 33 exclusiones y 11 inclusiones. |
-| Auditoría npm | Sin nuevos avisos; permanece el aviso moderado de ECharts ya documentado en `DEPENDENCIAS_FASE5.md`. |
+| Auditoría npm | En la entrega original permanecía el aviso moderado de ECharts; el análisis antiguo y esa excepción se retiraron el 10 de noviembre. Ver `RETIRO_ANALISIS_GRAFICO_20261110.md`. |
 | Secretos | Snapshot y rango del commit comprobados con Gitleaks, sin hallazgos. |
 
 Las pruebas encontraron un fallo del servidor portable: `.mjs` se servía como `application/octet-stream`, lo que impedía cargar el worker de PDF.js con `nosniff`. Se corrigió el MIME de esos módulos a JavaScript, conservando CSP y `nosniff`. El navegador comprobó después la lectura de PDFs guardados y de las vistas previas locales.

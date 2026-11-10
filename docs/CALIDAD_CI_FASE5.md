@@ -125,7 +125,7 @@ esta entrega queda en una rama local para su integración posterior mediante PR.
 
 - Ampliar análisis de PHP y tipos de payloads de forma gradual y comprobada.
 - El bloque de dependencias del 5 de noviembre retira `install`, unifica npm y
-  añade auditorías al CI; ver [resultado y aviso pendiente de ECharts](DEPENDENCIAS_FASE5.md).
+  añade auditorías al CI; ver [resultados y retiro posterior de ECharts](DEPENDENCIAS_FASE5.md).
 - El bloque [E2E en escritorio y móvil](E2E_FASE5.md) añade recorridos con API,
   bases y archivos sintéticos reales, sin credenciales de producción.
 - Continuar con cobertura de reglas críticas y aceptación operativa de la

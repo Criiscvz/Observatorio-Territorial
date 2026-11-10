@@ -139,4 +139,4 @@ Los mensajes nativos de arranque y herramientas CLI pueden quedar fuera de la re
 
 ## Pendientes de aceptación
 
-Confirmación de host/proxy/TLS/dominio y recursos; almacenamiento persistente y backups programados; IAM/red/retención de logs; monitoreo/alertas y posible Collector; RPO/RTO medidos; pruebas de correo, OAuth y Microsoft reales; CI remoto e integración de las ramas locales. El análisis estático de otras capas y dos dependencias de presentación conocidas siguen pendientes. Consultar también [dependencias y aviso ECharts acotado](DEPENDENCIAS_FASE5.md); el plazo de esa excepción no se extiende por este manual.
+Confirmación de host/proxy/TLS/dominio y recursos; almacenamiento persistente y backups programados; IAM/red/retención de logs; monitoreo/alertas y posible Collector; RPO/RTO medidos; pruebas de correo, OAuth y Microsoft reales; CI remoto e integración de las ramas locales. El análisis estático de otras capas y dos dependencias de presentación conocidas siguen pendientes. El análisis ECharts y su excepción se retiraron el 10 de noviembre; consultar [alcance y comprobaciones](RETIRO_ANALISIS_GRAFICO_20261110.md).

@@ -2,6 +2,12 @@
 
 > Documento generado el 2026-07-04, actualizado el mismo día tras un arranque en frío real y verificado. Es el mapa completo del sistema: estructura, arquitectura, cómo se integran PostgreSQL y MongoDB, y cómo levantarlo de punta a punta.
 
+> **Registro histórico.** El frontend y la operación actuales se describen en
+> `MANUAL_TECNICO_OPERACION.md` y `MATRIZ_SUBSANACION_20261109.md`. El análisis
+> gráfico de datasets y ECharts descritos aquí se retiraron el 10 de noviembre;
+> se conservaron las tablas, los datos y las API. Ver
+> [alcance del retiro](RETIRO_ANALISIS_GRAFICO_20261110.md).
+
 ---
 
 ## 1. Visión general

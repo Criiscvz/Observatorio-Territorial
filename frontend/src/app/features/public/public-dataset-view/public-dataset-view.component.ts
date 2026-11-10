@@ -17,14 +17,13 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { DatasetFuente, VariableMetadato } from '@core/models';
 import { CategoriaService } from '@core/services/categoria.service';
 import { DashboardService } from '@core/services/dashboard.service';
-import { DataTableComponent } from '@shared/components/charts';
-import { VariableListComponent } from '@shared/components/variable-list/variable-list.component';
+import { DataTableComponent } from '@shared/components/data-table/data-table.component';
 import { ColumnWithUniqueId } from '@shared/models';
 
 @Component({
@@ -42,14 +41,12 @@ import { ColumnWithUniqueId } from '@shared/models';
     MatTooltipModule,
     TranslateModule,
     DataTableComponent,
-    VariableListComponent,
   ],
   templateUrl: './public-dataset-view.component.html',
   styleUrl: './public-dataset-view.component.scss',
 })
 export class PublicDatasetViewComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
   private dashboardService = inject(DashboardService);
   private categoriaService = inject(CategoriaService);
   private platformId = inject(PLATFORM_ID);
@@ -80,8 +77,6 @@ export class PublicDatasetViewComponent implements OnInit {
     }));
   });
 
-  // All visible variables are analysable
-  analysableVariables = computed(() => this.variables().filter((v) => v.es_visible));
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
@@ -127,8 +122,4 @@ export class PublicDatasetViewComponent implements OnInit {
     this.loadData(event.pageIndex + 1);
   }
 
-  /** Navigate to variable analysis page */
-  onVariableSelected(variable: VariableMetadato): void {
-    this.router.navigate(['/publico/datasets', this.datasetId(), 'variable', variable.id]);
-  }
 }
