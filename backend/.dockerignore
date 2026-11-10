@@ -38,6 +38,7 @@ auth.json
 
 # Testing artifacts
 .phpunit.result.cache
+/tests/E2E
 
 # Storage (se crea en el contenedor)
 /storage/logs/*

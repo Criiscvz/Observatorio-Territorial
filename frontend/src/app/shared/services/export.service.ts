@@ -20,28 +20,6 @@ export class ExportService {
   }
 
   /**
-   * Download chart data as CSV. Handles both univariable (labels+values) and generic key-value.
-   */
-  downloadChartDataCsv(
-    data: { labels?: string[]; values?: number[]; stats?: Record<string, number> },
-    filename: string = 'datos',
-  ): void {
-    if (data.labels && data.values) {
-      this.downloadFrequencyCsv(data.labels, data.values, filename);
-    }
-  }
-
-  /**
-   * Download an image from an ECharts instance data URL
-   */
-  downloadChartPng(dataUrl: string, filename: string = 'grafico'): void {
-    const link = document.createElement('a');
-    link.href = dataUrl;
-    link.download = `${filename}.png`;
-    link.click();
-  }
-
-  /**
    * Download generic 2D data as CSV
    */
   downloadTableCsv(headers: string[], rows: (string | number)[][], filename: string): void {

@@ -104,6 +104,26 @@ class AdminUserPasswordTest extends TestCase
         $this->getJson('/api/user')->assertUnauthorized();
     }
 
+    public function test_a_browser_cookie_with_the_previous_password_hash_is_rejected_after_password_rotation(): void
+    {
+        config(['session.driver' => 'cookie', 'sanctum.stateful' => ['localhost:4200']]);
+        $user = $this->user('ADMIN');
+        $sessionKey = Auth::guard('web')->getName();
+        $previousHash = $user->password;
+        $sessionId = str_repeat('a', 40);
+        $this->withHeader('Origin', 'http://localhost:4200')->withCredentials()->withCookies([
+            config('session.cookie') => $sessionId,
+            $sessionId => json_encode([
+                'data' => serialize([$sessionKey => $user->id, 'password_hash_web' => $previousHash]),
+                'expires' => time() + 600,
+            ]),
+        ])->getJson('/api/user')->assertOk()->assertJsonPath('id', $user->id);
+        DB::table('users')->where('id', $user->id)->update(['password' => Hash::make(self::NEW_PASSWORD)]);
+        Auth::forgetGuards();
+        $this->app['session']->forgetDrivers();
+        $this->getJson('/api/user')->assertUnauthorized()->assertJsonMissingPath('id');
+    }
+
     public function test_users_role_filter_and_search_apply_before_pagination(): void
     {
         $admin = $this->user('ADMIN'); $this->user('ADMIN_OBSERVATORIO'); $this->user('USER');

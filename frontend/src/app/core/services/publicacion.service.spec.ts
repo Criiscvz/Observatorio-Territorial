@@ -25,6 +25,22 @@ describe('PublicacionService SharePoint imports', () => {
 
   afterEach(() => httpMock.verify());
 
+  it('requests management library pages, totals and server search without fetching the complete array', () => {
+    service.libraryPage('dep-1',{tipo:'LIBRO',q:'Ana Pérez',page:3}).subscribe();
+    const request=httpMock.expectOne(r=>r.url===`${environment.apiUrl}/departamentos/dep-1/biblioteca/publicaciones`);
+    expect(request.request.params.get('per_page')).toBe('20');expect(request.request.params.get('page')).toBe('3');
+    expect(request.request.params.get('q')).toBe('Ana Pérez');expect(request.request.params.get('tipo')).toBe('LIBRO');
+    request.flush({data:[],meta:{total:0,current_page:3,last_page:1,per_page:20},counts:{LIBRO:0},review_total:0});
+  });
+
+  it.each([false,true])('uses the %s Atlas library contract and category filter', management => {
+    service.atlasPage('category-1',2,'Salud',management).subscribe();
+    const endpoint=management?'/departamentos/publicaciones/atlas-biblioteca':'/publico/atlas/biblioteca';
+    const request=httpMock.expectOne(r=>r.url===`${environment.apiUrl}${endpoint}`);
+    expect(request.request.params.get('categoria_id')).toBe('category-1');expect(request.request.params.get('page')).toBe('2');expect(request.request.params.get('per_page')).toBe('20');
+    request.flush({data:[],meta:{total:0,current_page:2,last_page:1,per_page:20}});
+  });
+
   it('persists the selected category when importing global Atlas files', () => {
     service.importManyGlobalAtlasSharePoint(['pdf-1'], 'category-1').subscribe();
     const request = httpMock.expectOne(`${environment.apiUrl}/departamentos/publicaciones/atlas-global/sharepoint/import-many`);

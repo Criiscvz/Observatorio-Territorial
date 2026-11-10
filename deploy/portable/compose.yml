@@ -1,0 +1,146 @@
+name: observatorio-portable-ensayo
+
+x-logs: &bounded-logs
+  driver: json-file
+  options: {max-size: '10m', max-file: '3'}
+
+x-api: &api
+  logging: *bounded-logs
+  image: observatorio-portable-api:phase4
+  build:
+    context: ../../backend
+    dockerfile: Dockerfile.portable
+  environment:
+    APP_NAME: Observatorio portable
+    APP_ENV: production
+    APP_DEBUG: 'false'
+    APP_KEY: ${PORTABLE_APP_KEY:?Generate the private rehearsal environment first}
+    APP_URL: http://localhost:${PORTABLE_HTTP_PORT:-4400}
+    FRONTEND_URL: http://localhost:${PORTABLE_HTTP_PORT:-4400}
+    DB_CONNECTION: pgsql
+    DB_URL: ''
+    DATABASE_URL: ''
+    DB_HOST: postgres
+    DB_PORT: '5432'
+    DB_DATABASE: observatorio_portable_test
+    DB_USERNAME: portable_app
+    DB_PASSWORD: ${PORTABLE_DB_APP_PASSWORD:?Private rehearsal secret required}
+    DB_SSLMODE: disable
+    MONGODB_URI: mongodb://portable_app:${PORTABLE_MONGO_APP_PASSWORD:?Private rehearsal secret required}@mongo:27017/observatorio_portable_test?authSource=observatorio_portable_test
+    MONGODB_DATABASE: observatorio_portable_test
+    FILESYSTEM_DISK: local
+    CACHE_STORE: file
+    SESSION_DRIVER: file
+    SESSION_COOKIE: observatorio_portable_session
+    SESSION_SECURE_COOKIE: 'false'
+    SESSION_SAME_SITE: lax
+    SANCTUM_STATEFUL_DOMAINS: localhost:${PORTABLE_HTTP_PORT:-4400}
+    QUEUE_CONNECTION: sync
+    MAIL_MAILER: array
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: info
+    L5_SWAGGER_GENERATE_ALWAYS: 'false'
+    LEGACY_PUBLICATION_REHEARSAL_ENABLED: 'false'
+  volumes:
+    - app-storage:/var/www/html/storage
+  tmpfs:
+    - /tmp:uid=10001,gid=10001,mode=0700
+    - /var/www/html/bootstrap/cache:uid=10001,gid=10001,mode=0700
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  networks: [portable]
+  labels:
+    observatorio.purpose: portable-rehearsal
+
+services:
+  postgres:
+    logging: *bounded-logs
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    environment:
+      POSTGRES_DB: observatorio_portable_test
+      POSTGRES_USER: portable_owner
+      POSTGRES_PASSWORD: ${PORTABLE_DB_OWNER_PASSWORD:?Private rehearsal secret required}
+      PORTABLE_DB_APP_PASSWORD: ${PORTABLE_DB_APP_PASSWORD:?Private rehearsal secret required}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/10-app.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U portable_owner -d observatorio_portable_test']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [portable]
+    labels:
+      observatorio.purpose: portable-rehearsal
+  mongo:
+    logging: *bounded-logs
+    image: mongo:7@sha256:35a5926f71f8b6cb19206bee928c5a85f241a8be99f20c81abe35ae78a73415d
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: portable_root
+      MONGO_INITDB_ROOT_PASSWORD: ${PORTABLE_MONGO_ROOT_PASSWORD:?Private rehearsal secret required}
+      PORTABLE_MONGO_APP_PASSWORD: ${PORTABLE_MONGO_APP_PASSWORD:?Private rehearsal secret required}
+    volumes:
+      - mongo-data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/10-app.js:ro
+    healthcheck:
+      test: [CMD-SHELL, 'mongosh --quiet --host 127.0.0.1 --username portable_app --password "$$PORTABLE_MONGO_APP_PASSWORD" --authenticationDatabase observatorio_portable_test --eval "db.adminCommand({ping:1}).ok"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [portable]
+    labels:
+      observatorio.purpose: portable-rehearsal
+  api:
+    <<: *api
+    depends_on:
+      postgres: {condition: service_healthy}
+      mongo: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, php, -r, 'exit(@fsockopen("127.0.0.1",9000) ? 0 : 1);']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  schema:
+    <<: *api
+    profiles: [tools]
+    command: [php, artisan, migrate, --force, '--isolated=75']
+    depends_on:
+      postgres: {condition: service_healthy}
+  web:
+    logging: *bounded-logs
+    image: observatorio-portable-web:phase4
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile.portable
+    ports:
+      - '127.0.0.1:${PORTABLE_HTTP_PORT:-4400}:8080'
+    tmpfs:
+      - /tmp:uid=101,gid=101,mode=0700
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on:
+      api: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:8080/healthz']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [edge, portable]
+    labels:
+      observatorio.purpose: portable-rehearsal
+
+volumes:
+  pg-data:
+    labels: {observatorio.purpose: portable-rehearsal}
+  mongo-data:
+    labels: {observatorio.purpose: portable-rehearsal}
+  app-storage:
+    labels: {observatorio.purpose: portable-rehearsal}
+networks:
+  edge:
+    labels: {observatorio.purpose: portable-rehearsal}
+  portable:
+    internal: true
+    labels: {observatorio.purpose: portable-rehearsal}

@@ -2,7 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { ApiService } from './api.service';
 import { AuthService } from './auth.service';
 import { Departamento } from '../models';
+import { PublicationCapabilities } from '../models/publicacion/publicacion.interface';
 export interface WorkspacePublication {
+    capabilities?: PublicationCapabilities;
     id: string;
     departamento_id: string;
     departamento_nombre: string;

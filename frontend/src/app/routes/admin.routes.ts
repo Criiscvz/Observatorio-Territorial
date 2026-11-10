@@ -113,12 +113,8 @@ export const ADMIN_ROUTES: Routes = [
   },
   {
     path: 'datasets/:id/variable/:variableId',
-    canActivate: [roleGuard('ADMIN','USER','SUBSCRIBER')],
-    loadComponent: () =>
-      import('../features/datasets/admin-variable-analysis/admin-variable-analysis.component').then(
-        (m) => m.AdminVariableAnalysisComponent,
-      ),
-    title: 'Análisis de Variable - Observatorio',
+    redirectTo: 'datasets/:id',
+    pathMatch: 'full',
   },
 
   // Usuarios (solo admin)

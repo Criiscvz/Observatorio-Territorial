@@ -2,6 +2,12 @@
 
 > Documento generado el 2026-07-04, actualizado el mismo día tras un arranque en frío real y verificado. Es el mapa completo del sistema: estructura, arquitectura, cómo se integran PostgreSQL y MongoDB, y cómo levantarlo de punta a punta.
 
+> **Registro histórico.** El frontend y la operación actuales se describen en
+> `MANUAL_TECNICO_OPERACION.md` y `MATRIZ_SUBSANACION_20261109.md`. El análisis
+> gráfico de datasets y ECharts descritos aquí se retiraron el 10 de noviembre;
+> se conservaron las tablas, los datos y las API. Ver
+> [alcance del retiro](RETIRO_ANALISIS_GRAFICO_20261110.md).
+
 ---
 
 ## 1. Visión general
@@ -320,7 +326,7 @@ Ningún paso requiere una transacción distribuida Postgres↔Mongo: si la escri
 ### 7.1 Prerrequisitos
 
 - **Docker Desktop** corriendo (Postgres + MongoDB viven ahí).
-- **Bun** (preferido) o **npm** para el frontend — el repo detecta cuál tenés instalado.
+- **Node 24.17.0 y npm 11.13.0** para los proyectos JavaScript; las instalaciones reproducibles usan `npm ci`.
 - Para la ruta "backend nativo en host": **PHP 8.4** + **Composer**. Para la ruta recomendada (backend en Docker) no necesitás PHP en el host.
 
 ### 7.2 Arranque desde cero (clon nuevo del repo)
@@ -351,7 +357,7 @@ docker exec observatorio-backend-dev php artisan datasets:migrar-a-mongo
 ```powershell
 cd Observatirio
 .\scripts\start.ps1 setup   # instala deps backend+frontend, migra BD
-.\scripts\start.ps1 all     # docker (Postgres+Mongo) + backend (php -S) + frontend (bun)
+.\scripts\start.ps1 all     # docker (Postgres+Mongo) + backend (php -S) + frontend (npm)
 ```
 
 El backend en Docker resuelve `DB_HOST` y `MONGODB_URI` a `host.docker.internal` automáticamente (reescritos en runtime por los scripts) para alcanzar los contenedores de datos publicados en el host — no hace falta editar `.env` a mano para esto.

@@ -1,17 +1,25 @@
+import { publicationPage } from '../../../testing/publication-page.fixture';
 import { TestBed } from '@angular/core/testing';
 import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { ObservatoryLibraryComponent } from './observatory-library.component';
 
 describe('Biblioteca compacta por pestañas', () => {
+  it('no abre un recurso con URL si la API deniega su visualización o no devuelve permisos',()=>{
+    const {component}=setup([article(1)]);
+    expect(component.canView(article(1))).toBe(true);
+    expect(component.canView(article(1,{capabilities:undefined}))).toBe(false);
+    expect(component.canView(article(1,{capabilities:{can_view:false,can_edit:false,can_delete:false,can_review:false}}))).toBe(false);
+  });
   const article = (index: number, extra: Partial<ObservatorioPublicacion> = {}): ObservatorioPublicacion => ({
-    id: 'art-' + index, tipo: 'ARTICULO', titulo: 'Publicación ' + index, codigo: 'ART-' + index,
+    capabilities:{can_view:true,can_edit:false,can_delete:false,can_review:false}, id: 'art-' + index, tipo: 'ARTICULO', titulo: 'Publicación ' + index, codigo: 'ART-' + index,
     estado: 'PUBLICACION', solo_suscriptores: false, fecha_publicacion: '2026-10-20',
     fuente: 'ULEAM', autores: ['Ana Pérez'], download_url: '/api/pdf/' + index,
     link_url: 'https://www.uleam.edu.ec/', created_at: '', updated_at: '', ...extra,
   });
   function setup(items: ObservatorioPublicacion[]) {
     const fixture = TestBed.createComponent(ObservatoryLibraryComponent);
-    fixture.componentRef.setInput('publications', items); fixture.detectChanges();
+    const respond=(filters:any={tipo:'ARTICULO'})=>{const result=publicationPage(items,filters);for(const [key,value] of Object.entries({publications:result.data,total:result.meta.total,totals:result.counts,type:filters.tipo||'ARTICULO',query:filters.q||'',page:(filters.page||1)-1}))fixture.componentRef.setInput(key,value);};
+    respond();fixture.componentInstance.filtersChange.subscribe(filters=>respond({...filters,page:filters.page+1}));fixture.detectChanges();
     return {fixture, component: fixture.componentInstance, element: fixture.nativeElement as HTMLElement};
   }
   it.each(['SUSPENDIDO','ARCHIVADO','RECHAZADO'] as const)('muestra el estado %s y su motivo completo sin perder acceso al visor',estado=>{
@@ -27,7 +35,7 @@ describe('Biblioteca compacta por pestañas', () => {
     expect(element.querySelector('.review-observation script')).toBeNull();
     expect(element.querySelector<HTMLButtonElement>('.resource-actions button')!.disabled).toBe(false);
     if(estado==='RECHAZADO')expect(element.textContent).toContain('Solo consulta');
-    component.search('referencias');expect(component.filtered()).toHaveLength(1);
+    component.search('referencias');expect(component.visible()).toHaveLength(1);
   });
   it('pagina las publicaciones reales de 20 en 20 sin perder filas y mantiene los detalles cerrados', () => {
     const {component, fixture, element} = setup(Array.from({length:47}, (_,i) => article(i)));
@@ -39,7 +47,7 @@ describe('Biblioteca compacta por pestañas', () => {
     component.changePage(1);fixture.detectChanges();expect(element.querySelectorAll('.library-row')).toHaveLength(7);
     expect(element.querySelector('.library-pagination')?.textContent).toContain('41–47 de 47');
     expect(element.querySelector<HTMLButtonElement>('button[aria-label="Página siguiente"]')!.disabled).toBe(true);
-    fixture.componentRef.setInput('publications',[article(0)]);fixture.detectChanges();
+    fixture.componentRef.setInput('publications',[article(0)]);fixture.componentRef.setInput('total',1);fixture.componentRef.setInput('page',0);fixture.detectChanges();
     expect(component.currentPage()).toBe(0);expect(element.querySelectorAll('.library-row')).toHaveLength(1);
   });
   it('busca sin acentos por título, código, autor y fuente, y reinicia la página', () => {
@@ -49,7 +57,7 @@ describe('Biblioteca compacta por pestañas', () => {
     const search=element.querySelector<HTMLInputElement>('input[type=search]')!;
     search.value='  atencion ';search.dispatchEvent(new Event('input'));fixture.detectChanges();
     expect(component.currentPage()).toBe(0);expect(component.visible().map(x=>x.id)).toEqual(['art-40']);
-    for(const term of ['perez','ART-40','ministerio']){component.search(term);expect(component.filtered().map(x=>x.id)).toEqual(['art-40']);}
+    for(const term of ['perez','ART-40','ministerio']){component.search(term);expect(component.visible().map(x=>x.id)).toEqual(['art-40']);}
     component.search('no existe');fixture.detectChanges();expect(element.querySelectorAll('.library-row')).toHaveLength(0);
     expect(element.textContent).toContain('No se encontraron publicaciones');expect(element.textContent).toContain('0–0 de 0');
   });

@@ -9,6 +9,7 @@ export interface AtlasCategoria {
   icono?: string | null;
   publico?: boolean;
   publicacion_destacada_id?: string | null;
+  publicaciones_total?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -16,6 +17,9 @@ export class AtlasCategoriaService {
   private readonly changed = new Subject<void>();
   readonly onCategoriasChanged$ = this.changed.asObservable();
   private readonly api = inject(ApiService);
+  directory(publico = false, q = '') {
+    return this.api.get<{data: AtlasCategoria[]; unassigned_total: number}>(publico ? '/publico/atlas/directorio' : '/atlas/categorias/directorio', {q});
+  }
   list(publico = false) {
     return this.api
       .get<{ data: AtlasCategoria[] }>(publico ? '/publico/atlas/categorias' : '/atlas/categorias')

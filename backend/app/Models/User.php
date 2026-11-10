@@ -212,6 +212,12 @@ class User extends Authenticatable
             && in_array($id, $this->observatoryIds('puede_revisar'), true));
     }
 
+    /** Management context is a view hint, never a substitute for current permissions. */
+    public function canReadPublicationForManagement(ObservatorioPublicacion $publication): bool
+    {
+        return app(\App\Policies\ObservatorioPublicacionPolicy::class)->viewForManagement($this, $publication);
+    }
+
     /**
      * Verificar si el usuario tiene rol global SUBSCRIBER
      */

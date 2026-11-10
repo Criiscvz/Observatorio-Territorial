@@ -35,11 +35,8 @@ export const PUBLIC_ROUTES: Routes = [
   },
   {
     path: 'datasets/:id/variable/:variableId',
-    loadComponent: () =>
-      import('../features/public/public-variable-analysis/public-variable-analysis.component').then(
-        (m) => m.PublicVariableAnalysisComponent,
-      ),
-    title: 'Análisis de Variable - Observatorio ULEAM',
+    redirectTo: 'datasets/:id',
+    pathMatch: 'full',
   },
   {
     path: 'barometro/:codigo',

@@ -1,6 +1,7 @@
 import { Articulo } from '@core/services/articulos.service';
 import { Reporte } from '@core/services/reportes.service';
 import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
+import { CatalogPublication } from '@core/models/publicacion/public-catalog.interface';
 
 export type PublicLibraryType = 'ARTICULO' | 'REPORTE' | 'LIBRO';
 export interface PublicLibraryPublication {
@@ -30,7 +31,7 @@ function pdfUrl(value: string | null | undefined): string | null {
 }
 
 export function toPublicLibraryItem(
-  item: Articulo | Reporte | ObservatorioPublicacion,
+  item: Articulo | Reporte | ObservatorioPublicacion | CatalogPublication,
   type: PublicLibraryType,
   subscriberAccess: boolean,
 ): PublicLibraryPublication {
@@ -44,15 +45,15 @@ export function toPublicLibraryItem(
   const link = locked ? null : publicHttpUrl(item.link_url);
   const legacyArticleLink = !locked && type === 'ARTICULO' && article.enlace !== download ? publicHttpUrl(article.enlace) : null;
   const sourceUrl = locked ? null : (type === 'REPORTE' ? publicHttpUrl(item.fuente) : link || legacyArticleLink || publicHttpUrl(item.fuente));
-  const authors = type === 'ARTICULO' ? article.autor : publication.autores;
+  const authors = publication.autores || article.autor;
   return {
-    id: item.id,
+    id: 'resource_key' in item ? item.resource_key : item.id,
     type,
-    title: type === 'REPORTE' ? report.nombre_indicador : article.titulo,
+    title: type === 'REPORTE' ? report.nombre_indicador || article.titulo : article.titulo,
     code: publication.codigo || ({ARTICULO: 'Artículo', REPORTE: 'Reporte Power BI', LIBRO: 'Libro PDF'}[type]),
     date: item.fecha_publicacion || null,
     authors: (Array.isArray(authors) ? authors.filter(Boolean).join(', ') : authors) || '',
-    description: locked ? 'Contenido exclusivo para suscriptores.' : (type === 'REPORTE' ? report.descripcion_indicador : article.descripcion) || '',
+    description: locked ? 'Contenido exclusivo para suscriptores.' : (type === 'REPORTE' ? report.descripcion_indicador || article.descripcion : article.descripcion) || '',
     source: item.fuente || '',
     sourceUrl,
     reportUrl: type === 'REPORTE' ? link : null,

@@ -36,6 +36,19 @@ class CheckPermission
             return $next($request);
         }
 
+        $action = (string) $request->route()?->getActionName();
+        $legacySource = str_starts_with($action, 'App\\Presentation\\Http\\Controllers\\Api\\ArticuloController@') ? 'articulos'
+            : (str_starts_with($action, 'App\\Presentation\\Http\\Controllers\\Api\\ReporteController@') ? 'reportes' : null);
+        if ($legacySource && $request->method() === 'POST'
+            && app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->canCreate($request, $legacySource)) {
+            return $next($request);
+        }
+        if ($legacySource && in_array($request->method(), ['PUT', 'DELETE'], true)
+            && is_string($request->route('id'))
+            && app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->canWrite($request, $legacySource, $request->route('id'))) {
+            return $next($request);
+        }
+
         // Pesos de los niveles de permisos
         $pesos = [
             'ninguno' => 0,

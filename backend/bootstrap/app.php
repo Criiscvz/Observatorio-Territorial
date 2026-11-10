@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->prepend(\App\Http\Middleware\ObserveRequest::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Esto asegura que Laravel SIEMPRE responda JSON en rutas /api/*
         $middleware->prependToGroup('api', \App\Http\Middleware\ForceJsonResponse::class);
         $middleware->statefulApi();
+        $middleware->appendToGroup('api', \App\Http\Middleware\EnsureActiveAccount::class);
 
         // Para API: NO redirigir a login, sino devolver JSON 401
         $middleware->redirectGuestsTo(function (Request $request) {
@@ -35,6 +37,11 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->dontReportDuplicates();
+        $exceptions->report(function (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::error('APPLICATION_EXCEPTION', ['exception' => $exception::class]);
+            return false; // Never pass raw exception messages, SQL/bindings or traces to Laravel's default reporter.
+        });
         // Handle ApiException - structured error responses
         $exceptions->render(function (ApiException $e, Request $request) {
             if ($request->is('api/*') || $request->expectsJson()) {

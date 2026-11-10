@@ -12,6 +12,7 @@ COPY composer.json composer.lock ./
 RUN composer install \
     --no-dev \
     --no-scripts \
+    --no-plugins \
     --no-autoloader \
     --prefer-dist \
     --ignore-platform-reqs
@@ -20,7 +21,7 @@ RUN composer install \
 COPY . .
 
 # Generar autoload optimizado
-RUN composer dump-autoload --optimize --no-dev
+RUN composer --no-plugins dump-autoload --optimize --no-dev
 
 # ========================================
 # Stage 2: Production image
@@ -106,6 +107,7 @@ COPY . .
 
 # Copiar configuración de nginx
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/observability-fpm.conf /usr/local/etc/php-fpm.d/zz-observability.conf
 
 # Copiar configuración de supervisor
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf

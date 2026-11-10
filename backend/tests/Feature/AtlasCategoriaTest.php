@@ -59,6 +59,7 @@ class AtlasCategoriaTest extends TestCase
         (require database_path('migrations/2026_10_07_000001_add_visibility_and_icon_to_atlas_categorias.php'))->up();
         (require database_path('migrations/2026_10_21_000001_add_selected_publication_to_atlas_categories.php'))->up();
         (require database_path('migrations/2026_10_28_000001_add_review_observation_to_publications.php'))->up();
+        (require database_path('migrations/2026_10_29_000001_preserve_legacy_publication_access.php'))->up();
     }
 
     private function signIn(string $role = 'ADMIN'): void
@@ -509,8 +510,13 @@ class AtlasCategoriaTest extends TestCase
         $this->getJson($download)->assertNotFound();
     }
 
-    public function test_department_lists_respect_private_atlas_categories_and_keep_editor_ownership_access(): void
+    public function test_department_lists_respect_private_atlas_categories_even_for_the_former_editor_owner(): void
     {
+        Schema::create('usuario_departamento', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id');
+            $table->uuid('departamento_id');
+            $table->string('rol');
+        });
         Schema::create('departamentos', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('nombre');
@@ -527,7 +533,7 @@ class AtlasCategoriaTest extends TestCase
             $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(0, 'data');
         }
         $publication->update(['creado_por' => 1]);
-        $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(1, 'data');
+        $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(0, 'data');
         $this->signIn();
         $this->getJson("/api/departamentos/$department/publicaciones")->assertOk()->assertJsonCount(1, 'data');
     }

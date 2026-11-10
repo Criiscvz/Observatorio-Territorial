@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const source = await readFile(new URL('../.github/workflows/security.yml', import.meta.url), 'utf8');
+const source = (await readFile(new URL('../.github/workflows/security.yml', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 const config = await readFile(new URL('../.gitleaks.toml', import.meta.url), 'utf8');
 const installer = await readFile(new URL('./install-gitleaks.mjs', import.meta.url), 'utf8');
 const scanner = await readFile(new URL('./scan-secrets.mjs', import.meta.url), 'utf8');
@@ -11,7 +11,7 @@ const backendDocker = await readFile(new URL('../backend/Dockerfile', import.met
 const backendDevDocker = await readFile(new URL('../backend/Dockerfile.dev', import.meta.url), 'utf8');
 
 test('CI uses normal pull requests and selected branch pushes, not privileged PR events', () => {
-  assert.match(source, /^on:\n  pull_request:\n  push:\n    branches: \[main, deploy-gratis\]/m);
+  assert.match(source, /^on:\n  pull_request:\n  push:\n    branches: \[main, deploy-gratis, pruebas-rediseno\]/m);
   assert(!/pull_request_target|workflow_run|paths-ignore|continue-on-error/.test(source));
   assert.match(source, /cancel-in-progress: true/);
 });
@@ -69,6 +69,24 @@ test('frontend uses the lockfile, non-watch tests, header regressions and produc
   assert(!/npm update|npm install/.test(source));
 });
 
+test('the API build setter is checked before compiling the SPA and Docker image', () => {
+  assert(source.includes('run: npm run test:api-build'));
+  assert(source.indexOf('run: npm run test:api-build') < source.indexOf('run: npm run build:vercel'));
+});
+
+test('browser journeys are type-checked and required by the frontend gate', () => {
+  const frontend = source.slice(source.indexOf('\n  frontend:'), source.indexOf('\n  result:'));
+  for (const command of ['node node_modules/typescript/bin/tsc -p tsconfig.e2e.json',
+    'npx --no-install playwright install --with-deps chromium --only-shell', 'npm run test:e2e']) assert(frontend.includes(command));
+  assert(frontend.indexOf('tsc -p tsconfig.e2e.json') < frontend.indexOf('run: npm run test:e2e'));
+  assert(!/upload-artifact|storage\/codex-local/.test(frontend), 'Browser traces stay private.');
+});
+
+test('operational health regressions remain required without a production endpoint in CI', () => {
+  assert(source.includes('run: node --test scripts/check-operational-health.test.mjs'));
+  assert(!source.includes('check-operational-health.mjs --url'), 'CI probes must stay synthetic, not call a hosted service.');
+});
+
 test('scanner retains default rules, redaction and no broad fixture or history suppression', () => {
   assert.match(config, /useDefault = true/);
   assert.match(config, /targetRules = \["grafana-api-key"\]/);
@@ -84,6 +102,20 @@ test('scanner retains default rules, redaction and no broad fixture or history s
   assert(installer.includes("const version = '8.30.1'"));
   assert.equal((installer.match(/sha256: '[a-f0-9]{64}'/g) ?? []).length, 2);
   assert(installer.includes('Gitleaks checksum mismatch; refusing to extract or execute.'));
+});
+
+test('quality gates run before application tests and remain required by Resultado', () => {
+  for (const command of ['run: composer analyse', 'run: npm run lint', 'run: npm run test:quality']) {
+    assert(source.includes(command));
+  }
+  assert(source.indexOf('run: composer analyse') < source.indexOf('run: php vendor/bin/phpunit --no-progress'));
+  assert(source.indexOf('run: npm run lint') < source.indexOf('run: npm test -- --watch=false'));
+});
+
+test('locked dependency audits cannot be omitted or replaced by a force update in CI', () => {
+  for (const command of ['composer audit --locked --no-interaction', 'npm run audit:dependencies',
+    'npm --prefix backend run audit:dependencies', 'node --test scripts/audit-dependencies.test.mjs']) assert(source.includes(command));
+  assert(!/audit fix|--force|legacy-peer-deps/.test(source));
 });
 
 test('the locked MongoDB library has a compatible, identical PHP driver in Docker and CI', () => {

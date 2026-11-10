@@ -1,0 +1,35 @@
+# Separate from Render's Dockerfile/entrypoint; no hosted runtime is changed.
+FROM php:8.4-fpm-alpine@sha256:93aa3f61216b73cc6f878235c9772849449f4efc18dfe3d6678eed645076c00d AS php-base
+RUN apk add --no-cache postgresql-dev freetype-dev libjpeg-turbo-dev libpng-dev libwebp-dev libzip-dev icu-dev ca-certificates \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j2 pdo_pgsql pgsql gd zip bcmath intl pcntl \
+    && apk add --no-cache --virtual .mongodb-build-deps $PHPIZE_DEPS openssl-dev \
+    && pecl install mongodb-2.5.2 \
+    && docker-php-ext-enable mongodb \
+    && apk del .mongodb-build-deps
+
+FROM composer:2@sha256:4ed71c38c6d788eb4e4e3747b5332f5b40d5b5a6fcadd5062a1a70986a118e0a AS composer-binary
+FROM php-base AS dependencies
+COPY --from=composer-binary /usr/bin/composer /usr/local/bin/composer
+WORKDIR /var/www/html
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --no-progress --no-scripts --no-plugins
+COPY . .
+RUN composer --no-plugins dump-autoload --optimize --no-dev --no-scripts \
+    && composer check-platform-reqs --no-dev
+
+FROM php-base AS runtime
+WORKDIR /var/www/html
+COPY --from=dependencies /var/www/html .
+COPY --from=composer-binary /usr/bin/composer /usr/local/bin/composer
+COPY docker/portable-php.ini /usr/local/etc/php/conf.d/zz-portable.ini
+COPY docker/portable-fpm.conf /usr/local/etc/php-fpm.d/zz-portable.conf
+COPY --chmod=755 docker/portable-entrypoint.sh /usr/local/bin/portable-entrypoint
+RUN addgroup -g 10001 app && adduser -D -u 10001 -G app app \
+    && mkdir -p storage/app/private storage/app/public/avatars storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs storage/api-docs bootstrap/cache \
+    && chown -R app:app storage bootstrap/cache \
+    && chmod -R 700 storage bootstrap/cache
+USER 10001:10001
+EXPOSE 9000
+ENTRYPOINT ["portable-entrypoint"]
+CMD ["php-fpm", "-F"]

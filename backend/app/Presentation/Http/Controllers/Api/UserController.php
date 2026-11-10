@@ -64,6 +64,7 @@ class UserController extends Controller
                 'last_page' => $users->lastPage(),
                 'per_page' => $users->perPage(),
                 'total' => $users->total(),
+                'access_capabilities' => app(\App\Application\Permiso\UseCases\ManageObservatoryAccess::class)->overview($request->user())['capabilities'],
             ],
         ]);
     }

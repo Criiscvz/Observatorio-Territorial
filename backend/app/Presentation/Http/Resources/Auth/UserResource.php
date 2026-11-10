@@ -11,7 +11,12 @@ class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        $managementAction = (string) ($request->route()?->getActionName() ?? '');
+        $accessContext = str_contains($managementAction, 'UserController') || str_contains($managementAction, 'ObservatoryAccessController')
+            || str_contains($managementAction, 'PermisoController');
         return [
+            ...($accessContext && $request->user() ? ['access_capabilities' =>
+                app(\App\Policies\ObservatoryAccessPolicy::class)->capabilities($request->user(), $this->resource)] : []),
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
@@ -41,8 +46,6 @@ class UserResource extends JsonResource
                     'descripcion' => $d->descripcion,
                     'publico' => $d->publico,
                     'rol' => $d->pivot->rol,
-                    'puede_revisar' => (bool) $d->pivot->puede_revisar,
-                    'puede_agregar_editores' => (bool) $d->pivot->puede_agregar_editores,
                     'puede_revisar' => (bool) $d->pivot->puede_revisar,
                     'puede_agregar_editores' => (bool) $d->pivot->puede_agregar_editores,
                     'assigned_at' => $d->pivot->created_at?->toISOString(),

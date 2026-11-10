@@ -1,3 +1,4 @@
+import { publicationPage } from '../../../testing/publication-page.fixture';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,14 +14,14 @@ import { DepartamentoDetailComponent } from './departamento-detail.component';
 
 describe('Biblioteca integrada en el observatorio', () => {
   function setup(extra:any={},editor=false) {
-    const publication={id:'rep-1',tipo:'REPORTE',titulo:'Reporte de salud',estado:'PUBLICACION',codigo:'REP-1',fecha_publicacion:'2026-10-20',fuente:'ULEAM',autores:['Ana','Luis'],download_url:null,link_url:'https://app.powerbi.com/view?r=publico',...extra};
+    const publication={capabilities:{can_view:true,can_edit:!editor,can_delete:!editor,can_review:!editor},id:'rep-1',tipo:'REPORTE',titulo:'Reporte de salud',estado:'PUBLICACION',codigo:'REP-1',fecha_publicacion:'2026-10-20',fuente:'ULEAM',autores:['Ana','Luis'],download_url:null,link_url:'https://app.powerbi.com/view?r=publico',...extra};
     const openPdf=vi.fn(()=>of(true)); const viewer={open:vi.fn()};
     TestBed.configureTestingModule({imports:[DepartamentoDetailComponent],providers:[
       provideRouter([]),provideTranslateService({fallbackLang:'es'}),
       {provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:convertToParamMap({})},params:of({id:'salud'}),queryParamMap:of(convertToParamMap({}))}},
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Observatorio de la Salud',publico:true,datasets:[{id:'antiguo',nombre:'Datos antiguos'}]})}},
       {provide:DatasetService,useValue:{}},
-      {provide:PublicacionService,useValue:{getAll:()=>of([publication]),canUpload:()=>of({can_upload:true}),openPdf}},
+      {provide:PublicacionService,useValue:{libraryPage:(_id:string,filters:any)=>of(publicationPage([publication],filters)),canUpload:()=>of({can_upload:true}),openPdf}},
       {provide:AuthService,useValue:{isAdmin:()=>!editor,isEditor:()=>editor,canReviewObservatory:()=>!editor,user:()=>({id:1}),hasRoleInDepartamento:()=>editor}},
       {provide:PublicationViewerService,useValue:viewer},
       {provide:MatDialog,useValue:{}},{provide:MatSnackBar,useValue:{open:vi.fn()}},

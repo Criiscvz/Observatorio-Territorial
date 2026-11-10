@@ -1,1 +1,1 @@
-export * from './chart.types';
+export * from './dataset-table.types';

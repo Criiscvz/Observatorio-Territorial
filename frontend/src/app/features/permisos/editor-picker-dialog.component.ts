@@ -5,7 +5,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { catchError, debounceTime, distinctUntilChanged, of, Subject, switchMap, tap } from 'rxjs';
 import { User } from '@core/models';
-import { AuthService } from '@core/services/auth.service';
+
 import { UserService } from '@core/services/user.service';
 
 @Component({selector: 'app-editor-picker-dialog', standalone: true,
@@ -13,7 +13,7 @@ import { UserService } from '@core/services/user.service';
   templateUrl: './editor-picker-dialog.component.html', styleUrl: './user-permissions-dialog.component.scss'})
 export class EditorPickerDialogComponent implements OnInit {
   private readonly api = inject(UserService);
-  private readonly auth = inject(AuthService);
+
   private readonly ref = inject(MatDialogRef<EditorPickerDialogComponent, User>);
   private readonly destroyRef = inject(DestroyRef);
   private readonly requests = new Subject<number>();
@@ -39,8 +39,7 @@ export class EditorPickerDialogComponent implements OnInit {
   }
   load(page: number): void { this.requests.next(page); }
   choose(user: User): void {
-    if (!this.loading() && this.auth.user()?.rol === 'ADMIN_OBSERVATORIO' && this.auth.canAssignEditors()
-      && user.rol === 'USER' && user.is_active !== false) this.ref.close(user);
+    if (!this.loading() && user.access_capabilities?.can_assign_editors === true) this.ref.close(user);
   }
   close(): void { this.ref.close(); }
 }

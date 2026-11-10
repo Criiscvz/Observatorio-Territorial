@@ -1,8 +1,10 @@
 {
     "$schema": "https://www.schemastore.org/package.json",
     "private": true,
+    "packageManager": "npm@11.13.0",
     "type": "module",
     "scripts": {
+        "audit:dependencies": "node ../scripts/audit-dependencies.mjs backend",
         "build": "vite build",
         "dev": "vite"
     },

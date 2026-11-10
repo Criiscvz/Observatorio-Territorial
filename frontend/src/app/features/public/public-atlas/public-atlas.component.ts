@@ -4,7 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { forkJoin } from 'rxjs';
+import { Subject, catchError, of, switchMap } from 'rxjs';
 import { ObservatorioPublicacion } from '@core/models/publicacion/publicacion.interface';
 import { AtlasCategoria, AtlasCategoriaService } from '@core/services/atlas-categoria.service';
 import { PublicacionService } from '@core/services/publicacion.service';
@@ -15,7 +15,7 @@ import { PublicationViewerService } from '../components/publication-viewer.servi
 import { PublicPublicationDetailsComponent } from '../components/public-publication-details.component';
 
 interface AtlasDirectoryEntry extends AtlasCategoria {
-  publications: ObservatorioPublicacion[];
+  total: number;
   available: boolean;
 }
 
@@ -45,65 +45,60 @@ export class PublicAtlasComponent implements OnInit {
   readonly libraryQuery = signal('');
   readonly libraryPage = signal(0);
   readonly libraryPageSize = 20;
+  readonly libraryTotal = signal(0);
+  readonly libraryLoading = signal(false);
+  readonly libraryError = signal(false);
+  private readonly directoryRequests = new Subject<void>();
+  private readonly libraryRequests = new Subject<string|null>();
   readonly pageSize = 5;
   readonly categoryVisual = atlasCategoryPresentation;
   readonly entries = computed<AtlasDirectoryEntry[]>(() => {
     return this.categorias().filter(category => category.publico !== false).map(category => {
-      const publications = this.atlas().filter(item => item.estado === 'PUBLICACION'
-        && (item.atlas_categoria?.id || item.atlas_categoria_id) === category.id);
-      return {...category, publications, available: publications.some(item => this.canRead(item))};
+      return {...category, total: category.publicaciones_total || 0, available: !!category.publicaciones_total};
     });
   });
-  readonly filtered = computed(() => {
-    const query = this.normalize(this.query());
-    return this.entries().filter(entry =>
-      this.normalize([entry.nombre, entry.descripcion, ...entry.publications.flatMap(item => [item.titulo,item.fuente])].join(' ')).includes(query));
-  });
+  readonly filtered = this.entries;
   readonly pageCount = computed(() => Math.max(1, Math.ceil(this.filtered().length / this.pageSize)));
   readonly currentPage = computed(() => Math.min(this.page(), this.pageCount() - 1));
   readonly visible = computed(() => this.filtered().slice(this.currentPage() * this.pageSize, (this.currentPage() + 1) * this.pageSize));
   readonly rangeStart = computed(() => this.filtered().length ? this.currentPage() * this.pageSize + 1 : 0);
   readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.filtered().length));
   readonly selectedCategory = computed(() => this.entries().find(entry => entry.id === this.selectedCategoryId()));
-  readonly libraryItems = computed(() => {
-    const query = this.normalize(this.libraryQuery());
-    return (this.selectedCategory()?.publications || []).filter(item => this.normalize([item.titulo,item.codigo,this.authors(item),item.fuente].join(' ')).includes(query));
-  });
-  readonly libraryPageCount = computed(() => Math.max(1, Math.ceil(this.libraryItems().length / this.libraryPageSize)));
+  readonly libraryItems = this.atlas;
+  readonly libraryPageCount = computed(() => Math.max(1, Math.ceil(this.libraryTotal() / this.libraryPageSize)));
   readonly currentLibraryPage = computed(() => Math.min(this.libraryPage(), this.libraryPageCount()-1));
-  readonly visibleLibrary = computed(() => this.libraryItems().slice(this.currentLibraryPage()*this.libraryPageSize,(this.currentLibraryPage()+1)*this.libraryPageSize));
-  readonly libraryStart = computed(() => this.libraryItems().length ? this.currentLibraryPage()*this.libraryPageSize+1 : 0);
-  readonly libraryEnd = computed(() => Math.min((this.currentLibraryPage()+1)*this.libraryPageSize,this.libraryItems().length));
+  readonly visibleLibrary = this.atlas;
+  readonly libraryStart = computed(() => this.libraryTotal() ? this.currentLibraryPage()*this.libraryPageSize+1 : 0);
+  readonly libraryEnd = computed(() => Math.min((this.currentLibraryPage()+1)*this.libraryPageSize,this.libraryTotal()));
 
   ngOnInit(): void {
+    this.directoryRequests.pipe(switchMap(()=>{
+      this.loading.set(true);this.loadError.set(false);this.categorias.set([]);
+      return this.categories.directory(true,this.query()).pipe(catchError(()=>{this.loadError.set(true);return of(null);}));
+    }),takeUntilDestroyed(this.destroyRef)).subscribe(result=>{
+      if(result)this.categorias.set(result.data);
+      this.loading.set(false);
+    });
+    this.libraryRequests.pipe(switchMap(id=>{
+      this.atlas.set([]);this.libraryError.set(false);this.libraryTotal.set(0);
+      if(!id)return of(null);
+      this.libraryLoading.set(true);
+      const request=()=>this.publications.atlasPage(id,this.libraryPage()+1,this.libraryQuery());
+      return request().pipe(switchMap(result=>{
+        if(this.libraryPage()+1>result.meta.last_page){this.libraryPage.set(Math.max(0,result.meta.last_page-1));return request();}return of(result);
+      }),catchError(()=>{this.libraryError.set(true);return of(null);}));
+    }),takeUntilDestroyed(this.destroyRef)).subscribe(result=>{
+      if(result){this.atlas.set(result.data);this.libraryTotal.set(result.meta.total);this.libraryPage.set(result.meta.current_page-1);}
+      this.libraryLoading.set(false);
+    });
     if (isPlatformBrowser(this.platformId)) this.loadData();
   }
 
   loadData(): void {
-    if (this.loading()) return;
-    this.loading.set(true);
-    this.loadError.set(false);
-    forkJoin({ atlas: this.publications.getPublicAtlas(), categories: this.categories.list(true) })
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: data => {
-          this.categorias.set(data.categories);
-          this.atlas.set(data.atlas);
-          if (!data.categories.some(category => category.id === this.selectedCategoryId() && category.publico !== false)) this.selectedCategoryId.set(null);
-          this.page.set(0);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.categorias.set([]);
-          this.atlas.set([]);
-          this.selectedCategoryId.set(null);
-          this.loadError.set(true);
-          this.loading.set(false);
-        },
-      });
+    this.selectedCategoryId.set(null);this.libraryRequests.next(null);this.page.set(0);this.directoryRequests.next();
   }
 
-  search(value: string): void { this.query.set(value); this.page.set(0); }
+  search(value: string): void { this.query.set(value); this.page.set(0);this.directoryRequests.next(); }
   changePage(delta: number): void {
     this.page.set(Math.max(0, Math.min(this.currentPage() + delta, this.pageCount() - 1)));
   }
@@ -111,11 +106,13 @@ export class PublicAtlasComponent implements OnInit {
   openCategory(entry: AtlasDirectoryEntry): void {
     if (!this.entries().some(current => current.id === entry.id)) return;
     this.selectedCategoryId.set(entry.id);this.libraryQuery.set('');this.libraryPage.set(0);
+    this.libraryRequests.next(entry.id);
     this.scrollToTop();
   }
-  backToCategories(): void { this.selectedCategoryId.set(null); this.scrollToTop(); }
-  searchLibrary(value: string): void { this.libraryQuery.set(value);this.libraryPage.set(0); }
-  changeLibraryPage(delta: number): void { this.libraryPage.set(Math.max(0,Math.min(this.currentLibraryPage()+delta,this.libraryPageCount()-1))); }
+  backToCategories(): void { this.selectedCategoryId.set(null);this.libraryRequests.next(null); this.scrollToTop(); }
+  retryLibrary():void {this.libraryRequests.next(this.selectedCategoryId());}
+  searchLibrary(value: string): void { this.libraryQuery.set(value);this.libraryPage.set(0);this.retryLibrary(); }
+  changeLibraryPage(delta: number): void { this.libraryPage.set(Math.max(0,Math.min(this.currentLibraryPage()+delta,this.libraryPageCount()-1)));this.retryLibrary(); }
   authors(item: ObservatorioPublicacion): string {
     return Array.isArray(item.autores) ? item.autores.filter(Boolean).join(', ') : item.autores || '';
   }
@@ -124,20 +121,20 @@ export class PublicAtlasComponent implements OnInit {
   }
   hasSource(item: ObservatorioPublicacion): boolean { return !!item.fuente?.trim(); }
   canRead(item: ObservatorioPublicacion): boolean {
-    return !item.bloqueado && !!(powerBiEmbedUrl(item.link_url ?? null) || item.download_url || item.sharepoint_url);
+    return item.estado === 'PUBLICACION' && !item.bloqueado && !!(powerBiEmbedUrl(item.link_url ?? null) || item.download_url || item.sharepoint_url);
   }
   openAtlas(candidate: ObservatorioPublicacion): void {
     // Re-read current category membership and access after any refresh.
-    const current = this.entries().find(entry => entry.publications.some(item => item.id === candidate.id));
-    const publication = current?.publications.find(item => item.id === candidate.id);
+    const current = this.selectedCategory();
+    const publication = this.atlas().find(item => item.id === candidate.id && (item.atlas_categoria_id || item.atlas_categoria?.id) === current?.id);
     if (!current || !publication || !this.canRead(publication)) return;
     const reportUrl = powerBiEmbedUrl(publication.link_url ?? null);
     this.viewer.open(this.toLibraryItem(publication, current), current.nombre, reportUrl ? 'report' : 'pdf', 'atlas');
   }
 
   openDetails(candidate: ObservatorioPublicacion): void {
-    const category = this.entries().find(entry => entry.publications.some(item => item.id === candidate.id));
-    const publication = category?.publications.find(item => item.id === candidate.id);
+    const category = this.selectedCategory();
+    const publication = this.atlas().find(item => item.id === candidate.id && (item.atlas_categoria_id || item.atlas_categoria?.id) === category?.id);
     if (!category || !publication || publication.bloqueado) return;
     this.dialog.open(PublicPublicationDetailsComponent, {
       data: {item: this.toLibraryItem(publication, category), departmentName: category.nombre, context: 'atlas'},

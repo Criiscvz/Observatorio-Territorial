@@ -1,7 +1,6 @@
 // Services
 export * from './api.service';
 export * from './auth.service';
-export * from './chart-theme.service';
 export * from './dashboard.service';
 export * from './dataset.service';
 export * from './departamento.service';

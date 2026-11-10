@@ -12,7 +12,6 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideRouter } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
-import { provideEchartsCore } from 'ngx-echarts';
 import { provideTranslateBrowserLoader } from './core/loaders/translate-browser.loader';
 
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
@@ -34,9 +33,6 @@ export const appConfig: ApplicationConfig = {
     provideClientHydration(withEventReplay()),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor, retryInterceptor])),
     provideAnimationsAsync(),
-    provideEchartsCore({
-      echarts: () => import('./core/config/echarts.config').then((m) => m.echarts),
-    }),
     ...repositoryProviders,
     // Configuración de ngx-translate para internacionalización
     provideTranslateService({
