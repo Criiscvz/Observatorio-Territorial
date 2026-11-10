@@ -1,3 +1,4 @@
+import { publicationPage } from '../../../testing/publication-page.fixture';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -9,17 +10,20 @@ import { DepartamentoService } from '@core/services/departamento.service';
 import { DatasetService } from '@core/services/dataset.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { DepartamentoDetailComponent } from './departamento-detail.component';
+import { ObservatoryWorkspaceFacade } from './observatory-workspace.facade';
+import { PublicationEditorFacade } from './publication-editor.facade';
 
 describe('Accesos operativos a los formularios existentes', () => {
   function setup(query: Record<string, string>, admin = true, editor = false) {
-    const publication = {id:'publication',tipo:'ARTICULO',titulo:'Pendiente',estado:'EN_REVISION',fecha_publicacion:'2026-10-20',autores:[],creado_por:1};
+    const publication = {capabilities:{can_view:true,can_edit:admin||editor,can_delete:admin||editor,can_review:admin},id:'publication',tipo:'ARTICULO',titulo:'Pendiente',estado:'EN_REVISION',fecha_publicacion:'2026-10-20',autores:[],creado_por:1};
     const records=[publication,{...publication,id:'other',creado_por:2,estado:'PUBLICACION'},{...publication,id:'atlas',tipo:'ATLAS'}];
     TestBed.configureTestingModule({providers:[
+      ObservatoryWorkspaceFacade, PublicationEditorFacade,
       {provide:ActivatedRoute,useValue:{snapshot:{queryParamMap:convertToParamMap(query)},params:of({id:'salud'}),queryParamMap:new Subject()}},
       {provide:Router,useValue:{events:new Subject()}},
       {provide:DepartamentoService,useValue:{getById:()=>of({id:'salud',nombre:'Salud',datasets:[]})}},
       {provide:DatasetService,useValue:{}},
-      {provide:PublicacionService,useValue:{getAll:()=>of(records),getInReview:()=>of(records.filter(x=>x.estado==='EN_REVISION')),canUpload:()=>of({can_upload:admin||editor})}},
+      {provide:PublicacionService,useValue:{libraryPage:(_id:string,filters:any)=>of(publicationPage(records.filter(x=>x.tipo!=='ATLAS'&&(!editor||x.creado_por===1)),filters)),libraryById:(_id:string,id:string)=>of(records.find(x=>x.id===id)),canUpload:()=>of({can_upload:admin||editor})}},
       {provide:AuthService,useValue:{isAdmin:()=>admin,isEditor:()=>editor,canReviewObservatory:()=>admin,user:()=>({id:1}),hasRoleInDepartamento:()=>editor}},
       {provide:TranslateService,useValue:{instant:(value:string)=>value}},
       {provide:MatDialog,useValue:{}},{provide:MatSnackBar,useValue:{}},

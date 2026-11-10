@@ -48,6 +48,7 @@ class CsrfProtectionTest extends TestCase
             $table->uuid('id')->primary();
             $table->softDeletes();
         });
+        (require database_path('migrations/2026_10_29_000001_preserve_legacy_publication_access.php'))->up();
         (require database_path('migrations/2026_09_27_000001_create_atlas_categorias.php'))->up();
         (require database_path('migrations/2026_10_07_000001_add_visibility_and_icon_to_atlas_categorias.php'))->up();
 
@@ -194,7 +195,7 @@ class CsrfProtectionTest extends TestCase
     public function test_valid_csrf_token_does_not_bypass_administrator_role_requirement(): void
     {
         $this->actingAs((new User())->forceFill([
-            'id' => $this->admin->id, 'rol' => 'EDITOR', 'password' => $this->admin->password,
+            'id' => $this->admin->id, 'rol' => 'EDITOR', 'password' => $this->admin->password, 'is_active' => true,
         ]), 'web');
 
         $this->postJson('/api/atlas/categorias', ['nombre' => 'Must not be saved'],

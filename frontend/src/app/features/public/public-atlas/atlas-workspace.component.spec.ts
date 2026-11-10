@@ -1,3 +1,4 @@
+import { publicationPage } from '../../../testing/publication-page.fixture';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { OverlayContainer } from '@angular/cdk/overlay';
@@ -15,8 +16,8 @@ describe('Gestión de Atlas por categorías',()=>{
   const publications=Array.from({length:25},(_,i)=>({id:`p${i+1}`,atlas_categoria_id:'c1',tipo:'ATLAS',estado:'PUBLICACION',solo_suscriptores:false,titulo:`Atlas ${i+1}`,codigo:`ATL-${i+1}`,fecha_publicacion:'2026-10-20',link_url:`https://example.test/atlas/${i+1}`,fuente:'ULEAM'}));
   function setup(category='',items:any[]=publications){
     const links={save:vi.fn((_data?:unknown,_id?:string)=>of({...publications[0]}))};
-    const categoryService={list:vi.fn(()=>of(categories)),save:vi.fn(()=>of({data:categories[0],message:'Guardada'})),delete:vi.fn(()=>of({message:'Eliminada'}))};
-    const pubService={getGlobalAtlas:vi.fn(()=>of(items)),openPdf:vi.fn(()=>of(true)),delete:vi.fn(()=>of({message:'Eliminado'}))};
+    const categoryService={directory:vi.fn(()=>of({data:categories.map(c=>({...c,publicaciones_total:items.filter(p=>p.atlas_categoria_id===c.id).length})),unassigned_total:items.filter(p=>!p.atlas_categoria_id).length})),save:vi.fn(()=>of({data:categories[0],message:'Guardada'})),delete:vi.fn(()=>of({message:'Eliminada'}))};
+    const pubService={atlasPage:vi.fn((categoryId:string,page:number,q:string)=>of(publicationPage(items.filter(item=>item.atlas_categoria_id===categoryId),{page,q}))),openPdf:vi.fn(()=>of(true)),delete:vi.fn(()=>of({message:'Eliminado'}))};
     const viewer={open:vi.fn()};const snackbar={open:vi.fn()};
     TestBed.configureTestingModule({providers:[provideRouter([]),{provide:ActivatedRoute,useValue:{paramMap:of(convertToParamMap(category?{categoria:category}:{})),queryParamMap:of(convertToParamMap({})),snapshot:{queryParamMap:convertToParamMap({}),url:[]}}},{provide:AtlasCategoriaService,useValue:categoryService},{provide:AtlasEnlaceService,useValue:links},{provide:PublicacionService,useValue:pubService},{provide:MatSnackBar,useValue:snackbar},{provide:PublicationViewerService,useValue:viewer}]});
     TestBed.overrideComponent(AtlasWorkspaceComponent,{add:{providers:[{provide:MatSnackBar,useValue:snackbar}]}});

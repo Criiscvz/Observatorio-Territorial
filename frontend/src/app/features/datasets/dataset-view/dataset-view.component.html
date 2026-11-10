@@ -201,6 +201,11 @@
           {{ 'datasets.view.tabs.variables' | translate }}
         </ng-template>
         <div class="py-4">
+          <app-variable-list
+            [variables]="variables()"
+            [enableBulkActions]="true"
+            (bulkActionRequested)="onBulkAction($event)"
+          />
           <mat-card>
             <mat-card-header>
               <mat-card-title>{{ 'datasets.view.variables.title' | translate }}</mat-card-title>
@@ -258,22 +263,6 @@
               </table>
             </mat-card-content>
           </mat-card>
-        </div>
-      </mat-tab>
-
-      <!-- Tab: Análisis y Gráficos -->
-      <mat-tab>
-        <ng-template mat-tab-label>
-          <mat-icon class="mr-2">analytics</mat-icon>
-          {{ 'datasets.view.tabs.analysis' | translate }}
-        </ng-template>
-        <div class="py-4">
-          <app-variable-list
-            [variables]="analysableVariables()"
-            [enableBulkActions]="true"
-            (variableSelected)="onVariableSelected($event)"
-            (bulkActionRequested)="onBulkAction($event)"
-          />
         </div>
       </mat-tab>
 

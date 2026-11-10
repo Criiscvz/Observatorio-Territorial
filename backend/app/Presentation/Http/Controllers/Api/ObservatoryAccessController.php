@@ -2,15 +2,15 @@
 
 namespace App\Presentation\Http\Controllers\Api;
 
-use App\Application\Permiso\UseCases\SavePermisoUseCase;
+use App\Application\Permiso\UseCases\ManageObservatoryAccess;
 use App\Http\Controllers\Controller;
-use App\Models\Permiso;
+use App\Policies\ObservatoryAccessPolicy;
 use App\Models\User;
 use App\Presentation\Http\Requests\Permiso\SavePermisosRequest;
 use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 /** Delegated access never uses the global user-management endpoints. */
 class ObservatoryAccessController extends Controller
@@ -35,74 +35,32 @@ class ObservatoryAccessController extends Controller
         return response()->json(['data' => UserResource::collection($users->items()), 'meta' => [
             'current_page' => $users->currentPage(), 'last_page' => $users->lastPage(),
             'per_page' => $users->perPage(), 'total' => $users->total(),
+            'access_capabilities' => app(ManageObservatoryAccess::class)->overview($request->user())['capabilities'],
         ]]);
     }
 
-    public function show(Request $request, User $user): JsonResponse
+    public function overview(Request $request, ManageObservatoryAccess $access): JsonResponse
     {
-        $ids = $request->user()->observatoryIds();
-        $this->ensureTarget($user, $ids);
-        return response()->json($this->permissions($user, $ids));
+        return response()->json($access->overview($request->user()));
     }
 
-    public function save(SavePermisosRequest $request, User $user, SavePermisoUseCase $save): JsonResponse
+    public function context(Request $request, User $user, ManageObservatoryAccess $access): JsonResponse
     {
-        return DB::transaction(function () use ($request, $user, $save) {
-            $actor = User::query()->lockForUpdate()->findOrFail($request->user()->id);
-            abort_unless($actor->isObservatoryAdmin(), 403);
-            $user = User::query()->lockForUpdate()->findOrFail($user->id);
-            $ids = $actor->observatoryIds('puede_agregar_editores');
-            abort_if(empty($ids), 403, 'No tienes permiso para agregar editores.');
-            $this->ensureTarget($user, $ids);
-            abort_unless($user->is_active, 422, 'Activa la cuenta antes de asignarla como editor.');
-            $incoming = $request->validated()['permisos'];
-            $selected = [];
-            foreach ($incoming as $permission) {
-                abort_unless($permission['modulo'] === 'observatorios' && in_array($permission['nivel'], ['escritura', 'ninguno'], true)
-                    && empty($permission['puede_revisar']) && empty($permission['puede_agregar_editores']), 403,
-                    'Solo puedes asignar acceso de editor.');
-                $id = $permission['departamento_id'] ?? null;
-                // A single null/none entry clears only the actor's manageable scopes.
-                abort_unless(($id === null && $permission['nivel'] === 'ninguno' && count($incoming) === 1)
-                    || in_array($id, $ids, true), 403, 'Observatorio fuera de tu alcance.');
-                if ($permission['nivel'] === 'escritura') $selected[$id] = true;
-            }
-            // Keep all assignments outside the actor's scope, including legacy generic editor access.
-            $outside = $user->departamentos()->whereNotIn('departamentos.id', $ids)->get();
-            $merged = Permiso::where('user_id', $user->id)->where('modulo', '!=', 'observatorios')->get()
-                ->map(fn ($p) => ['modulo' => $p->modulo, 'nivel' => $p->nivel, 'departamento_id' => $p->departamento_id])->all();
-            foreach ($outside as $department) {
-                $merged[] = ['modulo' => 'observatorios', 'nivel' => match ($department->pivot->rol) {
-                    'ADMIN' => 'admin', 'LECTOR' => 'lectura', default => 'escritura',
-                }, 'departamento_id' => $department->id];
-            }
-            foreach (array_keys($selected) as $id) {
-                $merged[] = ['modulo' => 'observatorios', 'nivel' => 'escritura', 'departamento_id' => $id];
-            }
-            if ($user->rol === 'USER' && ! empty($selected)) {
-                // This is the sole delegated promotion: validated above, no arbitrary role input.
-                User::withoutEvents(function () use ($user) { $user->rol = 'EDITOR'; $user->save(); });
-            }
-            $save->saveAll($user->id, $merged ?: [['modulo' => 'observatorios', 'nivel' => 'ninguno', 'departamento_id' => null]]);
-            $visibleIds = $actor->observatoryIds();
-            $user->load(['perfil', 'departamentos' => fn ($q) => $q->whereIn('departamentos.id', $visibleIds)]);
-            return response()->json(['message' => 'Accesos de editor guardados.', 'permisos' => $this->permissions($user, $visibleIds),
-                'user' => new UserResource($user)]);
-        });
+        return response()->json($access->context($request->user(), $user));
     }
 
-    private function ensureTarget(User $user, array $ids): void
+    public function show(Request $request, User $user, ManageObservatoryAccess $access): JsonResponse
     {
-        abort_unless($user->rol === 'USER' || ($user->rol === 'EDITOR'
-            && $user->departamentos()->whereIn('departamentos.id', $ids)->exists()), 403,
-            'Solo puedes gestionar usuarios normales o editores de tus observatorios.');
+        Gate::forUser($request->user())->authorize('viewAccess', $user);
+        return response()->json($access->permissions($user, app(ObservatoryAccessPolicy::class)->visibleIds($request->user())));
     }
 
-    private function permissions(User $user, array $ids): array
+    public function save(SavePermisosRequest $request, User $user, ManageObservatoryAccess $access): JsonResponse
     {
-        return $user->departamentos()->whereIn('departamentos.id', $ids)->get()->map(fn ($d) => [
-            'modulo' => 'observatorios', 'nivel' => 'escritura', 'departamento_id' => $d->id,
-            'puede_revisar' => false, 'puede_agregar_editores' => false,
-        ])->all();
+        $user = $access->save($request->user()->id, $user->id, $request->validated()['permisos'], delegated: true);
+        $ids = app(ObservatoryAccessPolicy::class)->visibleIds($request->user()->fresh());
+        $user->load(['perfil', 'departamentos' => fn ($q) => $q->whereIn('departamentos.id', $ids)]);
+        return response()->json(['message' => 'Accesos de editor guardados.', 'permisos' => $access->permissions($user, $ids),
+            'user' => new UserResource($user)]);
     }
 }

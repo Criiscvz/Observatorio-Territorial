@@ -7,7 +7,7 @@ import { DepartamentoService } from '@core/services/departamento.service';
 import { WorkspacePublicationsComponent } from './admin-workspace.component';
 
 describe('Lista editorial de publicaciones',()=>{
-  const records=['ARTICULO','LIBRO','REPORTE'].map((type,i)=>({id:`p${i}`,departamento_id:'salud',departamento_nombre:'Salud',titulo:`Contenido ${type}`,tipo:type,estado:'PUBLICACION',codigo:`CODE-${i}`,fecha_publicacion:'2026-10-20'}));
+  const records=['ARTICULO','LIBRO','REPORTE'].map((type,i)=>({capabilities:{can_view:true,can_edit:true,can_delete:true,can_review:true},id:`p${i}`,departamento_id:'salud',departamento_nombre:'Salud',titulo:`Contenido ${type}`,tipo:type,estado:'PUBLICACION',codigo:`CODE-${i}`,fecha_publicacion:'2026-10-20'}));
   function setup(){
     const service={publications:vi.fn(()=>of({data:records,meta:{total:25,from:1,to:20,current_page:1,last_page:2,per_page:20}}))};
     TestBed.configureTestingModule({providers:[provideRouter([]),{provide:AdminWorkspaceService,useValue:service},{provide:DepartamentoService,useValue:{getAll:()=>of([{id:'salud',nombre:'Salud'}])}},{provide:ActivatedRoute,useValue:{queryParamMap:of(convertToParamMap({}))}}]});
@@ -42,9 +42,18 @@ describe('Lista editorial de publicaciones',()=>{
     expect(fixture.nativeElement.querySelector('[role=alert]')).not.toBeNull();component.load();fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('table')).not.toBeNull();
   });
+  it('usa las capacidades del servidor aunque la sesión local sea de administrador y deniega si faltan',()=>{
+    const {component,fixture}=setup();
+    for(const capabilities of [undefined,{can_view:true,can_edit:false,can_delete:false,can_review:false}]){
+      component.items.set({data:[{...records[0],capabilities}],meta:{total:1,from:1,to:1,current_page:1,last_page:1}});
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.btn-publication-edit')).toBeNull();
+      expect(fixture.nativeElement.textContent).toContain('Ver biblioteca');
+    }
+  });
   it('muestra motivo y biblioteca en lugar de editar para el editor de una publicación rechazada',()=>{
     const {component,fixture}=setup();vi.spyOn(component,'isEditor').mockReturnValue(true);
-    component.items.set({data:[{...records[0],estado:'RECHAZADO',observacion_revision:'No cumple los requisitos.'}],meta:{total:1,from:1,to:1,current_page:1,last_page:1,per_page:20}});
+    component.items.set({data:[{...records[0],capabilities:{can_view:true,can_edit:false,can_delete:false,can_review:false},estado:'RECHAZADO',observacion_revision:'No cumple los requisitos.'}],meta:{total:1,from:1,to:1,current_page:1,last_page:1,per_page:20}});
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Rechazado');
     expect(fixture.nativeElement.textContent).toContain('No cumple los requisitos.');

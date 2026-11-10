@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/publicaciones/{publicacion}/download', [ObservatorioPublicacionController::class, 'download']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/{departamento}/biblioteca/publicaciones', [ObservatorioPublicacionController::class, 'library'])->middleware('role:ADMIN,EDITOR,ADMIN_OBSERVATORIO');
+    Route::get('/{departamento}/biblioteca/publicaciones/{id}', [ObservatorioPublicacionController::class, 'libraryShow'])->whereUuid('id')->middleware('role:ADMIN,EDITOR,ADMIN_OBSERVATORIO');
+    Route::get('/publicaciones/atlas-biblioteca', [ObservatorioPublicacionController::class, 'atlasLibrary'])->middleware('role:ADMIN');
     Route::get('/{departamento}/publicaciones', [ObservatorioPublicacionController::class, 'index']);
     Route::get('/{departamento}/publicaciones/articulos', [ObservatorioPublicacionController::class, 'articulos']);
     Route::get('/{departamento}/publicaciones/reportes', [ObservatorioPublicacionController::class, 'reportes']);

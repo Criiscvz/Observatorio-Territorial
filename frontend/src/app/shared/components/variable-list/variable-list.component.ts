@@ -133,11 +133,13 @@ export interface BulkAction {
           @for (variable of filteredVariables(); track variable.id) {
             <div
               class="variable-card"
+              [class.selectable]="selectionMode()"
               [class.selected]="selectionMode() && selectedIds().has(variable.id)"
-              (click)="onCardClick(variable, $event)"
-              (keydown.enter)="onCardClick(variable, $event)"
-              tabindex="0"
-              role="button"
+              (click)="onCardClick(variable)"
+              (keydown.enter)="onCardClick(variable)"
+              (keydown.space)="$event.preventDefault(); onCardClick(variable)"
+              [attr.tabindex]="selectionMode() ? 0 : null"
+              [attr.role]="selectionMode() ? 'button' : null"
             >
               <div class="variable-card-header">
                 @if (selectionMode()) {
@@ -157,9 +159,6 @@ export interface BulkAction {
                     {{ getTypeLabel(variable.tipo_dato) }}
                   </span>
                 </div>
-                @if (!selectionMode()) {
-                  <mat-icon class="arrow-icon">chevron_right</mat-icon>
-                }
               </div>
               @if (variable.tipo_dato === 'CATEGORICO' && variable.opciones?.length) {
                 <div class="variable-options">
@@ -318,11 +317,14 @@ export interface BulkAction {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: var(--radius-lg);
-      cursor: pointer;
       transition: all 0.15s ease;
     }
 
-    .variable-card:hover {
+    .variable-card.selectable {
+      cursor: pointer;
+    }
+
+    .variable-card.selectable:hover {
       border-color: var(--primary-400);
       box-shadow: 0 4px 12px var(--shadow-color);
       transform: translateY(-1px);
@@ -433,17 +435,6 @@ export interface BulkAction {
     :host-context(.dark) .badge-fecha { background: rgba(202, 138, 4, 0.2); color: #facc15; }
     :host-context(.dark) .badge-texto { background: rgba(147, 51, 234, 0.2); color: #c084fc; }
 
-    .arrow-icon {
-      color: var(--text-tertiary);
-      flex-shrink: 0;
-      transition: transform 0.15s ease;
-    }
-
-    .variable-card:hover .arrow-icon {
-      transform: translateX(2px);
-      color: var(--primary-600);
-    }
-
     .variable-options {
       margin-top: 0.5rem;
       padding-top: 0.5rem;
@@ -516,7 +507,6 @@ export interface BulkAction {
 export class VariableListComponent {
   variables = input.required<VariableMetadato[]>();
   enableBulkActions = input(false);
-  variableSelected = output<VariableMetadato>();
   bulkActionRequested = output<BulkAction>();
 
   searchTerm = signal('');
@@ -602,11 +592,9 @@ export class VariableListComponent {
     }
   }
 
-  onCardClick(variable: VariableMetadato, event: Event): void {
+  onCardClick(variable: VariableMetadato): void {
     if (this.selectionMode()) {
       this.toggleSelection(variable.id);
-    } else {
-      this.variableSelected.emit(variable);
     }
   }
 

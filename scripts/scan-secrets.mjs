@@ -29,6 +29,9 @@ async function runScan(directory, mode, extra, { config = join(root, '.gitleaks.
     { encoding: 'utf8', timeout: 130000, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
     // Never forward scanner stdout/stderr or source/Secret/Match report fields.
     assert(!result.error && [0, 1].includes(result.status), 'Gitleaks failed; raw diagnostics suppressed.');
+    // With error-only logging, diagnostics mean the scan was incomplete. In
+    // particular, Gitleaks can exit 0 with an empty report when Git itself fails.
+    assert(!result.stderr.trim(), 'Gitleaks reported an execution error; raw diagnostics suppressed.');
     const report = JSON.parse(await readFile(reportPath, 'utf8'));
     assert(Array.isArray(report), 'Unexpected scanner report; contents suppressed.');
     const findings = report.map(item => {
@@ -56,6 +59,11 @@ export function scanHistory(repository, base, head, options) {
   assert(!/^0{40}$/.test(base), 'A new ref has no bounded history range; review it separately.');
   return runScan(repository, 'git', [`--log-opts=${base}..${head} --no-ext-diff`], options);
 }
+
+// Explicit operator audit, separate from the bounded range required by PR CI.
+// Includes root commits and every reachable local/remote ref, never arbitrary log options.
+export const scanAllReachableHistory = (repository, options) => runScan(repository, 'git',
+  ['--log-opts=--all --full-history --no-ext-diff'], options);
 
 export async function trackedSnapshot(repository) {
   const result = spawnSync('git', ['ls-files', '--stage', '-z'],

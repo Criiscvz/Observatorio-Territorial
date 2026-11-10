@@ -13,7 +13,7 @@
     @else{
       <div class="candidate-list">
         @for(user of users(); track user.id){
-          <button class="candidate" type="button" [disabled]="user.is_active === false" (click)="choose(user)" [attr.aria-label]="'Asignar como editor a ' + user.name">
+          <button class="candidate" type="button" [disabled]="user.access_capabilities?.can_assign_editors !== true" (click)="choose(user)" [attr.aria-label]="'Asignar como editor a ' + user.name">
             <span class="user-avatar">{{user.name.charAt(0).toUpperCase()}}</span><span class="candidate-copy"><strong>{{user.name}}</strong><small>{{user.email}}</small></span>
             @if(user.is_active === false){<span class="section-count">Inactivo</span>}@else{<mat-icon>chevron_right</mat-icon>}
           </button>

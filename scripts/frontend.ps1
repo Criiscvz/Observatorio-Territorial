@@ -1,7 +1,7 @@
 ﻿# ============================================
 # Frontend Scripts (Angular)
 # Uso: .\scripts\frontend.ps1 [comando]
-# Detecta automaticamente bun o npm
+# Usa npm y el lockfile del proyecto.
 # ============================================
 
 param(
@@ -12,17 +12,7 @@ param(
 
 $FrontendPath = Join-Path $PSScriptRoot "..\frontend"
 
-# Detectar package manager
-function Get-PackageManager {
-    if (Get-Command bun -ErrorAction SilentlyContinue) {
-        return "bun"
-    } else {
-        return "npm"
-    }
-}
-
-$PM = Get-PackageManager
-Write-Host "Usando: $PM" -ForegroundColor Cyan
+Write-Host "Usando: npm" -ForegroundColor Cyan
 
 Push-Location $FrontendPath
 
@@ -30,23 +20,23 @@ try {
     switch ($Command) {
         "start" {
             Write-Host "Iniciando servidor de desarrollo..." -ForegroundColor Green
-            if ($PM -eq "bun") { bun run start } else { npm run start }
+            npm run start
         }
         "install" {
             Write-Host "Instalando dependencias..." -ForegroundColor Green
-            if ($PM -eq "bun") { bun install } else { npm install }
+            npm ci
         }
         "build" {
             Write-Host "Construyendo para produccion..." -ForegroundColor Green
-            if ($PM -eq "bun") { bun run build } else { npm run build }
+            npm run build
         }
         "test" {
             Write-Host "Ejecutando tests..." -ForegroundColor Green
-            if ($PM -eq "bun") { bun run test } else { npm run test }
+            npm run test
         }
         "lint" {
             Write-Host "Ejecutando linter..." -ForegroundColor Green
-            if ($PM -eq "bun") { bun run lint } else { npm run lint }
+            npm run lint
         }
         "help" {
             Write-Host "Frontend Scripts - Comandos disponibles:" -ForegroundColor Yellow

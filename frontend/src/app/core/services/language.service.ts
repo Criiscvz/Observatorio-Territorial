@@ -31,7 +31,7 @@ export class LanguageService {
   }
 
   private initializeLanguage(): void {
-    let savedLang: Language | null = null;
+    let savedLang: Language | null;
     
     if (isPlatformBrowser(this.platformId)) {
       savedLang = localStorage.getItem(this.STORAGE_KEY) as Language | null;

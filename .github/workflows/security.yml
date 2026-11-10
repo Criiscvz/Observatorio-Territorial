@@ -3,7 +3,7 @@ name: CI seguridad
 on:
   pull_request:
   push:
-    branches: [main, deploy-gratis]
+    branches: [main, deploy-gratis, pruebas-rediseno]
   workflow_dispatch:
 
 # PR code never receives deployment secrets, write tokens or OIDC credentials.
@@ -58,6 +58,20 @@ jobs:
         run: node --test scripts/test-repository-hygiene.mjs scripts/security-workflow.test.mjs
       - name: Synthetic Docker context only
         run: node scripts/test-docker-context-hygiene.mjs
+      - name: Portable rehearsal contracts
+        run: node --test scripts/portable-runtime.test.mjs
+      - name: Portable synthetic build contexts
+        run: node scripts/test-portable-build-contexts.mjs
+      - name: Dependency audit policy regressions
+        run: node --test scripts/audit-dependencies.test.mjs
+      - name: Operational health probe regressions
+        run: node --test scripts/check-operational-health.test.mjs
+      - name: Audit backend JavaScript tools from their lockfile
+        run: npm --prefix backend run audit:dependencies
+      - name: Install backend asset tools from their lockfile
+        run: npm --prefix backend ci --ignore-scripts --no-audit --no-fund
+      - name: Build backend assets without application secrets
+        run: npm --prefix backend run build
 
   backend:
     name: Backend
@@ -95,7 +109,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: shivammathur/setup-php@4424c9aab975b57bd706ee5a39c6b4334d6e4f60 # 2.40.0
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0 (commit, not annotated tag object)
         with:
           php-version: '8.4'
           extensions: mbstring, dom, xml, xmlwriter, simplexml, sqlite3, pdo_sqlite, pdo_pgsql, gd, zip, intl, bcmath, mongodb-2.5.2
@@ -107,6 +121,10 @@ jobs:
         run: composer install --no-interaction --prefer-dist --no-progress --no-scripts --no-plugins
       - name: Verify real PHP and extension compatibility
         run: composer check-platform-reqs
+      - name: Audit all locked PHP dependencies
+        run: composer audit --locked --no-interaction
+      - name: Static analysis of domain and review decisions
+        run: composer analyse
       - name: Discover packages in the isolated testing environment
         run: php artisan package:discover --ansi
       - name: SQLite suite
@@ -119,12 +137,12 @@ jobs:
           TEST_DB_DATABASE: observatorio_ci_test
           TEST_DB_USERNAME: ci_test
           TEST_DB_PASSWORD: synthetic-disposable-ci-only
-        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest'
+        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest|SharePointPublicationImporterTest|PublicationPdfStorageTest|SharePointArticleImportTest|PublicationPdfReaderTest|ObservatoryAccessCapabilitiesTest|ObservatoryAdministratorTest'
 
   frontend:
     name: Frontend
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 35
     defaults:
       run:
         working-directory: frontend
@@ -138,6 +156,14 @@ jobs:
           package-manager-cache: false
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
+      - name: Repeatable API build configuration
+        run: npm run test:api-build
+      - name: Audit all locked frontend dependencies
+        run: npm run audit:dependencies
+      - name: TypeScript, Angular templates and dependency direction
+        run: npm run lint
+      - name: Prove quality checks reject invalid synthetic code
+        run: npm run test:quality
       - name: Frontend unit tests
         run: npm test -- --watch=false
       - name: Production SPA build with a same-origin API path
@@ -148,6 +174,12 @@ jobs:
         env:
           SECURITY_CHECK_BUILD: '1'
         run: npm run test:security-headers
+      - name: Type-check browser journeys
+        run: node node_modules/typescript/bin/tsc -p tsconfig.e2e.json
+      - name: Install isolated Chromium test runtime
+        run: npx --no-install playwright install --with-deps chromium --only-shell
+      - name: Desktop and mobile journeys with disposable local services
+        run: npm run test:e2e
 
   result:
     name: Resultado

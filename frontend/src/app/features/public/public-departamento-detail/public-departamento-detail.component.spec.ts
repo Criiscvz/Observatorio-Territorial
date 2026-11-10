@@ -4,8 +4,7 @@ import { MatDialog, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dial
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { DepartamentoService } from '@core/services/departamento.service';
-import { ArticulosService } from '@core/services/articulos.service';
-import { ReportesService } from '@core/services/reportes.service';
+import { PublicCatalogService } from '@core/services/public-catalog.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { AuthService } from '@core/services/auth.service';
 import { PublicDepartamentoDetailComponent } from './public-departamento-detail.component';
@@ -15,70 +14,69 @@ import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-a
 import { PublicationViewerComponent } from '../components/publication-viewer.component';
 import { PublicationViewerService } from '../components/publication-viewer.service';
 
-describe('Biblioteca pública por observatorio', () => {
-  const department = {id: 'salud', nombre: 'Observatorio de la Salud', descripcion: 'Investigación'};
-  const article = (id: number, extra: any = {}) => ({id: `art-${id}`, departamento_id: 'salud', titulo: `Artículo ${id}`, codigo: `ART-${id}`, autor: ['Ana Pérez','Luis'], fecha_publicacion: '2026-10-20', fuente: 'ULEAM', download_url: `/api/departamentos/publicaciones/art-${id}/download`, link_url: 'https://example.test/fuente', ...extra});
-  function setup(options: {articles?: any[]; reports?: any[]; books?: any[]; articleError?: boolean} = {}) {
-    const params = new BehaviorSubject({id: 'salud'});
-    const departments = {getPublicById: vi.fn(() => of(department))};
-    const articles = {getAll: vi.fn(() => options.articleError ? throwError(() => new Error('offline')) : of(options.articles || []))};
-    const reports = {getAll: vi.fn(() => of(options.reports || []))};
-    const publications = {getPublicAtlasByDepartamento: vi.fn(() => of(options.books || [])), openPdf: vi.fn(() => of(true))};
-    const dialog = {open: vi.fn()}; const snack = {open: vi.fn()};
-    TestBed.configureTestingModule({providers: [provideRouter([]),
-      {provide: ActivatedRoute, useValue: {params}}, {provide: DepartamentoService, useValue: departments},
-      {provide: ArticulosService, useValue: articles}, {provide: ReportesService, useValue: reports},
-      {provide: PublicacionService, useValue: publications}, {provide: AuthService, useValue: {user: () => null, isAuthenticated: () => false}},
-      {provide: MatDialog, useValue: dialog}, {provide: MatSnackBar, useValue: snack},
-    ]});
-    TestBed.overrideProvider(MatDialog, {useValue: dialog});
-    TestBed.overrideProvider(MatSnackBar, {useValue: snack});
-    const fixture = TestBed.createComponent(PublicDepartamentoDetailComponent); fixture.detectChanges();
-    return {fixture, component: fixture.componentInstance, element: fixture.nativeElement as HTMLElement, departments, articles, reports, publications, dialog, params, snack};
+describe('Biblioteca pública con paginación SQL', () => {
+  const department = {id:'salud', nombre:'Observatorio de la Salud', descripcion:'Investigación'};
+  const article = (id:number, extra:any={}) => ({id:'art-'+id, resource_key:'publicaciones:art-'+id, origen:'publicaciones', tipo:'ARTICULO', departamento_id:'salud', titulo:'Artículo '+id, codigo:'ART-'+id, autores:['Ana Pérez'], fecha_publicacion:'2026-10-20', fuente:'ULEAM', download_url:'/api/departamentos/publicaciones/art-'+id+'/download', link_url:'https://example.test/fuente', ...extra});
+  const response = (data:any[], total=data.length, counts:any={ARTICULO:total,REPORTE:0,LIBRO:0}, page=1) => ({data,counts,meta:{current_page:page,per_page:20,total,last_page:Math.max(1,Math.ceil(total/20)),from:total?(page-1)*20+1:null,to:Math.min(page*20,total)}});
+  function setup(initial:any=response([article(1)])) {
+    const params=new BehaviorSubject({id:'salud'});
+    const departments={getPublicById:vi.fn(() => of(department))};
+    const catalog={getPage:vi.fn(() => of(initial))};
+    const publications={openPdf:vi.fn(() => of(true))};
+    const dialog={open:vi.fn()}, snack={open:vi.fn()};
+    TestBed.configureTestingModule({providers:[provideRouter([]),
+      {provide:ActivatedRoute,useValue:{params}}, {provide:DepartamentoService,useValue:departments},
+      {provide:PublicCatalogService,useValue:catalog}, {provide:PublicacionService,useValue:publications},
+      {provide:AuthService,useValue:{user:() => null,isAuthenticated:() => false}},
+      {provide:MatDialog,useValue:dialog},{provide:MatSnackBar,useValue:snack}]});
+    TestBed.overrideProvider(MatDialog,{useValue:dialog}); TestBed.overrideProvider(MatSnackBar,{useValue:snack});
+    const fixture=TestBed.createComponent(PublicDepartamentoDetailComponent);fixture.detectChanges();
+    return {fixture,component:fixture.componentInstance,element:fixture.nativeElement as HTMLElement,catalog,departments,params,dialog,publications};
   }
-  it('muestra los tres tipos con totales reales y pagina 20 sin mezclar observatorios ni Atlas', () => {
-    const {component, fixture, element} = setup({articles: [...Array.from({length: 41}, (_, i) => article(i)), article(99, {departamento_id: 'otro'})], reports: [{id:'rep', departamento_id:'salud', nombre_indicador:'Reporte', link_url:'https://app.powerbi.com/view?r=demo'}], books: [{...article(2), id:'lib', tipo:'LIBRO', autores:['Autora']}, {...article(3), tipo:'ATLAS'}]});
-    expect(component.count('ARTICULO')).toBe(41); expect(component.count('REPORTE')).toBe(1); expect(component.count('LIBRO')).toBe(1);
-    expect(element.querySelectorAll('[role="tab"]')).toHaveLength(3); expect(element.querySelectorAll('.public-library-row')).toHaveLength(20);
-    component.changePage(1); fixture.detectChanges(); expect(component.rangeStart()).toBe(21); expect(component.visible()).toHaveLength(20);
-    component.changePage(1); fixture.detectChanges(); expect(component.visible()).toHaveLength(1); expect(element.textContent).toContain('41–41 de 41');
-    component.selectType('LIBRO'); fixture.detectChanges(); expect(component.page()).toBe(0); expect(element.textContent).toContain('Leer libro');
+  it('solicita una página de 20 y conserva los totales del servidor sin cargar las demás páginas', () => {
+    const counts={ARTICULO:41,REPORTE:1,LIBRO:1};
+    const s=setup(response(Array.from({length:20},(_,i)=>article(i)),41,counts));
+    expect(s.catalog.getPage).toHaveBeenCalledExactlyOnceWith('salud','ARTICULO',1,'');
+    expect(s.component.count('ARTICULO')).toBe(41);expect(s.component.count('REPORTE')).toBe(1);expect(s.component.count('LIBRO')).toBe(1);
+    expect(s.element.querySelectorAll('.public-library-row')).toHaveLength(20);
+    s.catalog.getPage.mockReturnValue(of(response(Array.from({length:20},(_,i)=>article(i+20)),41,counts,2)));
+    s.component.changePage(1);s.fixture.detectChanges();expect(s.catalog.getPage).toHaveBeenLastCalledWith('salud','ARTICULO',2,'');expect(s.component.rangeStart()).toBe(21);
+    s.catalog.getPage.mockReturnValue(of(response([article(40)],41,counts,3)));s.component.changePage(1);s.fixture.detectChanges();expect(s.element.textContent).toContain('41–41 de 41');
+    s.catalog.getPage.mockReturnValue(of(response([article(1,{tipo:'LIBRO'})],1,counts)));s.component.selectType('LIBRO');s.fixture.detectChanges();expect(s.catalog.getPage).toHaveBeenLastCalledWith('salud','LIBRO',1,'');expect(s.element.textContent).toContain('Leer libro');
   });
-  it('busca por autores, título, código y fuente sin tildes y muestra un vacío útil', () => {
-    const {component, fixture, element} = setup({articles:[article(1), article(2, {autor:'Otro', fuente:'Ministerio', titulo:'Acceso territorial'})]});
-    for (const query of ['PEREZ','ART-1']) {component.search(query); expect(component.filtered().map(x => x.id)).toEqual(['art-1']);}
-    component.search('ministerio'); expect(component.filtered().map(x => x.id)).toEqual(['art-2']);
-    component.search('inexistente'); fixture.detectChanges(); expect(element.textContent).toContain('No se encontraron publicaciones');
-    component.selectType('LIBRO'); fixture.detectChanges(); expect(element.textContent).toContain('Aún no hay libros publicados'); expect(component.query()).toBe('');
+  it('envía búsqueda al servidor y vuelve a la primera página sin filtrar solo lo descargado', () => {
+    const s=setup(response([article(1)],41));
+    s.catalog.getPage.mockReturnValue(of(response([],0,{ARTICULO:41,REPORTE:0,LIBRO:0})));
+    s.component.search('PEREZ');s.fixture.detectChanges();expect(s.catalog.getPage).toHaveBeenLastCalledWith('salud','ARTICULO',1,'PEREZ');expect(s.component.visible()).toHaveLength(0);expect(s.component.count('ARTICULO')).toBe(41);expect(s.element.textContent).toContain('No se encontraron publicaciones');
   });
-  it('elige la primera pestaña con publicaciones y conserva un error parcial sin ocultar reportes', () => {
-    const {component, fixture, element} = setup({articleError:true, reports:[{id:'rep', departamento_id:'salud', nombre_indicador:'Reporte', link_url:'https://app.powerbi.com/view?r=demo'}]});
-    expect(component.type()).toBe('REPORTE'); expect(component.visible()).toHaveLength(1);
-    expect(element.querySelector('[role="alert"]')?.textContent).toContain('artículos');
-    component.selectType('ARTICULO'); fixture.detectChanges(); expect(component.visible()).toHaveLength(0);
+  it('corrige la página si el total cambia mientras se navega', () => {
+    const s=setup(response([article(1)],41));
+    s.catalog.getPage.mockReturnValueOnce(of(response([],1,undefined,2))).mockReturnValueOnce(of(response([article(2)],1)));
+    s.component.changePage(1);
+    expect(s.catalog.getPage).toHaveBeenLastCalledWith('salud','ARTICULO',1,'');
+    expect(s.component.page()).toBe(0);expect(s.component.visible()[0].title).toBe('Artículo 2');
   });
-  it('cancela la carga anterior al cambiar de observatorio y no deja resultados de otra ruta', () => {
-    const {component, params, departments, articles} = setup({articles:[article(1)]});
-    const pending = new Subject<any[]>(); articles.getAll.mockReturnValue(pending);
-    params.next({id:'anterior'}); expect(component.loading()).toBe(true);
-    articles.getAll.mockReturnValue(of([])); departments.getPublicById.mockReturnValue(of({...department,id:'actual'}));
-    params.next({id:'actual'}); pending.next([article(1)]); pending.complete();
-    expect(component.departamento()?.id).toBe('actual'); expect(component.items()).toEqual([]); expect(component.loading()).toBe(false);
+  it('elige la primera pestaña con resultados según counts y no muestra publicaciones de otra pestaña', () => {
+    const s=setup(response([article(1,{tipo:'REPORTE',titulo:'Reporte',link_url:'https://app.powerbi.com/view?r=demo'})],1,{ARTICULO:0,REPORTE:1,LIBRO:0}));
+    expect(s.component.type()).toBe('REPORTE');expect(s.catalog.getPage).toHaveBeenLastCalledWith('salud','REPORTE',1,'');expect(s.component.visible()[0].title).toBe('Reporte');
   });
-  it('abre el PDF o el reporte correcto y usa una ventana central para sus detalles', () => {
-    const {component, publications, dialog} = setup({articles:[article(1)], reports:[{id:'rep', departamento_id:'salud', nombre_indicador:'Reporte', link_url:'https://app.powerbi.com/view?r=demo'}]});
-    const pdf = component.items().find(x => x.type === 'ARTICULO')!;
-    component.read(pdf); expect(dialog.open).toHaveBeenCalledWith(PublicationViewerComponent, expect.objectContaining({data: {item:pdf, departmentName:department.nombre, mode:'pdf'}}));
-    component.openDetails(pdf); expect(dialog.open).toHaveBeenCalledWith(PublicPublicationDetailsComponent, expect.objectContaining({data:{item:pdf,departmentName:department.nombre},maxHeight:'calc(100dvh - 24px)'}));
-    const open = vi.spyOn(window,'open').mockImplementation(() => null);
-    const report=component.items().find(x => x.type === 'REPORTE')!;
-    component.read(report); expect(dialog.open).toHaveBeenCalledWith(PublicationViewerComponent, expect.objectContaining({data: {item:report,departmentName:department.nombre,mode:'report'}})); expect(open).not.toHaveBeenCalled(); open.mockRestore();
+  it('cancela solicitudes al cambiar de observatorio y búsquedas anteriores', () => {
+    const s=setup();const pending=new Subject<any>();s.catalog.getPage.mockReturnValue(pending);
+    s.component.search('primera');expect(s.component.resultsLoading()).toBe(true);
+    s.catalog.getPage.mockReturnValue(of(response([article(2)])));s.component.search('segunda');pending.next(response([article(99)]));expect(s.component.items()[0].title).toBe('Artículo 2');
+    s.catalog.getPage.mockReturnValue(pending);s.params.next({id:'anterior'});
+    s.catalog.getPage.mockReturnValue(of(response([])));s.departments.getPublicById.mockReturnValue(of({...department,id:'actual'}));s.params.next({id:'actual'});pending.next(response([article(99)]));expect(s.component.departamento()?.id).toBe('actual');expect(s.component.items()).toEqual([]);
   });
-  it('no abre ningún recurso de suscriptor para visitantes aunque lleguen enlaces en la respuesta', () => {
-    const {component, dialog, publications} = setup({articles:[article(1,{visibilidad:'suscriptor'})]});
-    const item=component.items()[0]; expect(item.locked).toBe(true); expect(item.download_url).toBeNull(); expect(item.sourceUrl).toBeNull();
-    component.read(item); component.openDetails(item); expect(publications.openPdf).not.toHaveBeenCalled();
-    expect(dialog.open).toHaveBeenCalledWith(SubscriberAccessDialogComponent, expect.anything());
+  it('mantiene el observatorio visible ante errores del catálogo y permite reintentar', () => {
+    const s=setup();s.catalog.getPage.mockReturnValue(throwError(() => new Error('offline')));s.component.search('consulta');s.fixture.detectChanges();expect(s.component.departamento()?.id).toBe('salud');expect(s.element.querySelector('[role="alert"]')?.textContent).toContain('publicaciones');
+    s.catalog.getPage.mockReturnValue(of(response([article(1)])));s.component.retry();expect(s.component.publicationErrors()).toEqual([]);expect(s.component.visible()).toHaveLength(1);
+  });
+  it('abre PDF y reporte del contrato unificado con descripción y autores correctos', () => {
+    const s=setup(response([article(1,{descripcion:'Resumen completo'})]));const pdf=s.component.items()[0];s.component.read(pdf);expect(s.dialog.open).toHaveBeenCalledWith(PublicationViewerComponent,expect.objectContaining({data:{item:pdf,departmentName:department.nombre,mode:'pdf'}}));s.component.openDetails(pdf);expect(pdf.description).toBe('Resumen completo');expect(pdf.authors).toBe('Ana Pérez');
+    s.catalog.getPage.mockReturnValue(of(response([article(2,{tipo:'REPORTE',titulo:'Reporte unificado',descripcion:'Detalle de reporte',link_url:'https://app.powerbi.com/view?r=demo'})],1,{ARTICULO:1,REPORTE:1,LIBRO:0})));s.component.selectType('REPORTE');const report=s.component.items()[0];s.component.read(report);expect(report.title).toBe('Reporte unificado');expect(report.description).toBe('Detalle de reporte');expect(s.dialog.open).toHaveBeenCalledWith(PublicationViewerComponent,expect.objectContaining({data:{item:report,departmentName:department.nombre,mode:'report'}}));
+  });
+  it('no abre recursos bloqueados aunque la respuesta incluya enlaces', () => {
+    const s=setup(response([article(1,{solo_suscriptores:true})]));const item=s.component.items()[0];expect(item.locked).toBe(true);expect(item.download_url).toBeNull();s.component.read(item);s.component.openDetails(item);expect(s.publications.openPdf).not.toHaveBeenCalled();expect(s.dialog.open).toHaveBeenCalledWith(SubscriberAccessDialogComponent,expect.anything());
   });
 });
 

@@ -19,6 +19,7 @@ const excluded = [
   'storage/codex-logs/fixture.txt', 'storage/framework/sessions/fixture.txt',
   'storage/oauth-private.key', 'bootstrap/cache/config.php',
   '.docker-codex/fixture.txt', 'tmp/fixture.json', 'output/fixture.pdf',
+  'tests/E2E/E2EGraphProvider.php', 'tests/E2E/providers.php',
 ];
 const included = [
   '.env.example', 'artisan', 'composer.json', 'composer.lock',

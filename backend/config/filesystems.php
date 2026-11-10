@@ -30,6 +30,14 @@ return [
 
     'disks' => [
 
+        // Used only by explicitly enabled disposable publication rehearsals.
+        'phase2-rehearsal' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/phase2-rehearsal'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

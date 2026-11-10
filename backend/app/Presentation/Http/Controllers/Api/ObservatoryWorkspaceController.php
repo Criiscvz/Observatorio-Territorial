@@ -9,7 +9,10 @@ class ObservatoryWorkspaceController extends AdminWorkspaceController
 {
     protected function publications(): Builder
     {
-        return parent::publications()->whereIn('departamento_id', request()->user()->observatoryIds());
+        $user = request()->user();
+        return parent::publications()->whereIn('departamento_id', $user->observatoryIds())
+            ->where(fn ($query) => $query->whereIn('departamento_id', $user->observatoryIds('puede_revisar'))
+                ->orWhere('estado', 'PUBLICACION'));
     }
 
     public function summary(): JsonResponse

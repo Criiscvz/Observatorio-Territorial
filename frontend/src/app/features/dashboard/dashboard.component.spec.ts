@@ -8,7 +8,6 @@ import { DepartamentoService } from '@core/services/departamento.service';
 import { AuthService } from '@core/services/auth.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Departamento } from '@core/models';
-import { NGX_ECHARTS_CONFIG } from 'ngx-echarts';
 
 @Pipe({ name: 'translate', standalone: true })
 class MockTranslatePipe implements PipeTransform {
@@ -68,9 +67,6 @@ describe('DashboardComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [DashboardComponent, NoopAnimationsModule, RouterModule.forRoot([])],
-      providers: [
-        { provide: NGX_ECHARTS_CONFIG, useValue: { echarts: () => Promise.resolve() } }
-      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardComponent);

@@ -14,8 +14,6 @@ use App\Application\Public\UseCases\GetPublicDepartamentosUseCase;
 use App\Application\Public\UseCases\GetTextAnalysisUseCase;
 use App\Application\Public\UseCases\GetUnivariableStatsUseCase;
 use App\Http\Controllers\Controller;
-use App\Infrastructure\Persistence\Eloquent\Models\ArticuloModel;
-use App\Infrastructure\Persistence\Eloquent\Models\ReporteModel;
 use App\Models\Departamento;
 use App\Models\ObservatorioPublicacion;
 use App\Presentation\Http\Requests\Public\BivariableStatsRequest;
@@ -64,26 +62,14 @@ class PublicController extends Controller
     {
         $publicDepartmentIds = Departamento::query()->publicos()->pluck('id');
 
-        $legacyArticles = ArticuloModel::query()
-            ->whereIn('departamento_id', $publicDepartmentIds)
-            ->where(fn ($query) => $query->whereNull('visibilidad')->orWhere('visibilidad', '!=', 'privado'))
-            ->where(fn ($query) => $query->whereNull('estado')->orWhereIn('estado', ['PUBLICADO', 'PUBLICACION']))
-            ->count();
-
-        $legacyReports = ReporteModel::query()
-            ->whereIn('departamento_id', $publicDepartmentIds)
-            ->where(fn ($query) => $query->whereNull('visibilidad')->orWhere('visibilidad', '!=', 'privado'))
-            ->count();
-
-        $publishedPublications = ObservatorioPublicacion::query()
-            ->whereIn('departamento_id', $publicDepartmentIds)
-            ->where('estado', 'PUBLICACION');
+        $counts = app(\App\Application\Publicaciones\PublicPublicationCatalog::class)->query()
+            ->whereNotNull('departamento_id')->selectRaw('tipo, COUNT(*) total')->groupBy('tipo')->pluck('total', 'tipo');
 
         return response()->json([
             'observatorios' => $publicDepartmentIds->count(),
-            'articulos' => $legacyArticles + (clone $publishedPublications)->where('tipo', 'ARTICULO')->count(),
-            'reportes' => $legacyReports + (clone $publishedPublications)->where('tipo', 'REPORTE')->count(),
-            'libros' => (clone $publishedPublications)->where('tipo', 'LIBRO')->count(),
+            'articulos' => (int) ($counts['ARTICULO'] ?? 0),
+            'reportes' => (int) ($counts['REPORTE'] ?? 0),
+            'libros' => (int) ($counts['LIBRO'] ?? 0),
         ]);
     }
 
@@ -119,6 +105,7 @@ class PublicController extends Controller
         }
 
         $query = ObservatorioPublicacion::query()
+            ->publicLegacyAccess()
             ->where('departamento_id', $id)
             ->where('tipo', 'LIBRO')
             ->where('estado', 'PUBLICACION')
@@ -131,6 +118,7 @@ class PublicController extends Controller
     {
         $filters = $request->validate(['categoria_id' => ['nullable', 'uuid']]);
         $query = ObservatorioPublicacion::query()
+            ->publicLegacyAccess()
             ->with('atlasCategoria')
             ->when($filters['categoria_id'] ?? null, fn ($q, $id) => $q->where('atlas_categoria_id', $id))
             ->where('tipo', 'ATLAS')
@@ -140,6 +128,20 @@ class PublicController extends Controller
             ->latest('fecha_publicacion');
 
         return PublicacionResource::collection($query->get());
+    }
+
+    public function atlasLibrary(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    {
+        $filters = $request->validate([
+            'categoria_id' => ['required', 'uuid'], 'q' => ['nullable', 'string', 'max:200'],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'], 'per_page' => ['sometimes', 'integer', 'in:20'],
+        ]);
+        \App\Models\AtlasCategoria::where('publico', true)->findOrFail($filters['categoria_id']);
+        $query = ObservatorioPublicacion::with('atlasCategoria')->publicLegacyAccess()->where('tipo', 'ATLAS')
+            ->whereNull('departamento_id')->where('estado', 'PUBLICACION')->where('atlas_categoria_id', $filters['categoria_id']);
+        \App\Application\Publicaciones\PublicationLibrarySearch::apply($query, $filters['q'] ?? '');
+        return \App\Presentation\Http\Resources\Publicacion\LibraryPublicationResource::collection(
+            $query->orderByRaw('fecha_publicacion DESC NULLS LAST')->orderByDesc('created_at')->orderBy('id')->paginate(20)->withQueryString());
     }
 
     private function isSubscriber($user): bool

@@ -14,11 +14,14 @@ class PublicacionResource extends JsonResource
         $routeAction = (string) ($request->route()?->getActionName() ?? '');
         $isManagementRequest = str_contains($routeAction, 'ObservatorioPublicacionController')
             || str_contains($routeAction, 'AtlasEnlaceController');
+        abort_if($this->eliminado_legado_at !== null, 404);
+        abort_if($this->resource->hasPrivateLegacyAccess()
+            && ! ($isManagementRequest && $user?->canReadPublicationForManagement($this->resource)), 404);
         $isEditorOwner = $isManagementRequest
             && $user?->rol === 'EDITOR'
-            && (int) $this->creado_por === (int) $user->id;
+            && $user->canReadPublicationForManagement($this->resource);
         $isScopedManager = $isManagementRequest && $user?->isObservatoryAdmin() && $this->tipo !== 'ATLAS'
-            && in_array($this->departamento_id, $user->observatoryIds(), true);
+            && $user->canReadPublicationForManagement($this->resource);
         $canViewSubscriberContent = $isScopedManager || ! $isSubscriberContent
             || ($user && in_array($user->rol, ['ADMIN', 'SUBSCRIBER', 'SUSCRIPTOR', 'SUBSCRIPTOR'], true))
             || $isEditorOwner;
@@ -48,6 +51,7 @@ class PublicacionResource extends JsonResource
             'tipo' => $this->tipo,
             'estado' => $this->estado,
             ...($isManagementRequest ? [
+                'capabilities' => app(\App\Policies\ObservatorioPublicacionPolicy::class)->capabilities($user, $this->resource),
                 'observacion_revision' => $this->observacion_revision,
                 'fecha_revision' => $this->fecha_revision?->toIso8601String(),
             ] : []),

@@ -74,7 +74,7 @@
           />
         </label>
         @if(auth.user()?.rol === 'ADMIN_OBSERVATORIO') {
-          <button type="button" class="editor-action manage-observatorios add-editor" [disabled]="!auth.canAssignEditors() || savingUserId() !== null" (click)="addEditor()"><mat-icon>person_add</mat-icon>Agregar editor</button>
+          <button type="button" class="editor-action manage-observatorios add-editor" [disabled]="!canAssignEditors() || savingUserId() !== null" (click)="addEditor()"><mat-icon>person_add</mat-icon>Agregar editor</button>
         }
       </div>
 
@@ -82,7 +82,7 @@
         <mat-icon aria-hidden="true">info_outline</mat-icon>
         <span>{{selectedRole() === 'ADMIN_OBSERVATORIO' ? 'Activa edición y revisión o agregar editores en cada observatorio asignado. Ambos permisos son independientes.' : 'Cada editor crea contenido y consulta sus propios envíos en los observatorios asignados.'}}</span>
       </div>
-      @if(auth.user()?.rol === 'ADMIN_OBSERVATORIO' && !auth.canAssignEditors()) {
+      @if(auth.user()?.rol === 'ADMIN_OBSERVATORIO' && !canAssignEditors()) {
         <p class="permissions-status">Puedes consultar los editores de tus observatorios. Para asignar o quitar accesos necesitas que Administración active «Agregar editores».</p>
       }
 
@@ -127,7 +127,7 @@
                 <button
                   type="button"
                   class="editor-action reset-access"
-                  [disabled]="!canManageUser(user) || savingUserId() !== null || getAssignedObservatoriosCount(user) === 0"
+                  [disabled]="user.access_capabilities?.can_revoke_access !== true || savingUserId() !== null || getAssignedObservatoriosCount(user) === 0"
                   [attr.aria-label]="'Quitar accesos de ' + user.name"
                   (click)="resetConfirmationId.set(user.id)"
                 >
@@ -135,7 +135,7 @@
                   Quitar accesos
                 </button>
                 <button type="button" class="editor-action manage-observatorios"
-                  [disabled]="savingUserId() !== null"
+                  [disabled]="user.access_capabilities?.can_view_access !== true || savingUserId() !== null"
                   [attr.aria-label]="'Gestionar observatorios de ' + user.name"
                   (click)="openPermissionsDialog(user)">
                   <mat-icon aria-hidden="true">tune</mat-icon>

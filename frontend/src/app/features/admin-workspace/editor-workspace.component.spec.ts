@@ -30,7 +30,7 @@ describe('Espacio operativo del editor', () => {
   });
 
   it('consulta la lista propia paginada y permite editar sin presentar aprobación',()=>{
-    const publications=vi.fn(()=>of({data:[{id:'propia',departamento_id:'laboral',departamento_nombre:'Laboral',titulo:'Mi artículo',tipo:'ARTICULO',estado:'EN_REVISION',codigo:'ART-1'}],meta:{total:21,from:1,to:20,current_page:1,last_page:2,per_page:20}}));
+    const publications=vi.fn(()=>of({data:[{capabilities:{can_view:true,can_edit:true,can_delete:true,can_review:false},id:'propia',departamento_id:'laboral',departamento_nombre:'Laboral',titulo:'Mi artículo',tipo:'ARTICULO',estado:'EN_REVISION',codigo:'ART-1'}],meta:{total:21,from:1,to:20,current_page:1,last_page:2,per_page:20}}));
     TestBed.configureTestingModule({providers:[{provide:AdminWorkspaceService,useValue:{publications}},
       {provide:DepartamentoService,useValue:{getAll:()=>of([{id:'laboral',nombre:'Laboral'}])}},
       {provide:ActivatedRoute,useValue:{queryParamMap:of(convertToParamMap({estado:'EN_REVISION'}))}},

@@ -1,5 +1,7 @@
 <?php
 
+use App\Presentation\Http\Controllers\Api\PublicPublicationCatalogController;
+
 use App\Presentation\Http\Controllers\Api\PublicController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +16,7 @@ Route::get('/departamentos', [PublicController::class, 'departamentos']);
 Route::get('/departamentos/{id}', [PublicController::class, 'departamento']);
 Route::get('/departamentos/{id}/atlas', [PublicController::class, 'departamentoAtlas']);
 Route::get('/atlas', [PublicController::class, 'atlas']);
+Route::get('/atlas/biblioteca', [PublicController::class, 'atlasLibrary']);
 Route::get('/estadisticas', [PublicController::class, 'estadisticas']);
 
 // Datasets públicos
@@ -23,3 +26,4 @@ Route::get('/datasets/{id}/data', [PublicController::class, 'datasetData']);
 Route::post('/stats/univariable', [PublicController::class, 'univariable']);
 Route::post('/stats/bivariable', [PublicController::class, 'bivariable']);
 Route::post('/stats/text-analysis', [PublicController::class, 'textAnalysis']);
+Route::get('/publicaciones', [PublicPublicationCatalogController::class, 'index']);
