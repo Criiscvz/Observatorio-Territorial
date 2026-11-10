@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, input } from '@angular/core';
 import { ChartData } from '@core/models';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
 
 @Component({

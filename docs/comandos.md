@@ -116,25 +116,20 @@ php artisan tinker
 ```bash
 cd frontend
 
-# Instalar dependencias (usando Bun)
-bun install
-
-# O con npm
-npm install
+# Instalar las versiones bloqueadas (Node 24.17.0 y npm 11.13.0)
+npm ci
 
 # Iniciar servidor de desarrollo
-bun run start
-# o
 npm start
 
 # Build de producción
-bun run build
+npm run build
 
 # Ejecutar tests
-bun run test
+npm run test
 
 # Linting
-bun run lint
+npm run lint
 ```
 
 ---
@@ -218,14 +213,14 @@ php artisan migrate
 
 # 4. Configurar Frontend
 cd ../frontend
-bun install
+npm ci
 
 # 5. Iniciar servidores (en terminales separadas)
 # Terminal 1: Backend
 cd backend && php artisan serve
 
 # Terminal 2: Frontend
-cd frontend && bun run start
+cd frontend && npm run start
 ```
 
 ### Día a día

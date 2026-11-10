@@ -12,7 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ActiveChart } from '@shared/models';
 import { ChartOptionsService } from '@shared/services/chart-options.service';
 import { ExportService } from '@shared/services/export.service';
-import { EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { ChartFiltersComponent } from '../chart-filters/chart-filters.component';
 

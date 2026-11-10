@@ -10,10 +10,11 @@ if (!apiUrl || (!/^https:\/\//.test(apiUrl) && !/^\//.test(apiUrl))) {
 
 const file = new URL('../src/environments/environment.prod.ts', import.meta.url);
 const source = await readFile(file, 'utf8');
-const output = source.replace(/apiUrl: '[^']*'/, `apiUrl: '${apiUrl}'`);
+const property = /apiUrl: '[^']*'/;
 
-if (output === source) {
+if (!property.test(source)) {
   throw new Error('Could not set apiUrl in environment.prod.ts');
 }
 
-await writeFile(file, output);
+const output = source.replace(property, `apiUrl: '${apiUrl}'`);
+if (output !== source) await writeFile(file, output);

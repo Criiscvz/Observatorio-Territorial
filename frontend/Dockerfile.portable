@@ -1,0 +1,20 @@
+# Same Node release as CI; only the browser artifact reaches the runtime image.
+FROM node:24.17.0-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY angular.json ngsw-config.json tsconfig*.json ./
+COPY src ./src
+COPY public ./public
+COPY scripts/set-api-url.mjs scripts/create-vercel-spa-entry.mjs ./scripts/
+ENV API_URL=/api
+RUN npm run build:vercel
+
+FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:f5116ed4606f3eb015dd4a8e28cb9b351476dc0ad4bc6e9f93b19cec130cdf03
+COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
+COPY docker/portable-nginx.conf /etc/nginx/nginx.conf
+COPY docker/portable-headers.conf /etc/nginx/portable-headers.conf
+USER 101:101
+EXPOSE 8080
+ENTRYPOINT ["nginx"]
+CMD ["-g", "daemon off;"]

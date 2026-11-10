@@ -96,12 +96,7 @@ start_frontend() {
     
     cd "$PROJECT_DIR/frontend"
     
-    # Usar npm si bun no está disponible
-    if command -v bun &> /dev/null; then
-        bun run start &
-    else
-        npm run start &
-    fi
+    npm run start &
     
     echo -e "${GREEN}[Frontend]${NC} ${WHITE}Servidor Angular iniciado${NC}"
     echo -e "           ${GRAY}URL: http://localhost:4200${NC}"
@@ -158,11 +153,7 @@ run_setup() {
     echo -e "${CYAN}[Frontend]${NC} ${WHITE}Instalando dependencias de Node...${NC}"
     cd "$PROJECT_DIR/frontend"
     
-    if command -v bun &> /dev/null; then
-        bun install
-    else
-        npm install
-    fi
+    npm ci
     
     echo ""
     echo -e "${GREEN}═══════════════════════════════════════════════${NC}"

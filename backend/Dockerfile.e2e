@@ -1,0 +1,6 @@
+# Test-only layer. Production Dockerfiles never copy these fixtures.
+FROM observatorio-e2e-base:phase5
+USER root
+COPY tests/E2E/E2EGraphProvider.php app/Providers/E2EGraphProvider.php
+COPY tests/E2E/providers.php bootstrap/providers.php
+USER 10001:10001

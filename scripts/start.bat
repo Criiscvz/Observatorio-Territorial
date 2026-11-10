@@ -86,7 +86,7 @@ goto :eof
 call :banner
 echo [Frontend] Iniciando servidor Angular...
 cd /d "%PROJECT_DIR%\frontend"
-start "Angular Server" cmd /c "bun run start"
+start "Angular Server" cmd /c "npm run start"
 echo [Frontend] Servidor Angular iniciado
 echo            URL: http://localhost:4200
 goto :eof
@@ -117,7 +117,6 @@ cd /d "%PROJECT_DIR%"
 docker-compose down
 taskkill /f /im php.exe 2>nul
 taskkill /f /im node.exe 2>nul
-taskkill /f /im bun.exe 2>nul
 echo [Stop] Todos los servicios detenidos
 goto :eof
 
@@ -144,7 +143,7 @@ call php artisan migrate
 echo.
 echo [Frontend] Instalando dependencias de Node...
 cd /d "%PROJECT_DIR%\frontend"
-call bun install
+call npm ci
 
 echo.
 echo   ===============================================

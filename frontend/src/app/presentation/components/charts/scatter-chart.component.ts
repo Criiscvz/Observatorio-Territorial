@@ -2,7 +2,7 @@ import { Component, Input, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { CHART_COLORS } from './base-chart.component';
-import { EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
 
 @Component({
   selector: 'app-scatter-chart',

@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { ChartData } from '@core/models';
 import { ChartThemeService } from '@core/services/chart-theme.service';
 import { BivariableResponse } from '@core/services/interfaces';
-import { EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
 
 // Only import echarts-wordcloud in browser (it depends on 'window')
 if (typeof window !== 'undefined') {
