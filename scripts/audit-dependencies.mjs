@@ -1,16 +1,10 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-export const echartsReview = Object.freeze({
-  package: 'echarts', version: '5.6.0', advisory: 'GHSA-fgmj-fm8m-jvvx', reviewBy: '2026-12-05',
-  reason: 'Word-cloud 2.1.0 requires ECharts 5. LinesChart and full bundles are blocked by lint; the real registry is tested. Migration to ECharts >=6.1.0 remains required.',
-});
-
-export function evaluateNpmAudit(report, lock, { scope, now = new Date() }) {
+export function evaluateNpmAudit(report, { scope }) {
   const counts = report?.metadata?.vulnerabilities;
   const findings = report?.vulnerabilities;
   assert(['frontend', 'backend'].includes(scope), 'Unknown dependency scope.');
@@ -21,23 +15,7 @@ export function evaluateNpmAudit(report, lock, { scope, now = new Date() }) {
   const names = Object.keys(findings);
   assert(counts.total === ['info', 'low', 'moderate', 'high', 'critical'].reduce((sum, key) => sum + counts[key], 0)
     && names.length === counts.total, 'Contradictory audit counts.');
-  if (names.length === 0 && counts.total === 0) return { passed: true, counts, deferred: [] };
-  const finding = findings.echarts;
-  const today = now.toISOString().slice(0, 10);
-  const cloud = findings['echarts-wordcloud'];
-  const inheritedOnly = !cloud || (cloud.severity === 'moderate' && cloud.via?.length === 1 && cloud.via[0] === 'echarts'
-    && cloud.nodes?.length === 1 && cloud.nodes[0] === 'node_modules/echarts-wordcloud'
-    && lock?.packages?.['node_modules/echarts-wordcloud']?.version === '2.1.0');
-  const known = scope === 'frontend' && names.length > 0 && names.every(name => ['echarts', 'echarts-wordcloud'].includes(name))
-    && counts.moderate === names.length && !counts.high && !counts.critical && inheritedOnly
-    && finding.severity === 'moderate' && finding.via?.length > 0
-    && finding.via.every(item => typeof item === 'object'
-      && item.name === 'echarts' && item.severity === 'moderate'
-      && item.url === 'https://github.com/advisories/' + echartsReview.advisory)
-    && finding.nodes?.length === 1 && finding.nodes[0] === 'node_modules/echarts'
-    && lock?.packages?.['node_modules/echarts']?.version === echartsReview.version
-    && today <= echartsReview.reviewBy;
-  return { passed: Boolean(known), counts, deferred: known ? [echartsReview] : [] };
+  return { passed: names.length === 0, counts, deferred: [] };
 }
 
 function main(scope) {
@@ -51,8 +29,7 @@ function main(scope) {
   { cwd: directory, encoding: 'utf8', timeout: 90000, maxBuffer: 8 * 1024 * 1024, windowsHide: true });
   assert(!result.error && [0, 1].includes(result.status), 'Dependency registry unavailable.');
   const report = JSON.parse(result.stdout);
-  const lock = JSON.parse(readFileSync(resolve(directory, 'package-lock.json'), 'utf8'));
-  const evaluation = evaluateNpmAudit(report, lock, { scope });
+  const evaluation = evaluateNpmAudit(report, { scope });
   console.log(JSON.stringify({ scope, ...evaluation }, null, 2));
   if (!evaluation.passed) process.exitCode = 1;
 }

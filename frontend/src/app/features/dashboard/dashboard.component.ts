@@ -14,10 +14,8 @@ import { AuthService } from '@core/services/auth.service';
 import { DepartamentoService } from '@core/services/departamento.service';
 import { PublicacionService } from '@core/services/publicacion.service';
 import { SubscriberAccessDialogComponent } from '@shared/components/subscriber-access-dialog';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
-import type { EChartsOption } from 'echarts';
-import { NgxEchartsDirective } from 'ngx-echarts';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
@@ -34,7 +32,6 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
     MatRippleModule,
     MatTooltipModule,
     TranslateModule,
-    NgxEchartsDirective,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
@@ -43,7 +40,6 @@ export class DashboardComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly deptoService = inject(DepartamentoService);
   private readonly publicacionService = inject(PublicacionService);
-  private readonly translate = inject(TranslateService);
   private readonly dialog = inject(MatDialog);
   authService = inject(AuthService);
 
@@ -153,112 +149,6 @@ export class DashboardComponent implements OnInit {
     const total = this.totalDatasets();
     if (total === 0) return 0;
     return Math.round((this.datasetsByStatus()['COMPLETADO'] / total) * 100);
-  });
-
-  distributionChartOptions = computed<EChartsOption>(() => {
-    const deptos = this.departamentos();
-    if (deptos.length === 0) return {};
-
-    const sorted = [...deptos]
-      .map((d) => ({
-        name: d.nombre,
-        count: d.datasets?.length || 0,
-        publico: d.publico,
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-
-    return {
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: { type: 'shadow' },
-      },
-      grid: {
-        left: 8,
-        right: 24,
-        top: 8,
-        bottom: 0,
-        containLabel: true,
-      },
-      xAxis: {
-        type: 'value',
-        splitLine: { show: false },
-        axisLabel: { show: false },
-        axisTick: { show: false },
-        axisLine: { show: false },
-      },
-      yAxis: {
-        type: 'category',
-        data: sorted.map((d) => d.name),
-        inverse: true,
-        axisLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: {
-          color: 'var(--text-secondary)',
-          fontSize: 12,
-          width: 120,
-          overflow: 'truncate',
-        },
-      },
-      series: [
-        {
-          type: 'bar',
-          data: sorted.map((d) => ({
-            value: d.count,
-            itemStyle: {
-              color: d.publico ? '#6366f1' : '#94a3b8',
-              borderRadius: [0, 4, 4, 0],
-            },
-          })),
-          barWidth: 18,
-          label: {
-            show: true,
-            position: 'right',
-            fontSize: 12,
-            fontWeight: 600,
-            color: 'var(--text-primary)',
-          },
-        },
-      ],
-    };
-  });
-
-  statusChartOptions = computed<EChartsOption>(() => {
-    const status = this.datasetsByStatus();
-    const total = this.totalDatasets();
-    if (total === 0) return {};
-
-    const data = [
-      { value: status['COMPLETADO'], name: this.translate.instant('datasets.status.completed') || 'Completado', itemStyle: { color: '#10b981' } },
-      { value: status['PROCESANDO'], name: this.translate.instant('datasets.status.processing') || 'Procesando', itemStyle: { color: '#f59e0b' } },
-      { value: status['ERROR'], name: this.translate.instant('datasets.status.error') || 'Error', itemStyle: { color: '#ef4444' } },
-      { value: status['PENDIENTE'], name: this.translate.instant('datasets.status.pending') || 'Pendiente', itemStyle: { color: '#94a3b8' } },
-    ].filter((d) => d.value > 0);
-
-    return {
-      tooltip: {
-        trigger: 'item',
-        formatter: '{b}: {c} ({d}%)',
-      },
-      series: [
-        {
-          type: 'pie',
-          radius: ['55%', '80%'],
-          center: ['50%', '50%'],
-          avoidLabelOverlap: false,
-          itemStyle: {
-            borderRadius: 4,
-            borderColor: 'var(--card-bg)',
-            borderWidth: 2,
-          },
-          label: { show: false },
-          emphasis: {
-            label: { show: false },
-          },
-          data,
-        },
-      ],
-    };
   });
 
   ngOnInit(): void {

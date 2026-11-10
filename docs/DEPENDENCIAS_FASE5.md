@@ -2,6 +2,13 @@
 
 Fecha: 5 de noviembre de 2026, America/Guayaquil.
 
+**Actualización del 10 de noviembre:** se retiró el análisis gráfico antiguo por
+decisión funcional. ECharts, ngx-echarts y echarts-wordcloud ya no están en el
+manifiesto ni en el lockfile del frontend. La auditoría npm del frontend devuelve
+**0 avisos, sin excepciones**. El detalle y el alcance conservado están en
+[Retiro del análisis gráfico](RETIRO_ANALISIS_GRAFICO_20261110.md). Los resultados
+del 5 de noviembre que siguen se conservan como registro histórico.
+
 Entrega local en `subsanacion-dependencias-fase5`, desde `1eb8e26`.
 No se publica, fusiona ni cambia la configuración de los servicios alojados.
 La fase 5 sigue abierta: este documento registra el bloque de dependencias y
@@ -59,9 +66,10 @@ Revisar y retirar estas sustituciones cuando los paquetes padres incorporen
 rangos corregidos. No generalizar esta técnica a otras bibliotecas sin verificar
 sus consumidores y requisitos.
 
-## Único aviso pendiente: ECharts
+## Registro histórico: aviso ECharts del 5 de noviembre
 
-Permanece `GHSA-fgmj-fm8m-jvvx` / CVE-2026-45249 en ECharts 5.6.0.
+Al preparar la entrega del 5 de noviembre permanecía
+`GHSA-fgmj-fm8m-jvvx` / CVE-2026-45249 en ECharts 5.6.0.
 Se propaga a `echarts-wordcloud` 2.1.0, por eso npm informa dos paquetes.
 La corrección publicada es ECharts >=6.1.0, pero la extensión actual declara
 peer `echarts: ^5.0.1`. No se afirma corregido el paquete vulnerable.
@@ -81,10 +89,9 @@ migración ni cubren usos dinámicos que se introduzcan fuera de estos controles
 La migración debe resolver la compatibilidad de la nube de palabras, verificar
 gráficos, tooltips y exportaciones y retirar la excepción.
 
-**Revisión requerida antes del 5 de diciembre de 2026.** El control deja de
-aceptar la excepción al terminar ese día UTC. La valoración y el cierre
-institucional de esta excepción siguen pendientes de revisión; no se presenta
-como una aprobación de DIIT.
+La excepción tenía como límite el 5 de diciembre de 2026. Fue eliminada el
+10 de noviembre junto con las dependencias afectadas; no se amplió su plazo.
+Esto no equivale a la aceptación institucional de todas las fases.
 
 ## Controles y mantenimiento
 
@@ -93,11 +100,11 @@ lockfile completo, incluidas dependencias de desarrollo, opcionales y peers.
 El ejecutor usa npm sin scripts de aplicación y falla ante una respuesta inválida,
 error de red o aviso nuevo, incluso moderado o bajo.
 
-Solo contempla el ID, severidad, versión, ubicación y plazo de ECharts indicados
-arriba y, cuando npm la informa, su propagación exacta a wordcloud 2.1.0.
-No admite otras copias anidadas, cambios de versión, nuevos avisos ni aumento de
-severidad. Se prueban esos rechazos con respuestas sintéticas, sin publicar
-credenciales ni configurar exclusiones generales por severidad.
+Desde el 10 de noviembre no contempla excepciones: cualquier aviso, de cualquier
+severidad, hace fallar el control. Se prueban explícitamente el rechazo del antiguo
+aviso de ECharts y su propagación, además de los errores y respuestas
+contradictorias del registro. ESLint impide reintroducir imports de las tres
+librerías retiradas, incluidos imports de tipos, dinámicos y reexportaciones.
 
 El workflow añade estas auditorías a frontend e higiene. Backend ejecuta
 `composer audit --locked --no-interaction`, que debe quedar sin avisos. También

@@ -14,23 +14,20 @@ const within = (file, folder) => {
 
 export default {
   rules: {
-    'echarts-modular-imports': {
-      meta: { type: 'problem', schema: [], messages: { unsafe: 'Use the modular ECharts registry; full bundles and LinesChart are excluded while CVE-2026-45249 remains pending.' } },
+    'retired-chart-imports': {
+      meta: { type: 'problem', schema: [], messages: { unsafe: 'The legacy ECharts analysis has been retired. Keep dataset tables and use the publication viewers for PDFs and Power BI.' } },
       create(context) {
         function check(node, source) {
-          if (typeof source !== 'string' || !source.startsWith('echarts')) return;
-          if (node.importKind === 'type' || node.exportKind === 'type' || node.type === 'TSImportType'
-            || (node.specifiers?.length && node.specifiers.every(s => s.importKind === 'type'))) return;
-          const allowed = ['echarts/core', 'echarts/charts', 'echarts/components', 'echarts/renderers', 'echarts-wordcloud'];
-          const unsafeCharts = source === 'echarts/charts' && (!node.specifiers?.length
-            || node.specifiers.some(s => s.type === 'ImportNamespaceSpecifier' || s.imported?.name === 'LinesChart' || s.local?.name === 'LinesChart'));
-          if (!allowed.includes(source) || unsafeCharts) context.report({ node, messageId: 'unsafe' });
+          if (typeof source === 'string' && /^(echarts|echarts-wordcloud|ngx-echarts)(\/|$)/.test(source)) {
+            context.report({ node, messageId: 'unsafe' });
+          }
         }
         return {
           ImportDeclaration: node => check(node, node.source.value),
           ExportNamedDeclaration: node => check(node, node.source?.value),
           ExportAllDeclaration: node => check(node, node.source.value),
           ImportExpression: node => check(node, node.source.value),
+          TSImportType: node => check(node, (node.argument?.literal ?? node.argument)?.value),
           CallExpression: node => { if (node.callee.type === 'Identifier' && node.callee.name === 'require') check(node, node.arguments[0]?.value); },
         };
       },
