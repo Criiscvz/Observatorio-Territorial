@@ -49,7 +49,7 @@
     "@ngx-translate/http-loader": "^17.0.0",
     "express": "^5.1.0",
     "helmet": "^8.3.0",
-    "pdfjs-dist": "6.4.299",
+    "pdfjs-dist": "6.5.438",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -59,7 +59,7 @@
     "@angular/compiler-cli": "21.2.26",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.65.0",
-    "@tailwindcss/postcss": "^4.1.12",
+    "@tailwindcss/postcss": "^4.3.5",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
     "angular-eslint": "21.4.0",
@@ -67,7 +67,7 @@
     "jsdom": "^27.1.0",
     "postcss": "^8.5.3",
     "sharp": "^0.35.2",
-    "tailwindcss": "^4.1.12",
+    "tailwindcss": "^4.3.5",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.72.1",
     "vitest": "4.1.12"

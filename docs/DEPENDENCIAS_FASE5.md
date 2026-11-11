@@ -2,6 +2,10 @@
 
 Fecha: 5 de noviembre de 2026, America/Guayaquil.
 
+**Mantenimiento del 11 de noviembre:** la revisión conjunta de las diez propuestas
+de Dependabot y sus versiones se documenta en
+[Mantenimiento de dependencias](MANTENIMIENTO_DEPENDENCIAS_20261111.md).
+
 **Actualización del 10 de noviembre:** se retiró el análisis gráfico antiguo por
 decisión funcional. ECharts, ngx-echarts y echarts-wordcloud ya no están en el
 manifiesto ni en el lockfile del frontend. La auditoría npm del frontend devuelve

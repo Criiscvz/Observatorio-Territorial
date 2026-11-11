@@ -87,6 +87,13 @@ async function main() {
     writeFileSync(resolve(output, 'document.pdf'), Buffer.from(seeded.pdf, 'base64'), { mode: 0o600 });
     delete seeded.pdf;
     writeFileSync(resolve(output, 'fixture.json'), JSON.stringify({ ...fixture, ...seeded }, null, 2), { mode: 0o600 });
+    const mongoVerification = JSON.parse(compose(['exec', '-T', 'api', 'php'], {
+      input: readFileSync(resolve(root, 'scripts/e2e/verify-mongo.php'), 'utf8'),
+    }).stdout);
+    assert.equal(mongoVerification.ok, true);
+    assert.equal(mongoVerification.checks, 8);
+    writeFileSync(resolve(output, 'mongodb-results.json'), JSON.stringify(mongoVerification, null, 2));
+    console.log('E2E: MongoDB persistence, pagination, BSON dates and scoped deletion verified.');
     const health = await (await fetch(origin + '/api/health?deep=1')).json();
     assert.equal(health.ok, true); assert.deepEqual(health.services, { postgres: 'ok', mongodb: 'ok' });
     const operational = await checkHealth(origin);
