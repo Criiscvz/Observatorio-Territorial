@@ -1508,16 +1508,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.70.0",
+            "version": "v12.71.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "4a4554f4d81f4095c8ff1911ec8a58144b0ed71b"
+                "reference": "64dc24f5d965add4d402b4b8b64f59b561112af5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/4a4554f4d81f4095c8ff1911ec8a58144b0ed71b",
-                "reference": "4a4554f4d81f4095c8ff1911ec8a58144b0ed71b",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/64dc24f5d965add4d402b4b8b64f59b561112af5",
+                "reference": "64dc24f5d965add4d402b4b8b64f59b561112af5",
                 "shasum": ""
             },
             "require": {
@@ -1726,7 +1726,8 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2026-10-13T13:24:10+00:00"
+            "time": "2026-11-03T15:08:25+00:00",
+            "published-time": "2026-11-03T15:09:32+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -2859,28 +2860,29 @@
         },
         {
             "name": "mongodb/laravel-mongodb",
-            "version": "5.8.2",
+            "version": "5.12.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/mongodb/laravel-mongodb",
-                "reference": "179946ce5ee892c0c9227a12cc3c09db204c8e82"
+                "url": "https://github.com/mongodb/laravel-mongodb.git",
+                "reference": "faea6c1c6e34098becd7dd24f19ebaabb824aca0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mongodb/laravel-mongodb/zipball/179946ce5ee892c0c9227a12cc3c09db204c8e82",
-                "reference": "179946ce5ee892c0c9227a12cc3c09db204c8e82",
+                "url": "https://api.github.com/repos/mongodb/laravel-mongodb/zipball/faea6c1c6e34098becd7dd24f19ebaabb824aca0",
+                "reference": "faea6c1c6e34098becd7dd24f19ebaabb824aca0",
                 "shasum": ""
             },
             "require": {
                 "composer-runtime-api": "^2.0.0",
                 "ext-mongodb": "^1.21|^2",
-                "illuminate/cache": "^10.36|^11|^12|^13.0",
-                "illuminate/container": "^10.0|^11|^12|^13.0",
-                "illuminate/database": "^10.30|^11|^12|^13.0",
-                "illuminate/events": "^10.0|^11|^12|^13.0",
-                "illuminate/support": "^10.0|^11|^12|^13.0",
-                "mongodb/mongodb": "^1.21|^2",
-                "php": "^8.1"
+                "illuminate/cache": "^12|^13.0",
+                "illuminate/container": "^12|^13.0",
+                "illuminate/database": "^12.51|^13.0",
+                "illuminate/events": "^12|^13.0",
+                "illuminate/support": "^12|^13.0",
+                "mongodb/mongodb": "^1.21.2|^2.1.1",
+                "php": "^8.2",
+                "symfony/polyfill-php86": "^1.38"
             },
             "conflict": {
                 "illuminate/bus": "< 10.37.2"
@@ -2890,13 +2892,14 @@
             },
             "require-dev": {
                 "doctrine/coding-standard": "^12.0",
+                "laravel/boost": "^2.4",
                 "laravel/scout": "^10.3",
                 "league/flysystem-gridfs": "^3.28",
                 "league/flysystem-read-only": "^3.0",
                 "mockery/mockery": "^1.4.4",
-                "orchestra/testbench": "^8.0|^9.0|^10.0|^11.0",
+                "orchestra/testbench": "^10.0|^11.0",
                 "phpstan/phpstan": "^1.10|^2.1",
-                "phpunit/phpunit": "^10.3|^11.5.3|^12.5.12",
+                "phpunit/phpunit": "^11.5.3|^12.5.12",
                 "rector/rector": "^1.2|^2.3",
                 "spatie/laravel-query-builder": "^5.6|^6"
             },
@@ -2960,9 +2963,11 @@
             ],
             "support": {
                 "issues": "https://www.mongodb.com/support",
-                "security": "https://www.mongodb.com/security"
+                "security": "https://www.mongodb.com/security",
+                "source": "https://github.com/mongodb/laravel-mongodb/tree/5.12.0"
             },
-            "time": "2026-06-17T11:34:44+00:00"
+            "time": "2026-10-26T14:53:54+00:00",
+            "published-time": "2026-10-26T15:23:38+00:00"
         },
         {
             "name": "mongodb/mongodb",
@@ -6932,6 +6937,87 @@
             ],
             "time": "2026-09-25T15:46:47+00:00",
             "published-time": "2026-09-30T10:23:32+00:00"
+        },
+        {
+            "name": "symfony/polyfill-php86",
+            "version": "v1.43.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-php86.git",
+                "reference": "8840df45b24f33a49dc419fa18dc0057231ae1d8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-php86/zipball/8840df45b24f33a49dc419fa18dc0057231ae1d8",
+                "reference": "8840df45b24f33a49dc419fa18dc0057231ae1d8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php86\\": ""
+                },
+                "classmap": [
+                    "Resources/stubs"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill backporting some PHP 8.6+ features to lower PHP versions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-php86/tree/v1.43.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-09-25T15:46:47+00:00",
+            "published-time": "2026-09-30T10:23:43+00:00"
         },
         {
             "name": "symfony/polyfill-uuid",
