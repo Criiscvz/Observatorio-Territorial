@@ -267,4 +267,54 @@ class LegacyPublicationBridgeTest extends TestCase
         $this->getJson('/api/articulos/'.$old->id)->assertOk()->assertJsonPath('categoria', null);
         $this->getJson('/api/publico/publicaciones')->assertOk()->assertJsonPath('meta.total', 1)->assertJsonPath('data.0.categoria_id', null);
     }
+
+    public function test_current_and_legacy_pdf_urls_share_bytes_and_reader_headers(): void
+    {
+        [, $publication] = $this->convert('reportes');
+        $current = $this->get('/api/departamentos/publicaciones/'.$publication->id.'/download')->assertOk();
+        $legacy = $this->get('/api/reportes/fichas/bridge.pdf')->assertOk();
+        $current->assertStreamedContent("%PDF-1.4\nOriginal fixture\n%%EOF");
+        $legacy->assertStreamedContent($current->streamedContent());
+        foreach (['Content-Type', 'Cache-Control', 'Content-Disposition', 'X-Content-Type-Options'] as $header) {
+            $this->assertNotNull($current->headers->get($header));
+            $this->assertSame($current->headers->get($header), $legacy->headers->get($header));
+        }
+        $current->assertHeader('Content-Type', 'application/pdf')->assertHeaderMissing('Location');
+        $this->assertStringContainsString('no-store', $current->headers->get('Cache-Control'));
+    }
+
+    public function test_revoked_editor_cannot_open_the_stored_pdf_through_either_adapter(): void
+    {
+        [, $publication] = $this->convert('reportes');
+        $publication->update(['estado' => 'EN_REVISION']);
+        $this->editor->departamentos()->detach($this->department->id);
+        Sanctum::actingAs($this->editor);
+        $this->mock(\App\Infrastructure\Services\PublicationPdfStorage::class)->shouldNotReceive('readStream');
+        foreach (['/api/departamentos/publicaciones/'.$publication->id.'/download', '/api/reportes/fichas/bridge.pdf'] as $url) {
+            $this->getJson($url.'?context=management')->assertNotFound()->assertHeaderMissing('Location');
+        }
+    }
+
+    public function test_missing_imported_copy_never_falls_back_to_the_original_file_or_sharepoint(): void
+    {
+        [, $publication] = $this->convert('reportes');
+        $publication->update(['archivo_pdf' => null, 'sharepoint_url' => 'https://tenant.sharepoint.com/original.pdf']);
+        $this->mock(\App\Infrastructure\Services\PublicationPdfStorage::class)->shouldNotReceive('readStream');
+        foreach (['/api/departamentos/publicaciones/'.$publication->id.'/download', '/api/reportes/fichas/bridge.pdf'] as $url) {
+            $this->getJson($url)->assertStatus(409)->assertHeaderMissing('Location');
+        }
+        Storage::disk('phase2-rehearsal')->assertExists('public/fichas/bridge.pdf');
+    }
+
+    public function test_storage_outage_is_preserved_by_both_pdf_adapters(): void
+    {
+        [, $publication] = $this->convert('reportes');
+        $this->mock(\App\Infrastructure\Services\PublicationPdfStorage::class)
+            ->shouldReceive('readStream')->twice()->with($publication->archivo_pdf)
+            ->andThrow(new \Symfony\Component\HttpKernel\Exception\HttpException(503, 'Synthetic storage outage.'));
+        foreach (['/api/departamentos/publicaciones/'.$publication->id.'/download', '/api/reportes/fichas/bridge.pdf'] as $url) {
+            $this->getJson($url)->assertStatus(503)->assertHeaderMissing('Location');
+        }
+        Storage::disk('phase2-rehearsal')->assertExists('public/fichas/bridge.pdf');
+    }
 }

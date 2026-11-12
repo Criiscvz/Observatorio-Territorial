@@ -7,6 +7,8 @@ namespace App\Presentation\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Application\Publicaciones\PublicationReviewWorkflow;
 use App\Application\Publicaciones\SharePointPublicationImporter;
+use App\Application\Publicaciones\ReadPublicationPdf;
+use App\Presentation\Http\Responses\PublicationPdfResponse;
 use App\Infrastructure\Services\PublicationPdfStorage;
 use App\Models\Departamento;
 use App\Models\AtlasCategoria;
@@ -26,10 +28,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ObservatorioPublicacionController extends Controller
 {
     private const ESTADO_PUBLICACION = 'PUBLICACION';
-    private const SUBSCRIBER_ROLE = 'SUBSCRIBER';
 
     public function __construct(private readonly SharePointService $sharePointService, private readonly PublicationReviewWorkflow $reviewWorkflow,
-        private readonly PublicationPdfStorage $pdfStorage, private readonly SharePointPublicationImporter $sharePointImporter)
+        private readonly PublicationPdfStorage $pdfStorage, private readonly SharePointPublicationImporter $sharePointImporter,
+        private readonly ReadPublicationPdf $readPdf, private readonly PublicationPdfResponse $pdfResponse)
     {
     }
 
@@ -274,33 +276,12 @@ class ObservatorioPublicacionController extends Controller
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response()->setStatusCode(201);
     }
 
-    public function download(Request $request, ObservatorioPublicacion $publicacion): StreamedResponse|\Illuminate\Http\RedirectResponse
+    public function download(Request $request, ObservatorioPublicacion $publicacion): StreamedResponse
     {
-        if ($publicacion->departamento) {
-            $this->ensureCanView($request, $publicacion->departamento);
-        }
-        $this->ensureCanViewPublication($request, $publicacion);
-        abort_if(! $publicacion->archivo_pdf && $publicacion->sharepoint_url, 409,
-            'Este PDF no tiene una copia guardada. Administración debe importarlo nuevamente desde SharePoint.');
-
-        abort_unless($publicacion->archivo_pdf, 404, 'Esta publicación no tiene un PDF guardado. Un administrador debe volver a subirlo.');
-
-        $filename = $publicacion->nombre_archivo_original ?? $publicacion->titulo.'.pdf';
-        $safeFilename = str_replace('"', '\"', $filename);
-
-        $stream = $this->pdfStorage->readStream($publicacion->archivo_pdf);
-
-        return response()->stream(function () use ($stream): void {
-            try { fpassthru($stream); }
-            finally { fclose($stream); }
-        }, 200, [
-            'Content-Type' => 'application/pdf',
-            'Cache-Control' => 'private, no-store',
-            'X-Content-Type-Options' => 'nosniff',
-            'Content-Disposition' => 'inline; filename="'.$safeFilename.'"',
-        ]);
+        $file = $this->readPdf->execute($request->user('sanctum') ?: $request->user(),
+            $publicacion, $request->query('context') === 'management');
+        return $this->pdfResponse->make($file);
     }
-
 
     public function update(UpdatePublicacionRequest $request, ObservatorioPublicacion $publicacion): JsonResponse
     {
@@ -693,42 +674,10 @@ class ObservatorioPublicacionController extends Controller
 
     }
 
-    private function ensureCanViewPublication(Request $request, ObservatorioPublicacion $publicacion): void
-    {
-        $user = $request->user('sanctum') ?: $request->user();
-        abort_if($publicacion->eliminado_legado_at !== null, 404);
-        if ($user?->rol === 'ADMIN') {
-            return;
-        }
-        // A soft-deleted parent must not turn a private/assigned resource into a global download.
-        abort_if(($publicacion->departamento_id !== null && ! $publicacion->departamento)
-            || ($publicacion->departamento_id === null && $publicacion->tipo !== 'ATLAS'), 404);
-        if ($request->query('context') === 'management' && $user?->canReadPublicationForManagement($publicacion)) {
-            return;
-        }
-
-        abort_if($publicacion->hasPrivateLegacyAccess(), 404);
-
-        abort_unless($publicacion->estado === self::ESTADO_PUBLICACION, 404, 'La publicación no está disponible.');
-
-        if ($publicacion->tipo === 'ATLAS' && $publicacion->atlas_categoria_id) {
-            abort_unless($publicacion->atlasCategoria?->publico === true, 404, 'La publicación no está disponible.');
-        }
-
-        if ($publicacion->solo_suscriptores) {
-            abort_unless($this->isSubscriber($user), 403, 'Esta publicación es solo para suscriptores.');
-        }
-    }
-
     private function ensureCanManage(Request $request, Departamento $departamento): void
     {
         abort_unless($request->user()->can('create', [ObservatorioPublicacion::class, $departamento]), 403,
             'No tienes acceso de edición a este observatorio.');
-    }
-
-    private function isSubscriber($user): bool
-    {
-        return $user && in_array($user->rol, [self::SUBSCRIBER_ROLE, 'SUSCRIPTOR', 'SUBSCRIPTOR'], true);
     }
 
 }

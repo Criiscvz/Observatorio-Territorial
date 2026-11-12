@@ -44,7 +44,8 @@ construidas dinámicamente en ejecución.
 ## Backend
 
 `composer analyse` ejecuta PHPStan 2.3.4 en nivel 5 sobre `app/Domain` y
-`PublicationReviewDecision`; desde el bloque del 8 de noviembre incluye también
+`PublicationReviewDecision`; el 12 de noviembre incorpora también el DTO
+`PublicationPdf` y su adaptador `PublicationPdfResponse`. Desde el bloque del 8 de noviembre incluye también
 `Infrastructure/Observability` y el middleware `ObserveRequest`. No arranca Laravel ni consulta bases. No usa
 baseline, exclusiones de archivos ni `ignoreErrors`. El alcance es explícito:
 todavía no equivale a analizar todos los controladores, modelos y casos de uso.
@@ -61,15 +62,18 @@ imports agrupados y nombres completos; no se basan en buscar texto en comentario
 - Se conservan los contratos existentes de Collection y paginación: no se
   certifica aquí una arquitectura completamente independiente de Laravel.
 
-Se registran dos excepciones previas y exactas, sin comodines:
+Las dos excepciones previas se eliminan el 12 de noviembre de 2026:
 
-| Archivo | Dependencia existente | Tratamiento posterior |
+| Archivo | Dependencia retirada | Sustitución |
 |---|---|---|
-| `Application/Dashboard/UseCases/GetUnivariableStatsUseCase.php` | `Presentation/Http/Requests/Stats/StatsRequest` | Separar compatibilidad de gráficos del FormRequest al revisar Barómetro/datasets. |
-| `Application/Publicaciones/LegacyPublicationBridge.php` | `Presentation/Http/Controllers/Api/ObservatorioPublicacionController` | Extraer el caso de uso compartido de descarga y verificar permisos, respuestas y almacenamiento antes de reemplazar el adaptador. |
+| `Application/Dashboard/UseCases/GetUnivariableStatsUseCase.php` | `Presentation/Http/Requests/Stats/StatsRequest` | `Domain/Statistics/UnivariableChartTypes`, compartido con el formulario HTTP; conserva el contrato de la API retenida. |
+| `Application/Publicaciones/LegacyPublicationBridge.php` | `Presentation/Http/Controllers/Api/ObservatorioPublicacionController` | `ReadPublicationPdf` prepara un DTO autorizado; los adaptadores HTTP comparten `PublicationPdfResponse` para transmitirlo. |
 
-La prueba falla si aparece otra dependencia prohibida o si una excepción deja
-de existir sin retirarla de la lista. Las excepciones no se ignoran globalmente.
+El recorrido AST exige ahora cero infracciones en cada archivo de dominio y
+aplicación, sin lista de excepciones. Las pruebas negativas también comprueban
+que no reaparezcan las dependencias concretas del formulario y del controlador.
+Se conservan los límites declarados de Laravel/Eloquent y del alcance de PHPStan.
+Ver [cambios y comprobaciones del cierre](CIERRE_EXCEPCIONES_ARQUITECTURA_20261112.md).
 
 ## CI e integración
 
