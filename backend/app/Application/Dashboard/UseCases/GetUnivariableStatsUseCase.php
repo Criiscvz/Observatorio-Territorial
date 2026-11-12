@@ -10,7 +10,7 @@ use App\Domain\Departamento\Repositories\DepartamentoRepositoryInterface;
 use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
 use App\Domain\Dataset\Repositories\VariableMetadatoRepositoryInterface;
 use App\Domain\Statistics\Services\StatisticsServiceInterface;
-use App\Presentation\Http\Requests\Stats\StatsRequest;
+use App\Domain\Statistics\UnivariableChartTypes;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -47,11 +47,11 @@ class GetUnivariableStatsUseCase
         }
 
         // Determinar tipo de gráfico
-        $defaultChartType = $this->getDefaultChartType($variable->tipoDato);
+        $defaultChartType = UnivariableChartTypes::defaultFor($variable->tipoDato);
         $chartType = $dto->chartType ?? $defaultChartType;
 
         // Validar compatibilidad
-        if (!StatsRequest::isChartCompatible($chartType, $variable->tipoDato)) {
+        if (!UnivariableChartTypes::isCompatible($chartType, $variable->tipoDato)) {
             $chartType = $defaultChartType;
         }
 
@@ -103,15 +103,5 @@ class GetUnivariableStatsUseCase
             data: $result['data'],
             stats: $result['stats'],
         );
-    }
-
-    private function getDefaultChartType(string $tipoDato): string
-    {
-        return match ($tipoDato) {
-            'NUMERICO' => 'histogram',
-            'CATEGORICO' => 'pie',
-            'FECHA' => 'line',
-            default => 'bar',
-        };
     }
 }

@@ -7,6 +7,7 @@ namespace App\Presentation\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\ReporteModel;
 use App\Support\Authorization\DepartamentoResourceAuthorizer;
+use App\Presentation\Http\Responses\PublicationPdfResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,7 @@ class ReporteController extends Controller
 {
     public function __construct(
         private readonly DepartamentoResourceAuthorizer $resourceAuthorizer,
+        private readonly PublicationPdfResponse $pdfResponse,
     ) {}
 
     #[OA\Get(
@@ -259,8 +261,8 @@ class ReporteController extends Controller
                 ->header('Cross-Origin-Resource-Policy', 'cross-origin');
         }
 
-        if ($response = app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->file($request, $filename)) {
-            return $response;
+        if ($file = app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->file($request, $filename)) {
+            return $this->pdfResponse->make($file);
         }
         $path = 'public/fichas/' . $filename;
 

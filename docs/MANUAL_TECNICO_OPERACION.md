@@ -16,7 +16,7 @@ flowchart LR
   A --> L[Logs JSON y spans locales]
 ```
 
-El frontend se publica como SPA con API del mismo origen en el ensayo portable; no necesita un servidor Node en runtime. La API aplica autenticación por sesión/cookies y CSRF, autorización por rol y observatorio, validación, publicación y lectura de archivos. La separación de dominio/aplicación/infraestructura es gradual: las excepciones de arquitectura conocidas están documentadas en [calidad CI](CALIDAD_CI_FASE5.md).
+El frontend se publica como SPA con API del mismo origen en el ensayo portable; no necesita un servidor Node en runtime. La API aplica autenticación por sesión/cookies y CSRF, autorización por rol y observatorio, validación, publicación y lectura de archivos. La separación de dominio/aplicación/infraestructura es gradual: el control AST ya no admite excepciones de presentación en aplicación, y los límites restantes de Laravel/Eloquent y del análisis estático están documentados en [calidad CI](CALIDAD_CI_FASE5.md).
 
 PostgreSQL conserva usuarios, roles/asignaciones, observatorios, categorías y publicaciones nativas, decisiones y mapas/recibos de compatibilidad. MongoDB conserva los datos/documentos de los módulos heredados. Los PDF e imágenes son archivos, no deben suponerse incluidos en un dump SQL. Las importaciones PDF de SharePoint guardan una copia gestionada; un enlace público Power BI sigue dependiendo de Microsoft. Atlas publica enlaces mediante su biblioteca de categorías.
 
@@ -139,4 +139,4 @@ Los mensajes nativos de arranque y herramientas CLI pueden quedar fuera de la re
 
 ## Pendientes de aceptación
 
-Confirmación de host/proxy/TLS/dominio y recursos; almacenamiento persistente y backups programados; IAM/red/retención de logs; monitoreo/alertas y posible Collector; RPO/RTO medidos; pruebas de correo, OAuth y Microsoft reales; CI remoto e integración de las ramas locales. El análisis estático de otras capas y dos dependencias de presentación conocidas siguen pendientes. El análisis ECharts y su excepción se retiraron el 10 de noviembre; consultar [alcance y comprobaciones](RETIRO_ANALISIS_GRAFICO_20261110.md).
+Confirmación de host/proxy/TLS/dominio y recursos; almacenamiento persistente y backups programados; IAM/red/retención de logs; monitoreo/alertas y posible Collector; RPO/RTO medidos; pruebas de correo, OAuth y Microsoft reales; CI remoto e integración de cada revisión. Sigue pendiente ampliar el análisis estático de otras capas. Las dos dependencias de presentación se retiran en el [cierre del 12 de noviembre](CIERRE_EXCEPCIONES_ARQUITECTURA_20261112.md). El análisis ECharts y su excepción se retiraron el 10 de noviembre; consultar [alcance y comprobaciones](RETIRO_ANALISIS_GRAFICO_20261110.md).

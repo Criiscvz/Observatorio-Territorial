@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Application\Publicaciones;
 
 use App\Models\ObservatorioPublicacion;
-use App\Presentation\Http\Controllers\Api\ObservatorioPublicacionController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +17,8 @@ use Throwable;
 /** Routes old identities to their single destination. Never creates a conversion. */
 final class LegacyPublicationBridge
 {
-    public function __construct(private readonly PublicationReviewWorkflow $reviewWorkflow, private readonly PublicationPdfStorage $pdfStorage) {}
+    public function __construct(private readonly PublicationReviewWorkflow $reviewWorkflow, private readonly PublicationPdfStorage $pdfStorage,
+        private readonly ReadPublicationPdf $readPdf) {}
 
     public function resolve(string $source, string $id, bool $lock = false): ?array
     {
@@ -230,7 +230,7 @@ final class LegacyPublicationBridge
         }
     }
 
-    public function file(Request $request, string $filename): mixed
+    public function file(Request $request, string $filename): ?PublicationPdf
     {
         if (! Schema::hasTable('publication_origins')) { return null; }
         $maps = DB::table('publication_origins')->where('source_table', 'reportes')->where('legacy_file_name', $filename)->get();
@@ -244,7 +244,8 @@ final class LegacyPublicationBridge
         $resolved = $this->resolve('reportes', $map->source_id);
         abort_unless($resolved, 404);
         $this->authorizeRead($request, $resolved['publication']);
-        return app(ObservatorioPublicacionController::class)->download($request, $resolved['publication']);
+        return $this->readPdf->execute($request->user('sanctum') ?: $request->user(),
+            $resolved['publication'], $request->query('context') === 'management');
     }
 
     private function row(Request $request, string $source, array $resolved): array
