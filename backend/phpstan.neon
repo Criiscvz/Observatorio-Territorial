@@ -3,6 +3,8 @@ parameters:
     paths:
         - app/Domain
         - app/Application/Publicaciones/PublicationReviewDecision.php
+        - app/Application/Publicaciones/PublicationPdf.php
+        - app/Presentation/Http/Responses/PublicationPdfResponse.php
         - app/Infrastructure/Observability
         - app/Http/Middleware/ObserveRequest.php
     tmpDir: storage/framework/cache/phpstan

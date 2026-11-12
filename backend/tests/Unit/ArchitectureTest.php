@@ -11,14 +11,6 @@ final class ArchitectureTest extends TestCase
 {
     public function test_existing_domain_and_application_follow_dependency_direction(): void
     {
-        // Dataset/Barometer redesign is deferred. This existing dependency
-        // must not spread; removing it later also requires removing its entry.
-        $exceptions = [
-            'Application/Dashboard/UseCases/GetUnivariableStatsUseCase.php' => ['App\\Presentation\\Http\\Requests\\Stats\\StatsRequest'],
-            // Existing compatibility PDF adapter; replacing its controller call
-            // needs a dedicated download-use-case change and regression tests.
-            'Application/Publicaciones/LegacyPublicationBridge.php' => ['App\\Presentation\\Http\\Controllers\\Api\\ObservatorioPublicacionController'],
-        ];
         $files = 0;
         foreach (['Domain', 'Application'] as $layer) {
             $directory = dirname(__DIR__, 2).'/app/'.$layer;
@@ -26,12 +18,10 @@ final class ArchitectureTest extends TestCase
                 if ($file->getExtension() !== 'php') continue;
                 $relative = $layer.'/'.str_replace('\\', '/', substr($file->getPathname(), strlen($directory) + 1));
                 $actual = DependencyDirection::violations(file_get_contents($file->getPathname()), $layer);
-                self::assertSame($exceptions[$relative] ?? [], $actual, $relative);
-                unset($exceptions[$relative]);
+                self::assertSame([], $actual, $relative);
                 $files++;
             }
         }
-        self::assertSame([], $exceptions, 'Remove stale architecture exceptions.');
         self::assertGreaterThan(50, $files, 'Architecture scope unexpectedly empty.');
     }
 
@@ -51,6 +41,9 @@ final class ArchitectureTest extends TestCase
     {
         self::assertSame(['App\\Presentation\\Http\\Requests\\Stats\\StatsRequest'], DependencyDirection::violations(
             '<?php \\App\\Presentation\\Http\\Requests\\Stats\\StatsRequest::isChartCompatible();', 'Application'
+        ));
+        self::assertSame(['App\\Presentation\\Http\\Controllers\\Api\\ObservatorioPublicacionController'], DependencyDirection::violations(
+            '<?php use App\\Presentation\\Http\\Controllers\\Api\\ObservatorioPublicacionController; ObservatorioPublicacionController::class;', 'Application'
         ));
     }
 

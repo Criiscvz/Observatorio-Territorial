@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Requests\Stats;
 
+use App\Domain\Statistics\UnivariableChartTypes;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StatsRequest extends FormRequest
 {
     // Gráficos para variables numéricas
-    public const NUMERIC_CHARTS = ['histogram', 'bar', 'line', 'area', 'gauge', 'horizontal_bar', 'pictorial_bar'];
+    public const NUMERIC_CHARTS = UnivariableChartTypes::NUMERIC;
 
     // Gráficos para variables categóricas
-    public const CATEGORICAL_CHARTS = ['bar', 'pie', 'donut', 'funnel', 'treemap', 'radar', 'line', 'area', 'horizontal_bar', 'rose', 'polar_bar', 'pictorial_bar', 'wordcloud'];
+    public const CATEGORICAL_CHARTS = UnivariableChartTypes::CATEGORICAL;
 
     // Todos los gráficos univariables permitidos
-    public const ALL_UNIVARIABLE_CHARTS = ['bar', 'pie', 'donut', 'histogram', 'line', 'area', 'funnel', 'treemap', 'gauge', 'radar', 'wordcloud', 'horizontal_bar', 'rose', 'polar_bar', 'pictorial_bar'];
+    public const ALL_UNIVARIABLE_CHARTS = UnivariableChartTypes::ALL;
 
     public function authorize(): bool
     {
@@ -45,12 +46,7 @@ class StatsRequest extends FormRequest
      */
     public static function getCompatibleCharts(string $tipoDato): array
     {
-        return match ($tipoDato) {
-            'NUMERICO' => self::NUMERIC_CHARTS,
-            'CATEGORICO', 'TEXTO' => self::CATEGORICAL_CHARTS,
-            'FECHA' => ['line', 'area', 'bar'],
-            default => self::CATEGORICAL_CHARTS,
-        };
+        return UnivariableChartTypes::compatibleWith($tipoDato);
     }
 
     /**
@@ -58,6 +54,6 @@ class StatsRequest extends FormRequest
      */
     public static function isChartCompatible(string $chartType, string $tipoDato): bool
     {
-        return in_array($chartType, self::getCompatibleCharts($tipoDato));
+        return UnivariableChartTypes::isCompatible($chartType, $tipoDato);
     }
 }
