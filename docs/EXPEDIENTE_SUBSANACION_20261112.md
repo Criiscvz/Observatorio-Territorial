@@ -6,9 +6,9 @@ Este documento organiza la evidencia del proyecto y los pendientes para una futu
 
 ## Resultado del cotejo
 
-Hay **ocho NC con evidencia técnica disponible (V)** y **siete parciales (P)**. V propone reevaluación dentro del alcance descrito; P identifica una exigencia sin completar/aceptar. No se calcula avance global a partir de estas cantidades.
+Hay **siete NC con evidencia técnica disponible (V)** y **ocho parciales (P)**. V propone reevaluación dentro del alcance descrito; P identifica una exigencia sin completar/aceptar. No se calcula avance global a partir de estas cantidades.
 
-Las brechas más concretas son: purga histórica no ejecutada; tablas/modelos y servicios de compatibilidad conservados; tres controladores de datasets todavía sin Resources/DTOs; alcance arquitectónico/calidad aún parcial; IaC/alojamiento sin confirmar; observabilidad y custodia institucional incompletas. Las fuentes conservan su severidad original.
+Las brechas más concretas son: purga histórica no ejecutada; tablas/modelos y servicios de compatibilidad conservados; tres controladores de datasets todavía sin Resources/DTOs; alcance arquitectónico/calidad aún parcial; vigencia de librerías de seis meses aún sin acreditar; IaC/alojamiento sin confirmar; observabilidad y custodia institucional incompletas. Las fuentes conservan su severidad original.
 
 La siguiente implementación acotada recomendada es **NC-09: contratos y validaciones de CategoriaDataset, DatasetFuente y GraficoPredeterminado**, conservando sus consumidores y permisos. No requiere restaurar la interfaz gráfica retirada ni esperar el rediseño visual de Barómetro.
 

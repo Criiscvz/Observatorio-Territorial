@@ -13,7 +13,7 @@ Corte: **12 de noviembre de 2026**, America/Guayaquil. Corresponde a la fase 6 d
 
 **P — parcial:** existe avance, pero queda un requisito literal, una ampliación técnica o una decisión institucional sin aceptar. Una justificación del proyecto no es una excepción aprobada por DIIT.
 
-Resultado documental: **8 V y 7 P; ninguna recepción institucional acreditada**. No son porcentajes de cobertura, de seguridad o de avance global. Las severidades se conservan del PDF original, sin recalificarlas como riesgo residual.
+Resultado documental: **7 V y 8 P; ninguna recepción institucional acreditada**. No son porcentajes de cobertura, de seguridad o de avance global. Las severidades se conservan del PDF original, sin recalificarlas como riesgo residual.
 
 | NC | Severidad original | Tema | Estado |
 |---|---|---|---|
@@ -28,7 +28,7 @@ Resultado documental: **8 V y 7 P; ninguna recepción institucional acreditada**
 | NC-09 | Alta | DTOs y respuestas API | P |
 | NC-10 | Alta | Sesión e interceptor | V |
 | NC-11 | Alta | Cabeceras web y SSR | V |
-| NC-12 | Media | Dependencias | V |
+| NC-12 | Media | Dependencias | P |
 | NC-13 | Media | Telemetría | P |
 | NC-14 | Media | Permisos de archivo y configuración | V |
 | NC-15 | Baja | Higiene del repositorio | P |
@@ -133,13 +133,15 @@ Resultado documental: **8 V y 7 P; ninguna recepción institucional acreditada**
 
 **Límite / continuidad:** producción usa SPA en Vercel, no el servidor Express opcional. Comprobar cabeceras reales del proxy del futuro host; no declarar desplegado SSR por la sola presencia de su código. No desactivar CSP/nosniff para corregir visores.
 
-### NC-12 · V · Dependencias
+### NC-12 · P · Dependencias
 
-**Exigencia:** retirar `install`, resolver parches/gestor de paquetes y mantener dependencias (PDF p. 5; reportes sección 2.3).
+**Exigencia:** retirar `install`, resolver parches/gestor de paquetes y mantener dependencias; el PDF también establece vigencia de librerías ≤ seis meses (PDF pp. 1–2 y 5; reportes sección 2.3).
 
 **Evidencia:** npm único, locks, retiro de Bun y `install`; [retiro del análisis gráfico antiguo](RETIRO_ANALISIS_GRAFICO_20261110.md) y [mantenimiento del 11 de noviembre](MANTENIMIENTO_DEPENDENCIAS_20261111.md). Diez propuestas de Dependabot revisadas, con pruebas de la combinación; auditorías npm/Composer sin avisos en las ejecuciones enlazadas. Dependabot está activo.
 
-**Límite / continuidad:** cero avisos conocidos en esa ejecución no garantiza ausencia de vulnerabilidades futuras. No calificar abandono por antigüedad aislada. Mantener revisión, auditorías y comprobación real de requisitos; la instalación heredada que ignora plataforma sigue en A-05.
+**Pendiente confirmado:** `fakerphp/faker` v1.24.1 conserva en el lockfile fecha `2024-11-21`. Es una dependencia de desarrollo y no se instala en la imagen de producción sin dev, pero no existe aceptación de DIIT de esa excepción a la vigencia. Las auditorías sin avisos no satisfacen por sí solas el límite de seis meses.
+
+**Salida / continuidad:** inventariar vigencia y soporte de dependencias de producción/desarrollo, evaluar actualización o sustitución y obtener tratamiento aceptado por DIIT cuando no haya relevo compatible. No calificar una biblioteca como vulnerable o abandonada solo por su edad. Mantener auditorías y requisitos reales; el instalador heredado que ignora plataforma sigue en A-05. Proyecto/DIIT.
 
 ### NC-13 · P · Telemetría
 
@@ -194,7 +196,7 @@ Estas filas evitan perder requisitos que el cuadro de 15 NC resume de forma gene
 2. **A-08 y A-03:** política de contraseñas/recuperación, medición de cobertura y ampliación gradual de calidad, sin afectar accesos existentes.
 3. **NC-03/15 y NC-04/A-07:** acordar por separado el tratamiento histórico y el retiro de compatibilidad. Requieren inventario, respaldo y ensayo; no se ejecutan por estar enumerados aquí.
 4. **DIIT:** confirmar ficha técnica y alcance para NC-07, A-04/A-06; después cerrar runtime/migraciones, telemetría/custodia y pruebas de proveedores.
-5. Actualizar esta matriz con resultados de la misma revisión, integrar por PR con CI y solicitar reevaluación. Ninguna de las siete P se convierte en V por una aprobación genérica del expediente.
+5. Actualizar esta matriz con resultados de la misma revisión, integrar por PR con CI y solicitar reevaluación. Ninguna de las ocho P se convierte en V por una aprobación genérica del expediente.
 
 ## Fuentes e integridad
 
