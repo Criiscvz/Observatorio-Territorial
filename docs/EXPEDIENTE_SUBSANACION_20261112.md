@@ -2,6 +2,9 @@
 
 **Preparación de fase 6 · 12 de noviembre de 2026 · America/Guayaquil.**
 
+Seguimiento posterior: [implementación técnica de NC-09 del 13 de noviembre](CONTRATOS_DATASETS_NC09_20261113.md).
+Este expediente conserva las versiones y resultados de su corte original.
+
 Este documento organiza la evidencia del proyecto y los pendientes para una futura revisión por DIIT. No es acta de recepción ni certificación de cumplimiento total. No se ha enviado el expediente a DIIT. La [matriz actual](MATRIZ_CUMPLIMIENTO_20261112.md) contrasta literalmente las 15 NC del PDF y doce observaciones adicionales de los dos reportes.
 
 ## Resultado del cotejo

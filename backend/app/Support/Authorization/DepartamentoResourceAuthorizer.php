@@ -20,19 +20,40 @@ final class DepartamentoResourceAuthorizer
 {
     public function ensureCanManageDepartamento(User $user, ?string $departamentoId): void
     {
-        if ($user->isAdmin()) {
-            return;
+        abort_unless($this->canManageDepartamento($user, $departamentoId), 403,
+            'No tienes permisos de edición para este observatorio.');
+    }
+
+    public function canManageDepartamento(?User $user, ?string $departamentoId): bool
+    {
+        if (! $user || ! $user->is_active || $user->trashed()) {
+            return false;
         }
 
-        $canManage = $user->isEditor()
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isEditor()
             && $departamentoId !== null
             && DB::table('usuario_departamento')
                 ->where('user_id', $user->id)
                 ->where('departamento_id', $departamentoId)
                 ->whereIn('rol', ['ADMIN', 'EDITOR'])
                 ->exists();
+    }
 
-        abort_unless($canManage, 403, 'No tienes permisos de edición para este observatorio.');
+    /** Public datasets are readable; private/incomplete ones require current management access. */
+    public function findReadableDataset(?User $user, string $datasetId): DatasetModel
+    {
+        $dataset = DatasetModel::with('departamento')->find($datasetId);
+        abort_unless($dataset && $dataset->departamento, 404, 'Dataset no encontrado.');
+
+        $public = $dataset->estado === 'COMPLETADO' && $dataset->departamento->publico;
+        abort_unless($public || $this->canManageDepartamento($user, $dataset->departamento_id),
+            404, 'Dataset no encontrado.');
+
+        return $dataset;
     }
 
     public function findManagedDataset(User $user, string $datasetId): DatasetModel
