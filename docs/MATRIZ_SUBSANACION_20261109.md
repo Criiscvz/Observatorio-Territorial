@@ -1,5 +1,10 @@
 # Revisión conjunta de subsanación
 
+> Referencia histórica. Para el cotejo completo con los tres documentos originales,
+> los requisitos literales pendientes y la evidencia del 12 de noviembre, consultar
+> la [matriz actual](MATRIZ_CUMPLIMIENTO_20261112.md) y el
+> [expediente para reevaluación](EXPEDIENTE_SUBSANACION_20261112.md).
+
 Corte: 9 de noviembre de 2026, America/Guayaquil. Base publicada comprobada en GitHub: `pruebas-rediseno`, `0ba95c9`. Esta revisión reúne los bloques locales de fases 4–5 para validarlos mediante PR; no declara una aceptación de DIIT ni una publicación de esos bloques.
 
 Actualizaciones posteriores: el [mantenimiento del 11 de noviembre](MANTENIMIENTO_DEPENDENCIAS_20261111.md)
