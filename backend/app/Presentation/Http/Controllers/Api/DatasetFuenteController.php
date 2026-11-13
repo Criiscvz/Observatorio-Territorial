@@ -6,6 +6,7 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\DatasetFuenteModel;
+use App\Presentation\Http\Resources\Dataset\DatasetFuenteResource;
 use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,13 +31,14 @@ class DatasetFuenteController extends Controller
             new OA\Response(response: 200, description: 'Lista de fuentes')
         ]
     )]
-    public function index(string $datasetId): JsonResponse
+    public function index(Request $request, string $datasetId): JsonResponse
     {
+        $this->resourceAuthorizer->findReadableDataset($request->user('sanctum'), $datasetId);
         $fuentes = DatasetFuenteModel::where('dataset_id', $datasetId)
             ->orderBy('orden')
             ->get();
 
-        return response()->json($fuentes);
+        return response()->json(DatasetFuenteResource::collection($fuentes)->resolve($request));
     }
 
     #[OA\Post(
@@ -68,13 +70,13 @@ class DatasetFuenteController extends Controller
     {
         // Normalize URL: add https:// if no protocol specified
         $input = $request->all();
-        if (!empty($input['url']) && !preg_match('#^https?://#i', $input['url'])) {
+        if (is_string($input['url'] ?? null) && $input['url'] !== '' && !preg_match('#^https?://#i', $input['url'])) {
             $input['url'] = 'https://' . $input['url'];
         }
 
         $validator = Validator::make($input, [
             'titulo' => 'required|string|max:255',
-            'url' => 'required|url|max:500',
+            'url' => 'required|string|url:http,https|max:500',
             'descripcion' => 'nullable|string|max:500',
             'orden' => 'nullable|integer|min:0',
         ]);
@@ -92,7 +94,7 @@ class DatasetFuenteController extends Controller
 
         $fuente = DatasetFuenteModel::create($data);
 
-        return response()->json($fuente, 201);
+        return response()->json((new DatasetFuenteResource($fuente))->resolve($request), 201);
     }
 
     #[OA\Put(
@@ -120,13 +122,13 @@ class DatasetFuenteController extends Controller
 
         // Normalize URL: add https:// if no protocol specified
         $input = $request->all();
-        if (!empty($input['url']) && !preg_match('#^https?://#i', $input['url'])) {
+        if (is_string($input['url'] ?? null) && $input['url'] !== '' && !preg_match('#^https?://#i', $input['url'])) {
             $input['url'] = 'https://' . $input['url'];
         }
 
         $validator = Validator::make($input, [
             'titulo' => 'sometimes|string|max:255',
-            'url' => 'sometimes|url|max:500',
+            'url' => 'sometimes|string|url:http,https|max:500',
             'descripcion' => 'nullable|string|max:500',
             'orden' => 'nullable|integer|min:0',
         ]);
@@ -140,7 +142,7 @@ class DatasetFuenteController extends Controller
 
         $fuente->update($validator->validated());
 
-        return response()->json($fuente);
+        return response()->json((new DatasetFuenteResource($fuente))->resolve($request));
     }
 
     #[OA\Delete(

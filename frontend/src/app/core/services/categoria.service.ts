@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { CategoriaDataset, Dataset, DatasetFuente, GraficoPredeterminado } from '@core/models';
-import { Observable } from 'rxjs';
+import { CategoriaDataset, CategoriaDatasetItem, CategoriaDatasetsResponse, DatasetFuente, GraficoPredeterminado } from '@core/models';
+import { map, Observable } from 'rxjs';
 import { ApiService } from './api.service';
 
 @Injectable({
@@ -19,8 +19,9 @@ export class CategoriaService {
     return this.api.get<CategoriaDataset>(`/categorias/${codigo}`);
   }
 
-  getDatasetsByCategoria(codigo: string): Observable<Dataset[]> {
-    return this.api.get<Dataset[]>(`/categorias/${codigo}/datasets`);
+  getDatasetsByCategoria(codigo: string): Observable<CategoriaDatasetItem[]> {
+    return this.api.get<CategoriaDatasetsResponse>(`/categorias/${codigo}/datasets`)
+      .pipe(map(response => response.datasets));
   }
 
   // ─── Fuentes de Dataset ───

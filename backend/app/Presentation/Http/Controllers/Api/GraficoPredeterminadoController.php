@@ -6,6 +6,7 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\GraficoPredeterminadoModel;
+use App\Presentation\Http\Resources\Dataset\GraficoPredeterminadoResource;
 use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -30,15 +31,22 @@ class GraficoPredeterminadoController extends Controller
             new OA\Response(response: 200, description: 'Lista de gráficos predeterminados')
         ]
     )]
-    public function index(string $datasetId): JsonResponse
+    public function index(Request $request, string $datasetId): JsonResponse
     {
+        $user = $request->user('sanctum');
+        $dataset = $this->resourceAuthorizer->findReadableDataset($user, $datasetId);
+        $canManage = $this->resourceAuthorizer->canManageDepartamento($user, $dataset->departamento_id);
+        $visibleVariable = fn ($q) => $q->where('dataset_id', $datasetId)
+            ->when(! $canManage, fn ($q) => $q->where('es_visible', true));
         $graficos = GraficoPredeterminadoModel::where('dataset_id', $datasetId)
             ->where('activo', true)
+            ->whereHas('variableX', $visibleVariable)
+            ->where(fn ($q) => $q->whereNull('variable_y_id')->orWhereHas('variableY', $visibleVariable))
             ->with(['variableX:id,nombre_columna,nombre_original,tipo_dato', 'variableY:id,nombre_columna,nombre_original,tipo_dato'])
             ->orderBy('orden')
             ->get();
 
-        return response()->json($graficos);
+        return response()->json(GraficoPredeterminadoResource::collection($graficos)->resolve($request));
     }
 
     #[OA\Post(
@@ -108,7 +116,10 @@ class GraficoPredeterminadoController extends Controller
 
         $grafico = GraficoPredeterminadoModel::create($data);
 
-        return response()->json($grafico->load(['variableX', 'variableY']), 201);
+        return response()->json((new GraficoPredeterminadoResource($grafico->load([
+            'variableX:id,nombre_columna,nombre_original,tipo_dato',
+            'variableY:id,nombre_columna,nombre_original,tipo_dato',
+        ])))->resolve($request), 201);
     }
 
     #[OA\Put(
@@ -164,7 +175,10 @@ class GraficoPredeterminadoController extends Controller
 
         $grafico->update($data);
 
-        return response()->json($grafico->load(['variableX', 'variableY']));
+        return response()->json((new GraficoPredeterminadoResource($grafico->load([
+            'variableX:id,nombre_columna,nombre_original,tipo_dato',
+            'variableY:id,nombre_columna,nombre_original,tipo_dato',
+        ])))->resolve($request));
     }
 
     #[OA\Delete(

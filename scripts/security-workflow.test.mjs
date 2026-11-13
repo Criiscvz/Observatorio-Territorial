@@ -69,6 +69,13 @@ test('frontend uses the lockfile, non-watch tests, header regressions and produc
   assert(!/npm update|npm install/.test(source));
 });
 
+test('dataset response contracts also run in the disposable PostgreSQL suite', () => {
+  const postgres = source.slice(source.indexOf('name: PostgreSQL 16 JSONB and isolation suites'),
+    source.indexOf('\n  frontend:'));
+  assert(postgres.includes('TEST_DB_CONNECTION: pgsql'));
+  assert(postgres.includes('DatasetResourceContractTest'));
+});
+
 test('the API build setter is checked before compiling the SPA and Docker image', () => {
   assert(source.includes('run: npm run test:api-build'));
   assert(source.indexOf('run: npm run test:api-build') < source.indexOf('run: npm run build:vercel'));

@@ -50,10 +50,20 @@ describe('CategoriaService', () => {
     });
 
     it('getDatasetsByCategoria() should GET /categorias/:codigo/datasets', () => {
-      service.getDatasetsByCategoria('EDU').subscribe();
+      const dataset = { id: 'd1', nombre: 'Educación', total_registros: 18, variables_metadatos: [] };
+      service.getDatasetsByCategoria('EDU').subscribe(items => {
+        expect(Array.isArray(items)).toBe(true);
+        expect(items).toEqual([dataset]);
+      });
       const req = httpMock.expectOne(`${environment.apiUrl}/categorias/EDU/datasets`);
       expect(req.request.method).toBe('GET');
-      req.flush([]);
+      req.flush({ categoria: mockCategoria, datasets: [dataset] });
+    });
+
+    it('keeps the category response envelope out of the empty card list', () => {
+      service.getDatasetsByCategoria('EDU').subscribe(items => expect(items).toEqual([]));
+      httpMock.expectOne(`${environment.apiUrl}/categorias/EDU/datasets`)
+        .flush({ categoria: mockCategoria, datasets: [] });
     });
   });
 
