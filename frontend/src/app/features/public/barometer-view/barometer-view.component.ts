@@ -10,7 +10,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { CategoriaDataset, Dataset } from '@core/models';
+import { CategoriaDataset, CategoriaDatasetItem } from '@core/models';
 import { CategoriaService } from '@core/services/categoria.service';
 import { ArticulosService, Articulo } from '@core/services/articulos.service';
 import { ReportesService, Reporte } from '@core/services/reportes.service';
@@ -51,7 +51,7 @@ export class BarometerViewComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   categoria = signal<CategoriaDataset | null>(null);
-  datasets = signal<Dataset[]>([]);
+  datasets = signal<CategoriaDatasetItem[]>([]);
   articulos = signal<Articulo[]>([]);
   reportes = signal<Reporte[]>([]);
   loading = signal(true);

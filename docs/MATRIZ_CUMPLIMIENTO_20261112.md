@@ -2,6 +2,10 @@
 
 Corte: **12 de noviembre de 2026**, America/Guayaquil. Corresponde a la fase 6 del plan interno (fases 0–6), no a una declaración de recepción de DIIT. Contrasta el PDF original, especialmente sus páginas 5–6, y los dos reportes Markdown. Sustituye como referencia actual a la matriz del 9 de noviembre, que se conserva como antecedente.
 
+Seguimiento del **13 de noviembre**: [contratos de respuesta de NC-09](CONTRATOS_DATASETS_NC09_20261113.md).
+La tabla y las versiones de este documento conservan el corte del día 12; la entrega
+posterior identifica su alcance, pruebas y condiciones de integración por separado.
+
 ## Versión y significado de los estados
 
 - Producción examinada: `pruebas-rediseno`, `6b7f5ea3f35e42f39ac0c8370379d1e3d090a371`.
