@@ -74,6 +74,7 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
     source.indexOf('\n  frontend:'));
   assert(postgres.includes('TEST_DB_CONNECTION: pgsql'));
   assert(postgres.includes('DatasetResourceContractTest'));
+  assert(postgres.includes('DatasetInputValidationTest'));
 });
 
 test('the API build setter is checked before compiling the SPA and Docker image', () => {

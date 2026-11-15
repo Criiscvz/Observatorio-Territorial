@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Lectura pública (gráficos de datasets públicos)
-Route::get('/datasets/{datasetId}/graficos-predeterminados', [GraficoPredeterminadoController::class, 'index']);
+Route::get('/datasets/{datasetId}/graficos-predeterminados', [GraficoPredeterminadoController::class, 'index'])->whereUuid('datasetId');
 
 // Escritura - admin y editor autenticados
 Route::middleware(['auth:sanctum', 'role:ADMIN,EDITOR'])->group(function () {
-    Route::post('/datasets/{datasetId}/graficos-predeterminados', [GraficoPredeterminadoController::class, 'store']);
-    Route::put('/graficos-predeterminados/{id}', [GraficoPredeterminadoController::class, 'update']);
-    Route::delete('/graficos-predeterminados/{id}', [GraficoPredeterminadoController::class, 'destroy']);
+    Route::post('/datasets/{datasetId}/graficos-predeterminados', [GraficoPredeterminadoController::class, 'store'])->whereUuid('datasetId');
+    Route::put('/graficos-predeterminados/{id}', [GraficoPredeterminadoController::class, 'update'])->whereUuid('id');
+    Route::delete('/graficos-predeterminados/{id}', [GraficoPredeterminadoController::class, 'destroy'])->whereUuid('id');
 });

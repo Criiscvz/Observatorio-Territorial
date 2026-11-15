@@ -11,5 +11,5 @@ use Illuminate\Support\Facades\Route;
 
 // Rutas públicas (sin autenticación)
 Route::get('/', [CategoriaDatasetController::class, 'index']);
-Route::get('/{codigo}', [CategoriaDatasetController::class, 'show']);
-Route::get('/{codigo}/datasets', [CategoriaDatasetController::class, 'datasets']);
+Route::get('/{codigo}', [CategoriaDatasetController::class, 'show'])->where('codigo', '[^\x00/]{1,255}');
+Route::get('/{codigo}/datasets', [CategoriaDatasetController::class, 'datasets'])->where('codigo', '[^\x00/]{1,255}');

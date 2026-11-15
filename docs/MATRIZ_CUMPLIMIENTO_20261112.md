@@ -6,6 +6,10 @@ Seguimiento del **13 de noviembre**: [contratos de respuesta de NC-09](CONTRATOS
 La tabla y las versiones de este documento conservan el corte del día 12; la entrega
 posterior identifica su alcance, pruebas y condiciones de integración por separado.
 
+Seguimiento del **15 de noviembre**: [primer bloque de validaciones A-02](VALIDACIONES_DATASETS_A02_20261115.md).
+A-02 permanece parcial: la extracción comprobada de fuentes/gráficos no representa
+el 100% de FormRequest de la aplicación; el seguimiento incluye el inventario restante.
+
 ## Versión y significado de los estados
 
 - Producción examinada: `pruebas-rediseno`, `6b7f5ea3f35e42f39ac0c8370379d1e3d090a371`.
