@@ -6,11 +6,11 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\GraficoPredeterminadoModel;
+use App\Presentation\Http\Requests\Dataset\SaveGraficoPredeterminadoRequest;
 use App\Presentation\Http\Resources\Dataset\GraficoPredeterminadoResource;
 use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Gráficos Predeterminados', description: 'Gestión de gráficos predeterminados')]
@@ -80,37 +80,10 @@ class GraficoPredeterminadoController extends Controller
             new OA\Response(response: 422, description: 'Validación fallida')
         ]
     )]
-    public function store(Request $request, string $datasetId): JsonResponse
+    public function store(SaveGraficoPredeterminadoRequest $request, string $datasetId): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'titulo' => 'required|string|max:255',
-            'descripcion' => 'nullable|string|max:1000',
-            'analisis' => 'nullable|string|max:5000',
-            'tipo_grafico' => 'required|string|max:50',
-            'tipo_analisis' => 'required|string|in:univariable,bivariable',
-            'variable_x_id' => 'required|uuid|exists:variables_metadatos,id',
-            'variable_y_id' => 'nullable|uuid|exists:variables_metadatos,id',
-            'filtros' => 'nullable|array',
-            'configuracion' => 'nullable|array',
-            'orden' => 'nullable|integer|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Datos de validación inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $data = $validator->validated();
-        $dataset = $this->resourceAuthorizer->findManagedDataset($request->user(), $datasetId);
-        $this->resourceAuthorizer->ensureVariablesBelongToDataset(
-            $dataset->id,
-            $data['variable_x_id'],
-            $data['variable_y_id'] ?? null,
-        );
-
-        $data['dataset_id'] = $dataset->id;
+        $data = $request->validated();
+        $data['dataset_id'] = $request->datasetId();
         $data['creado_por'] = $request->user()->id;
         $data['activo'] = true;
 
@@ -135,42 +108,14 @@ class GraficoPredeterminadoController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function update(Request $request, string $id): JsonResponse
+    public function update(SaveGraficoPredeterminadoRequest $request, string $id): JsonResponse
     {
-        $grafico = GraficoPredeterminadoModel::find($id);
-
-        if (!$grafico) {
-            return response()->json(['message' => 'Gráfico no encontrado'], 404);
-        }
-
-        $dataset = $this->resourceAuthorizer->findManagedDataset($request->user(), $grafico->dataset_id);
-
-        $validator = Validator::make($request->all(), [
-            'titulo' => 'sometimes|string|max:255',
-            'descripcion' => 'nullable|string|max:1000',
-            'analisis' => 'nullable|string|max:5000',
-            'tipo_grafico' => 'sometimes|string|max:50',
-            'tipo_analisis' => 'sometimes|string|in:univariable,bivariable',
-            'variable_x_id' => 'sometimes|uuid|exists:variables_metadatos,id',
-            'variable_y_id' => 'nullable|uuid|exists:variables_metadatos,id',
-            'filtros' => 'nullable|array',
-            'configuracion' => 'nullable|array',
-            'orden' => 'nullable|integer|min:0',
-            'activo' => 'sometimes|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Datos de validación inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $data = $validator->validated();
+        $grafico = $request->grafico();
+        $data = $request->validated();
         $this->resourceAuthorizer->ensureVariablesBelongToDataset(
-            $dataset->id,
+            $request->datasetId(),
             $data['variable_x_id'] ?? $grafico->variable_x_id,
-            $data['variable_y_id'] ?? $grafico->variable_y_id,
+            array_key_exists('variable_y_id', $data) ? $data['variable_y_id'] : $grafico->variable_y_id,
         );
 
         $grafico->update($data);
