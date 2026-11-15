@@ -6,11 +6,11 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\Persistence\Eloquent\Models\DatasetFuenteModel;
+use App\Presentation\Http\Requests\Dataset\SaveDatasetFuenteRequest;
 use App\Presentation\Http\Resources\Dataset\DatasetFuenteResource;
 use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Fuentes', description: 'Fuentes de datos de datasets')]
@@ -66,31 +66,10 @@ class DatasetFuenteController extends Controller
             new OA\Response(response: 422, description: 'Validación fallida')
         ]
     )]
-    public function store(Request $request, string $datasetId): JsonResponse
+    public function store(SaveDatasetFuenteRequest $request, string $datasetId): JsonResponse
     {
-        // Normalize URL: add https:// if no protocol specified
-        $input = $request->all();
-        if (is_string($input['url'] ?? null) && $input['url'] !== '' && !preg_match('#^https?://#i', $input['url'])) {
-            $input['url'] = 'https://' . $input['url'];
-        }
-
-        $validator = Validator::make($input, [
-            'titulo' => 'required|string|max:255',
-            'url' => 'required|string|url:http,https|max:500',
-            'descripcion' => 'nullable|string|max:500',
-            'orden' => 'nullable|integer|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Datos de validación inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $data = $validator->validated();
-        $dataset = $this->resourceAuthorizer->findManagedDataset($request->user(), $datasetId);
-        $data['dataset_id'] = $dataset->id;
+        $data = $request->validated();
+        $data['dataset_id'] = $request->datasetId();
 
         $fuente = DatasetFuenteModel::create($data);
 
@@ -110,37 +89,10 @@ class DatasetFuenteController extends Controller
             new OA\Response(response: 404, description: 'No encontrada')
         ]
     )]
-    public function update(Request $request, string $id): JsonResponse
+    public function update(SaveDatasetFuenteRequest $request, string $id): JsonResponse
     {
-        $fuente = DatasetFuenteModel::find($id);
-
-        if (!$fuente) {
-            return response()->json(['message' => 'Fuente no encontrada'], 404);
-        }
-
-        $this->resourceAuthorizer->findManagedDataset($request->user(), $fuente->dataset_id);
-
-        // Normalize URL: add https:// if no protocol specified
-        $input = $request->all();
-        if (is_string($input['url'] ?? null) && $input['url'] !== '' && !preg_match('#^https?://#i', $input['url'])) {
-            $input['url'] = 'https://' . $input['url'];
-        }
-
-        $validator = Validator::make($input, [
-            'titulo' => 'sometimes|string|max:255',
-            'url' => 'sometimes|string|url:http,https|max:500',
-            'descripcion' => 'nullable|string|max:500',
-            'orden' => 'nullable|integer|min:0',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Datos de validación inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $fuente->update($validator->validated());
+        $fuente = $request->fuente();
+        $fuente->update($request->validated());
 
         return response()->json((new DatasetFuenteResource($fuente))->resolve($request));
     }

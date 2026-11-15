@@ -7,5 +7,6 @@ parameters:
         - app/Presentation/Http/Responses/PublicationPdfResponse.php
         - app/Infrastructure/Observability
         - app/Http/Middleware/ObserveRequest.php
+        - app/Rules/BoundedJsonData.php
     tmpDir: storage/framework/cache/phpstan
     reportUnmatchedIgnoredErrors: true
