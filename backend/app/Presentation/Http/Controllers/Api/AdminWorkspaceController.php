@@ -5,9 +5,10 @@ namespace App\Presentation\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Departamento;
 use App\Models\ObservatorioPublicacion;
+use App\Presentation\Http\Requests\Publicacion\UpdatePortalConfigurationRequest;
+use App\Presentation\Http\Requests\Publicacion\WorkspacePublicationFiltersRequest;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AdminWorkspaceController extends Controller
@@ -18,9 +19,9 @@ class AdminWorkspaceController extends Controller
             ->where('key', 'visor_geografico_url')->value('value') ?? config('portal.visor_geografico_url')]);
     }
 
-    public function updateConfiguration(Request $request): JsonResponse
+    public function updateConfiguration(UpdatePortalConfigurationRequest $request): JsonResponse
     {
-        $data = $request->validate(['visor_geografico_url' => ['required', 'string', 'max:2048', 'url:http,https']]);
+        $data = $request->validated();
         $timestamp = now();
         DB::table('site_settings')->upsert([
             ['key' => 'visor_geografico_url', 'value' => $data['visor_geografico_url'], 'created_at' => $timestamp, 'updated_at' => $timestamp],
@@ -60,14 +61,9 @@ class AdminWorkspaceController extends Controller
         ]);
     }
 
-    public function indexPublications(Request $request): JsonResponse
+    public function indexPublications(WorkspacePublicationFiltersRequest $request): JsonResponse
     {
-        $filters = $request->validate([
-            'estado' => ['nullable', 'in:'.implode(',', ObservatorioPublicacion::ESTADOS)],
-            'tipo' => ['nullable', 'in:ARTICULO,REPORTE,LIBRO'],
-            'departamento_id' => ['nullable', 'uuid'], 'q' => ['nullable', 'string', 'max:255'],
-            'page' => ['nullable', 'integer', 'min:1'],
-        ]);
+        $filters = $request->validated();
         $query = $this->publications()->with('departamento:id,nombre');
         foreach (['estado', 'tipo', 'departamento_id'] as $key) {
             if (! empty($filters[$key])) {

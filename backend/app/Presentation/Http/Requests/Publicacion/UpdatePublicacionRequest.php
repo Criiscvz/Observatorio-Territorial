@@ -7,6 +7,8 @@ namespace App\Presentation\Http\Requests\Publicacion;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Models\ObservatorioPublicacion;
+use App\Rules\DatabaseText;
+use App\Rules\PublicationPdfFilename;
 
 class UpdatePublicacionRequest extends FormRequest
 {
@@ -27,13 +29,7 @@ class UpdatePublicacionRequest extends FormRequest
         }
 
         if ($this->has('autores')) {
-            $autores = is_array($this->input('autores')) ? $this->input('autores') : [$this->input('autores')];
-            $autores = array_values(array_filter(array_map(
-                fn (mixed $autor): string => is_string($autor) ? trim($autor) : '',
-                $autores,
-            )));
-
-            $this->merge(['autores' => $autores ?: null]);
+            $this->merge(['autores' => PublicationInputRules::normalizeAuthors($this->input('autores'))]);
         }
     }
 
@@ -52,28 +48,29 @@ class UpdatePublicacionRequest extends FormRequest
                 Rule::requiredIf($tipo !== 'ATLAS' && $this->user()?->canReviewObservatory($publicacion?->departamento_id)
                     && in_array($this->input('estado'), ObservatorioPublicacion::ESTADOS_CON_OBSERVACION, true)),
                 Rule::prohibitedIf(! $this->user()?->canReviewObservatory($publicacion?->departamento_id)),
-                'nullable', 'string', 'max:2000',
+                'nullable', 'string', 'max:2000', new DatabaseText,
             ],
             'solo_suscriptores' => ['sometimes', 'boolean'],
             'atlas_categoria_id' => ['sometimes', 'nullable', Rule::prohibitedIf($tipo !== 'ATLAS' || $this->user()?->rol !== 'ADMIN'), 'uuid', Rule::exists('atlas_categorias', 'id')->whereNull('deleted_at')],
-            'titulo' => ['required', 'string', 'max:255'],
-            'fecha_publicacion' => ['required', 'date'],
+            'titulo' => PublicationInputRules::text(255, true),
+            'fecha_publicacion' => ['bail', 'required', 'date', 'after_or_equal:0001-01-01', 'before_or_equal:9999-12-31'],
             'link_url' => [
                 Rule::requiredIf($tipo === 'REPORTE'),
                 'nullable',
                 'url:http,https',
                 'max:2048',
+                new DatabaseText,
             ],
-            'descripcion' => ['nullable', 'string', 'max:3000'],
-            'autores' => ['nullable', 'array'],
-            'autores.*' => ['nullable', 'string', 'max:255'],
-            'fuente' => ['nullable', 'string', 'max:255'],
+            'descripcion' => PublicationInputRules::text(3000),
+            ...PublicationInputRules::authors($this->input('autores')),
+            'fuente' => PublicationInputRules::text(255),
             'archivo' => [
                 'nullable',
                 'file',
                 'mimetypes:application/pdf,application/x-pdf',
                 'mimes:pdf',
                 'max:20480',
+                new PublicationPdfFilename,
             ],
         ];
     }
