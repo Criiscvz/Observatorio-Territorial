@@ -103,8 +103,6 @@ jobs:
       DATABASE_URL: ''
       DB_URL: ''
       MONGODB_URI: ''
-      TEST_MONGO_HOST: 127.0.0.1
-      TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}
       CACHE_STORE: array
       SESSION_DRIVER: array
       QUEUE_CONNECTION: sync
@@ -137,9 +135,14 @@ jobs:
       - name: Discover packages in the isolated testing environment
         run: php artisan package:discover --ansi
       - name: SQLite suite
+        env:
+          TEST_MONGO_HOST: 127.0.0.1
+          TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}
         run: php vendor/bin/phpunit --no-progress
       - name: PostgreSQL 16 JSONB and isolation suites
         env:
+          TEST_MONGO_HOST: 127.0.0.1
+          TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}
           TEST_DB_CONNECTION: pgsql
           TEST_DB_HOST: 127.0.0.1
           TEST_DB_PORT: ${{ job.services.postgres.ports['5432'] }}

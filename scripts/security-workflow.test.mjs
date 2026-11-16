@@ -81,6 +81,11 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
   assert(postgres.includes('StatisticsFilterLiteralTest'));
   assert(source.includes('TEST_MONGO_HOST: 127.0.0.1'));
   assert(source.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
+  const backendJobEnv = source.slice(source.indexOf('    env:\n      APP_ENV: testing'), source.indexOf('    defaults:'));
+  assert(!backendJobEnv.includes('job.services'), 'Dynamic service ports are available only after the job starts.');
+  const sqlite = source.slice(source.indexOf('name: SQLite suite'), source.indexOf('name: PostgreSQL 16 JSONB and isolation suites'));
+  assert(sqlite.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
+  assert(postgres.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
   for (const suite of ['AccountInputValidationTest', 'AdminUserPasswordTest', 'RegistrationCommunityProfileTest', 'InactiveAccountSessionTest']) {
     assert(postgres.includes(suite));
   }
