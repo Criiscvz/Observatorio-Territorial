@@ -18,6 +18,7 @@ use App\Infrastructure\Services\SharePointService;
 use App\Presentation\Http\Requests\Publicacion\StorePublicacionRequest;
 use App\Presentation\Http\Requests\Publicacion\UpdatePublicacionRequest;
 use App\Presentation\Http\Requests\Publicacion\ObservatoryPublicationFiltersRequest;
+use App\Presentation\Http\Requests\Publicacion\PublicationReadRequest;
 use App\Presentation\Http\Requests\Atlas\AdminAtlasLibraryRequest;
 use App\Presentation\Http\Requests\SharePoint\BrowseSharePointRequest;
 use App\Presentation\Http\Requests\SharePoint\ImportSharePointRequest;
@@ -270,10 +271,10 @@ class ObservatorioPublicacionController extends Controller
         return (new PublicacionResource($publicacion->refresh()->load('creadoPor')))->response()->setStatusCode(201);
     }
 
-    public function download(Request $request, ObservatorioPublicacion $publicacion): StreamedResponse
+    public function download(PublicationReadRequest $request, ObservatorioPublicacion $publicacion): StreamedResponse
     {
         $file = $this->readPdf->execute($request->user('sanctum') ?: $request->user(),
-            $publicacion, $request->query('context') === 'management');
+            $publicacion, $request->management());
         return $this->pdfResponse->make($file);
     }
 

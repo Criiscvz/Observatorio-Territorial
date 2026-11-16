@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Presentation\Http\Requests\Publicacion\UpdateOriginalArticleRequest;
 use App\Presentation\Http\Requests\Publicacion\LegacyCatalogRequest;
+use App\Presentation\Http\Requests\Publicacion\PublicationReadRequest;
 use App\Support\Http\FormRequestResolver;
 use OpenApi\Attributes as OA;
 
@@ -49,7 +50,7 @@ class ArticuloController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function show(Request $request, string $id): JsonResponse
+    public function show(PublicationReadRequest $request, string $id): JsonResponse
     {
         if ($response = app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->show($request, 'articulos', $id)) {
             return $response;

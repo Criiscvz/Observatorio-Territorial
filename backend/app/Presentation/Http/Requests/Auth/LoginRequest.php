@@ -11,7 +11,10 @@ class LoginRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        $this->merge(['email' => Str::lower(trim((string) $this->input('email')))]);
+        $email = $this->input('email');
+        if (is_string($email) && strlen($email) <= 1020 && mb_check_encoding($email, 'UTF-8')) {
+            $this->merge(['email' => Str::lower(trim($email))]);
+        }
     }
 
     public function authorize(): bool
@@ -22,7 +25,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'email'],
+            'email' => ['bail', 'required', 'string', 'max:255', 'email', new \App\Rules\DatabaseText],
             'password' => ['required', 'string'],
         ];
     }

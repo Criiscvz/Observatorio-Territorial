@@ -17,6 +17,7 @@ use App\Application\Auth\Services\GoogleOAuthService;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Presentation\Http\Requests\Auth\GoogleCodeExchangeRequest;
+use App\Presentation\Http\Requests\Auth\GoogleCallbackRequest;
 use App\Presentation\Http\Requests\Auth\LoginRequest;
 use App\Presentation\Http\Requests\Auth\ResendVerificationCodeRequest;
 use App\Presentation\Http\Requests\Auth\RegisterRequest;
@@ -182,18 +183,19 @@ class AuthController extends Controller
         }
     }
 
-    public function googleCallback(Request $request): RedirectResponse
+    public function googleCallback(GoogleCallbackRequest $request): RedirectResponse
     {
         $frontendUrl = rtrim((string) config('app.frontend_url'), '/');
 
-        if ($request->filled('error') || !$request->filled(['code', 'state'])) {
+        $data = $request->validated();
+        if (isset($data['error']) && $data['error'] !== '') {
             return redirect()->away($frontendUrl.'/auth/login?google_error=cancelled');
         }
 
         try {
             $loginCode = $this->googleOAuthService->handleCallback(
-                (string) $request->query('code'),
-                (string) $request->query('state'),
+                $data['code'],
+                $data['state'],
             );
 
             return redirect()->away($frontendUrl.'/auth/google/callback?code='.rawurlencode($loginCode));
