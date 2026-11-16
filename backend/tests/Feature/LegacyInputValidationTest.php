@@ -191,6 +191,8 @@ class LegacyInputValidationTest extends TestCase
         return [['not-array'], [['named' => $row]], [[null]], [array_fill(0, 51, $row)],
             [[['column' => ['bad'], 'operator' => 'eq', 'value' => 1]]],
             [[array_replace($row, ['column' => "A\0B"])]], [[array_replace($row, ['column' => str_repeat('x', 501)])]],
+            [[array_replace($row, ['column' => '$invalid'])]], [[array_replace($row, ['column' => 'nested.$invalid'])]],
+            [[array_replace($row, ['column' => 'nested..invalid'])]],
             [[array_replace($row, ['operator' => ['eq']])]], [[array_replace($row, ['operator' => 'where'])]],
             [[array_replace($row, ['value' => ['nested' => 'object']])]],
             [[array_replace($row, ['value' => "A\0B"])]], [[array_replace($row, ['value' => str_repeat('x', 2049)])]],

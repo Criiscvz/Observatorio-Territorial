@@ -35,6 +35,8 @@ final class StatisticsFilters implements ValidationRule
             || array_diff(array_keys($filter), ['column', 'operator', 'value', 'type']) !== []
             || ! is_string($filter['column'] ?? null) || mb_strlen($filter['column']) > 500
             || preg_match('/^[^\x00-\x1F\x7F]+$/u', $filter['column']) !== 1
+            || str_starts_with($filter['column'], '.') || str_ends_with($filter['column'], '.')
+            || str_contains($filter['column'], '..') || preg_match('/(?:^|\.)\$/', $filter['column']) === 1
             || ! in_array($filter['operator'] ?? null, self::OPERATORS, true)
             || (isset($filter['type']) && ! in_array($filter['type'], ['NUMERICO', 'CATEGORICO', 'FECHA', 'TEXTO'], true))
             || ! array_key_exists('value', $filter)) return false;

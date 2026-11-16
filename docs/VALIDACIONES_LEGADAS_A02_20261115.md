@@ -30,7 +30,7 @@ decisiones de revisión, contadores, mapas y respuestas de compatibilidad.
 | Variables por lote | lista de 1 a 200 UUID; tipo permitido y booleano válido; sin expansión de comodines para lote no válido |
 | Palabras excluidas | lista de 1 a 1000 textos de hasta 100 caracteres; UTF-8 sin NUL; conserva limpieza, deduplicación y opciones del dataset |
 | Análisis conservado | dataset/variables UUID, variable requerida por cada DTO, limit de 1 a 100 cuando se envía, chart_type acotado con el contrato previo de cada ruta |
-| Filtros de análisis | hasta 50 filas y 32 KiB; columnas imprimibles de hasta 500 caracteres; operadores conocidos y valores simples sin NUL, UTF-8 válido, listas de hasta 100 operandos de hasta 2048 caracteres; between exige dos valores |
+| Filtros de análisis | hasta 50 filas y 32 KiB; columnas imprimibles de hasta 500 caracteres sin segmentos vacíos o que empiecen por dólar; operadores conocidos y valores simples sin NUL, UTF-8 válido, listas de hasta 100 operandos de hasta 2048 caracteres; between exige dos valores |
 | Catálogo antiguo | UUID opcionales de observatorio/categoría; conserva su respuesta como lista |
 | Publicación de compatibilidad | campos, fechas de años 0001–9999, enlaces HTTP/HTTPS, motivo y estados admitidos; PDF de reporte hasta 20 MiB y nombre original hasta 255 caracteres |
 | Artículo original | título/autor/fuente 255, descripción 3000, estado textual 255, enlace HTTP/HTTPS 2048, fechas y UUID válidos |
@@ -48,6 +48,11 @@ antes de pasarlos a parámetros tipados; 0/1 y cadenas numéricas válidas conse
 su uso. No se cambian los algoritmos ni sus decisiones previas de muestreo
 (incluido el scatter privado de hasta 1000 puntos). Esta entrega no certifica
 exactitud estadística ni ejecuta proveedores reales de análisis en pruebas.
+Los operandos de igualdad/pertenencia se envuelven en $literal para conservar
+su significado como datos, incluso si empiezan por dólar. Esto corrige su
+interpretación accidental como expresiones de MongoDB. Se verifica por separado
+con documentos sintéticos en un MongoDB 8 desechable, también obligatorio en CI.
+Referencia: [semántica de $literal](https://www.mongodb.com/docs/manual/reference/operator/aggregation/literal/).
 
 La reasignación de un reporte original autoriza el observatorio de destino
 **antes** de reemplazar su ficha. Un rechazo no elimina el archivo anterior.
@@ -57,14 +62,18 @@ actual y su mapa; no duplica filas antiguas ni convierte originales por leerlos.
 
 ## Verificación
 
-LegacyInputValidationTest añade 57 casos HTTP: entradas malformadas, límites,
+LegacyInputValidationTest añade 60 casos HTTP: entradas malformadas, límites,
 paginación, permisos vigentes/revocados, metadatos, números/booleanos de transporte,
 archivos, tipos de publicación y filtros válidos/invalidos. Comprueba datos,
 contadores, mapas y archivos sin cambios ante errores. Se ejecutan además las
 suites existentes de puentes, preservación, catálogo, contratos y autorización.
 
-- Backend completo local: 627 casos, 7319 aserciones; ocho omisiones previstas PG.
-- PostgreSQL 16 local: 164 casos, 1871 aserciones, aprobados.
+- Backend completo local: 631 casos, 7373 aserciones; ocho omisiones previstas PG
+  y una del servicio Mongo no configurado en esa ejecución.
+- PostgreSQL 16 local: 167 casos, 1925 aserciones, aprobados.
+- MongoDB 8 local desechable: un caso, catorce aserciones; doce verifican
+  eq/neq/in/not_in con texto plano, referencias aparentes de campo y variables
+  aparentes, y dos comprueban el espacio aislado antes de retirarlo.
 - PHPStan aprobado en el alcance previo más StatisticsFilters y FormRequestResolver.
 - Pruebas de dirección de dependencias aprobadas; Application no importa Presentation.
 - 29 controles de higiene/workflow aprobados; los casos nuevos son obligatorios en
@@ -72,7 +81,8 @@ suites existentes de puentes, preservación, catálogo, contratos y autorizació
 
 Las bases, cuentas y archivos de prueba son sintéticos. El repositorio de filas y
 el servicio de estadísticas se controlan en estos HTTP tests; no se llama a MongoDB,
-Graph ni correo reales para probar entradas malformadas. La lectura publicada se
+Graph ni correo productivos para probar entradas malformadas. La prueba específica
+de MongoDB crea y retira únicamente su propio espacio sintético. La lectura publicada se
 verifica por separado, sin escrituras de negocio ni fixtures en producción.
 No hay migraciones, cambios de dependencias ni cambios visuales.
 

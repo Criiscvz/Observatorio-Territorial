@@ -102,18 +102,18 @@ class StatisticsService implements StatisticsServiceInterface
             switch ($operator) {
                 case 'eq':
                     // Comparación como string para replicar data->>? = ?
-                    $conditions[] = ['$expr' => ['$eq' => [['$toString' => '$' . $field], (string) $value]]];
+                    $conditions[] = ['$expr' => ['$eq' => [['$toString' => '$' . $field], ['$literal' => (string) $value]]]];
                     break;
 
                 case 'neq':
-                    $conditions[] = ['$expr' => ['$ne' => [['$toString' => '$' . $field], (string) $value]]];
+                    $conditions[] = ['$expr' => ['$ne' => [['$toString' => '$' . $field], ['$literal' => (string) $value]]]];
                     break;
 
                 case 'in':
                     if (is_array($value)) {
                         $conditions[] = ['$expr' => ['$in' => [
                             ['$toString' => '$' . $field],
-                            array_map('strval', $value),
+                            ['$literal' => array_map('strval', $value)],
                         ]]];
                     }
                     break;
@@ -122,7 +122,7 @@ class StatisticsService implements StatisticsServiceInterface
                     if (is_array($value)) {
                         $conditions[] = ['$expr' => ['$not' => [['$in' => [
                             ['$toString' => '$' . $field],
-                            array_map('strval', $value),
+                            ['$literal' => array_map('strval', $value)],
                         ]]]]];
                     }
                     break;
