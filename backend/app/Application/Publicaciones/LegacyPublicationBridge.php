@@ -18,7 +18,7 @@ use Throwable;
 final class LegacyPublicationBridge
 {
     public function __construct(private readonly PublicationReviewWorkflow $reviewWorkflow, private readonly PublicationPdfStorage $pdfStorage,
-        private readonly ReadPublicationPdf $readPdf) {}
+        private readonly ReadPublicationPdf $readPdf, private readonly LegacyPublicationInput $input) {}
 
     public function resolve(string $source, string $id, bool $lock = false): ?array
     {
@@ -73,19 +73,7 @@ final class LegacyPublicationBridge
         if (is_string($request->input('departamento_id')) && Str::isUuid($request->input('departamento_id'))
             && ! $this->canCreate($request, $source)) { abort(403); }
         $article = $source === 'articulos'; $title = $article ? 'titulo' : 'nombre_indicador';
-        $values = $request->validate([
-            $title => ['required', 'string', 'max:255'], 'departamento_id' => ['required', 'uuid'],
-            'fecha_publicacion' => ['required', 'date'], 'fecha_recepcion' => ['nullable', 'date'],
-            'descripcion' => ['nullable', 'string', 'max:3000'], 'descripcion_indicador' => ['nullable', 'string', 'max:3000'],
-            'autor' => ['nullable', 'string', 'max:255'], 'fuente' => ['nullable', 'string', 'max:255'],
-            'categoria_id' => ['nullable', 'uuid', 'exists:categorias_dataset,id'],
-            'enlace' => ['nullable', 'url:http,https', 'max:2048'],
-            'link_url' => [$article ? 'nullable' : 'required', 'url:http,https', 'max:2048'],
-            'estado' => ['sometimes', 'in:PUBLICADO,BORRADOR,'.implode(',', ObservatorioPublicacion::ESTADOS)],
-            'observacion_revision' => ['nullable', 'string', 'max:2000'],
-            'visibilidad' => ['sometimes', 'in:publico,suscriptor,privado'],
-            'ficha' => ['sometimes', 'file', 'mimes:pdf', 'mimetypes:application/pdf,application/x-pdf', 'max:20480'],
-        ]);
+        $values = $this->input->create($request, $source);
         abort_unless($this->canCreate($request, $source), 403);
         $user = $request->user(); $reviewer = $user->canReviewObservatory($values['departamento_id']);
         $state = PublicationReviewWorkflow::legacyState($values['estado'] ?? 'EN_REVISION');
@@ -167,21 +155,7 @@ final class LegacyPublicationBridge
                     $p->forceFill(['eliminado_legado_at' => now()])->saveOrFail();
                     return response()->json(['message' => 'Publicación eliminada.']);
                 }
-                $values = $request->validate([
-                    'titulo' => ['sometimes', 'string', 'max:255'], 'nombre_indicador' => ['sometimes', 'string', 'max:255'],
-                    'descripcion' => ['sometimes', 'nullable', 'string', 'max:3000'],
-                    'descripcion_indicador' => ['sometimes', 'nullable', 'string', 'max:3000'],
-                    'autor' => ['sometimes', 'nullable', 'string', 'max:255'], 'fuente' => ['sometimes', 'nullable', 'string', 'max:255'],
-                    'fecha_publicacion' => ['sometimes', 'required', 'date'], 'fecha_recepcion' => ['sometimes', 'nullable', 'date'],
-                    'categoria_id' => ['sometimes', 'nullable', 'uuid', 'exists:categorias_dataset,id'],
-                    'departamento_id' => ['sometimes', 'required', 'uuid'],
-                    'enlace' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
-                    'link_url' => ['sometimes', 'nullable', 'url:http,https', 'max:2048'],
-                    'estado' => ['sometimes', 'required', 'in:PUBLICADO,BORRADOR,'.implode(',', ObservatorioPublicacion::ESTADOS)],
-                    'observacion_revision' => ['sometimes', 'nullable', 'string', 'max:2000'],
-                    'visibilidad' => ['sometimes', 'required', 'in:publico,suscriptor,privado'],
-                    'ficha' => ['sometimes', 'file', 'mimes:pdf', 'mimetypes:application/pdf,application/x-pdf', 'max:20480'],
-                ]);
+                $values = $this->input->update($request, $source);
                 if (isset($values['departamento_id']) && $values['departamento_id'] !== $p->departamento_id) {
                     throw ValidationException::withMessages(['departamento_id' => 'El observatorio de una publicación convertida no se cambia desde el formulario antiguo.']);
                 }

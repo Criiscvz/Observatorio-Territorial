@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')
+    ->where(['datasetId' => '[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}'])->group(function () {
     Route::post('/univariable', [DashboardController::class, 'univariable']);
     Route::post('/bivariable', [DashboardController::class, 'bivariable']);
     Route::post('/text-analysis', [DashboardController::class, 'textAnalysis']);

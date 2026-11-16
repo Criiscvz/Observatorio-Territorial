@@ -9,7 +9,9 @@ use App\Infrastructure\Persistence\Eloquent\Models\ArticuloModel;
 use App\Support\Authorization\DepartamentoResourceAuthorizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Presentation\Http\Requests\Publicacion\UpdateOriginalArticleRequest;
+use App\Presentation\Http\Requests\Publicacion\LegacyCatalogRequest;
+use App\Support\Http\FormRequestResolver;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Artículos', description: 'Artículos de contenido del observatorio')]
@@ -30,7 +32,7 @@ class ArticuloController extends Controller
             new OA\Response(response: 200, description: 'Lista de artículos')
         ]
     )]
-    public function index(Request $request): JsonResponse
+    public function index(LegacyCatalogRequest $request): JsonResponse
     {
         return app(\App\Presentation\Http\Resources\Publicacion\LegacyCatalogResponse::class)->index($request, 'ARTICULO');
     }
@@ -150,30 +152,7 @@ class ArticuloController extends Controller
 
         $this->resourceAuthorizer->ensureCanManageDepartamento($request->user(), $articulo->departamento_id);
 
-        $input = $request->all();
-
-        $validator = Validator::make($input, [
-            'titulo' => 'sometimes|string|max:255',
-            'descripcion' => 'nullable|string',
-            'autor' => 'nullable|string|max:255',
-            'fuente' => 'nullable|string|max:255',
-            'estado' => 'nullable|string',
-            'enlace' => 'nullable|string',
-            'visibilidad' => 'sometimes|string|in:publico,suscriptor,privado',
-            'fecha_publicacion' => 'nullable|date',
-            'fecha_recepcion' => 'nullable|date',
-            'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
-            'departamento_id' => 'nullable|uuid|exists:departamentos,id',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Datos de validación inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $data = $validator->validated();
+        $data = FormRequestResolver::validated($request, UpdateOriginalArticleRequest::class);
         $this->resourceAuthorizer->ensureCanManageDepartamento(
             $request->user(),
             $data['departamento_id'] ?? $articulo->departamento_id,

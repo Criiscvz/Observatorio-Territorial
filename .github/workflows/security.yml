@@ -89,6 +89,13 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U ci_test -d observatorio_ci_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
+      mongodb:
+        image: mongo@sha256:d97fea17ccb8d004cd137be8dab54d70d0df11be69c9f422aefe4484c8414ab7 # MongoDB 8.0.38, disposable test data only
+        ports:
+          - 27017/tcp
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1}).ok'"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     env:
       APP_ENV: testing
       DB_CONNECTION: sqlite
@@ -128,16 +135,21 @@ jobs:
       - name: Discover packages in the isolated testing environment
         run: php artisan package:discover --ansi
       - name: SQLite suite
+        env:
+          TEST_MONGO_HOST: 127.0.0.1
+          TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}
         run: php vendor/bin/phpunit --no-progress
       - name: PostgreSQL 16 JSONB and isolation suites
         env:
+          TEST_MONGO_HOST: 127.0.0.1
+          TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}
           TEST_DB_CONNECTION: pgsql
           TEST_DB_HOST: 127.0.0.1
           TEST_DB_PORT: ${{ job.services.postgres.ports['5432'] }}
           TEST_DB_DATABASE: observatorio_ci_test
           TEST_DB_USERNAME: ci_test
           TEST_DB_PASSWORD: synthetic-disposable-ci-only
-        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest|SharePointPublicationImporterTest|PublicationPdfStorageTest|SharePointArticleImportTest|PublicationPdfReaderTest|ObservatoryAccessCapabilitiesTest|ObservatoryAdministratorTest|DatasetResourceContractTest|DatasetInputValidationTest|EditorialInputValidationTest|AccountInputValidationTest|AdminUserPasswordTest|RegistrationCommunityProfileTest|InactiveAccountSessionTest'
+        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest|SharePointPublicationImporterTest|PublicationPdfStorageTest|SharePointArticleImportTest|PublicationPdfReaderTest|ObservatoryAccessCapabilitiesTest|ObservatoryAdministratorTest|DatasetResourceContractTest|DatasetInputValidationTest|EditorialInputValidationTest|AccountInputValidationTest|AdminUserPasswordTest|RegistrationCommunityProfileTest|InactiveAccountSessionTest|LegacyInputValidationTest|StatisticsFilterLiteralTest'
 
   frontend:
     name: Frontend

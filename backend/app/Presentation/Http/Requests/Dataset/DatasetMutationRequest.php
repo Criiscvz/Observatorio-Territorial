@@ -21,6 +21,6 @@ abstract class DatasetMutationRequest extends FormRequest
     /** PostgreSQL text/varchar cannot store a zero byte, even when SQLite can. */
     protected function textRules(int $max, bool $required = false): array
     {
-        return ['bail', ...($required ? ['required'] : ['nullable']), 'string', 'max:'.$max, 'not_regex:/\x00/'];
+        return ['bail', ...($required ? ['required'] : ['nullable']), 'string', 'max:'.$max, new \App\Rules\DatabaseText];
     }
 }

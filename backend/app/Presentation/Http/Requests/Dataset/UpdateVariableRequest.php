@@ -18,7 +18,7 @@ class UpdateVariableRequest extends FormRequest
         return [
             'tipo_dato' => ['nullable', 'string', 'in:NUMERICO,CATEGORICO,FECHA,TEXTO'],
             'es_visible' => ['nullable', 'boolean'],
-            'nombre_columna' => ['nullable', 'string', 'max:100'],
+            'nombre_columna' => ['bail', 'nullable', 'string', 'max:100', new \App\Rules\DatabaseText],
         ];
     }
 

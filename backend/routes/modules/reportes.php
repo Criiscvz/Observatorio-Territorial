@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 
 // Lectura pública
 // IMPORTANTE: /fichas/{filename} debe declararse ANTES de /{id}
-Route::get('/fichas/{filename}', [ReporteController::class, 'ficha']);
+Route::get('/fichas/{filename}', [ReporteController::class, 'ficha'])->where('filename', '[A-Za-z0-9._-]{1,255}');
 Route::get('/', [ReporteController::class, 'index']);
 Route::get('/{id}', [ReporteController::class, 'show'])->whereUuid('id');
 

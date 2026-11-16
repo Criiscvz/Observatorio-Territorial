@@ -28,6 +28,7 @@ test('all external actions and the disposable database image are immutable refer
   assert.equal(uses.length, 8);
   assert(uses.every(value => /^[\w.-]+\/[\w.-]+@[a-f0-9]{40}$/.test(value)));
   assert.match(source, /image: postgres@sha256:[a-f0-9]{64}/);
+  assert.match(source, /image: mongo@sha256:[a-f0-9]{64}/);
   assert.equal((source.match(/persist-credentials: false/g) ?? []).length, 4);
   assert(!/^\s+cache:|restore-keys:|upload-artifact|uses: actions\/cache@/m.test(source));
 });
@@ -76,6 +77,15 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
   assert(postgres.includes('DatasetResourceContractTest'));
   assert(postgres.includes('DatasetInputValidationTest'));
   assert(postgres.includes('EditorialInputValidationTest'));
+  assert(postgres.includes('LegacyInputValidationTest'));
+  assert(postgres.includes('StatisticsFilterLiteralTest'));
+  assert(source.includes('TEST_MONGO_HOST: 127.0.0.1'));
+  assert(source.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
+  const backendJobEnv = source.slice(source.indexOf('    env:\n      APP_ENV: testing'), source.indexOf('    defaults:'));
+  assert(!backendJobEnv.includes('job.services'), 'Dynamic service ports are available only after the job starts.');
+  const sqlite = source.slice(source.indexOf('name: SQLite suite'), source.indexOf('name: PostgreSQL 16 JSONB and isolation suites'));
+  assert(sqlite.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
+  assert(postgres.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
   for (const suite of ['AccountInputValidationTest', 'AdminUserPasswordTest', 'RegistrationCommunityProfileTest', 'InactiveAccountSessionTest']) {
     assert(postgres.includes(suite));
   }

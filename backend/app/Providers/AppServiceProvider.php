@@ -16,6 +16,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(\App\Infrastructure\Observability\RequestTelemetry::class);
+        $this->app->bind(\App\Application\Publicaciones\LegacyPublicationInput::class,
+            \App\Presentation\Http\Validation\LegacyPublicationInputValidator::class);
     }
 
     /**
