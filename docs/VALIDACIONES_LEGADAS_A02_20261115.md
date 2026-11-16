@@ -54,6 +54,11 @@ interpretación accidental como expresiones de MongoDB. Se verifica por separado
 con documentos sintéticos en un MongoDB 8 desechable, también obligatorio en CI.
 Referencia: [semántica de $literal](https://www.mongodb.com/docs/manual/reference/operator/aggregation/literal/).
 
+La imagen desechable de CI está fijada por digest a MongoDB 8.0.38. Incluye la
+corrección de detección del kernel Ubuntu incorporada en 8.0.37; no se desactiva
+la protección de arranque ni se cambia el MongoDB publicado o el ensayo portable.
+Referencia: [SERVER-131779](https://jira.mongodb.org/browse/SERVER-131779).
+
 La reasignación de un reporte original autoriza el observatorio de destino
 **antes** de reemplazar su ficha. Un rechazo no elimina el archivo anterior.
 Se conservan error 422 del formulario original, formatos permitidos y ámbitos
