@@ -10,6 +10,10 @@ Seguimiento del **15 de noviembre**: [primer bloque de validaciones A-02](VALIDA
 A-02 permanece parcial: la extracción comprobada de fuentes/gráficos no representa
 el 100% de FormRequest de la aplicación; el seguimiento incluye el inventario restante.
 
+Segundo bloque del **15 de noviembre**: [validaciones editoriales, Atlas e importación](VALIDACIONES_EDITORIALES_A02_20261115.md).
+Actualiza el inventario pendiente y añade pruebas de autorización, persistencia
+y entradas de proveedor; no cambia los estados del corte histórico de esta matriz.
+
 ## Versión y significado de los estados
 
 - Producción examinada: `pruebas-rediseno`, `6b7f5ea3f35e42f39ac0c8370379d1e3d090a371`.

@@ -198,7 +198,7 @@ class SharePointService
 
     public function getFile(string $fileId): array
     {
-        $response = $this->graph()->get("/drives/{$this->driveId()}/items/{$fileId}");
+        $response = $this->graph()->get($this->itemEndpoint($fileId));
 
         if ($response->failed()) {
             throw new RuntimeException('No se pudo obtener el archivo de SharePoint: '.$response->body());
@@ -214,7 +214,7 @@ class SharePointService
 
     public function getPowerBiLink(string $fileId): array
     {
-        $response = $this->graph()->get("/drives/{$this->driveId()}/items/{$fileId}");
+        $response = $this->graph()->get($this->itemEndpoint($fileId));
 
         if ($response->failed()) {
             throw new RuntimeException('No se pudo obtener el enlace de SharePoint: '.$response->body());
@@ -330,7 +330,7 @@ class SharePointService
             'sharepoint:item:'.sha1($this->driveId().'|'.$itemId),
             self::CACHE_TTL_SECONDS,
             function () use ($itemId) {
-                $response = $this->graph()->get("/drives/{$this->driveId()}/items/{$itemId}", [
+                $response = $this->graph()->get($this->itemEndpoint($itemId), [
                     '$select' => self::GRAPH_SELECT,
                 ]);
                 if ($response->failed()) {
@@ -354,7 +354,7 @@ class SharePointService
     private function fetchChildren(string $folderId): array
     {
         $items = [];
-        $endpoint = "/drives/{$this->driveId()}/items/{$folderId}/children?\$top=200&\$select=".rawurlencode(self::GRAPH_SELECT);
+        $endpoint = $this->itemEndpoint($folderId).'/children?$top=200&$select='.rawurlencode(self::GRAPH_SELECT);
 
         do {
             $response = str_starts_with($endpoint, 'http')
@@ -388,7 +388,7 @@ class SharePointService
 
     private function verifyFileContentIsReadable(string $fileId): void
     {
-        $endpoint = "/drives/{$this->driveId()}/items/{$fileId}/content";
+        $endpoint = $this->itemEndpoint($fileId).'/content';
         $response = $this->graph()->head($endpoint);
 
         if ($response->successful()) {
@@ -407,6 +407,11 @@ class SharePointService
     private function driveId(): string
     {
         return $this->requiredConfig('drive_id');
+    }
+
+    private function itemEndpoint(string $itemId): string
+    {
+        return '/drives/'.rawurlencode($this->driveId()).'/items/'.rawurlencode($itemId);
     }
 
     private function mapDriveItem(array $item): array
@@ -581,7 +586,7 @@ class SharePointService
             return null;
         }
 
-        $response = $this->graph()->get("/drives/{$this->driveId()}/items/{$id}/content");
+        $response = $this->graph()->get($this->itemEndpoint($id).'/content');
         if ($response->failed()) {
             return null;
         }

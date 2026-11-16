@@ -18,6 +18,7 @@ use App\Models\Departamento;
 use App\Models\ObservatorioPublicacion;
 use App\Presentation\Http\Requests\Public\BivariableStatsRequest;
 use App\Presentation\Http\Requests\Public\UnivariableStatsRequest;
+use App\Presentation\Http\Requests\Atlas\PublicAtlasFiltersRequest;
 use App\Presentation\Http\Resources\Publicacion\PublicacionResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -114,9 +115,9 @@ class PublicController extends Controller
         return PublicacionResource::collection($query->get());
     }
 
-    public function atlas(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function atlas(PublicAtlasFiltersRequest $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        $filters = $request->validate(['categoria_id' => ['nullable', 'uuid']]);
+        $filters = $request->validated();
         $query = ObservatorioPublicacion::query()
             ->publicLegacyAccess()
             ->with('atlasCategoria')
@@ -130,12 +131,9 @@ class PublicController extends Controller
         return PublicacionResource::collection($query->get());
     }
 
-    public function atlasLibrary(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function atlasLibrary(PublicAtlasFiltersRequest $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        $filters = $request->validate([
-            'categoria_id' => ['required', 'uuid'], 'q' => ['nullable', 'string', 'max:200'],
-            'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'], 'per_page' => ['sometimes', 'integer', 'in:20'],
-        ]);
+        $filters = $request->validated();
         \App\Models\AtlasCategoria::where('publico', true)->findOrFail($filters['categoria_id']);
         $query = ObservatorioPublicacion::with('atlasCategoria')->publicLegacyAccess()->where('tipo', 'ATLAS')
             ->whereNull('departamento_id')->where('estado', 'PUBLICACION')->where('atlas_categoria_id', $filters['categoria_id']);

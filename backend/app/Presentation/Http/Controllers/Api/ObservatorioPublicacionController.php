@@ -17,6 +17,12 @@ use App\Models\ObservatorioPublicacion;
 use App\Infrastructure\Services\SharePointService;
 use App\Presentation\Http\Requests\Publicacion\StorePublicacionRequest;
 use App\Presentation\Http\Requests\Publicacion\UpdatePublicacionRequest;
+use App\Presentation\Http\Requests\Publicacion\ObservatoryPublicationFiltersRequest;
+use App\Presentation\Http\Requests\Atlas\AdminAtlasLibraryRequest;
+use App\Presentation\Http\Requests\SharePoint\BrowseSharePointRequest;
+use App\Presentation\Http\Requests\SharePoint\ImportSharePointRequest;
+use App\Presentation\Http\Requests\SharePoint\ImportManySharePointRequest;
+use App\Support\Authorization\PublicationDepartmentAccess;
 use App\Presentation\Http\Resources\Publicacion\PublicacionResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,12 +41,9 @@ class ObservatorioPublicacionController extends Controller
     {
     }
 
-    public function index(Request $request, Departamento $departamento): AnonymousResourceCollection
+    public function index(ObservatoryPublicationFiltersRequest $request, Departamento $departamento): AnonymousResourceCollection
     {
-        $filters = $request->validate([
-            'tipo' => ['nullable', 'in:ARTICULO,REPORTE,LIBRO,ATLAS'],
-            'estado' => ['nullable', 'in:'.implode(',', ObservatorioPublicacion::ESTADOS)],
-        ]);
+        $filters = $request->validated();
 
         return $this->list($request, $departamento, $filters['tipo'] ?? null, $filters['estado'] ?? null);
     }
@@ -59,14 +62,9 @@ class ObservatorioPublicacionController extends Controller
         return $query;
     }
 
-    public function library(Request $request, Departamento $departamento): AnonymousResourceCollection
+    public function library(ObservatoryPublicationFiltersRequest $request, Departamento $departamento): AnonymousResourceCollection
     {
-        $filters = $request->validate([
-            'tipo' => ['nullable', 'in:ARTICULO,REPORTE,LIBRO'],
-            'estado' => ['nullable', 'in:'.implode(',', ObservatorioPublicacion::ESTADOS)],
-            'q' => ['nullable', 'string', 'max:200'], 'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
-            'per_page' => ['sometimes', 'integer', 'in:20'],
-        ]);
+        $filters = $request->validated();
         $query = $this->libraryQuery($request, $departamento);
         $counts = (clone $query)->selectRaw('tipo, COUNT(*) total')->groupBy('tipo')->pluck('total', 'tipo');
         $reviewCount = (clone $query)->where('estado', 'EN_REVISION')->count();
@@ -85,14 +83,10 @@ class ObservatorioPublicacionController extends Controller
         return (new \App\Presentation\Http\Resources\Publicacion\LibraryPublicationResource($publication))->response();
     }
 
-    public function atlasLibrary(Request $request): AnonymousResourceCollection
+    public function atlasLibrary(AdminAtlasLibraryRequest $request): AnonymousResourceCollection
     {
         abort_unless($request->user()?->isAdmin(), 403);
-        $filters = $request->validate([
-            'categoria_id' => ['nullable', 'uuid', 'exists:atlas_categorias,id'], 'sin_categoria' => ['sometimes', 'boolean'],
-            'q' => ['nullable', 'string', 'max:200'], 'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
-            'per_page' => ['sometimes', 'integer', 'in:20'],
-        ]);
+        $filters = $request->validated();
         $query = ObservatorioPublicacion::with(['creadoPor', 'atlasCategoria'])->where('tipo', 'ATLAS')->whereNull('departamento_id');
         if ($filters['sin_categoria'] ?? false) { $query->whereNull('atlas_categoria_id'); }
         elseif ($filters['categoria_id'] ?? null) {
@@ -386,36 +380,30 @@ class ObservatorioPublicacionController extends Controller
         ]);
     }
 
-    public function browseSharePointAtlas(Request $request, Departamento $departamento): JsonResponse
+    public function browseSharePointAtlas(BrowseSharePointRequest $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
-        $data = $request->validate([
-            'item_id' => ['nullable', 'string', 'max:1024'],
-        ]);
+        $data = $request->validated();
 
         return response()->json([
             'data' => $this->sharePointService->browseAtlasFolder($data['item_id'] ?? null),
         ]);
     }
 
-    public function browseSharePointArticulos(Request $request, Departamento $departamento): JsonResponse
+    public function browseSharePointArticulos(BrowseSharePointRequest $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
-        $data = $request->validate([
-            'item_id' => ['nullable', 'string', 'max:1024'],
-        ]);
+        $data = $request->validated();
 
         return response()->json([
             'data' => $this->sharePointService->browseBarometerFolder($data['item_id'] ?? null),
         ]);
     }
 
-    public function browseSharePointReportes(Request $request, Departamento $departamento): JsonResponse
+    public function browseSharePointReportes(BrowseSharePointRequest $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
-        $data = $request->validate([
-            'item_id' => ['nullable', 'string', 'max:1024'],
-        ]);
+        $data = $request->validated();
 
         return response()->json([
             'data' => $this->sharePointService->browseBarometerFolder($data['item_id'] ?? null),
@@ -431,13 +419,10 @@ class ObservatorioPublicacionController extends Controller
         ]);
     }
 
-    public function importSharePointReporte(Request $request, Departamento $departamento): JsonResponse
+    public function importSharePointReporte(ImportSharePointRequest $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
-        $data = $request->validate([
-            'sharepoint_file_id' => ['required', 'string', 'max:1024'],
-            'descripcion' => ['nullable', 'string', 'max:3000'],
-        ]);
+        $data = $request->validated();
 
         $file = $this->sharePointService->getPowerBiLink($data['sharepoint_file_id']);
         $publicacion = $this->sharePointImporter->upsertLink(
@@ -473,13 +458,10 @@ class ObservatorioPublicacionController extends Controller
         ]);
     }
 
-    public function importSharePointAtlas(Request $request, Departamento $departamento): JsonResponse
+    public function importSharePointAtlas(ImportSharePointRequest $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
-        $data = $request->validate([
-            'sharepoint_file_id' => ['required', 'string', 'max:1024'],
-            'descripcion' => ['nullable', 'string', 'max:3000'],
-        ]);
+        $data = $request->validated();
         $file = $this->sharePointService->getPdfFileInsideRoot($data['sharepoint_file_id']);
         $existing = $this->sharePointImporter->find($departamento, (string) $file['id']);
         $publication = $this->sharePointImporter->savePdf($request->user(), $departamento, $file, 'LIBRO');
@@ -488,13 +470,10 @@ class ObservatorioPublicacionController extends Controller
     }
 
 
-    public function importManySharePointAtlas(Request $request, Departamento $departamento): JsonResponse
+    public function importManySharePointAtlas(ImportManySharePointRequest $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
-        $data = $request->validate([
-            'sharepoint_file_ids' => ['required', 'array', 'min:1', 'max:50'],
-            'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
-        ]);
+        $data = $request->validated();
 
         return $this->importManySharePointPdfs(
             request: $request,
@@ -505,26 +484,20 @@ class ObservatorioPublicacionController extends Controller
         );
     }
 
-    public function browseSharePointGlobalAtlas(Request $request): JsonResponse
+    public function browseSharePointGlobalAtlas(BrowseSharePointRequest $request): JsonResponse
     {
         abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para importar Atlas global.');
-        $data = $request->validate([
-            'item_id' => ['nullable', 'string', 'max:1024'],
-        ]);
+        $data = $request->validated();
 
         return response()->json([
             'data' => $this->sharePointService->browseAtlasFolder($data['item_id'] ?? null),
         ]);
     }
 
-    public function importManySharePointGlobalAtlas(Request $request): JsonResponse
+    public function importManySharePointGlobalAtlas(ImportManySharePointRequest $request): JsonResponse
     {
         abort_unless($request->user()->rol === 'ADMIN', 403, 'No tienes permisos para importar Atlas global.');
-        $data = $request->validate([
-            'atlas_categoria_id' => ['nullable', 'uuid', \Illuminate\Validation\Rule::exists('atlas_categorias', 'id')->whereNull('deleted_at')],
-            'sharepoint_file_ids' => ['required', 'array', 'min:1', 'max:50'],
-            'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
-        ]);
+        $data = $request->validated();
 
         return $this->importManySharePointPdfs(
             request: $request,
@@ -536,13 +509,10 @@ class ObservatorioPublicacionController extends Controller
         );
     }
 
-    public function importManySharePointArticulos(Request $request, Departamento $departamento): JsonResponse
+    public function importManySharePointArticulos(ImportManySharePointRequest $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
-        $data = $request->validate([
-            'sharepoint_file_ids' => ['required', 'array', 'min:1', 'max:50'],
-            'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
-        ]);
+        $data = $request->validated();
 
         return $this->importManySharePointPdfs(
             request: $request,
@@ -553,13 +523,10 @@ class ObservatorioPublicacionController extends Controller
         );
     }
 
-    public function importManySharePointReportes(Request $request, Departamento $departamento): JsonResponse
+    public function importManySharePointReportes(ImportManySharePointRequest $request, Departamento $departamento): JsonResponse
     {
         $this->ensureCanView($request, $departamento);
-        $data = $request->validate([
-            'sharepoint_file_ids' => ['required', 'array', 'min:1', 'max:50'],
-            'sharepoint_file_ids.*' => ['required', 'string', 'max:1024', 'distinct'],
-        ]);
+        $data = $request->validated();
 
         return $this->importManySharePointPdfs(
             request: $request,
@@ -631,14 +598,7 @@ class ObservatorioPublicacionController extends Controller
     private function ensureCanView(Request $request, Departamento $departamento): void
     {
         $user = $request->user('sanctum') ?: $request->user();
-        if ($user?->isObservatoryAdmin()) {
-            abort_unless(in_array($departamento->id, $user->observatoryIds(), true), 403, 'Observatorio fuera de tu alcance.');
-            return;
-        }
-        $hasAccess = ($user?->rol === 'ADMIN')
-            || $departamento->publico
-            || ($user && $departamento->usuarios()->where('users.id', $user->id)->exists());
-        abort_unless($hasAccess, 403, 'No tienes acceso a este observatorio.');
+        app(PublicationDepartmentAccess::class)->ensure($user, $departamento);
     }
 
     private function applyVisibilityFilter($query, Request $request): void
