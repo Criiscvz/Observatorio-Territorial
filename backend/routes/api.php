@@ -84,7 +84,7 @@ Route::get('/avatars/{filename}', function (string $filename) {
         ->header('Cache-Control', 'public, max-age=31536000')
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Cross-Origin-Resource-Policy', 'cross-origin');
-})->where('filename', '(?i:[a-z0-9_-]+\\.(jpg|jpeg|png|webp))');
+})->where('filename', '(?i:[a-z0-9_-]{1,250}\\.(jpg|jpeg|png|webp))');
 
 // ============ AUTH ============
 Route::get('/publico/configuracion', [\App\Presentation\Http\Controllers\Api\AdminWorkspaceController::class, 'configuration']);

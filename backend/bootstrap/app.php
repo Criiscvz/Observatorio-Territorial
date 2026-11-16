@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Authorization codes/state are opaque protocol values; validate rather than trim them.
+        $middleware->trimStrings(except: [fn (Request $request) => $request->is('api/auth/google/callback')]);
         $middleware->prepend(\App\Http\Middleware\ObserveRequest::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,

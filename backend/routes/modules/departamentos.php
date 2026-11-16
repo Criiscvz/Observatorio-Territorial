@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')
+    ->where(['departamento' => '[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}'])->group(function () {
     // Lectura - todos los usuarios autenticados
     Route::get('/', [DepartamentoController::class, 'index']);
     Route::get('/{departamento}', [DepartamentoController::class, 'show']);

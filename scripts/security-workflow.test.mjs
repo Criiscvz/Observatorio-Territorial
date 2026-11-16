@@ -46,7 +46,7 @@ test('the hygiene and scanner regression suites actually run in CI', () => {
   for (const command of ['node scripts/install-gitleaks.mjs',
     'node --test scripts/secret-scan.test.mjs', 'node scripts/scan-secrets.mjs',
     'node --test scripts/test-repository-hygiene.mjs scripts/security-workflow.test.mjs',
-    'node scripts/test-docker-context-hygiene.mjs']) assert(source.includes(command));
+    'node scripts/test-docker-context-hygiene.mjs', 'node scripts/test-api-ingress.cjs']) assert(source.includes(command));
 });
 
 test('backend uses forced testing settings and only a local disposable PostgreSQL database', () => {
@@ -79,6 +79,9 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
   assert(postgres.includes('EditorialInputValidationTest'));
   assert(postgres.includes('LegacyInputValidationTest'));
   assert(postgres.includes('StatisticsFilterLiteralTest'));
+  assert(postgres.includes('ProtocolInputValidationTest'));
+  assert(postgres.includes('GoogleOAuthServiceTest'));
+  assert(source.includes('php scripts/inventory-http-entrypoints.php > /tmp/observatorio-http-entrypoints.json'));
   assert(source.includes('TEST_MONGO_HOST: 127.0.0.1'));
   assert(source.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
   const backendJobEnv = source.slice(source.indexOf('    env:\n      APP_ENV: testing'), source.indexOf('    defaults:'));

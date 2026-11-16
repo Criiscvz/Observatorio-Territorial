@@ -48,17 +48,23 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\User::class, \App\Policies\ObservatoryAccessPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\ObservatorioPublicacion::class, \App\Policies\ObservatorioPublicacionPolicy::class);
         RateLimiter::for('email-verification', function (Request $request) {
-            $email = Str::lower((string) $request->input('email', ''));
-            return Limit::perMinute(10)->by($request->ip().'|'.hash('sha256', $email));
+            return Limit::perMinute(10)->by($this->emailVerificationKey($request));
         });
 
         RateLimiter::for('email-verification-resend', function (Request $request) {
-            $email = Str::lower((string) $request->input('email', ''));
-            return Limit::perMinutes(10, 3)->by($request->ip().'|'.hash('sha256', $email));
+            return Limit::perMinutes(10, 3)->by($this->emailVerificationKey($request));
         });
 
         RateLimiter::for('google-oauth', fn (Request $request) =>
             Limit::perMinute(10)->by($request->ip())
         );
+    }
+
+    private function emailVerificationKey(Request $request): string
+    {
+        $value = $request->input('email');
+        $email = is_string($value) && strlen($value) <= 1020 && mb_check_encoding($value, 'UTF-8')
+            ? Str::lower(trim($value)) : '';
+        return $request->ip().'|'.hash('sha256', $email);
     }
 }
