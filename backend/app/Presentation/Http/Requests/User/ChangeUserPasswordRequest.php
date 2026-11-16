@@ -16,12 +16,8 @@ class ChangeUserPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => ['required', 'string', 'min:8', 'max:72', 'confirmed',
-                function (string $attribute, mixed $value, \Closure $fail) {
-                    // Bcrypt only uses the first 72 bytes; never accept a truncated credential.
-                    if (is_string($value) && strlen($value) > 72) $fail('La contraseña es demasiado larga. Utiliza una más corta.');
-                }],
-            'password_confirmation' => ['required', 'string'],
+            'password' => [...AccountInputRules::password(), 'confirmed'],
+            'password_confirmation' => ['bail', 'required', 'string', 'max:72'],
         ];
     }
 

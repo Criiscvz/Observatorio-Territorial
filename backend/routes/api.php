@@ -68,17 +68,17 @@ Route::get('/docs', function () {
 // ============ ARCHIVOS PÚBLICOS (Avatares) ============
 Route::get('/avatars/{filename}', function (string $filename) {
     $path = 'public/avatars/' . $filename;
-    
+
     if (!Storage::exists($path)) {
         // Return 404 with CORS headers so the browser doesn't block the response
         return response()->json(['message' => 'Avatar no encontrado'], 404)
             ->header('Access-Control-Allow-Origin', '*')
             ->header('Cross-Origin-Resource-Policy', 'cross-origin');
     }
-    
+
     $file = Storage::get($path);
     $mimeType = Storage::mimeType($path);
-    
+
     return response($file, 200)
         ->header('Content-Type', $mimeType)
         ->header('Cache-Control', 'public, max-age=31536000')
@@ -101,7 +101,7 @@ Route::prefix('editor')->middleware(['auth:sanctum', 'role:EDITOR'])->group(func
     Route::get('/inicio', [$controller, 'summary']);
     Route::get('/publicaciones', [$controller, 'indexPublications']);
 });
-Route::prefix('observatorio-admin')->middleware(['auth:sanctum', 'role:ADMIN_OBSERVATORIO'])->group(function () {
+Route::prefix('observatorio-admin')->middleware(['auth:sanctum', 'role:ADMIN_OBSERVATORIO'])->where(['user' => '[1-9][0-9]{0,17}'])->group(function () {
     $workspace = \App\Presentation\Http\Controllers\Api\ObservatoryWorkspaceController::class;
     $access = \App\Presentation\Http\Controllers\Api\ObservatoryAccessController::class;
     Route::get('/inicio', [$workspace, 'summary']);
@@ -112,7 +112,7 @@ Route::prefix('observatorio-admin')->middleware(['auth:sanctum', 'role:ADMIN_OBS
 });
 require __DIR__ . '/modules/atlas.php';
 
-Route::middleware(['auth:sanctum', 'role:ADMIN,ADMIN_OBSERVATORIO'])->prefix('accesos')->group(function () {
+Route::middleware(['auth:sanctum', 'role:ADMIN,ADMIN_OBSERVATORIO'])->prefix('accesos')->where(['user' => '[1-9][0-9]{0,17}'])->group(function () {
     $controller = \App\Presentation\Http\Controllers\Api\ObservatoryAccessController::class;
     Route::get('/contexto', [$controller, 'overview']);
     Route::get('/usuarios/{user}', [$controller, 'context']);

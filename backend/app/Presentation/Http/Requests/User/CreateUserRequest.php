@@ -10,27 +10,27 @@ class CreateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() === true;
     }
 
     protected function prepareForValidation(): void
     {
-        if ($this->filled('rol')) {
-            $this->merge(['rol' => $this->normalizeRole($this->input('rol'))]);
+        if ($this->exists('rol')) {
+            $this->merge(['rol' => AccountInputRules::normalizeRole($this->input('rol'))]);
         }
     }
 
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
-            'rol' => ['sometimes', 'string', 'in:ADMIN,USER,SUBSCRIBER,EDITOR,ADMIN_OBSERVATORIO'],
+            'name' => AccountInputRules::text(255, true),
+            'email' => [...AccountInputRules::text(255, true), 'email', 'unique:users,email'],
+            'password' => AccountInputRules::password(),
+            'rol' => ['bail', 'sometimes', 'string', 'in:ADMIN,USER,SUBSCRIBER,EDITOR,ADMIN_OBSERVATORIO'],
             'is_active' => ['sometimes', 'boolean'],
-            'telefono' => ['nullable', 'string', 'max:20'],
-            'cargo' => ['nullable', 'string', 'max:100'],
-            'bio' => ['nullable', 'string', 'max:500'],
+            'telefono' => AccountInputRules::text(20),
+            'cargo' => AccountInputRules::text(100),
+            'bio' => AccountInputRules::text(500),
         ];
     }
 
@@ -47,12 +47,5 @@ class CreateUserRequest extends FormRequest
             'rol.in' => 'El rol debe ser Administrador, Supervisor, Editor, Suscriptor o Usuario',
             'is_active.boolean' => 'El campo is_active debe ser verdadero o falso',
         ];
-    }
-
-    private function normalizeRole(string $role): string
-    {
-        $normalized = strtoupper(trim($role));
-
-        return in_array($normalized, ['SUSCRIPTOR', 'SUBSCRIPTOR'], true) ? 'SUBSCRIBER' : $normalized;
     }
 }
