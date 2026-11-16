@@ -11,13 +11,13 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() === true;
     }
 
     protected function prepareForValidation(): void
     {
-        if ($this->filled('rol')) {
-            $this->merge(['rol' => $this->normalizeRole($this->input('rol'))]);
+        if ($this->exists('rol')) {
+            $this->merge(['rol' => AccountInputRules::normalizeRole($this->input('rol'))]);
         }
     }
 
@@ -26,20 +26,20 @@ class UpdateUserRequest extends FormRequest
         $userId = $this->route('id');
 
         return [
-            'name' => ['sometimes', 'string', 'max:255'],
+            'name' => ['sometimes', ...AccountInputRules::text(255, true)],
             'email' => [
-                'sometimes', 
-                'string', 
-                'email', 
-                'max:255', 
+                'bail', 'sometimes', 'string',
+                'email',
+                'max:255',
+                new \App\Rules\DatabaseText,
                 Rule::unique('users', 'email')->ignore($userId)
             ],
-            'password' => ['nullable', 'string', 'min:8'],
-            'rol' => ['sometimes', 'string', 'in:ADMIN,USER,SUBSCRIBER,EDITOR,ADMIN_OBSERVATORIO'],
+            'password' => AccountInputRules::password(false),
+            'rol' => ['bail', 'sometimes', 'string', 'in:ADMIN,USER,SUBSCRIBER,EDITOR,ADMIN_OBSERVATORIO'],
             'is_active' => ['sometimes', 'boolean'],
-            'telefono' => ['nullable', 'string', 'max:20'],
-            'cargo' => ['nullable', 'string', 'max:100'],
-            'bio' => ['nullable', 'string', 'max:500'],
+            'telefono' => AccountInputRules::text(20),
+            'cargo' => AccountInputRules::text(100),
+            'bio' => AccountInputRules::text(500),
         ];
     }
 
@@ -53,12 +53,5 @@ class UpdateUserRequest extends FormRequest
             'rol.in' => 'El rol debe ser Administrador, Supervisor, Editor, Suscriptor o Usuario',
             'is_active.boolean' => 'El campo is_active debe ser verdadero o falso',
         ];
-    }
-
-    private function normalizeRole(string $role): string
-    {
-        $normalized = strtoupper(trim($role));
-
-        return in_array($normalized, ['SUSCRIPTOR', 'SUBSCRIPTOR'], true) ? 'SUBSCRIBER' : $normalized;
     }
 }

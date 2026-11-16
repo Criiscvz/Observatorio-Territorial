@@ -20,6 +20,8 @@ use App\Presentation\Http\Requests\User\CreateUserRequest;
 use App\Presentation\Http\Requests\User\ChangeUserPasswordRequest;
 use App\Presentation\Http\Requests\User\UpdateUserRequest;
 use App\Presentation\Http\Requests\User\UpdateUserRoleRequest;
+use App\Presentation\Http\Requests\User\UserFiltersRequest;
+use App\Presentation\Http\Requests\User\ToggleUserStatusRequest;
 use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,10 +53,9 @@ class UserController extends Controller
             new OA\Response(response: 403, description: 'No autorizado')
         ]
     )]
-    public function index(Request $request): JsonResponse
+    public function index(UserFiltersRequest $request): JsonResponse
     {
-        $filters = $request->validate(['per_page' => 'sometimes|integer|min:1|max:100', 'page' => 'sometimes|integer|min:1',
-            'search' => 'nullable|string|max:255', 'rol' => 'nullable|in:ADMIN,ADMIN_OBSERVATORIO,EDITOR,SUBSCRIBER,USER']);
+        $filters = $request->validated();
         $users = $this->getUsersUseCase->execute($request->user()->id, (int) ($filters['per_page'] ?? 15), $filters['search'] ?? null, $filters['rol'] ?? null);
 
         return response()->json([
@@ -281,10 +282,11 @@ class UserController extends Controller
             new OA\Response(response: 404, description: 'Usuario no encontrado')
         ]
     )]
-    public function toggleStatus(Request $request, int $id): JsonResponse
+    public function toggleStatus(ToggleUserStatusRequest $request, int $id): JsonResponse
     {
-        $isActive = $request->has('is_active') ? (bool) $request->input('is_active') : null;
-        
+        $data = $request->validated();
+        $isActive = array_key_exists('is_active', $data) ? (bool) $data['is_active'] : null;
+
         $user = $this->toggleUserStatusUseCase->execute($id, $request->user()->id, $isActive);
 
         $status = $user->is_active ? 'activado' : 'desactivado';

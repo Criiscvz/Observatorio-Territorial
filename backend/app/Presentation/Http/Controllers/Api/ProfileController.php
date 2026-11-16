@@ -12,7 +12,8 @@ use App\Http\Controllers\Controller;
 use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Presentation\Http\Requests\Profile\CommunityProfileRules;
+use App\Presentation\Http\Requests\Profile\UpdateProfileRequest;
+use App\Presentation\Http\Requests\Profile\UploadAvatarRequest;
 
 #[OA\Tag(name: 'Profile', description: 'Endpoints de perfil de usuario')]
 class ProfileController extends Controller
@@ -69,14 +70,9 @@ class ProfileController extends Controller
             new OA\Response(response: 422, description: 'Datos inválidos')
         ]
     )]
-    public function update(Request $request): JsonResponse
+    public function update(UpdateProfileRequest $request): JsonResponse
     {
-        $validated = $request->validate(array_merge(CommunityProfileRules::rules($request), [
-            'name' => 'sometimes|string|max:255',
-            'telefono' => 'sometimes|nullable|string|max:20',
-            'cargo' => 'sometimes|nullable|string|max:100',
-            'bio' => 'sometimes|nullable|string|max:500',
-        ]));
+        $validated = $request->validated();
 
         $dto = UpdateProfileDTO::fromArray($validated);
         $user = $this->updateProfileUseCase->execute($request->user(), $dto);
@@ -117,15 +113,11 @@ class ProfileController extends Controller
             new OA\Response(response: 422, description: 'Archivo inválido')
         ]
     )]
-    public function uploadAvatar(Request $request): JsonResponse
+    public function uploadAvatar(UploadAvatarRequest $request): JsonResponse
     {
-        $request->validate([
-            'avatar' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
-
         $user = $this->uploadAvatarUseCase->execute(
             $request->user(),
-            $request->file('avatar')
+            $request->validated()['avatar']
         );
         $user->load(['perfil', 'departamentos']);
 
@@ -149,12 +141,12 @@ class ProfileController extends Controller
     public function deleteAvatar(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         if ($user->perfil && $user->perfil->avatar) {
             // Eliminar archivo
             $oldPath = 'public/avatars/' . basename($user->perfil->avatar);
             \Illuminate\Support\Facades\Storage::delete($oldPath);
-            
+
             // Actualizar perfil
             $user->perfil->update(['avatar' => null]);
         }

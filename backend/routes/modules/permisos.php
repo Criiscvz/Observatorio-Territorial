@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'role:ADMIN'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:ADMIN'])->where(['user' => '[1-9][0-9]{0,17}'])->group(function () {
     Route::get('/users/{user}/permisos', [PermisoController::class, 'show']);
     Route::put('/users/{user}/permisos', [PermisoController::class, 'save']);
 });
