@@ -7,13 +7,14 @@ namespace App\Presentation\Http\Resources\Publicacion;
 use App\Application\Publicaciones\PublicPublicationCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Presentation\Http\Requests\Publicacion\LegacyCatalogRequest;
 
 /** Array shape retained only for old consumers; the new catalog is paginated. */
 class LegacyCatalogResponse
 {
-    public function index(Request $request, string $type): JsonResponse
+    public function index(LegacyCatalogRequest $request, string $type): JsonResponse
     {
-        $filters = $request->validate(['departamento_id' => ['nullable', 'uuid'], 'categoria_id' => ['nullable', 'uuid']]);
+        $filters = $request->validated();
         $rows = app(PublicPublicationCatalog::class)->ordered(['tipo' => $type, ...$filters])->get();
         return response()->json($rows->map(function ($row) use ($request, $type): array {
             $p = (new CatalogPublicationResource($row))->resolve($request);

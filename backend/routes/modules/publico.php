@@ -20,7 +20,7 @@ Route::get('/atlas/biblioteca', [PublicController::class, 'atlasLibrary']);
 Route::get('/estadisticas', [PublicController::class, 'estadisticas']);
 
 // Datasets públicos
-Route::get('/datasets/{id}/data', [PublicController::class, 'datasetData']);
+Route::get('/datasets/{id}/data', [PublicController::class, 'datasetData'])->whereUuid('id');
 
 // Estadísticas públicas
 Route::post('/stats/univariable', [PublicController::class, 'univariable']);

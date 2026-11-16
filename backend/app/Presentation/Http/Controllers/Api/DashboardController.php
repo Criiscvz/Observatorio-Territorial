@@ -16,6 +16,7 @@ use App\Application\Dataset\UseCases\UpdateDatasetStopwordsUseCase;
 use App\Http\Controllers\Controller;
 use App\Presentation\Http\Requests\Stats\BivariableRequest;
 use App\Presentation\Http\Requests\Stats\StatsRequest;
+use App\Presentation\Http\Requests\Stats\UpdateStopwordsRequest;
 use App\Presentation\Http\Resources\Dataset\ChartDataResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -172,13 +173,12 @@ class DashboardController extends Controller
             new OA\Response(response: 200, description: 'Stopwords actualizados'),
         ]
     )]
-    public function updateStopwords(string $datasetId, Request $request): JsonResponse
+    public function updateStopwords(string $datasetId, UpdateStopwordsRequest $request): JsonResponse
     {
-        $request->validate(['stopwords' => 'required|array', 'stopwords.*' => 'string|max:100']);
         $result = $this->updateStopwordsUseCase->execute(
             $datasetId,
             $request->user()->id,
-            $request->input('stopwords', [])
+            $request->validated()['stopwords']
         );
         return response()->json($result);
     }

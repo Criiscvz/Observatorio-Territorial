@@ -11,7 +11,9 @@ use App\Presentation\Http\Responses\PublicationPdfResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
+use App\Presentation\Http\Requests\Publicacion\UpdateOriginalReportRequest;
+use App\Presentation\Http\Requests\Publicacion\LegacyCatalogRequest;
+use App\Support\Http\FormRequestResolver;
 use OpenApi\Attributes as OA;
 
 #[OA\Tag(name: 'Reportes', description: 'Reportes e indicadores del observatorio')]
@@ -33,7 +35,7 @@ class ReporteController extends Controller
             new OA\Response(response: 200, description: 'Lista de reportes')
         ]
     )]
-    public function index(Request $request): JsonResponse
+    public function index(LegacyCatalogRequest $request): JsonResponse
     {
         return app(\App\Presentation\Http\Resources\Publicacion\LegacyCatalogResponse::class)->index($request, 'REPORTE');
     }
@@ -155,32 +157,12 @@ class ReporteController extends Controller
 
         $this->resourceAuthorizer->ensureCanManageDepartamento($request->user(), $reporte->departamento_id);
 
-        // Normalizar URL: agregar https:// si no especifica protocolo
-        $input = $request->all();
-        if (!empty($input['link_url']) && !preg_match('#^https?://#i', $input['link_url'])) {
-            $input['link_url'] = 'https://' . $input['link_url'];
-        }
+        $data = FormRequestResolver::validated($request, UpdateOriginalReportRequest::class);
 
-        $validator = Validator::make($input, [
-            'nombre_indicador' => 'sometimes|string|max:255',
-            'descripcion_indicador' => 'nullable|string',
-            'fecha_publicacion' => 'nullable|date',
-            'link_url' => 'nullable|url|max:500',
-            'fuente' => 'nullable|string|max:255',
-            'visibilidad' => 'sometimes|string|in:publico,suscriptor,privado',
-            'categoria_id' => 'nullable|uuid|exists:categorias_dataset,id',
-            'departamento_id' => 'nullable|uuid|exists:departamentos,id',
-            'ficha' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx|max:10240',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Datos de validación inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $data = $validator->validated();
+        $this->resourceAuthorizer->ensureCanManageDepartamento(
+            $request->user(),
+            $data['departamento_id'] ?? $reporte->departamento_id,
+        );
 
         if ($request->hasFile('ficha')) {
             // Eliminar ficha anterior si existe
@@ -197,10 +179,6 @@ class ReporteController extends Controller
 
         unset($data['ficha']);
 
-        $this->resourceAuthorizer->ensureCanManageDepartamento(
-            $request->user(),
-            $data['departamento_id'] ?? $reporte->departamento_id,
-        );
 
         $reporte->update($data);
 

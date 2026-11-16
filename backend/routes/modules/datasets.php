@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'role:ADMIN,USER,SUBSCRIBER,SUSCRIPTOR,SUBSCRIPTOR'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:ADMIN,USER,SUBSCRIBER,SUSCRIPTOR,SUBSCRIPTOR'])
+    ->where(['dataset' => '[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}'])->group(function () {
     // El editor trabaja con publicaciones; los otros roles conservan su lectura.
     Route::get('/', [DatasetController::class, 'index']);
     Route::get('/{dataset}', [DatasetController::class, 'show']);

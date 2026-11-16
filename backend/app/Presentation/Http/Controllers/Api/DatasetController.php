@@ -21,6 +21,10 @@ use App\Http\Controllers\Controller;
 use App\Presentation\Http\Requests\Dataset\ConfirmImportRequest;
 use App\Presentation\Http\Requests\Dataset\UpdateVariableRequest;
 use App\Presentation\Http\Requests\Dataset\UploadDatasetRequest;
+use App\Presentation\Http\Requests\Dataset\DatasetFiltersRequest;
+use App\Presentation\Http\Requests\Dataset\DatasetDataRequest;
+use App\Presentation\Http\Requests\Dataset\UpdateDatasetRequest;
+use App\Presentation\Http\Requests\Dataset\BulkUpdateVariablesRequest;
 use App\Presentation\Http\Resources\Dataset\DatasetResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,9 +57,9 @@ class DatasetController extends Controller
             new OA\Response(response: 200, description: 'Lista de datasets')
         ]
     )]
-    public function index(Request $request): JsonResponse
+    public function index(DatasetFiltersRequest $request): JsonResponse
     {
-        $departamentoId = $request->query('departamento_id');
+        $departamentoId = $request->validated()['departamento_id'] ?? null;
         $result = $this->getDatasetsUseCase->execute(
             $request->user()->id,
             $departamentoId
@@ -185,9 +189,9 @@ class DatasetController extends Controller
             new OA\Response(response: 200, description: 'Datos paginados')
         ]
     )]
-    public function data(Request $request, string $id): JsonResponse
+    public function data(DatasetDataRequest $request, string $id): JsonResponse
     {
-        $perPage = (int) $request->query('per_page', 50);
+        $perPage = (int) ($request->validated()['per_page'] ?? 50);
         $result = $this->getDatasetDataUseCase->execute(
             $id,
             $request->user()->id,
@@ -220,10 +224,12 @@ class DatasetController extends Controller
     )]
     public function updateVariable(UpdateVariableRequest $request, string $id): JsonResponse
     {
+        $values = $request->validated();
+        if (isset($values['es_visible'])) $values['es_visible'] = (bool) $values['es_visible'];
         $result = $this->updateVariableUseCase->execute(
             $id,
             $request->user()->id,
-            $request->validated()
+            $values
         );
 
         return response()->json($result);
@@ -252,13 +258,9 @@ class DatasetController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateDatasetRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'nombre' => 'sometimes|string|max:255',
-            'descripcion' => 'nullable|string|max:2000',
-            'enlace_fuente' => 'nullable|string|url|max:500',
-        ]);
+        $validated = $request->validated();
 
         $result = $this->updateDatasetUseCase->execute($id, $request->user()->id, $validated);
 
@@ -286,19 +288,17 @@ class DatasetController extends Controller
             new OA\Response(response: 403, description: 'Sin permisos')
         ]
     )]
-    public function bulkUpdateVariables(Request $request): JsonResponse
+    public function bulkUpdateVariables(BulkUpdateVariablesRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'variable_ids' => 'required|array|min:1|max:200',
-            'variable_ids.*' => 'required|string|uuid',
-            'es_visible' => 'sometimes|boolean',
-            'tipo_dato' => 'sometimes|string|in:NUMERICO,CATEGORICO,TEXTO,FECHA',
-        ]);
+        $validated = $request->validated();
 
         $result = $this->bulkUpdateVariablesUseCase->execute(
             $validated['variable_ids'],
             $request->user()->id,
-            array_filter($validated, fn($key) => $key !== 'variable_ids', ARRAY_FILTER_USE_KEY),
+            array_filter([
+                ...$validated,
+                ...(array_key_exists('es_visible', $validated) ? ['es_visible' => (bool) $validated['es_visible']] : []),
+            ], fn($key) => $key !== 'variable_ids', ARRAY_FILTER_USE_KEY),
         );
 
         return response()->json($result);
