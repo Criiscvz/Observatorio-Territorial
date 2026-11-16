@@ -22,7 +22,7 @@ final readonly class StatsRequestDTO
             variableId: $data['variable_id'],
             userId: $userId,
             chartType: $data['chart_type'] ?? null,
-            limit: $data['limit'] ?? null,
+            limit: isset($data['limit']) ? (int) $data['limit'] : null,
             filters: $data['filters'] ?? null,
         );
     }

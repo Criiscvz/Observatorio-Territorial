@@ -18,6 +18,7 @@ use App\Models\Departamento;
 use App\Models\ObservatorioPublicacion;
 use App\Presentation\Http\Requests\Public\BivariableStatsRequest;
 use App\Presentation\Http\Requests\Public\UnivariableStatsRequest;
+use App\Presentation\Http\Requests\Dataset\DatasetDataRequest;
 use App\Presentation\Http\Requests\Atlas\PublicAtlasFiltersRequest;
 use App\Presentation\Http\Resources\Publicacion\PublicacionResource;
 use Illuminate\Http\JsonResponse;
@@ -161,10 +162,11 @@ class PublicController extends Controller
             new OA\Response(response: 404, description: 'Dataset no encontrado')
         ]
     )]
-    public function datasetData(string $id, Request $request): JsonResponse
+    public function datasetData(string $id, DatasetDataRequest $request): JsonResponse
     {
-        $page = (int) $request->input('page', 1);
-        $perPage = min((int) $request->input('per_page', 50), 100);
+        $values = $request->validated();
+        $page = (int) ($values['page'] ?? 1);
+        $perPage = (int) ($values['per_page'] ?? 50);
 
         $result = $this->getDatasetDataUseCase->execute($id, $page, $perPage);
 

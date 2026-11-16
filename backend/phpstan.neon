@@ -10,6 +10,8 @@ parameters:
         - app/Rules/BoundedJsonData.php
         - app/Rules/DatabaseText.php
         - app/Rules/BcryptPasswordBytes.php
+        - app/Rules/StatisticsFilters.php
+        - app/Support/Http/FormRequestResolver.php
         - app/Rules/SharePointItemId.php
         - app/Rules/PublicationPdfFilename.php
     tmpDir: storage/framework/cache/phpstan

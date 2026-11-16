@@ -24,7 +24,7 @@ final readonly class BivariableRequestDTO
             variableYId: $data['variable_y_id'],
             userId: $userId,
             chartType: $data['chart_type'] ?? null,
-            limit: $data['limit'] ?? null,
+            limit: isset($data['limit']) ? (int) $data['limit'] : null,
             filters: $data['filters'] ?? null,
         );
     }

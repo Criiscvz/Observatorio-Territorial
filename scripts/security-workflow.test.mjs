@@ -76,6 +76,7 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
   assert(postgres.includes('DatasetResourceContractTest'));
   assert(postgres.includes('DatasetInputValidationTest'));
   assert(postgres.includes('EditorialInputValidationTest'));
+  assert(postgres.includes('LegacyInputValidationTest'));
   for (const suite of ['AccountInputValidationTest', 'AdminUserPasswordTest', 'RegistrationCommunityProfileTest', 'InactiveAccountSessionTest']) {
     assert(postgres.includes(suite));
   }

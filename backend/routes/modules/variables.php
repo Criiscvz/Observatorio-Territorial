@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth:sanctum', 'role:ADMIN,EDITOR'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:ADMIN,EDITOR'])
+    ->where(['variable' => '[a-fA-F0-9]{8}-(?:[a-fA-F0-9]{4}-){3}[a-fA-F0-9]{12}'])->group(function () {
     Route::put('/{variable}', [DatasetController::class, 'updateVariable']);
     Route::post('/bulk-update', [DatasetController::class, 'bulkUpdateVariables']);
 });
