@@ -8,12 +8,15 @@ use Illuminate\Foundation\Http\FormRequest;
 use App\Models\User;
 use Illuminate\Support\Str;
 use App\Presentation\Http\Requests\Profile\CommunityProfileRules;
+use App\Presentation\Http\Requests\User\AccountInputRules;
 
 class RegisterRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        $this->merge(['email' => Str::lower(trim((string) $this->input('email')))]);
+        if (is_string($this->input('email'))) {
+            $this->merge(['email' => Str::lower(trim($this->input('email')))]);
+        }
     }
 
     public function authorize(): bool
@@ -24,16 +27,17 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return array_merge(CommunityProfileRules::rules($this), [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => AccountInputRules::text(255, true),
             'email' => [
-                'required', 'string', 'email', 'max:255',
+                'bail', 'required', 'string', 'email', 'max:255', new \App\Rules\DatabaseText,
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     if (User::query()->whereRaw('LOWER(email) = ?', [(string) $value])->exists()) {
                         $fail('validation.unique')->translate();
                     }
                 },
             ],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => [...AccountInputRules::password(), 'confirmed'],
+            'password_confirmation' => ['bail', 'required', 'string', 'max:72'],
         ]);
     }
 

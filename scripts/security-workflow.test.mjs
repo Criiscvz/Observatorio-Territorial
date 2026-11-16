@@ -76,6 +76,9 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
   assert(postgres.includes('DatasetResourceContractTest'));
   assert(postgres.includes('DatasetInputValidationTest'));
   assert(postgres.includes('EditorialInputValidationTest'));
+  for (const suite of ['AccountInputValidationTest', 'AdminUserPasswordTest', 'RegistrationCommunityProfileTest', 'InactiveAccountSessionTest']) {
+    assert(postgres.includes(suite));
+  }
 });
 
 test('the API build setter is checked before compiling the SPA and Docker image', () => {

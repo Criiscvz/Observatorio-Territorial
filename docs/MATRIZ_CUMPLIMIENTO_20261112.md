@@ -14,6 +14,11 @@ Segundo bloque del **15 de noviembre**: [validaciones editoriales, Atlas e impor
 Actualiza el inventario pendiente y añade pruebas de autorización, persistencia
 y entradas de proveedor; no cambia los estados del corte histórico de esta matriz.
 
+Tercer bloque del **15 de noviembre**: [cuentas, perfil y gestión de accesos](VALIDACIONES_CUENTAS_A02_20261115.md).
+Extrae las validaciones restantes de esos controladores y comprueba tipos,
+contraseñas, avatares y lotes de permisos. A-02 continúa parcial; no cambia
+el balance de NC ni la aceptación institucional del corte histórico.
+
 ## Versión y significado de los estados
 
 - Producción examinada: `pruebas-rediseno`, `6b7f5ea3f35e42f39ac0c8370379d1e3d090a371`.

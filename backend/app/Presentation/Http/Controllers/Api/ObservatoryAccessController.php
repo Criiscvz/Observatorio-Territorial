@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Policies\ObservatoryAccessPolicy;
 use App\Models\User;
 use App\Presentation\Http\Requests\Permiso\SavePermisosRequest;
+use App\Presentation\Http\Requests\Permiso\ObservatoryUserFiltersRequest;
 use App\Presentation\Http\Resources\Auth\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,10 +16,9 @@ use Illuminate\Support\Facades\Gate;
 /** Delegated access never uses the global user-management endpoints. */
 class ObservatoryAccessController extends Controller
 {
-    public function users(Request $request): JsonResponse
+    public function users(ObservatoryUserFiltersRequest $request): JsonResponse
     {
-        $data = $request->validate(['per_page' => 'sometimes|integer|min:1|max:100', 'search' => 'nullable|string|max:255',
-            'purpose' => 'nullable|in:permissions']);
+        $data = $request->validated();
         $ids = $request->user()->observatoryIds();
         $permissions = ($data['purpose'] ?? '') === 'permissions';
         $query = User::query()->where('rol', $permissions ? 'EDITOR' : 'USER')->with('perfil')

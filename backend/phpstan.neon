@@ -9,6 +9,7 @@ parameters:
         - app/Http/Middleware/ObserveRequest.php
         - app/Rules/BoundedJsonData.php
         - app/Rules/DatabaseText.php
+        - app/Rules/BcryptPasswordBytes.php
         - app/Rules/SharePointItemId.php
         - app/Rules/PublicationPdfFilename.php
     tmpDir: storage/framework/cache/phpstan
