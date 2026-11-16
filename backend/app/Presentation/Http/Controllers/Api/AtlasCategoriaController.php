@@ -4,10 +4,10 @@ namespace App\Presentation\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AtlasCategoria;
+use App\Presentation\Http\Requests\Atlas\AtlasDirectoryRequest;
+use App\Presentation\Http\Requests\Atlas\SaveAtlasCategoriaRequest;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class AtlasCategoriaController extends Controller
@@ -22,19 +22,19 @@ class AtlasCategoriaController extends Controller
         return response()->json(['data' => AtlasCategoria::where('publico', true)->orderBy('nombre')->get()]);
     }
 
-    public function directory(Request $request)
+    public function directory(AtlasDirectoryRequest $request)
     {
         return $this->directoryResponse($request, false);
     }
 
-    public function publicDirectory(Request $request)
+    public function publicDirectory(AtlasDirectoryRequest $request)
     {
         return $this->directoryResponse($request, true);
     }
 
-    private function directoryResponse(Request $request, bool $public)
+    private function directoryResponse(AtlasDirectoryRequest $request, bool $public)
     {
-        $filters = $request->validate(['q' => ['nullable', 'string', 'max:200']]);
+        $filters = $request->validated();
         $scope = function ($q) use ($public): void {
             $q->where('tipo', 'ATLAS')->whereNull('departamento_id');
             if ($public) { $q->publicLegacyAccess()->where('estado', 'PUBLICACION'); }
@@ -58,32 +58,19 @@ class AtlasCategoriaController extends Controller
         return response()->json(['data' => $data, 'unassigned_total' => $unassigned]);
     }
 
-    public function store(Request $request)
+    public function store(SaveAtlasCategoriaRequest $request)
     {
         return $this->save($request, new AtlasCategoria(), 201);
     }
 
-    public function update(Request $request, AtlasCategoria $categoria)
+    public function update(SaveAtlasCategoriaRequest $request, AtlasCategoria $categoria)
     {
         return $this->save($request, $categoria, 200);
     }
 
-    private function save(Request $request, AtlasCategoria $categoria, int $status)
+    private function save(SaveAtlasCategoriaRequest $request, AtlasCategoria $categoria, int $status)
     {
-        if (is_string($request->input('nombre'))) {
-            $request->merge(['nombre' => AtlasCategoria::normalize($request->input('nombre'))]);
-        }
-        $data = $request->validate([
-            'nombre' => ['required', 'string', 'max:150'],
-            'descripcion' => ['nullable', 'string', 'max:3000'],
-            'publico' => ['sometimes', 'boolean'],
-            'icono' => ['sometimes', 'nullable', 'string', 'max:50', Rule::in(config('atlas.category_icons'))],
-        ], ['nombre.required' => 'El nombre de la categoría es obligatorio.']);
-        $key = AtlasCategoria::key($data['nombre']);
-        if (AtlasCategoria::withTrashed()->where('nombre_clave', $key)
-            ->when($categoria->exists, fn ($q) => $q->where('id', '!=', $categoria->id))->exists()) {
-            throw ValidationException::withMessages(['nombre' => 'Ya existe una categoría con ese nombre (incluso si fue eliminada).']);
-        }
+        $data = $request->validated();
         try {
             $categoria->fill($data)->save();
         } catch (QueryException $e) {

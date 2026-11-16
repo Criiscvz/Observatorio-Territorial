@@ -5,36 +5,27 @@ namespace App\Presentation\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AtlasCategoria;
 use App\Models\ObservatorioPublicacion;
+use App\Presentation\Http\Requests\Atlas\SaveAtlasEnlaceRequest;
 use App\Presentation\Http\Resources\Publicacion\PublicacionResource;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class AtlasEnlaceController extends Controller
 {
-    public function store(Request $request, AtlasCategoria $categoria)
+    public function store(SaveAtlasEnlaceRequest $request, AtlasCategoria $categoria)
     {
         return $this->save($request, $categoria, new ObservatorioPublicacion());
     }
 
-    public function update(Request $request, ObservatorioPublicacion $publicacion)
+    public function update(SaveAtlasEnlaceRequest $request, ObservatorioPublicacion $publicacion)
     {
         $this->ensureGlobalAtlas($publicacion);
-        $data = $request->validate(['atlas_categoria_id' => ['required', 'uuid', Rule::exists('atlas_categorias', 'id')->whereNull('deleted_at')]]);
+        $data = $request->validated();
         return $this->save($request, AtlasCategoria::findOrFail($data['atlas_categoria_id']), $publicacion);
     }
 
-    private function save(Request $request, AtlasCategoria $categoria, ObservatorioPublicacion $publication)
+    private function save(SaveAtlasEnlaceRequest $request, AtlasCategoria $categoria, ObservatorioPublicacion $publication)
     {
-        $request->merge(['titulo' => is_string($request->titulo) ? trim($request->titulo) : $request->titulo]);
-        $data = $request->validate([
-            'titulo' => ['required', 'string', 'max:255'],
-            'fecha_publicacion' => ['required', 'date_format:Y-m-d'],
-            'link_url' => ['required', 'url:http,https', 'max:2048'],
-            'fuente' => ['nullable', 'string', 'max:255'],
-            'descripcion' => ['nullable', 'string', 'max:3000'],
-            'archivo' => ['prohibited'],
-        ]);
+        $data = $request->safe()->except('atlas_categoria_id');
         $created = ! $publication->exists;
         DB::transaction(function () use ($data, $request, $categoria, $publication, $created) {
             // Lock both categories in stable order when a legacy item is reassigned.
