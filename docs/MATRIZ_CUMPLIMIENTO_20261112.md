@@ -24,6 +24,11 @@ Extrae las validaciones inline restantes del alcance API/adaptadores y añade
 límites y regresiones. A-02 sigue parcial hasta cerrar el inventario por ruta;
 la ausencia de llamadas inline no acredita por sí sola 100% FormRequest.
 
+Quinto bloque del **16 de noviembre**: [inventario y entradas previas a validar](VALIDACIONES_ENTRADAS_A02_20261116.md),
+con [150 rutas registradas](INVENTARIO_ENTRADAS_HTTP_A02_20261116.md). Se corrigen
+normalización de login, callback OAuth y contexto de lectura. A-02 sigue parcial:
+se identifican formularios antiguos de observatorios/importación para el siguiente bloque.
+
 ## Versión y significado de los estados
 
 - Producción examinada: `pruebas-rediseno`, `6b7f5ea3f35e42f39ac0c8370379d1e3d090a371`.

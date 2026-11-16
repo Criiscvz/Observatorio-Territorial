@@ -10,6 +10,7 @@ class LegacyCatalogRequest extends FormRequest
     public function authorize(): bool { return true; }
     public function rules(): array
     {
-        return ['departamento_id' => ['bail', 'nullable', 'uuid'], 'categoria_id' => ['bail', 'nullable', 'uuid']];
+        return ['departamento_id' => ['bail', 'nullable', 'uuid'], 'categoria_id' => ['bail', 'nullable', 'uuid'],
+            'context' => ['bail', 'nullable', 'string', 'in:public,management']];
     }
 }

@@ -14,7 +14,8 @@ class RegisterRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        if (is_string($this->input('email'))) {
+        if (is_string($this->input('email')) && strlen($this->input('email')) <= 1020
+            && mb_check_encoding($this->input('email'), 'UTF-8')) {
             $this->merge(['email' => Str::lower(trim($this->input('email')))]);
         }
     }

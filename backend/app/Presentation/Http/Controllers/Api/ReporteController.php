@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Presentation\Http\Requests\Publicacion\UpdateOriginalReportRequest;
 use App\Presentation\Http\Requests\Publicacion\LegacyCatalogRequest;
+use App\Presentation\Http\Requests\Publicacion\PublicationReadRequest;
 use App\Support\Http\FormRequestResolver;
 use OpenApi\Attributes as OA;
 
@@ -52,7 +53,7 @@ class ReporteController extends Controller
             new OA\Response(response: 404, description: 'No encontrado')
         ]
     )]
-    public function show(Request $request, string $id): JsonResponse
+    public function show(PublicationReadRequest $request, string $id): JsonResponse
     {
         if ($response = app(\App\Application\Publicaciones\LegacyPublicationBridge::class)->show($request, 'reportes', $id)) {
             return $response;
@@ -231,7 +232,7 @@ class ReporteController extends Controller
             new OA\Response(response: 404, description: 'No encontrada')
         ]
     )]
-    public function ficha(Request $request, string $filename)
+    public function ficha(PublicationReadRequest $request, string $filename)
     {
         if (!preg_match('/^[A-Za-z0-9._-]+$/', $filename)) {
             return response()->json(['message' => 'Ficha no encontrada'], 404)
