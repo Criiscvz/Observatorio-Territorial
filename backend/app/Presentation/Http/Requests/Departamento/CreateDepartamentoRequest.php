@@ -10,18 +10,18 @@ class CreateDepartamentoRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() === true;
     }
 
     public function rules(): array
     {
         return [
-            'nombre' => ['required', 'string', 'max:255'],
-            'codigo_interno' => ['required', 'string', 'max:50', 'unique:departamentos,codigo_interno'],
-            'descripcion' => ['nullable', 'string', 'max:1000'],
-            'icono' => ['nullable', 'string', 'max:100'],
-            'publico' => ['boolean'],
-            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4096,max_height=4096'],
+            'nombre' => DepartamentoInputRules::text(255, true),
+            'codigo_interno' => [...DepartamentoInputRules::text(50, true), 'unique:departamentos,codigo_interno'],
+            'descripcion' => DepartamentoInputRules::text(1000),
+            'icono' => DepartamentoInputRules::text(100),
+            'publico' => ['bail', 'sometimes', 'boolean'],
+            'foto' => DepartamentoInputRules::photo(),
             'eliminar_foto' => ['sometimes', 'boolean'],
         ];
     }

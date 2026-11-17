@@ -29,6 +29,11 @@ con [150 rutas registradas](INVENTARIO_ENTRADAS_HTTP_A02_20261116.md). Se corrig
 normalización de login, callback OAuth y contexto de lectura. A-02 sigue parcial:
 se identifican formularios antiguos de observatorios/importación para el siguiente bloque.
 
+Sexto bloque del **17 de noviembre**: [formularios de observatorios e importación](VALIDACIONES_FORMULARIOS_A02_20261117.md).
+Revisa sus cuatro FormRequest, límites, tipos y persistencia; verifica códigos
+duplicados y esquema antes de sustituir metadatos, conserva el renombrado de columnas.
+El estado institucional de A-02 permanece parcial y mantiene el inventario de excepciones.
+
 ## Versión y significado de los estados
 
 - Producción examinada: `pruebas-rediseno`, `6b7f5ea3f35e42f39ac0c8370379d1e3d090a371`.

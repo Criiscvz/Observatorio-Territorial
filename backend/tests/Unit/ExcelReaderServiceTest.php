@@ -8,9 +8,11 @@ use App\Infrastructure\Services\ExcelReaderService;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use App\Domain\Dataset\Exceptions\InvalidImportSchema;
 
 class ExcelReaderServiceTest extends TestCase
 {
@@ -30,7 +32,7 @@ class ExcelReaderServiceTest extends TestCase
 
     public static function workbookFormats(): array
     {
-        return ['xlsx' => ['xlsx'], 'csv' => ['csv']];
+        return ['xlsx' => ['xlsx'], 'csv' => ['csv'], 'xls' => ['xls']];
     }
 
     private function workbook(string $format, array $rows): string
@@ -47,7 +49,7 @@ class ExcelReaderServiceTest extends TestCase
 
         try {
             $spreadsheet->getActiveSheet()->fromArray($rows, null, 'A1', true);
-            $writer = $format === 'csv' ? new Csv($spreadsheet) : new Xlsx($spreadsheet);
+            $writer = match ($format) { 'csv' => new Csv($spreadsheet), 'xls' => new Xls($spreadsheet), default => new Xlsx($spreadsheet) };
             $writer->save($path);
         } finally {
             $spreadsheet->disconnectWorksheets();
@@ -120,5 +122,38 @@ class ExcelReaderServiceTest extends TestCase
         $this->expectExceptionMessage('El archivo no tiene encabezados válidos');
 
         (new ExcelReaderService)->analyze($path);
+    }
+
+    #[DataProvider('workbookFormats')]
+    public function test_renamed_columns_use_original_headers_and_exclude_unselected_columns(string $format): void
+    {
+        $path = $this->workbook($format, [["\u{00a0} Grupo \u{00a0}", 'Valor'], ['Centro', 2], ['Norte', 0]]);
+        $rows = iterator_to_array((new ExcelReaderService)->import($path, [
+            ['nombre_columna' => 'renamed', 'nombre_original' => 'Valor', 'tipo_dato' => 'NUMERICO'],
+        ]));
+        $this->assertSame([['renamed' => 2.0], ['renamed' => 0.0]], $rows);
+        $rows = iterator_to_array((new ExcelReaderService)->import($path, [
+            ['nombre_columna' => 'group_name', 'nombre_original' => 'Grupo', 'tipo_dato' => 'TEXTO'],
+        ]));
+        $this->assertSame([['group_name' => 'Centro'], ['group_name' => 'Norte']], $rows);
+    }
+
+    public static function invalidHeaders(): array
+    {
+        return [[['Grupo', 'Grúpo']], [['!!!']], [[str_repeat('x', 256)]],
+            [array_map(fn ($i) => 'Campo '.$i, range(0, 200))]];
+    }
+
+    #[DataProvider('invalidHeaders')]
+    public function test_invalid_source_headers_reject_analysis_and_import_consistently(array $headers): void
+    {
+        $path = $this->workbook('xlsx', [$headers, array_fill(0, count($headers), 'value')]);
+        foreach (['analyze', 'import'] as $mode) {
+            try {
+                if ($mode === 'analyze') (new ExcelReaderService)->analyze($path);
+                else iterator_to_array((new ExcelReaderService)->import($path, [['nombre_columna' => 'grupo', 'tipo_dato' => 'TEXTO']]));
+                $this->fail('Invalid headers reached the import.');
+            } catch (InvalidImportSchema $e) { $this->assertSame('archivo', $e->field); }
+        }
     }
 }

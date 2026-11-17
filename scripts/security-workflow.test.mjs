@@ -81,6 +81,8 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
   assert(postgres.includes('StatisticsFilterLiteralTest'));
   assert(postgres.includes('ProtocolInputValidationTest'));
   assert(postgres.includes('GoogleOAuthServiceTest'));
+  assert(postgres.includes('ObservatoryImportValidationTest'));
+  assert(postgres.includes('ExcelReaderServiceTest'));
   assert(source.includes('php scripts/inventory-http-entrypoints.php > /tmp/observatorio-http-entrypoints.json'));
   assert(source.includes('TEST_MONGO_HOST: 127.0.0.1'));
   assert(source.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
