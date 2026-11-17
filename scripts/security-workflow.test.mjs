@@ -145,6 +145,13 @@ test('locked dependency audits cannot be omitted or replaced by a force update i
   assert(!/audit fix|--force|legacy-peer-deps/.test(source));
 });
 
+test('the temporary matcher fork is checked after installation in both gates', () => {
+  for (const command of ['scripts/picomatch-contract.test.mjs', 'node scripts/verify-picomatch.mjs backend',
+    'node ../scripts/verify-picomatch.mjs frontend']) assert(source.includes(command));
+  assert(source.indexOf('npm --prefix backend ci') < source.indexOf('node scripts/verify-picomatch.mjs backend'));
+  assert(source.indexOf('run: npm ci') < source.indexOf('node ../scripts/verify-picomatch.mjs frontend'));
+});
+
 test('the locked MongoDB library has a compatible, identical PHP driver in Docker and CI', () => {
   const library = backendLock.packages.find(pkg => pkg.name === 'mongodb/mongodb');
   const required = /^\^(\d+)\.(\d+)$/.exec(library.require['ext-mongodb']);

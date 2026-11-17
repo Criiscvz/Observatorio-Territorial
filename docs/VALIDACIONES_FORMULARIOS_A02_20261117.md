@@ -76,8 +76,11 @@ real de CSV/XLS/XLSX, conversión, renombrado y errores de encabezados.
 
 SQL y archivos sintéticos; el repositorio de filas se controla en las pruebas
 HTTP, sin escribir MongoDB ni proveedores productivos. El lector usa archivos
-reales generados en aislamiento. No hay migraciones, nuevas dependencias ni
-cambios visuales. Las lecturas del despliegue se verifican por separado.
+reales generados en aislamiento. No hay migraciones ni cambios visuales.
+El bloqueo de auditoría aparecido al revisar este bloque requiere la
+[mitigación temporal de picomatch](MITIGACION_PICOMATCH_20261117.md), con pin,
+verificación de código, pruebas acotadas y seguimiento del aviso original.
+Las lecturas del despliegue se verifican por separado.
 
 Este bloque valida metadatos y esquema de importación; no crea una transacción
 distribuida SQL/MongoDB ni resuelve importaciones concurrentes o fallos de un lote
