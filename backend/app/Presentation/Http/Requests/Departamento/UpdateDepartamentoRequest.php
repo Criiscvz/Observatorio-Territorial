@@ -5,23 +5,25 @@ declare(strict_types=1);
 namespace App\Presentation\Http\Requests\Departamento;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateDepartamentoRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() === true;
     }
 
     public function rules(): array
     {
         return [
-            'nombre' => ['nullable', 'string', 'max:255'],
-            'codigo_interno' => ['nullable', 'string', 'max:50'],
-            'descripcion' => ['nullable', 'string', 'max:1000'],
-            'icono' => ['nullable', 'string', 'max:50'],
-            'publico' => ['nullable', 'boolean'],
-            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4096,max_height=4096'],
+            'nombre' => DepartamentoInputRules::text(255),
+            'codigo_interno' => [...DepartamentoInputRules::text(50),
+                Rule::unique('departamentos', 'codigo_interno')->ignore($this->route('departamento'))],
+            'descripcion' => DepartamentoInputRules::text(1000),
+            'icono' => DepartamentoInputRules::text(50),
+            'publico' => ['bail', 'nullable', 'boolean'],
+            'foto' => DepartamentoInputRules::photo(),
             'eliminar_foto' => ['sometimes', 'boolean'],
         ];
     }

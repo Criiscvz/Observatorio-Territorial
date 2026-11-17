@@ -10,6 +10,7 @@ use App\Domain\Departamento\Repositories\DepartamentoRepositoryInterface;
 use App\Domain\Dataset\Entities\Dataset;
 use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class UploadDatasetUseCase
@@ -27,7 +28,7 @@ class UploadDatasetUseCase
         }
 
         // Generar nombre único para el archivo
-        $nombreArchivo = time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '_', $dto->archivo->getClientOriginalName());
+        $nombreArchivo = Str::uuid().'.'.strtolower($dto->archivo->getClientOriginalExtension());
 
         // Guardar archivo
         $dto->archivo->storeAs('datasets', $nombreArchivo, config('filesystems.default'));

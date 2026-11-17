@@ -49,34 +49,37 @@ class ConfirmImportUseCase
         $totalRegistros = 0;
 
         try {
-            DB::transaction(function () use ($dto, $filePath, &$totalRegistros) {
-            // Eliminar metadatos anteriores si existen
-            $this->variableRepository->deleteByDatasetId($dto->datasetId);
+            // The generator reads and validates source headers before any old metadata/rows are removed.
+            $records = $this->excelReader->import($filePath, $dto->columnas);
+            $records->rewind();
+            DB::transaction(function () use ($dto, $records, &$totalRegistros) {
+                // Eliminar metadatos anteriores si existen
+                $this->variableRepository->deleteByDatasetId($dto->datasetId);
             
-            // Guardar nuevos metadatos
-            $this->variableRepository->saveBatch($dto->datasetId, $dto->columnas);
+                // Guardar nuevos metadatos
+                $this->variableRepository->saveBatch($dto->datasetId, $dto->columnas);
 
-            // Eliminar registros anteriores si existen
-            $this->registroRepository->deleteByDatasetId($dto->datasetId);
+                // Eliminar registros anteriores si existen
+                $this->registroRepository->deleteByDatasetId($dto->datasetId);
 
-            // Importar datos en lotes
-            $batch = [];
-            $batchSize = 500;
+                // Importar datos en lotes
+                $batch = [];
+                $batchSize = 500;
 
-            foreach ($this->excelReader->import($filePath, $dto->columnas) as $registro) {
-                $batch[] = $registro;
-                $totalRegistros++;
+                foreach ($records as $registro) {
+                    $batch[] = $registro;
+                    $totalRegistros++;
 
-                if (count($batch) >= $batchSize) {
-                    $this->registroRepository->insertBatch($dto->datasetId, $batch);
-                    $batch = [];
+                    if (count($batch) >= $batchSize) {
+                        $this->registroRepository->insertBatch($dto->datasetId, $batch);
+                        $batch = [];
+                    }
                 }
-            }
 
-            // Insertar registros restantes
-            if (!empty($batch)) {
-                $this->registroRepository->insertBatch($dto->datasetId, $batch);
-            }
+                // Insertar registros restantes
+                if (!empty($batch)) {
+                    $this->registroRepository->insertBatch($dto->datasetId, $batch);
+                }
             });
         } finally {
             @unlink($filePath);

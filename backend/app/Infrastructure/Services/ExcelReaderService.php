@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Infrastructure\Services;
 
 use Illuminate\Support\Str;
+use App\Domain\Dataset\Exceptions\InvalidImportSchema;
+use App\Domain\Dataset\ImportLimits;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
@@ -20,78 +22,97 @@ class ExcelReaderService
         }
 
         $spreadsheet = IOFactory::load($filePath);
-        $worksheet = $spreadsheet->getActiveSheet();
-        $highestRow = $worksheet->getHighestRow();
-        $highestColumn = $worksheet->getHighestColumn();
+        try {
+            $worksheet = $spreadsheet->getActiveSheet();
+            $highestRow = $worksheet->getHighestRow();
+            $highestColumn = $worksheet->getHighestColumn();
 
-        $headers = $this->extractHeaders($worksheet, $highestColumn);
+            $headers = $this->extractHeaders($worksheet, $highestColumn);
 
-        if (empty($headers)) {
-            throw new \Exception('El archivo no tiene encabezados válidos');
+            if (empty($headers)) {
+                throw new InvalidImportSchema('archivo', 'El archivo no tiene encabezados válidos');
+            }
+
+            $sampleRows = min($this->sampleSize, $highestRow - 1);
+            $endRow = $sampleRows + 1;
+            $dataRange = $worksheet->rangeToArray('A2:' . $highestColumn . $endRow, null, true, true, true);
+
+            $columnas = $this->analyzeColumns($headers, $dataRange);
+            $preview = $this->extractPreview($headers, $dataRange);
+
+            return [
+                'columnas' => $columnas,
+                'preview' => $preview,
+                'total_filas' => $highestRow - 1,
+            ];
+        } finally {
+            $spreadsheet->disconnectWorksheets();
         }
-
-        $sampleRows = min($this->sampleSize, $highestRow - 1);
-        $endRow = $sampleRows + 1;
-        $dataRange = $worksheet->rangeToArray('A2:' . $highestColumn . $endRow, null, true, true, true);
-
-        $columnas = $this->analyzeColumns($headers, $dataRange);
-        $preview = $this->extractPreview($headers, $dataRange);
-
-        return [
-            'columnas' => $columnas,
-            'preview' => $preview,
-            'total_filas' => $highestRow - 1,
-        ];
     }
 
     public function import(string $filePath, array $columnasConfirmadas): \Generator
     {
         $spreadsheet = IOFactory::load($filePath);
-        $worksheet = $spreadsheet->getActiveSheet();
-        $highestRow = $worksheet->getHighestRow();
-        $highestColumn = $worksheet->getHighestColumn();
+        try {
+            $worksheet = $spreadsheet->getActiveSheet();
+            $highestRow = $worksheet->getHighestRow();
+            $highestColumn = $worksheet->getHighestColumn();
 
-        $headerRow = $worksheet->rangeToArray('A1:' . $highestColumn . '1', null, true, true, true)[1];
-        $headers = [];
-        foreach ($headerRow as $col => $value) {
-            if ($value !== null && $value !== '') {
-                $headers[$col] = $this->normalizeColumnName($value);
-            }
-        }
+            $headers = $this->extractHeaders($worksheet, $highestColumn);
 
-        $columnasMap = [];
-        foreach ($columnasConfirmadas as $columna) {
-            $columnasMap[$columna['nombre_columna']] = $columna;
-        }
-
-        for ($row = 2; $row <= $highestRow; $row++) {
-            $rowData = $worksheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, null, true, true, true)[$row];
-
-            $registro = [];
-            foreach ($headers as $col => $nombreColumna) {
-                if (!isset($columnasMap[$nombreColumna])) continue;
-
-                $valor = $rowData[$col] ?? null;
-                $tipoDato = $columnasMap[$nombreColumna]['tipo_dato'];
-
-                $registro[$nombreColumna] = $this->convertValue($valor, $tipoDato);
+            $columnasMap = [];
+            $targetNames = [];
+            foreach ($columnasConfirmadas as $columna) {
+                // The form permits renaming a column. Resolve its immutable original
+                // header to a source position, then write using the chosen output name.
+                $source = array_search($columna['nombre_original'] ?? $columna['nombre_columna'],
+                    array_map(fn ($header) => isset($columna['nombre_original']) ? Str::trim($header['original']) : $header['normalized'], $headers), true);
+                if ($source === false || isset($columnasMap[$source]) || isset($targetNames[$columna['nombre_columna']])) {
+                    throw new InvalidImportSchema('columnas', 'Las columnas deben ser únicas y pertenecer al archivo seleccionado.');
+                }
+                $columnasMap[$source] = $columna;
+                $targetNames[$columna['nombre_columna']] = true;
             }
 
-            if (!empty(array_filter($registro, fn($v) => $v !== null))) {
-                yield $registro;
+            for ($row = 2; $row <= $highestRow; $row++) {
+                $rowData = $worksheet->rangeToArray('A' . $row . ':' . $highestColumn . $row, null, true, true, true)[$row];
+
+                $registro = [];
+                foreach ($columnasMap as $col => $column) {
+                    $valor = $rowData[$col] ?? null;
+                    $tipoDato = $column['tipo_dato'];
+
+                    $registro[$column['nombre_columna']] = $this->convertValue($valor, $tipoDato);
+                }
+
+                if (!empty(array_filter($registro, fn($v) => $v !== null))) {
+                    yield $registro;
+                }
             }
+        } finally {
+            $spreadsheet->disconnectWorksheets();
         }
     }
 
     private function extractHeaders($worksheet, string $highestColumn): array
     {
         $headers = [];
+        $names = [];
         $headerRow = $worksheet->rangeToArray('A1:' . $highestColumn . '1', null, true, true, true)[1];
 
         foreach ($headerRow as $col => $value) {
             if ($value !== null && $value !== '') {
+                $value = (string) $value;
+                if (! mb_check_encoding($value, 'UTF-8') || str_contains($value, "\0") || mb_strlen($value) > 255) {
+                    throw new InvalidImportSchema('archivo', 'Los encabezados deben ser texto válido de hasta 255 caracteres, sin caracteres nulos.');
+                }
+                $normalized = $this->normalizeColumnName($value);
+                if (isset($names[$normalized]) || count($headers) >= ImportLimits::MAX_COLUMNS || strlen($normalized) > 255) {
+                    throw new InvalidImportSchema('archivo', 'El archivo admite hasta 200 columnas con encabezados normalizados únicos de hasta 255 caracteres.');
+                }
+                $names[$normalized] = true;
                 $headers[$col] = [
-                    'normalized' => $this->normalizeColumnName($value),
+                    'normalized' => $normalized,
                     'original' => $value,
                 ];
             }
@@ -279,8 +300,8 @@ class ExcelReaderService
             $normalizado = 'col_' . $normalizado;
         }
 
-        if (empty($normalizado)) {
-            $normalizado = 'columna_' . Str::random(4);
+        if ($normalizado === '') {
+            throw new InvalidImportSchema('archivo', 'Cada encabezado debe contener letras o números para identificar su columna.');
         }
 
         return $normalizado;
