@@ -5,21 +5,23 @@ declare(strict_types=1);
 namespace App\Presentation\Http\Requests\Dataset;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use App\Rules\DatabaseText;
 
 class UploadDatasetRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        return $this->user()?->isAdmin() === true;
     }
 
     public function rules(): array
     {
         return [
-            'departamento_id' => ['required', 'uuid', 'exists:departamentos,id'],
-            'nombre' => ['required', 'string', 'max:255'],
-            'descripcion' => ['nullable', 'string', 'max:1000'],
-            'archivo' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:51200'],
+            'departamento_id' => ['bail', 'required', 'uuid', Rule::exists('departamentos', 'id')->whereNull('deleted_at')],
+            'nombre' => ['bail', 'required', 'string', 'max:255', new DatabaseText],
+            'descripcion' => ['bail', 'nullable', 'string', 'max:1000', new DatabaseText],
+            'archivo' => ['bail', 'required', 'file', 'mimes:xlsx,xls,csv', 'extensions:xlsx,xls,csv', 'max:51200'],
         ];
     }
 

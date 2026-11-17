@@ -9,6 +9,7 @@ parameters:
         - app/Http/Middleware/ObserveRequest.php
         - app/Rules/BoundedJsonData.php
         - app/Rules/DatabaseText.php
+        - app/Rules/ImportValueList.php
         - app/Rules/BcryptPasswordBytes.php
         - app/Rules/StatisticsFilters.php
         - app/Support/Http/FormRequestResolver.php

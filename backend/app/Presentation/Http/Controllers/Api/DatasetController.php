@@ -28,6 +28,8 @@ use App\Presentation\Http\Requests\Dataset\BulkUpdateVariablesRequest;
 use App\Presentation\Http\Resources\Dataset\DatasetResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Domain\Dataset\Exceptions\InvalidImportSchema;
+use Illuminate\Validation\ValidationException;
 
 #[OA\Tag(name: 'Datasets', description: 'Gestión de datasets')]
 class DatasetController extends Controller
@@ -137,7 +139,11 @@ class DatasetController extends Controller
     )]
     public function analyze(Request $request, string $id): JsonResponse
     {
-        $result = $this->analyzeDatasetUseCase->execute($id, $request->user()->id);
+        try {
+            $result = $this->analyzeDatasetUseCase->execute($id, $request->user()->id);
+        } catch (InvalidImportSchema $error) {
+            throw ValidationException::withMessages([$error->field => $error->getMessage()]);
+        }
 
         return response()->json($result->toArray());
     }
@@ -171,7 +177,11 @@ class DatasetController extends Controller
             $request->user()->id
         );
 
-        $result = $this->confirmImportUseCase->execute($dto);
+        try {
+            $result = $this->confirmImportUseCase->execute($dto);
+        } catch (InvalidImportSchema $error) {
+            throw ValidationException::withMessages([$error->field => $error->getMessage()]);
+        }
 
         return response()->json($result->toArray());
     }

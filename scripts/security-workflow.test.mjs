@@ -81,6 +81,8 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
   assert(postgres.includes('StatisticsFilterLiteralTest'));
   assert(postgres.includes('ProtocolInputValidationTest'));
   assert(postgres.includes('GoogleOAuthServiceTest'));
+  assert(postgres.includes('ObservatoryImportValidationTest'));
+  assert(postgres.includes('ExcelReaderServiceTest'));
   assert(source.includes('php scripts/inventory-http-entrypoints.php > /tmp/observatorio-http-entrypoints.json'));
   assert(source.includes('TEST_MONGO_HOST: 127.0.0.1'));
   assert(source.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
@@ -141,6 +143,13 @@ test('locked dependency audits cannot be omitted or replaced by a force update i
   for (const command of ['composer audit --locked --no-interaction', 'npm run audit:dependencies',
     'npm --prefix backend run audit:dependencies', 'node --test scripts/audit-dependencies.test.mjs']) assert(source.includes(command));
   assert(!/audit fix|--force|legacy-peer-deps/.test(source));
+});
+
+test('the temporary matcher fork is checked after installation in both gates', () => {
+  for (const command of ['scripts/picomatch-contract.test.mjs', 'node scripts/verify-picomatch.mjs backend',
+    'node ../scripts/verify-picomatch.mjs frontend']) assert(source.includes(command));
+  assert(source.indexOf('npm --prefix backend ci') < source.indexOf('node scripts/verify-picomatch.mjs backend'));
+  assert(source.indexOf('run: npm ci') < source.indexOf('node ../scripts/verify-picomatch.mjs frontend'));
 });
 
 test('the locked MongoDB library has a compatible, identical PHP driver in Docker and CI', () => {
