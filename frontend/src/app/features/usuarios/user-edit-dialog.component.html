@@ -11,8 +11,8 @@
         <label class="user-field">Descripción (opcional)<textarea formControlName="bio" maxlength="500" rows="2"></textarea></label>
         @if(!user){
           <label class="user-field">Rol inicial<select formControlName="rol">@for(role of roles;track role.value){<option [value]="role.value">{{role.label}}</option>}</select></label>
-          <label class="user-field">Contraseña *<span class="password-input"><input formControlName="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password"><button class="icon-action" type="button" (click)="showPassword.set(!showPassword())" [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"><mat-icon>{{showPassword() ? 'visibility_off' : 'visibility'}}</mat-icon></button></span><small>Mínimo 8 caracteres.</small></label>
-          @if(form.controls.password.touched && form.controls.password.invalid){<p class="field-error" role="alert">{{form.controls.password.hasError('passwordTooLong') ? 'La contraseña es demasiado larga.' : 'Escribe una contraseña de al menos 8 caracteres.'}}</p>}
+          <label class="user-field">Contraseña *<span class="password-input"><input formControlName="password" [type]="showPassword() ? 'text' : 'password'" autocomplete="new-password"><button class="icon-action" type="button" (click)="showPassword.set(!showPassword())" [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"><mat-icon>{{showPassword() ? 'visibility_off' : 'visibility'}}</mat-icon></button></span><small>{{'common.validation.passwordHelp' | translate}}</small></label>
+          @if(form.controls.password.touched && form.controls.password.invalid){<p class="field-error" role="alert">{{passwordErrorKey(form.controls.password) | translate}}</p>}
           <label class="user-field">Confirmar contraseña *<input formControlName="confirmation" type="password" autocomplete="new-password"></label>
           @if(form.controls.confirmation.touched && (form.hasError('mismatch') || form.controls.confirmation.invalid)){<p class="field-error" role="alert">Las contraseñas deben coincidir.</p>}
         }

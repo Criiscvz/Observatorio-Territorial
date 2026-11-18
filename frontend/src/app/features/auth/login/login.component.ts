@@ -9,6 +9,7 @@ import { AuthService } from '@core/services/auth.service';
 import { ThemeService } from '@core/services/theme.service';
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { ActivatedRoute } from '@angular/router';
+import { loginPasswordValidator, passwordErrorKey } from '@shared/validators/password.validator';
 
 @Component({
   selector: 'app-login',
@@ -35,12 +36,13 @@ export class LoginComponent {
 
   form: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
+    password: ['', [Validators.required, loginPasswordValidator]],
   });
 
   loading = signal(false);
   error = signal<string | null>(null);
   hidePassword = signal(true);
+  readonly passwordErrorKey = passwordErrorKey;
 
   constructor() {
     if (this.route.snapshot.queryParamMap.has('google_error')) {

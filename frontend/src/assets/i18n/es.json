@@ -69,7 +69,12 @@
       "pattern": "El formato no es válido",
       "min": "El valor mínimo es {{min}}",
       "max": "El valor máximo es {{max}}",
-      "passwordMismatch": "Las contraseñas no coinciden"
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "passwordHelp": "Usa una frase de al menos 15 caracteres. Evita combinaciones comunes.",
+      "passwordTooShort": "La contraseña debe tener al menos 15 caracteres.",
+      "passwordTooLong": "La contraseña es demasiado larga. Acórtala un poco.",
+      "passwordCommon": "Elige una contraseña menos predecible. Puedes usar una frase larga.",
+      "passwordInvalidInput": "La contraseña contiene un carácter no permitido."
     },
     "time": {
       "today": "Hoy",
@@ -1087,7 +1092,7 @@
       "emailRequired": "El email es requerido",
       "emailInvalid": "Ingresa un email válido",
       "passwordRequired": "La contraseña es requerida",
-      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres"
+      "passwordMinLength": "La contraseña debe tener al menos 15 caracteres."
     },
     "confirmToggle": {
       "title": "Cambiar estado del usuario",

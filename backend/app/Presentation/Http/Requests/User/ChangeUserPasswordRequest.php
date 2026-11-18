@@ -24,9 +24,8 @@ class ChangeUserPasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...AccountInputRules::passwordMessages(),
             'password.required' => 'Escribe la nueva contraseña.',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
-            'password.max' => 'La contraseña es demasiado larga. Utiliza una más corta.',
             'password.confirmed' => 'Las contraseñas no coinciden.',
             'password_confirmation.required' => 'Confirma la nueva contraseña.',
         ];

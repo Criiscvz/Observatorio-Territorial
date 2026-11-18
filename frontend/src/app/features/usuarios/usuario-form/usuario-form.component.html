@@ -49,11 +49,12 @@
                 }
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
                 <mat-label>{{ 'users.form.password' | translate }}</mat-label>
                 <input
                   matInput
                   formControlName="password"
+                  autocomplete="new-password"
                   [type]="hidePassword() ? 'password' : 'text'"
                 />
                 <mat-icon matPrefix>lock</mat-icon>
@@ -68,12 +69,10 @@
                 @if (userForm.get('password')?.hasError('required')) {
                   <mat-error>{{ 'users.validation.passwordRequired' | translate }}</mat-error>
                 }
-                @if (userForm.get('password')?.hasError('minlength')) {
-                  <mat-error>{{ 'users.validation.passwordMinLength' | translate }}</mat-error>
+                @if (userForm.get('password')?.invalid && !userForm.get('password')?.hasError('required')) {
+                  <mat-error>{{ passwordErrorKey(userForm.get('password')) | translate }}</mat-error>
                 }
-                @if (isEditMode()) {
-                  <mat-hint>{{ 'users.form.passwordHint' | translate }}</mat-hint>
-                }
+                <mat-hint>{{ 'common.validation.passwordHelp' | translate }} @if (isEditMode()) { {{ 'users.form.passwordHint' | translate }} }</mat-hint>
               </mat-form-field>
             </div>
           </mat-card-content>

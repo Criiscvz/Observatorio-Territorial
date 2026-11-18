@@ -11,6 +11,8 @@ parameters:
         - app/Rules/DatabaseText.php
         - app/Rules/ImportValueList.php
         - app/Rules/BcryptPasswordBytes.php
+        - app/Rules/NewPassword.php
+        - app/Rules/LoginPasswordBytes.php
         - app/Rules/StatisticsFilters.php
         - app/Support/Http/FormRequestResolver.php
         - app/Rules/SharePointItemId.php

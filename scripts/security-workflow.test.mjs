@@ -83,6 +83,7 @@ test('dataset response contracts also run in the disposable PostgreSQL suite', (
   assert(postgres.includes('GoogleOAuthServiceTest'));
   assert(postgres.includes('ObservatoryImportValidationTest'));
   assert(postgres.includes('ExcelReaderServiceTest'));
+  assert(postgres.includes('PasswordPolicyTest'));
   assert(source.includes('php scripts/inventory-http-entrypoints.php > /tmp/observatorio-http-entrypoints.json'));
   assert(source.includes('TEST_MONGO_HOST: 127.0.0.1'));
   assert(source.includes("TEST_MONGO_PORT: ${{ job.services.mongodb.ports['27017'] }}"));
@@ -150,6 +151,10 @@ test('the temporary matcher fork is checked after installation in both gates', (
     'node ../scripts/verify-picomatch.mjs frontend']) assert(source.includes(command));
   assert(source.indexOf('npm --prefix backend ci') < source.indexOf('node scripts/verify-picomatch.mjs backend'));
   assert(source.indexOf('run: npm ci') < source.indexOf('node ../scripts/verify-picomatch.mjs frontend'));
+});
+
+test('the shared password policy and Unicode contracts are mandatory in CI', () => {
+  assert(source.includes('scripts/password-policy-contract.test.mjs'));
 });
 
 test('the locked MongoDB library has a compatible, identical PHP driver in Docker and CI', () => {

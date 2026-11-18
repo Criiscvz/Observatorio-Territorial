@@ -46,10 +46,10 @@ class UpdateUserRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...AccountInputRules::passwordMessages(),
             'name.max' => 'El nombre no puede exceder 255 caracteres',
             'email.email' => 'El email debe tener un formato válido',
             'email.unique' => 'Este email ya está en uso por otro usuario',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres',
             'rol.in' => 'El rol debe ser Administrador, Supervisor, Editor, Suscriptor o Usuario',
             'is_active.boolean' => 'El campo is_active debe ser verdadero o falso',
         ];

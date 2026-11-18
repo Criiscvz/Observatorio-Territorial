@@ -65,7 +65,7 @@ jobs:
       - name: Portable synthetic build contexts
         run: node scripts/test-portable-build-contexts.mjs
       - name: Dependency audit policy regressions
-        run: node --test scripts/audit-dependencies.test.mjs scripts/picomatch-contract.test.mjs
+        run: node --test scripts/audit-dependencies.test.mjs scripts/picomatch-contract.test.mjs scripts/password-policy-contract.test.mjs
       - name: Operational health probe regressions
         run: node --test scripts/check-operational-health.test.mjs
       - name: Audit backend JavaScript tools from their lockfile
@@ -155,7 +155,7 @@ jobs:
           TEST_DB_DATABASE: observatorio_ci_test
           TEST_DB_USERNAME: ci_test
           TEST_DB_PASSWORD: synthetic-disposable-ci-only
-        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest|SharePointPublicationImporterTest|PublicationPdfStorageTest|SharePointArticleImportTest|PublicationPdfReaderTest|ObservatoryAccessCapabilitiesTest|ObservatoryAdministratorTest|DatasetResourceContractTest|DatasetInputValidationTest|EditorialInputValidationTest|AccountInputValidationTest|AdminUserPasswordTest|RegistrationCommunityProfileTest|InactiveAccountSessionTest|LegacyInputValidationTest|StatisticsFilterLiteralTest|ProtocolInputValidationTest|GoogleOAuthServiceTest|ObservatoryImportValidationTest|ExcelReaderServiceTest'
+        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest|SharePointPublicationImporterTest|PublicationPdfStorageTest|SharePointArticleImportTest|PublicationPdfReaderTest|ObservatoryAccessCapabilitiesTest|ObservatoryAdministratorTest|DatasetResourceContractTest|DatasetInputValidationTest|EditorialInputValidationTest|AccountInputValidationTest|AdminUserPasswordTest|RegistrationCommunityProfileTest|InactiveAccountSessionTest|LegacyInputValidationTest|StatisticsFilterLiteralTest|ProtocolInputValidationTest|GoogleOAuthServiceTest|ObservatoryImportValidationTest|ExcelReaderServiceTest|PasswordPolicyTest'
 
   frontend:
     name: Frontend

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Presentation\Http\Requests\User;
 
-use App\Rules\{BcryptPasswordBytes, DatabaseText};
+use App\Rules\{BcryptPasswordBytes, DatabaseText, NewPassword};
 
 final class AccountInputRules
 {
@@ -17,8 +17,15 @@ final class AccountInputRules
 
     public static function password(bool $required = true): array
     {
-        return ['bail', $required ? 'required' : 'nullable', 'string', 'min:8', 'max:72',
-            new DatabaseText, new BcryptPasswordBytes];
+        return ['bail', $required ? 'required' : 'nullable', 'string',
+            'min:'.config('password_policy.minimumCharacters'), 'max:72',
+            new DatabaseText, new BcryptPasswordBytes, new NewPassword];
+    }
+
+    public static function passwordMessages(): array
+    {
+        return ['password.min' => 'La contraseña debe tener al menos '.config('password_policy.minimumCharacters').' caracteres.',
+            'password.max' => 'La contraseña es demasiado larga. Utiliza una más corta.'];
     }
 
     public static function pagination(): array

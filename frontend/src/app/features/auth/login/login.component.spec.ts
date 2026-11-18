@@ -74,6 +74,21 @@ describe('LoginComponent', () => {
     expect(component.error()).toBeNull();
   });
 
+  it('still submits a valid existing password shorter than the new-account minimum', () => {
+    authServiceSpy.login.mockReturnValue(of({}));
+    component.form.setValue({ email: 'legacy@example.test', password: 'abc123' });
+    component.onSubmit();
+    expect(authServiceSpy.login).toHaveBeenCalledWith({ email: 'legacy@example.test', password: 'abc123' });
+  });
+
+  it('rejects invalid or oversized password transport before making a request', () => {
+    for (const password of ['x'.repeat(4097), 'bad\0password', '\ud800']) {
+      component.form.setValue({ email: 'legacy@example.test', password });
+      component.onSubmit(); expect(component.form.invalid).toBe(true);
+    }
+    expect(authServiceSpy.login).not.toHaveBeenCalled();
+  });
+
   it('muestra los errores al enviar el formulario vacío sin llamar a la API', () => {
     const element = fixture.nativeElement as HTMLElement;
     element.querySelector<HTMLButtonElement>('.login-submit')!.click();
