@@ -169,14 +169,15 @@ class AccountInputValidationTest extends TestCase
         foreach (["Valid\xFFpassword", "Valid\0password"] as $password) {
             $this->assertTrue(Validator::make(['password' => $password], ['password' => AccountInputRules::password()])->fails());
         }
-        $password = str_repeat('é', 36);
+        $password = str_repeat('é', 35).'AB';
         $this->postJson('/api/users', [...$this->payload(), 'rol' => ' suscriptor ', 'password' => $password])
             ->assertCreated()->assertJsonPath('data.rol', 'SUBSCRIBER')->assertJsonMissingPath('data.password');
         $created = User::where('email', $this->payload()['email'])->firstOrFail();
         $this->assertTrue(Hash::check($password, $created->password));
-        $this->putJson('/api/users/'.$this->target->id, ['password' => str_repeat('a', 72), 'rol' => ' subscriptor '])
+        $updatedPassword = str_repeat('a', 71).'b';
+        $this->putJson('/api/users/'.$this->target->id, ['password' => $updatedPassword, 'rol' => ' subscriptor '])
             ->assertOk()->assertJsonPath('data.rol', 'SUBSCRIBER');
-        $this->assertTrue(Hash::check(str_repeat('a', 72), $this->target->fresh()->password));
+        $this->assertTrue(Hash::check($updatedPassword, $this->target->fresh()->password));
         $this->patchJson('/api/users/'.$this->target->id.'/role', ['rol' => ' editor '])->assertOk()->assertJsonPath('user.rol', 'EDITOR');
     }
 

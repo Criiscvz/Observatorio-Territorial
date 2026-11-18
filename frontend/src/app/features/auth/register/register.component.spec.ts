@@ -18,7 +18,7 @@ describe('RegisterComponent two-step registration', () => {
   let component: RegisterComponent;
   let auth: { register: ReturnType<typeof vi.fn>; getGoogleAuthorizationUrl: ReturnType<typeof vi.fn> };
   let router: Router;
-  const account = { given_name: ' Persona ', family_name: ' Ejemplo ', email: 'PERSONA@example.test', password: 'test-password', password_confirmation: 'test-password' };
+  const account = { given_name: ' Persona ', family_name: ' Ejemplo ', email: 'PERSONA@example.test', password: 'test-password-alameda', password_confirmation: 'test-password-alameda' };
   const pending = { email: 'persona@example.test', email_sent: true, resend_after: 60, verification_required: true };
   beforeEach(async () => {
     auth = { register: vi.fn().mockReturnValue(of(pending)), getGoogleAuthorizationUrl: vi.fn() };
@@ -39,6 +39,14 @@ describe('RegisterComponent two-step registration', () => {
   it('rejects mismatched passwords and whitespace-only names', () => {
     component.form.setValue({ ...account, given_name: ' ', password_confirmation: 'different' });
     component.nextStep(); expect(component.step()).toBe(1); expect(component.error()).toBe('common.validation.passwordMismatch');
+  });
+  it('blocks weak, common and oversized passwords before creating an account', () => {
+    for (const password of ['short', 'passwordpassword', 'é'.repeat(40)]) {
+      component.form.setValue({ ...account, password, password_confirmation: password });
+      component.nextStep(); expect(component.step()).toBe(1);
+      expect(component.form.controls.password.invalid).toBe(true);
+      expect(auth.register).not.toHaveBeenCalled();
+    }
   });
   it('sends selected public interest and institutional profile', () => {
     component.form.setValue(account); component.nextStep();

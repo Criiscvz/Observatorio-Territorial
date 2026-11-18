@@ -4,6 +4,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from '@core/services/auth.service';
 import { UserService } from '@core/services/user.service';
 import { User } from '@core/models';
+import { TranslateModule } from '@ngx-translate/core';
 import { UserEditDialogComponent, UserPasswordDialogComponent, UserRoleDialogComponent } from './user-dialogs.component';
 
 const target:User={id:8,name:'Carlos Mendoza',email:'carlos@example.test',rol:'EDITOR',is_active:true};
@@ -11,7 +12,7 @@ function setup(type: 'password' | 'role' | 'edit' | 'new' = 'password', admin = 
   const api={changePassword:vi.fn(()=>of({message:'Guardado',reauthenticate:false})),updateUserRole:vi.fn(()=>of({user:{...target,rol:'ADMIN_OBSERVATORIO'}})),
     updateUser:vi.fn(()=>of({data:target})),createUser:vi.fn(()=>of({data:{...target,id:9}}))};
   const ref={close:vi.fn(),disableClose:false};
-  TestBed.configureTestingModule({providers:[
+  TestBed.configureTestingModule({imports:[TranslateModule.forRoot()],providers:[
     {provide:AuthService,useValue:{isAdmin:()=>admin,user:()=>({id:1,rol:admin?'ADMIN':'ADMIN_OBSERVATORIO'})}},
     {provide:UserService,useValue:api},{provide:MatDialogRef,useValue:ref},{provide:MAT_DIALOG_DATA,useValue:type==='new'?null:target},
   ]});
@@ -38,29 +39,29 @@ describe('Ventanas de acciones directas de usuarios',()=>{
     const {api,component}=setup();const {fixture,instance}=component(UserPasswordDialogComponent);
     expect(fixture.nativeElement.querySelectorAll('input[type=password]')).toHaveLength(2);
     instance.form.setValue({password:'short',confirmation:'short'});instance.save();expect(api.changePassword).not.toHaveBeenCalled();
-    instance.form.setValue({password:'Nueva-pass-123',confirmation:'No coincide'});instance.save();expect(api.changePassword).not.toHaveBeenCalled();
+    instance.form.setValue({password:'alameda junto al mar',confirmation:'No coincide'});instance.save();expect(api.changePassword).not.toHaveBeenCalled();
     instance.form.setValue({password:'é'.repeat(40),confirmation:'é'.repeat(40)});instance.save();expect(api.changePassword).not.toHaveBeenCalled();
-    instance.form.setValue({password:'Nueva-pass-123',confirmation:'Nueva-pass-123'});fixture.detectChanges();
+    instance.form.setValue({password:'alameda junto al mar',confirmation:'alameda junto al mar'});fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('button[type=submit]').disabled).toBe(false);
   });
   it('envía la nueva contraseña una sola vez y limpia el formulario al confirmar el guardado',()=>{
     const {api,ref,component}=setup();const {instance}=component(UserPasswordDialogComponent);const pending=new Subject<any>();
     api.changePassword.mockReturnValue(pending);
-    instance.form.setValue({password:'Nueva-pass-123',confirmation:'Nueva-pass-123'});instance.save();instance.save();instance.close();
-    expect(api.changePassword).toHaveBeenCalledExactlyOnceWith(8,'Nueva-pass-123','Nueva-pass-123');expect(ref.close).not.toHaveBeenCalled();expect(ref.disableClose).toBe(true);
+    instance.form.setValue({password:'alameda junto al mar',confirmation:'alameda junto al mar'});instance.save();instance.save();instance.close();
+    expect(api.changePassword).toHaveBeenCalledExactlyOnceWith(8,'alameda junto al mar','alameda junto al mar');expect(ref.close).not.toHaveBeenCalled();expect(ref.disableClose).toBe(true);
     pending.next({message:'Guardado',reauthenticate:false});
     expect(instance.form.getRawValue()).toEqual({password:'',confirmation:''});expect(ref.close).toHaveBeenCalledWith({message:'Guardado',reauthenticate:false});
   });
   it('conserva el formulario ante un error y permite reintentar sin exponer la contraseña en el mensaje',()=>{
     const {api,ref,component}=setup();const {fixture,instance}=component(UserPasswordDialogComponent);
     api.changePassword.mockReturnValueOnce(throwError(()=>({error:{errors:{password:['No se pudo guardar la contraseña.']}}})));
-    instance.form.setValue({password:'Nueva-pass-123',confirmation:'Nueva-pass-123'});instance.save();fixture.detectChanges();
-    expect(ref.close).not.toHaveBeenCalled();expect(fixture.nativeElement.querySelector('[role=alert]').textContent).not.toContain('Nueva-pass-123');
-    expect(instance.form.controls.password.value).toBe('Nueva-pass-123');instance.save();expect(api.changePassword).toHaveBeenCalledTimes(2);
+    instance.form.setValue({password:'alameda junto al mar',confirmation:'alameda junto al mar'});instance.save();fixture.detectChanges();
+    expect(ref.close).not.toHaveBeenCalled();expect(fixture.nativeElement.querySelector('[role=alert]').textContent).not.toContain('alameda junto al mar');
+    expect(instance.form.controls.password.value).toBe('alameda junto al mar');instance.save();expect(api.changePassword).toHaveBeenCalledTimes(2);
   });
   it('cancelar no llama al servidor y el Supervisor no puede cambiar contraseñas ni roles',()=>{
     const {api,ref,component}=setup('password',false);const {instance}=component(UserPasswordDialogComponent);
-    instance.form.setValue({password:'Nueva-pass-123',confirmation:'Nueva-pass-123'});instance.save();expect(api.changePassword).not.toHaveBeenCalled();
+    instance.form.setValue({password:'alameda junto al mar',confirmation:'alameda junto al mar'});instance.save();expect(api.changePassword).not.toHaveBeenCalled();
     instance.close();expect(ref.close).toHaveBeenCalledWith();
   });
   it('la edición de datos no envía contraseñas ni modifica el rol',()=>{
@@ -73,8 +74,8 @@ describe('Ventanas de acciones directas de usuarios',()=>{
   it('permite crear una cuenta con contraseña confirmada y los roles visibles en orden',()=>{
     const {api,component}=setup('new');const {fixture,instance}=component(UserEditDialogComponent);
     expect([...fixture.nativeElement.querySelectorAll('select option')].map((e:any)=>e.textContent.trim())).toEqual(['Administrador','Supervisor','Editor','Suscriptor','Usuario']);
-    instance.form.patchValue({name:'Ana Prueba',email:'ana@example.test',password:'Nueva-pass-123',confirmation:'Distinta'});instance.save();expect(api.createUser).not.toHaveBeenCalled();
-    instance.form.controls.confirmation.setValue('Nueva-pass-123');instance.save();
-    expect(api.createUser).toHaveBeenCalledWith(expect.objectContaining({name:'Ana Prueba',email:'ana@example.test',password:'Nueva-pass-123',rol:'USER'}));
+    instance.form.patchValue({name:'Ana Prueba',email:'ana@example.test',password:'alameda junto al mar',confirmation:'Distinta'});instance.save();expect(api.createUser).not.toHaveBeenCalled();
+    instance.form.controls.confirmation.setValue('alameda junto al mar');instance.save();
+    expect(api.createUser).toHaveBeenCalledWith(expect.objectContaining({name:'Ana Prueba',email:'ana@example.test',password:'alameda junto al mar',rol:'USER'}));
   });
 });

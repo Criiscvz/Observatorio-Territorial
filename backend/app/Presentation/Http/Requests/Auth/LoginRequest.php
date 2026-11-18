@@ -26,7 +26,7 @@ class LoginRequest extends FormRequest
     {
         return [
             'email' => ['bail', 'required', 'string', 'max:255', 'email', new \App\Rules\DatabaseText],
-            'password' => ['required', 'string'],
+            'password' => ['bail', 'required', 'string', new \App\Rules\DatabaseText, new \App\Rules\LoginPasswordBytes],
         ];
     }
 

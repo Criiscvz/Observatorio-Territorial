@@ -69,7 +69,12 @@
       "pattern": "The format is not valid",
       "min": "The minimum value is {{min}}",
       "max": "The maximum value is {{max}}",
-      "passwordMismatch": "Passwords do not match"
+      "passwordMismatch": "Passwords do not match",
+      "passwordHelp": "Use a phrase of at least 15 characters. Avoid common combinations.",
+      "passwordTooShort": "Password must contain at least 15 characters.",
+      "passwordTooLong": "The password is too long. Please shorten it.",
+      "passwordCommon": "Choose a less predictable password. You can use a long phrase.",
+      "passwordInvalidInput": "The password contains an unsupported character."
     },
     "time": {
       "today": "Today",
@@ -1087,7 +1092,7 @@
       "emailRequired": "Email is required",
       "emailInvalid": "Enter a valid email",
       "passwordRequired": "Password is required",
-      "passwordMinLength": "Password must be at least 8 characters"
+      "passwordMinLength": "Password must contain at least 15 characters."
     },
     "confirmToggle": {
       "title": "Change user status",

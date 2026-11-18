@@ -17,6 +17,7 @@ import { USER_ROLE_OPTIONS } from '@core/models/user/user-role.presentation';
 import { UserService } from '@core/services/user.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { passwordValidator, passwordErrorKey } from '@shared/validators/password.validator';
 
 @Component({
   selector: 'app-usuario-form',
@@ -42,6 +43,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class UsuarioFormComponent implements OnInit {
   readonly roles = USER_ROLE_OPTIONS;
+  readonly passwordErrorKey = passwordErrorKey;
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
@@ -60,9 +62,9 @@ export class UsuarioFormComponent implements OnInit {
   userForm!: FormGroup;
 
   ngOnInit(): void {
-    this.initForm();
-
     const id = this.route.snapshot.params['id'];
+    this.isEditMode.set(Boolean(id));
+    this.initForm();
     if (id) {
       this.isEditMode.set(true);
       this.userId.set(parseInt(id, 10));
@@ -74,7 +76,7 @@ export class UsuarioFormComponent implements OnInit {
     this.userForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(255)]],
       email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
-      password: ['', this.isEditMode() ? [] : [Validators.required, Validators.minLength(8)]],
+      password: ['', this.isEditMode() ? [passwordValidator] : [Validators.required, passwordValidator]],
       rol: ['USER', [Validators.required]],
       is_active: [true],
       telefono: ['', [Validators.maxLength(20)]],
@@ -93,8 +95,8 @@ export class UsuarioFormComponent implements OnInit {
         this.user.set(response.data);
         this.patchForm(response.data);
         this.loadingUser.set(false);
-        // Password not required in edit mode
-        this.userForm.get('password')?.clearValidators();
+        // Empty means unchanged; a supplied new password still follows the shared policy.
+        this.userForm.get('password')?.setValidators([passwordValidator]);
         this.userForm.get('password')?.updateValueAndValidity();
       },
       error: () => {

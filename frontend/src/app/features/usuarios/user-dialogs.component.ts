@@ -7,8 +7,9 @@ import { User, UserRole } from '@core/models';
 import { USER_ROLE_OPTIONS, userRoleLabel } from '@core/models/user/user-role.presentation';
 import { AuthService } from '@core/services/auth.service';
 import { ChangeUserPasswordResponse, UserService } from '@core/services/user.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { passwordValidator, passwordErrorKey } from '@shared/validators/password.validator';
 
-const passwordSize = (control: AbstractControl) => new TextEncoder().encode(String(control.value ?? '')).length > 72 ? {passwordTooLong:true} : null;
 const nonBlank = (control: AbstractControl) => String(control.value ?? '').trim() ? null : {required:true};
 const matchingPasswords = (control: AbstractControl) => control.get('password')?.value === control.get('confirmation')?.value ? null : {mismatch:true};
 function message(error: any, fallback: string): string {
@@ -44,7 +45,7 @@ export class UserRoleDialogComponent {
   }
 }
 
-@Component({selector:'app-user-password-dialog', standalone:true, imports:[ReactiveFormsModule,MatDialogModule,MatIconModule],
+@Component({selector:'app-user-password-dialog', standalone:true, imports:[ReactiveFormsModule,MatDialogModule,MatIconModule,TranslateModule],
   templateUrl:'./user-password-dialog.component.html', styleUrl:'./user-dialogs.component.scss'})
 export class UserPasswordDialogComponent implements OnDestroy {
   readonly user = inject<User>(MAT_DIALOG_DATA);
@@ -56,8 +57,9 @@ export class UserPasswordDialogComponent implements OnDestroy {
   readonly error = signal('');
   readonly showPassword = signal(false);
   readonly showConfirmation = signal(false);
+  readonly passwordErrorKey = passwordErrorKey;
   readonly form = inject(FormBuilder).nonNullable.group({
-    password:['',[Validators.required,Validators.minLength(8),passwordSize]],
+    password:['',[Validators.required,passwordValidator]],
     confirmation:['',Validators.required],
   },{validators:matchingPasswords});
   get ownAccount(): boolean { return this.auth.user()?.id === this.user.id; }
@@ -75,7 +77,7 @@ export class UserPasswordDialogComponent implements OnDestroy {
   }
 }
 
-@Component({selector:'app-user-edit-dialog', standalone:true, imports:[ReactiveFormsModule,MatDialogModule,MatIconModule],
+@Component({selector:'app-user-edit-dialog', standalone:true, imports:[ReactiveFormsModule,MatDialogModule,MatIconModule,TranslateModule],
   templateUrl:'./user-edit-dialog.component.html', styleUrl:'./user-dialogs.component.scss'})
 export class UserEditDialogComponent implements OnDestroy {
   readonly user = inject<User | null>(MAT_DIALOG_DATA);
@@ -87,6 +89,7 @@ export class UserEditDialogComponent implements OnDestroy {
   readonly error = signal('');
   readonly showPassword = signal(false);
   readonly roles = USER_ROLE_OPTIONS;
+  readonly passwordErrorKey = passwordErrorKey;
   readonly form = inject(FormBuilder).nonNullable.group({
     name:[this.user?.name ?? '',[nonBlank,Validators.maxLength(255)]],
     email:[this.user?.email ?? '',[Validators.required,Validators.email,Validators.maxLength(255)]],
@@ -95,7 +98,7 @@ export class UserEditDialogComponent implements OnDestroy {
     bio:[this.user?.perfil?.bio ?? '',Validators.maxLength(500)],
     is_active:[this.user?.is_active ?? true],
     rol:['USER' as UserRole,Validators.required],
-    password:['',this.user ? [] : [Validators.required,Validators.minLength(8),passwordSize]],
+    password:['',this.user ? [] : [Validators.required,passwordValidator]],
     confirmation:['',this.user ? [] : [Validators.required]],
   },{validators:matchingPasswords});
   constructor() {
