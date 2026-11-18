@@ -49,7 +49,7 @@
                 <input id="login-password" [type]="hidePassword() ? 'password' : 'text'" formControlName="password" autocomplete="current-password" required [placeholder]="'auth.login.design.passwordPlaceholder' | translate" [attr.aria-invalid]="form.controls['password'].touched && form.controls['password'].invalid" aria-describedby="login-password-error" />
                 <button type="button" class="password-toggle" (click)="hidePassword.set(!hidePassword())" [attr.aria-label]="(hidePassword() ? 'auth.login.design.showPassword' : 'auth.login.design.hidePassword') | translate" [attr.aria-pressed]="!hidePassword()"><mat-icon>{{ hidePassword() ? 'visibility' : 'visibility_off' }}</mat-icon></button>
               </div>
-              <small id="login-password-error" class="login-field-error" [hidden]="!form.controls['password'].touched || form.controls['password'].valid">{{ 'common.validation.required' | translate }}</small>
+              <small id="login-password-error" class="login-field-error" [hidden]="!form.controls['password'].touched || form.controls['password'].valid">{{ passwordErrorKey(form.controls['password']) | translate }}</small>
             </div>
             <button class="login-submit" type="submit" [disabled]="loading()">
               @if (loading()) { <mat-spinner diameter="18" />{{ 'auth.login.submitting' | translate }} }

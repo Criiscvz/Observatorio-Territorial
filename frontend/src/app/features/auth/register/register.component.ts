@@ -11,6 +11,7 @@ import { AuthService } from '@core/services/auth.service';
 import { ThemeService } from '@core/services/theme.service';
 import { communityProfilePayload, createCommunityProfileForm } from '@core/models/user/community-profile';
 import { CommunityProfileFieldsComponent } from '../../../shared/components/community-profile-fields/community-profile-fields.component';
+import { passwordValidator, passwordErrorKey } from '@shared/validators/password.validator';
 
 @Component({
   selector: 'app-register', standalone: true,
@@ -31,7 +32,7 @@ export class RegisterComponent {
     given_name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(125)]],
     family_name: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(125)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
+    password: ['', [Validators.required, passwordValidator]],
     password_confirmation: ['', Validators.required],
   }, { validators: group => group.get('password')?.value !== group.get('password_confirmation')?.value ? { passwordMismatch: true } : null });
   readonly profileForm = createCommunityProfileForm(this.fb);
@@ -40,6 +41,7 @@ export class RegisterComponent {
   readonly error = signal<string | null>(null);
   readonly hidePassword = signal(true);
   readonly hideConfirmation = signal(true);
+  readonly passwordErrorKey = passwordErrorKey;
 
   invalid(name: string): boolean { const control = this.form.get(name); return !!control?.invalid && control.touched; }
   private validAccount(): boolean {
