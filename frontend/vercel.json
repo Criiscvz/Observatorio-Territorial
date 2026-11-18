@@ -32,6 +32,10 @@
   ],
   "rewrites": [
     {
+      "source": "/_internal/verification-mail",
+      "destination": "/api/verification-mail"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://observatorio-territorial-pruebas.onrender.com/api/:path*"
     },

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Application\Auth\Services;
 
-use App\Mail\EmailVerificationCodeMail;
+use App\Application\Auth\Contracts\VerificationCodeSender;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -18,6 +17,8 @@ class EmailVerificationService
     public const EXPIRES_MINUTES = 10;
     public const RESEND_COOLDOWN_SECONDS = 60;
     public const MAX_ATTEMPTS = 3;
+
+    public function __construct(private readonly VerificationCodeSender $sender) {}
 
     public function send(User $user, bool $enforceCooldown = true): void
     {
@@ -55,7 +56,7 @@ class EmailVerificationService
         });
 
         try {
-            Mail::to($user->email)->send(new EmailVerificationCodeMail($code));
+            $this->sender->send($user->email, $code);
         } catch (Throwable $exception) {
             // A code that was never delivered must never remain valid. Deleting
             // it also lets the user retry immediately after a transient outage.

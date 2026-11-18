@@ -14,7 +14,8 @@
     "test:e2e": "node ../scripts/run-e2e.mjs",
     "test:api-build": "node --test scripts/api-url-build.test.mjs",
     "test:security-headers": "node --test scripts/security-headers.test.mjs",
-    "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
+    "serve:ssr:frontend": "node dist/frontend/server/server.mjs",
+    "test:verification-relay": "node --test scripts/verification-mail.test.mjs"
   },
   "prettier": {
     "printWidth": 100,
@@ -49,6 +50,7 @@
     "@ngx-translate/http-loader": "^17.0.0",
     "express": "^5.1.0",
     "helmet": "^8.3.0",
+    "nodemailer": "10.6.0",
     "pdfjs-dist": "6.5.438",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
