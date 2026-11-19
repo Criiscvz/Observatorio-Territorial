@@ -14,7 +14,9 @@ use App\Application\Auth\UseCases\RegisterUseCase;
 use App\Application\Auth\DTOs\AuthResponseDTO;
 use App\Application\Auth\Services\EmailVerificationService;
 use App\Application\Auth\Services\GoogleOAuthService;
+use App\Domain\Shared\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\EnsureActiveAccount;
 use App\Models\User;
 use App\Presentation\Http\Requests\Auth\GoogleCodeExchangeRequest;
 use App\Presentation\Http\Requests\Auth\GoogleCallbackRequest;
@@ -70,6 +72,10 @@ class AuthController extends Controller
         $result = $this->loginUseCase->execute($dto);
         if ($request->hasSession()) {
             $request->session()->regenerate();
+            $request->session()->put(
+                EnsureActiveAccount::EMAIL_VERIFICATION_PAUSED_SESSION,
+                Auth::user()?->email_verified_at === null,
+            );
         }
 
         return response()->json(new AuthResource($result));
@@ -104,6 +110,14 @@ class AuthController extends Controller
     {
         $dto = RegisterDTO::fromArray($request->validated());
         $user = $this->registerUseCase->execute($dto);
+        if (config('verification.required') === false) {
+            return response()->json([
+                'message' => 'Cuenta creada. Ya puedes iniciar sesión.',
+                'verification_required' => false,
+                'email' => $user->email,
+            ], 201);
+        }
+
         $emailSent = true;
 
         try {
@@ -129,6 +143,7 @@ class AuthController extends Controller
 
     public function verifyEmailCode(VerifyEmailCodeRequest $request): JsonResponse
     {
+        $this->ensureEmailVerificationAvailable();
         $email = Str::lower(trim((string) $request->validated('email')));
         $user = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
 
@@ -153,6 +168,7 @@ class AuthController extends Controller
 
     public function resendVerificationCode(ResendVerificationCodeRequest $request): JsonResponse
     {
+        $this->ensureEmailVerificationAvailable();
         $email = Str::lower(trim((string) $request->validated('email')));
         $user = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
 
@@ -261,5 +277,16 @@ class AuthController extends Controller
         Auth::login($user);
 
         return AuthResponseDTO::fromUser($user);
+    }
+
+    private function ensureEmailVerificationAvailable(): void
+    {
+        if (config('verification.required') === false) {
+            throw new ApiException(
+                'EMAIL_VERIFICATION_PAUSED',
+                'La verificación de correo está en pausa. Inicia sesión con tu contraseña.',
+                409,
+            );
+        }
     }
 }

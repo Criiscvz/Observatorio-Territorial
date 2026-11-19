@@ -6,6 +6,7 @@ use App\Mail\EmailVerificationCodeMail;
 use App\Models\EmailVerificationCode;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use RuntimeException;
@@ -114,6 +115,84 @@ class EmailVerificationAuthTest extends TestCase
             ->assertJsonStructure(['user'])
             ->assertJsonMissing(['token']);
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_paused_registration_sends_no_code_and_allows_password_login(): void
+    {
+        config(['verification.required' => false]);
+
+        $this->postJson('/api/register', [
+            'name' => 'New User',
+            'email' => self::EMAIL,
+            'password' => self::PASSWORD,
+            'password_confirmation' => self::PASSWORD,
+        ])->assertCreated()->assertJsonPath('verification_required', false)->assertJsonPath('email', self::EMAIL);
+
+        $user = User::where('email', self::EMAIL)->firstOrFail();
+        $this->assertNull($user->email_verified_at);
+        $this->assertDatabaseCount('email_verification_codes', 0);
+        Mail::assertNothingSent();
+        $this->assertGuest();
+
+        $this->postJson('/api/login', ['email' => self::EMAIL, 'password' => 'invalid-password'])
+            ->assertUnprocessable();
+        $this->assertGuest();
+        $this->postJson('/api/login', ['email' => self::EMAIL, 'password' => self::PASSWORD])
+            ->assertOk()->assertJsonPath('user.rol', 'USER');
+        $this->assertAuthenticatedAs($user);
+        $this->getJson('/api/user')->assertOk();
+        $this->assertNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_pause_rejects_verification_and_resend_for_existing_codes(): void
+    {
+        [$user, $code] = $this->registerAndCaptureCode();
+        config(['verification.required' => false]);
+
+        $this->postJson('/api/verify-email-code', ['email' => self::EMAIL, 'code' => $code])
+            ->assertConflict()->assertJsonPath('code', 'EMAIL_VERIFICATION_PAUSED');
+        $this->postJson('/api/resend-verification-code', ['email' => self::EMAIL])
+            ->assertConflict()->assertJsonPath('code', 'EMAIL_VERIFICATION_PAUSED');
+        $this->assertNull($user->fresh()->email_verified_at);
+        $this->assertGuest();
+        Mail::assertSentCount(1);
+
+        config(['verification.required' => true]);
+        $this->postJson('/api/verify-email-code', ['email' => self::EMAIL, 'code' => $code])->assertOk();
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_reenabling_verification_invalidates_unverified_sessions(): void
+    {
+        config(['verification.required' => false, 'sanctum.stateful' => ['localhost:4200']]);
+        $user = User::factory()->unverified()->create(['password' => Hash::make(self::PASSWORD)]);
+        $key = Auth::guard('web')->getName();
+
+        $this->withHeader('Origin', 'http://localhost:4200')
+            ->postJson('/api/login', ['email' => $user->email, 'password' => self::PASSWORD])
+            ->assertOk()->assertSessionHas($key, $user->id);
+
+        config(['verification.required' => true]);
+        Auth::forgetGuards();
+        $this->withSession([$key => $user->id])
+            ->getJson('/api/user')->assertUnauthorized()->assertSessionMissing($key);
+        Auth::forgetGuards();
+        Auth::shouldUse('web');
+        $this->postJson('/api/login', ['email' => $user->email, 'password' => self::PASSWORD])
+            ->assertForbidden()->assertJsonPath('code', 'EMAIL_VERIFICATION_REQUIRED');
+    }
+
+    public function test_pause_does_not_allow_inactive_accounts_to_log_in(): void
+    {
+        config(['verification.required' => false]);
+        $user = User::factory()->unverified()->create([
+            'password' => Hash::make(self::PASSWORD),
+            'is_active' => false,
+        ]);
+
+        $this->postJson('/api/login', ['email' => $user->email, 'password' => self::PASSWORD])
+            ->assertUnprocessable();
+        $this->assertGuest();
     }
 
     public function test_email_provider_failure_leaves_no_valid_code(): void

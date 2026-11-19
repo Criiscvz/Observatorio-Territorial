@@ -53,6 +53,7 @@ button:disabled { opacity: .65; cursor: not-allowed; }
 .login-error { display: flex; align-items: flex-start; gap: 10px; padding: 12px; margin-bottom: 20px; background: var(--error-bg); color: var(--error-color-dark); border: 1px solid var(--error-border); border-radius: 10px; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
 :host-context(.dark) .login-error { color: var(--error-color-light); }
 .login-error mat-icon { flex-shrink: 0; width: 20px; height: 20px; font-size: 20px; margin-top: 1px; }
+.login-status { font-size: 13px; font-weight: 600; margin: 0 0 20px; }
 .login-divider { display: flex; align-items: center; gap: 12px; margin: 22px 0; font-size: 12px; color: var(--login-muted); }
 .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-color); }
 .login-google { background: var(--bg-secondary); color: var(--text-primary); }

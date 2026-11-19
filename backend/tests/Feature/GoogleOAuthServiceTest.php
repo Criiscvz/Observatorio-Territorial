@@ -69,6 +69,23 @@ class GoogleOAuthServiceTest extends TestCase
         $service->consumeLoginCode($loginCode);
     }
 
+    public function test_unverified_password_accounts_are_not_automatically_linked_to_google(): void
+    {
+        $user = User::factory()->unverified()->create(['email' => 'pending@example.test', 'google_id' => null]);
+        $service = app(GoogleOAuthService::class);
+
+        try {
+            $this->completeGoogle($service, 'google-pending', $user->email);
+            $this->fail('An unverified local account was linked to Google.');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('Verifica el correo de la cuenta local antes de vincular Google.', $e->getMessage());
+        }
+
+        $this->assertNull($user->fresh()->google_id);
+        $this->assertNull($user->fresh()->email_verified_at);
+        $this->assertDatabaseCount('oauth_login_codes', 0);
+    }
+
     private function completeGoogle(GoogleOAuthService $service, string $subject, string $email): string
     {
         $url = $service->authorizationUrl();

@@ -76,7 +76,11 @@ export class RegisterComponent {
     this.authService.register(data).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: response => {
         this.form.controls.password.reset(); this.form.controls.password_confirmation.reset();
-        this.router.navigate(['/auth/verificar-correo'], { state: { email: response.email, emailSent: response.email_sent, resendAfter: response.resend_after } });
+        if (response.verification_required) {
+          this.router.navigate(['/auth/verificar-correo'], { state: { email: response.email, emailSent: response.email_sent, resendAfter: response.resend_after } });
+        } else {
+          this.router.navigate(['/auth/login'], { state: { registered: true, email: response.email } });
+        }
       },
       error: err => {
         this.loading.set(false);

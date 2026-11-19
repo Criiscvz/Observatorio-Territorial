@@ -63,6 +63,17 @@ describe('RegisterComponent two-step registration', () => {
     component.onSubmit(true);
     expect(auth.register).toHaveBeenCalledExactlyOnceWith({ name: 'Persona Ejemplo', email: 'persona@example.test', password: account.password, password_confirmation: account.password });
   });
+  it('sends newly created accounts to login when verification is paused', () => {
+    auth.register.mockReturnValue(of({ email: pending.email, verification_required: false }));
+    component.form.setValue(account);
+    component.nextStep();
+    component.onSubmit(true);
+
+    expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/auth/login'], {
+      state: { registered: true, email: pending.email },
+    });
+    expect(component.form.controls.password.value).toBe('');
+  });
   it('blocks duplicate submissions and sends account errors back to the first step', () => {
     const request = new Subject<any>(); auth.register.mockReturnValue(request);
     component.form.setValue(account); component.nextStep(); component.onSubmit(true); component.onSubmit(true);
