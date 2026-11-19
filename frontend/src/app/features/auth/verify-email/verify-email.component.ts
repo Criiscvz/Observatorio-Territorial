@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, inject, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -48,8 +49,9 @@ export class VerifyEmailComponent {
         this.success.set('Correo verificado correctamente.');
         this.router.navigate([this.auth.isAdmin() || this.auth.isEditor() || this.auth.isObservatoryAdmin() ? '/admin/dashboard' : '/publico/departamentos']);
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         this.loading.set(false);
+        if (this.returnToLoginIfPaused(err)) return;
         this.error.set(err.error?.errors?.code?.[0] ?? err.error?.message ?? 'No fue posible verificar el código.');
       },
     });
@@ -65,8 +67,19 @@ export class VerifyEmailComponent {
         this.success.set(response.message);
         this.resendSeconds.set(response.resend_after || 60);
       },
-      error: (err) => { this.loading.set(false); this.error.set(err.error?.errors?.email?.[0] ?? err.error?.message ?? 'No fue posible reenviar el código.'); },
+      error: (err: HttpErrorResponse) => {
+        this.loading.set(false);
+        if (this.returnToLoginIfPaused(err)) return;
+        this.error.set(err.error?.errors?.email?.[0] ?? err.error?.message ?? 'No fue posible reenviar el código.');
+      },
     });
+  }
+
+  private returnToLoginIfPaused(error: HttpErrorResponse): boolean {
+    if (error.status !== 409 || error.error?.code !== 'EMAIL_VERIFICATION_PAUSED') return false;
+    this.auth.clearPendingVerificationEmail();
+    void this.router.navigate(['/auth/login'], { replaceUrl: true });
+    return true;
   }
 
   private readEmail(): string {

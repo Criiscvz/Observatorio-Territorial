@@ -46,3 +46,21 @@ La copia de las credenciales actuales desde Render a Vercel amplía los lugares 
 4. Hacer una entrega autorizada a una cuenta de prueba y comprobar la recepción y el código, además de los fallos de reenvío. Mantener la verificación activa durante todo el proceso.
 
 Sin configurar las variables, la función falla de forma cerrada. El backend conserva por defecto su selección mail; la publicación del adaptador no activa por sí sola el canal Gmail.
+
+## Pausa temporal de la verificación
+
+Publicar la versión que reconoce ambos modos en frontend y backend. Para
+activar la pausa, fijar `EMAIL_VERIFICATION_REQUIRED=false` en el entorno del
+backend. En local se puede usar `backend/.env`. Reiniciar el backend y regenerar
+la caché de configuración si el entorno la usa. En Render, guardar la variable
+y desplegar el backend con ese entorno.
+
+Durante la pausa, el registro termina en la página de inicio de sesión. Las
+cuentas activas con correo pendiente pueden acceder con su contraseña. El
+servidor deja los correos pendientes como tales y bloquea los endpoints de
+verificación y reenvío.
+
+Para reactivar la verificación, comprobar primero el transporte de correo con
+las credenciales del alojamiento, ajustar `EMAIL_VERIFICATION_REQUIRED=true`
+y volver a aplicar la configuración del backend. Las cuentas pendientes
+vuelven a requerir el código, incluidas las sesiones abiertas durante la pausa.

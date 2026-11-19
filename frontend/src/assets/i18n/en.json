@@ -123,6 +123,7 @@
       },
       "title": "ULEAM Observatory",
       "subtitle": "Sign in to your account",
+      "registrationComplete": "Your account is ready. Sign in with your password.",
       "email": "Email",
       "emailPlaceholder": "email@uleam.edu.ec",
       "password": "Password",
