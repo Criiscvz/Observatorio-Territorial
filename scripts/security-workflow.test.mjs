@@ -157,6 +157,10 @@ test('the shared password policy and Unicode contracts are mandatory in CI', () 
   assert(source.includes('scripts/password-policy-contract.test.mjs'));
 });
 
+test('the server-only verification relay has a mandatory security regression gate', () => {
+  assert(source.includes('run: npm run test:verification-relay'));
+});
+
 test('the locked MongoDB library has a compatible, identical PHP driver in Docker and CI', () => {
   const library = backendLock.packages.find(pkg => pkg.name === 'mongodb/mongodb');
   const required = /^\^(\d+)\.(\d+)$/.exec(library.require['ext-mongodb']);

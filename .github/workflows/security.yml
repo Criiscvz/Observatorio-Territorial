@@ -155,7 +155,7 @@ jobs:
           TEST_DB_DATABASE: observatorio_ci_test
           TEST_DB_USERNAME: ci_test
           TEST_DB_PASSWORD: synthetic-disposable-ci-only
-        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest|SharePointPublicationImporterTest|PublicationPdfStorageTest|SharePointArticleImportTest|PublicationPdfReaderTest|ObservatoryAccessCapabilitiesTest|ObservatoryAdministratorTest|DatasetResourceContractTest|DatasetInputValidationTest|EditorialInputValidationTest|AccountInputValidationTest|AdminUserPasswordTest|RegistrationCommunityProfileTest|InactiveAccountSessionTest|LegacyInputValidationTest|StatisticsFilterLiteralTest|ProtocolInputValidationTest|GoogleOAuthServiceTest|ObservatoryImportValidationTest|ExcelReaderServiceTest|PasswordPolicyTest'
+        run: php vendor/bin/phpunit --no-progress --filter 'RegistroDatoPostgresTest|EloquentRegistroDatoRepositoryTest|TestDatabaseIsolationTest|PublicPublicationCatalogTest|LegacyPublicationRehearsalTest|LegacyPublicationBridgeTest|PublicationLibraryPaginationTest|PublicationCapabilitiesTest|PublicationReviewWorkflowTest|SharePointPublicationImporterTest|PublicationPdfStorageTest|SharePointArticleImportTest|PublicationPdfReaderTest|ObservatoryAccessCapabilitiesTest|ObservatoryAdministratorTest|DatasetResourceContractTest|DatasetInputValidationTest|EditorialInputValidationTest|AccountInputValidationTest|AdminUserPasswordTest|RegistrationCommunityProfileTest|InactiveAccountSessionTest|LegacyInputValidationTest|StatisticsFilterLiteralTest|ProtocolInputValidationTest|GoogleOAuthServiceTest|ObservatoryImportValidationTest|ExcelReaderServiceTest|PasswordPolicyTest|VerificationRelayTest|EmailVerificationAuthTest|MailTransportCompatibilityTest'
 
   frontend:
     name: Frontend
@@ -186,6 +186,8 @@ jobs:
         run: npm run test:quality
       - name: Frontend unit tests
         run: npm test -- --watch=false
+      - name: Authenticated Gmail verification relay regressions
+        run: npm run test:verification-relay
       - name: Production SPA build with a same-origin API path
         env:
           API_URL: /api
