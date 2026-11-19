@@ -156,6 +156,7 @@ test('aplica nosniff, una política de referencia limitada y permisos no utiliza
 
 test('mantiene intactos el proxy de API/CSRF/almacenamiento y el fallback SPA', () => {
   assert.deepEqual(vercel.rewrites, [
+    { source: '/_internal/verification-mail', destination: '/api/verification-mail' },
     { source: '/api/:path*', destination: 'https://observatorio-territorial-pruebas.onrender.com/api/:path*' },
     { source: '/sanctum/:path*', destination: 'https://observatorio-territorial-pruebas.onrender.com/sanctum/:path*' },
     { source: '/storage/:path*', destination: 'https://observatorio-territorial-pruebas.onrender.com/storage/:path*' },
@@ -199,7 +200,11 @@ test('el bundle verificado no conserva el origen de bloqueo de API sin configura
     const dist = new URL('dist/frontend/browser/', frontendRoot);
     const files = (await readdir(dist)).filter((file) => file.endsWith('.js'));
     for (const file of files) {
-      assert.ok(!(await readFile(new URL(file, dist), 'utf8')).includes('api-url-not-configured.invalid'), file);
+      const source = await readFile(new URL(file, dist), 'utf8');
+      assert.ok(!source.includes('api-url-not-configured.invalid'), file);
+      for (const key of ['GMAIL_SMTP_PASSWORD', 'GMAIL_SMTP_USER', 'VERIFICATION_RELAY_SECRET']) {
+        assert.ok(!source.includes(key), `Server-only mail configuration in browser bundle: ${file}`);
+      }
     }
   });
 

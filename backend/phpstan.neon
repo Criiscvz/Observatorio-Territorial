@@ -2,6 +2,9 @@ parameters:
     level: 5
     paths:
         - app/Domain
+        - app/Application/Auth/Contracts/VerificationCodeSender.php
+        - app/Infrastructure/Mail
+        - app/Console/Commands/CheckVerificationDelivery.php
         - app/Application/Publicaciones/PublicationReviewDecision.php
         - app/Application/Publicaciones/PublicationPdf.php
         - app/Presentation/Http/Responses/PublicationPdfResponse.php
