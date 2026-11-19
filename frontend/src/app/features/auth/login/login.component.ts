@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Component, inject, signal, DestroyRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,7 +32,9 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
   private readonly route = inject(ActivatedRoute);
+  private readonly registration = inject(Location).getState() as { registered?: boolean; email?: string } | null;
   readonly themeService = inject(ThemeService);
+  readonly registrationComplete = this.registration?.registered === true;
 
   form: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -45,6 +47,9 @@ export class LoginComponent {
   readonly passwordErrorKey = passwordErrorKey;
 
   constructor() {
+    if (this.registrationComplete && typeof this.registration?.email === 'string') {
+      this.form.controls['email'].setValue(this.registration.email);
+    }
     if (this.route.snapshot.queryParamMap.has('google_error')) {
       this.error.set(this.translate.instant('auth.login.design.googleError'));
     }

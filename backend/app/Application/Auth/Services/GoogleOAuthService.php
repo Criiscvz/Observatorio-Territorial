@@ -101,6 +101,10 @@ class GoogleOAuthService
             if ($user && $user->google_id !== null && !hash_equals($user->google_id, $googleId)) {
                 throw new RuntimeException('El correo ya está vinculado con otra cuenta Google.');
             }
+            if ($user && $user->email_verified_at === null) {
+                // Proof from Google cannot establish who set the existing local password.
+                throw new RuntimeException('Verifica el correo de la cuenta local antes de vincular Google.');
+            }
 
             if (!$user) {
                 $user = User::create([

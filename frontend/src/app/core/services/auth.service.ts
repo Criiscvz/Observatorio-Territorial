@@ -6,13 +6,14 @@ import { ApiService } from './api.service';
 
 const VERIFICATION_EMAIL_KEY = 'verification_email';
 
-export interface RegisterPendingResponse {
+export type RegisterResponse = {
   message: string;
-  verification_required: true;
   email: string;
+} & ({
+  verification_required: true;
   email_sent: boolean;
   resend_after: number;
-}
+} | { verification_required: false });
 
 export interface VerificationMessageResponse {
   message: string;
@@ -57,11 +58,14 @@ export class AuthService {
   readonly isSubscriber = computed(() => this.userSignal()?.rol === 'SUBSCRIBER');
   readonly userRole = computed(() => this.userSignal()?.rol ?? null);
 
-  register(data: RegisterRequest): Observable<RegisterPendingResponse> {
+  register(data: RegisterRequest): Observable<RegisterResponse> {
     this.loadingSignal.set(true);
     return this.api.getCsrfCookie().pipe(
-      switchMap(() => this.api.post<RegisterPendingResponse>('/register', data)),
-      tap((response) => this.setPendingVerificationEmail(response.email)),
+      switchMap(() => this.api.post<RegisterResponse>('/register', data)),
+      tap((response) => {
+        if (response.verification_required) this.setPendingVerificationEmail(response.email);
+        else this.clearPendingVerificationEmail();
+      }),
       finalize(() => this.loadingSignal.set(false))
     );
   }
@@ -117,7 +121,10 @@ export class AuthService {
     this.loadingSignal.set(true);
     return this.api.getCsrfCookie().pipe(
       switchMap(() => this.api.post<AuthResponse>('/login', data)),
-      tap((response) => this.handleAuthSuccess(response)),
+      tap((response) => {
+        this.clearPendingVerificationEmail();
+        this.handleAuthSuccess(response);
+      }),
       finalize(() => this.loadingSignal.set(false))
     );
   }

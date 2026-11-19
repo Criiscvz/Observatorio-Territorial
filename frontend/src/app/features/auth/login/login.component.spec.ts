@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Location } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -60,6 +61,17 @@ describe('LoginComponent', () => {
     expect(component).toBeTruthy();
     expect(component.form.controls['email']).toBeTruthy();
     expect(component.form.controls['password']).toBeTruthy();
+  });
+  it('confirms registration and prefills the email for password login', () => {
+    const email = 'persona@example.test';
+    vi.spyOn(TestBed.inject(Location), 'getState').mockReturnValue({ registered: true, email });
+    fixture.destroy();
+    fixture = TestBed.createComponent(LoginComponent);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.form.controls['email'].value).toBe(email);
+    expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent)
+      .toContain('auth.login.registrationComplete');
   });
   it('lleva al editor a su espacio de trabajo al iniciar sesión', () => {
     authServiceSpy.isEditor.mockReturnValue(true);

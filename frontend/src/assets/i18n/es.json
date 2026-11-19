@@ -123,6 +123,7 @@
       },
       "title": "Observatorio ULEAM",
       "subtitle": "Ingresa a tu cuenta",
+      "registrationComplete": "Tu cuenta está lista. Inicia sesión con tu contraseña.",
       "email": "Correo electrónico",
       "emailPlaceholder": "correo@uleam.edu.ec",
       "password": "Contraseña",
