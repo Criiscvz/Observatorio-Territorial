@@ -144,6 +144,25 @@ class EmailVerificationAuthTest extends TestCase
         $this->assertNull($user->fresh()->email_verified_at);
     }
 
+    public function test_registration_rejects_the_email_of_a_soft_deleted_account(): void
+    {
+        config(['verification.required' => false]);
+        $user = User::factory()->create(['email' => self::EMAIL]);
+        $user->delete();
+
+        $this->postJson('/api/register', [
+            'name' => 'New User',
+            'email' => strtoupper(self::EMAIL),
+            'password' => self::PASSWORD,
+            'password_confirmation' => self::PASSWORD,
+        ])->assertUnprocessable()
+            ->assertJsonPath('errors.email.0', 'Este correo electrónico ya está registrado.');
+
+        $this->assertSoftDeleted($user);
+        $this->assertDatabaseCount('users', 1);
+        Mail::assertNothingSent();
+    }
+
     public function test_pause_rejects_verification_and_resend_for_existing_codes(): void
     {
         [$user, $code] = $this->registerAndCaptureCode();
