@@ -32,8 +32,8 @@ class RegisterRequest extends FormRequest
             'email' => [
                 'bail', 'required', 'string', 'email', 'max:255', new \App\Rules\DatabaseText,
                 function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (User::query()->whereRaw('LOWER(email) = ?', [(string) $value])->exists()) {
-                        $fail('validation.unique')->translate();
+                    if (User::withTrashed()->whereRaw('LOWER(email) = ?', [(string) $value])->exists()) {
+                        $fail('Este correo electrónico ya está registrado.');
                     }
                 },
             ],
@@ -49,7 +49,6 @@ class RegisterRequest extends FormRequest
             'name.required' => 'El nombre es obligatorio',
             'email.required' => 'El correo electrónico es obligatorio',
             'email.email' => 'El correo electrónico debe ser válido',
-            'email.unique' => 'Este correo electrónico ya está registrado',
             'password.required' => 'La contraseña es obligatoria',
             'password.confirmed' => 'Las contraseñas no coinciden',
         ];
