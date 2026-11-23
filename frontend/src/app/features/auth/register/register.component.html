@@ -31,10 +31,6 @@
       }
       </fieldset>
     </form>
-    @if (step() === 1) {
-      <div class="auth-divider"><span>{{ 'auth.register.or' | translate }}</span></div>
-      <button mat-stroked-button type="button" class="google-button" [disabled]="loading()" (click)="continueWithGoogle()"><mat-icon>account_circle</mat-icon>{{ 'auth.register.google' | translate }}</button>
-    }
     <p class="auth-footer-text">{{ 'auth.register.hasAccount' | translate }} <a routerLink="/auth/login">{{ 'auth.register.loginLink' | translate }}</a></p>
   </section>
 </div>

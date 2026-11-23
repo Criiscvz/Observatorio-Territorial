@@ -30,7 +30,6 @@ describe('LoginComponent', () => {
       isEditor: vi.fn().mockReturnValue(false),
       isObservatoryAdmin: vi.fn().mockReturnValue(false),
       setPendingVerificationEmail: vi.fn(),
-      getGoogleAuthorizationUrl: vi.fn(),
     };
     translateSpy = { instant: vi.fn().mockImplementation((k) => k) };
 
@@ -122,15 +121,13 @@ describe('LoginComponent', () => {
     expect(authServiceSpy.login).not.toHaveBeenCalled();
   });
 
-  it('impide solicitudes duplicadas y cambios de método mientras inicia sesión', () => {
+  it('impide solicitudes duplicadas mientras inicia sesión', () => {
     const pending = new Subject<any>();
     authServiceSpy.login.mockReturnValue(pending);
     component.form.setValue({email:'prueba@example.test',password:'prueba'});
-    component.onSubmit();component.onSubmit();component.continueWithGoogle();fixture.detectChanges();
+    component.onSubmit();component.onSubmit();fixture.detectChanges();
     expect(authServiceSpy.login).toHaveBeenCalledTimes(1);
-    expect(authServiceSpy.getGoogleAuthorizationUrl).not.toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('fieldset').disabled).toBe(true);
-    expect(fixture.nativeElement.querySelector('.login-google').disabled).toBe(true);
     pending.error({error:{message:'Error de prueba'}});fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('fieldset').disabled).toBe(false);
     expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('Error de prueba');
@@ -144,11 +141,10 @@ describe('LoginComponent', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/auth/verificar-correo'],{state:{email:'pendiente@example.test'}});
   });
 
-  it('muestra el error de Google y permite volver a intentar', () => {
-    authServiceSpy.getGoogleAuthorizationUrl.mockReturnValue(throwError(()=>({})));
-    component.continueWithGoogle();fixture.detectChanges();
-    expect(component.loading()).toBe(false);
-    expect(fixture.nativeElement.querySelector('[role="alert"]').textContent).toContain('auth.login.design.googleUnavailable');
+  it('oculta la opción de Google y su separador', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.login-google, .login-divider')).toBeNull();
+    expect(element.querySelector('.login-submit')).not.toBeNull();
   });
 
   describe('onSubmit()', () => {

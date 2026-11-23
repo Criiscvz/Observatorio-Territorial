@@ -1,5 +1,5 @@
 import { Component, Input, Pipe } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormGroup } from '@angular/forms';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
@@ -16,19 +16,25 @@ class MockCommunityFields { @Input() form!: FormGroup; }
 
 describe('RegisterComponent two-step registration', () => {
   let component: RegisterComponent;
-  let auth: { register: ReturnType<typeof vi.fn>; getGoogleAuthorizationUrl: ReturnType<typeof vi.fn> };
+  let fixture: ComponentFixture<RegisterComponent>;
+  let auth: { register: ReturnType<typeof vi.fn> };
   let router: Router;
   const account = { given_name: ' Persona ', family_name: ' Ejemplo ', email: 'PERSONA@example.test', password: 'test-password-alameda', password_confirmation: 'test-password-alameda' };
   const pending = { email: 'persona@example.test', email_sent: true, resend_after: 60, verification_required: true };
   beforeEach(async () => {
-    auth = { register: vi.fn().mockReturnValue(of(pending)), getGoogleAuthorizationUrl: vi.fn() };
+    auth = { register: vi.fn().mockReturnValue(of(pending)) };
     TestBed.overrideComponent(RegisterComponent, { remove: { imports: [TranslateModule, CommunityProfileFieldsComponent] }, add: { imports: [MockTranslatePipe, MockCommunityFields] } });
     await TestBed.configureTestingModule({ imports: [RegisterComponent], providers: [provideRouter([]), provideNoopAnimations(),
       { provide: AuthService, useValue: auth }, { provide: TranslateService, useValue: { instant: (key: string) => key } }] }).compileComponents();
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    const fixture = TestBed.createComponent(RegisterComponent);
+    fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance; fixture.detectChanges();
+  });
+  it('hides the Google option and its separator on the account step', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.google-button, .auth-divider')).toBeNull();
+    expect(element.querySelector('.registration-primary')).not.toBeNull();
   });
   it('validates the account before advancing and does not create it on the first step', () => {
     component.nextStep(); expect(component.step()).toBe(1);

@@ -61,8 +61,6 @@
           </fieldset>
         </form>
 
-        <div class="login-divider"><span>{{ 'auth.login.design.orContinue' | translate }}</span></div>
-        <button class="login-google" type="button" (click)="continueWithGoogle()" [disabled]="loading()"><span class="google-mark" aria-hidden="true">G</span>{{ 'auth.login.design.google' | translate }}</button>
         <p class="login-register">{{ 'auth.login.noAccount' | translate }} <a class="nav-login" routerLink="/auth/register">{{ 'auth.login.registerLink' | translate }}</a></p>
       </div>
     </section>

@@ -90,12 +90,4 @@ export class RegisterComponent {
       },
     });
   }
-  continueWithGoogle(): void {
-    if (this.loading()) return;
-    this.loading.set(true); this.error.set(null);
-    this.authService.getGoogleAuthorizationUrl().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ({ url }) => window.location.assign(url),
-      error: err => { this.loading.set(false); this.error.set(err.error?.message || this.translate.instant('auth.register.googleUnavailable')); },
-    });
-  }
 }

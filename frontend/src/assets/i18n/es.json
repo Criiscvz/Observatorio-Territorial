@@ -116,10 +116,7 @@
         "passwordPlaceholder": "Ingresa tu contraseña",
         "showPassword": "Mostrar contraseña",
         "hidePassword": "Ocultar contraseña",
-        "orContinue": "o continúa con",
-        "google": "Continuar con Google",
-        "googleError": "No fue posible completar el acceso con Google. Inténtalo nuevamente.",
-        "googleUnavailable": "Google no está disponible en este momento."
+        "googleError": "No fue posible completar el acceso con Google. Inténtalo nuevamente."
       },
       "title": "Observatorio ULEAM",
       "subtitle": "Ingresa a tu cuenta",
@@ -173,9 +170,6 @@
       "hidePassword": "Ocultar contraseña",
       "showConfirmation": "Mostrar confirmación",
       "hideConfirmation": "Ocultar confirmación",
-      "or": "o",
-      "google": "Continuar con Google",
-      "googleUnavailable": "Google no está disponible en este momento.",
       "community": {
         "link": "Vínculo con la comunidad",
         "institution": "Institución",

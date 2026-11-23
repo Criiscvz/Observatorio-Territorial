@@ -116,10 +116,7 @@
         "passwordPlaceholder": "Enter your password",
         "showPassword": "Show password",
         "hidePassword": "Hide password",
-        "orContinue": "or continue with",
-        "google": "Continue with Google",
-        "googleError": "Google sign-in could not be completed. Please try again.",
-        "googleUnavailable": "Google is currently unavailable."
+        "googleError": "Google sign-in could not be completed. Please try again."
       },
       "title": "ULEAM Observatory",
       "subtitle": "Sign in to your account",
@@ -173,9 +170,6 @@
       "hidePassword": "Hide password",
       "showConfirmation": "Show confirmation",
       "hideConfirmation": "Hide confirmation",
-      "or": "or",
-      "google": "Continue with Google",
-      "googleUnavailable": "Google is unavailable right now.",
       "community": {
         "link": "Community affiliation",
         "institution": "Institution",
