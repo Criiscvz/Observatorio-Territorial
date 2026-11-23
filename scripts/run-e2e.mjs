@@ -12,11 +12,33 @@ const project = 'observatorio-e2e-fase5';
 const purpose = 'e2e-fase5';
 const origin = 'http://localhost:4500';
 let operation = 0;
+function summarizeBuildFailure(result) {
+  if (result.error?.code === 'ENOBUFS') return 'Docker output exceeded the capture limit';
+  if (result.error?.code === 'ETIMEDOUT') return 'Docker exceeded the build timeout';
+
+  const log = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  const kinds = [
+    ['disk space exhausted', /no space left on device/i],
+    ['process killed or out of memory', /out of memory|Killed signal|exit code: 137/i],
+    ['registry rate limit', /toomanyrequests|429 Too Many Requests/i],
+    ['Alpine package installation', /unable to select packages|error installing apk|apk:.*error/i],
+    ['network or TLS failure', /timed out|TLS handshake|certificate verify failed|connection reset|temporary failure|could not resolve|Failed to download/i],
+    ['PHP extension compilation', /make: \*\*\*|fatal error:|failed to run make/i],
+  ];
+  const cause = kinds.find(([, pattern]) => pattern.test(log))?.[0];
+  const stage = /^\s*> \[(php-base|composer-binary|dependencies|runtime) \d+\/\d+\]/m.exec(log)?.[1];
+  return [cause, stage && `stage ${stage}`, result.status !== null && `exit ${result.status}`].filter(Boolean).join(', ');
+}
+
 function run(command, args, { input, timeout = 600000, allowFailure = false, cwd = root } = {}) {
   const result = spawnSync(command, args, { cwd, input, encoding: 'utf8', timeout,
     maxBuffer: 16 * 1024 * 1024, windowsHide: true });
   writeFileSync(resolve(output, `operation-${++operation}.log`), String(result.stdout || '') + '\n' + String(result.stderr || ''), { mode: 0o600 });
-  if (!allowFailure && (result.error || result.status !== 0)) throw new Error(`E2E operation ${operation} failed. Private diagnostics: storage/codex-local/e2e/operation-${operation}.log`);
+  if (!allowFailure && (result.error || result.status !== 0)) {
+    const buildFailure = command === 'docker' && args.includes('build') ? summarizeBuildFailure(result) : '';
+    const detail = buildFailure ? ` (${buildFailure})` : '';
+    throw new Error(`E2E operation ${operation} failed${detail}. Private diagnostics: storage/codex-local/e2e/operation-${operation}.log`);
+  }
   return result;
 }
 const docker = (args, options) => run('docker', ['--context', 'default', ...args], options);
