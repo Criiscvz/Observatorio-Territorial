@@ -111,6 +111,7 @@ Route::prefix('observatorio-admin')->middleware(['auth:sanctum', 'role:ADMIN_OBS
     Route::put('/users/{user}/permisos', [$access, 'save']);
 });
 require __DIR__ . '/modules/atlas.php';
+require __DIR__ . '/modules/barometro.php';
 
 Route::middleware(['auth:sanctum', 'role:ADMIN,ADMIN_OBSERVATORIO'])->prefix('accesos')->where(['user' => '[1-9][0-9]{0,17}'])->group(function () {
     $controller = \App\Presentation\Http\Controllers\Api\ObservatoryAccessController::class;

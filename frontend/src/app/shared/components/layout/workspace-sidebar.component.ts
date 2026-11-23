@@ -20,7 +20,7 @@ export class WorkspaceSidebarComponent {
     readonly observatoryAdmin = input(false);
     readonly collapsed = input(false);
     readonly navigate = output<string>();
-    readonly mainLinks = [{ label: 'Inicio', icon: 'dashboard', route: '/admin/dashboard', exact: true }, { label: 'Observatorios', icon: 'account_balance', route: '/admin/departamentos', exact: false }, { label: 'Publicaciones', icon: 'description', route: '/admin/publicaciones', exact: false }, { label: 'Atlas', icon: 'library_books', route: '/admin/atlas', exact: false }, { label: 'Barómetro', icon: 'bar_chart', route: '/admin/datasets', exact: false }];
+    readonly mainLinks = [{ label: 'Inicio', icon: 'dashboard', route: '/admin/dashboard', exact: true }, { label: 'Observatorios', icon: 'account_balance', route: '/admin/departamentos', exact: false }, { label: 'Publicaciones', icon: 'description', route: '/admin/publicaciones', exact: false }, { label: 'Atlas', icon: 'library_books', route: '/admin/atlas', exact: false }, { label: 'Barómetro', icon: 'bar_chart', route: '/admin/barometro', exact: false }];
     readonly visibleManagementLinks = computed(() => this.observatoryAdmin() ? this.managementLinks.slice(0, 2) : this.managementLinks);
     readonly managementLinks = [{ label: 'Usuarios', icon: 'group', route: '/admin/usuarios' }, { label: 'Permisos', icon: 'security', route: '/admin/permisos' }, { label: 'Configuración del sitio', icon: 'tune', route: '/admin/configuracion' }];
     readonly visibleMainLinks = computed(() => this.editor() || this.observatoryAdmin() ? this.mainLinks.slice(0, 3) : this.mainLinks);

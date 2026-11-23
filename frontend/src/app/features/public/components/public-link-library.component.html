@@ -1,0 +1,46 @@
+<section class="atlas-category-library" aria-labelledby="link-library-title">
+  <div class="library-heading"><h2 id="link-library-title">{{atlas() ? 'Biblioteca de Atlas' : 'Biblioteca del Barómetro'}}</h2><span>{{atlas() ? 'Visualizaciones e indicadores' : 'Reportes Power BI'}}</span></div>
+  <div class="atlas-library-tools">
+    <label class="public-search"><mat-icon aria-hidden="true">search</mat-icon>
+      <input type="search" maxlength="200" [attr.aria-label]="atlas() ? 'Buscar Atlas en la categoría' : 'Buscar reportes del Barómetro'"
+        [placeholder]="atlas() ? 'Buscar por título, autor o fuente…' : 'Buscar por título o fuente…'" [value]="query()" (input)="search.emit($any($event.target).value)">
+    </label>
+    <span class="result-count" aria-live="polite">{{total()}} {{total() === 1 ? 'publicación' : 'publicaciones'}}</span>
+  </div>
+  <div class="atlas-library-list">
+    @if(loading()){<p class="directory-empty" role="status">Cargando publicaciones…</p>}
+    @if(failed()){<div class="directory-empty" role="alert">No se pudo cargar la biblioteca.<button type="button" class="public-button" (click)="retry.emit()">Reintentar</button></div>}
+    @if (items().length) {
+      <div class="library-columns" aria-hidden="true"><span>Publicación</span><span>Fecha</span><span>Recursos disponibles</span><span>Consultar</span></div>
+    }
+    @for(publication of items(); track publication.id) {
+      <article class="atlas-library-row">
+        <div class="publication-copy">
+          <span class="file-icon" aria-hidden="true"><mat-icon>{{hasReport(publication) ? 'bar_chart' : 'map'}}</mat-icon></span>
+          <div><p class="publication-code">{{publication.codigo || 'Atlas'}}</p><h3><button type="button" [disabled]="publication.bloqueado" (click)="details.emit(publication)">{{publication.titulo}}</button></h3>
+            @if (authors(publication)) {<p class="publication-authors">{{authors(publication)}}</p>}
+            @else if (publication.fuente) {<p class="publication-authors">{{publication.fuente}}</p>}
+          </div>
+        </div>
+        <span class="publication-date">{{publication.fecha_publicacion ? (publication.fecha_publicacion | date:'dd/MM/yyyy') : 'Sin fecha'}}</span>
+        <div class="publication-resources">
+          @if (publication.bloqueado) {<span class="locked"><mat-icon>lock</mat-icon>Solo suscriptores</span>}
+          @else {
+            <span [class.available]="canRead(publication)"><mat-icon>{{canRead(publication) ? 'check_circle_outline' : 'remove_circle_outline'}}</mat-icon>{{hasReport(publication) ? (atlas() ? 'Atlas disponible' : 'Power BI disponible') : canRead(publication) ? 'PDF disponible' : 'Recurso no disponible'}}</span>
+            <span [class.available]="hasSource(publication)"><mat-icon>{{hasSource(publication) ? 'check_circle_outline' : 'remove_circle_outline'}}</mat-icon>{{hasSource(publication) ? 'Fuente registrada' : 'Sin fuente'}}</span>
+          }
+        </div>
+        <div class="publication-actions">
+          <button class="public-button public-button--soft view-atlas" type="button" [disabled]="!canRead(publication)" [attr.aria-label]="action() + ' ' + publication.titulo" (click)="read.emit(publication)"><mat-icon aria-hidden="true">{{publication.bloqueado ? 'lock' : 'bar_chart'}}</mat-icon>{{action()}}</button>
+          <button class="details-button" type="button" [disabled]="publication.bloqueado" [attr.aria-label]="'Ver detalles de ' + publication.titulo" (click)="details.emit(publication)"><mat-icon>info_outline</mat-icon></button>
+        </div>
+      </article>
+    } @empty {@if(!loading() && !failed()){<div class="directory-empty"><mat-icon>search_off</mat-icon><h2>{{query() ? 'No encontramos publicaciones' : (atlas() ? 'Aún no hay Atlas publicados' : 'Aún no hay reportes publicados')}}</h2><p>{{query() ? 'Prueba con otro título o fuente.' : (atlas() ? 'Los Atlas de esta categoría aparecerán aquí cuando se publiquen.' : 'Los reportes de esta sección aparecerán aquí cuando se publiquen.')}}</p></div>}}
+  </div>
+  <nav class="public-pagination" aria-label="Paginación de publicaciones">
+    <span>{{start()}}–{{end()}} de {{total()}} {{total() === 1 ? 'publicación' : 'publicaciones'}} · {{pageSize}} por página</span>
+    <div><button class="page-button" type="button" aria-label="Página anterior de publicaciones" [disabled]="loading() || page()===0" (click)="pageChange.emit(-1)"><mat-icon>chevron_left</mat-icon></button>
+    <span class="page-index" aria-live="polite">{{currentPage()+1}} / {{pageCount()}}</span>
+    <button class="page-button" type="button" aria-label="Página siguiente de publicaciones" [disabled]="loading() || page()+1>=pageCount()" (click)="pageChange.emit(1)"><mat-icon>chevron_right</mat-icon></button></div>
+  </nav>
+</section>

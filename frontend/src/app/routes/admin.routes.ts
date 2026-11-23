@@ -56,6 +56,16 @@ export const ADMIN_ROUTES: Routes = [
     title: 'Detalle del Departamento - Observatorio',
   },
 
+  {
+    path: 'barometro', canActivate: [adminGuard],
+    loadComponent: () => import('../features/admin-workspace/barometro/barometro-workspace.component').then(m => m.BarometroWorkspaceComponent),
+    title: 'Gestión del Barómetro - Observatorio',
+  },
+  {
+    path: 'barometro/:codigo', canActivate: [adminGuard],
+    loadComponent: () => import('../features/admin-workspace/barometro/barometro-workspace.component').then(m => m.BarometroWorkspaceComponent),
+    title: 'Biblioteca del Barómetro - Observatorio',
+  },
   // Datasets
   {
     path: 'datasets',

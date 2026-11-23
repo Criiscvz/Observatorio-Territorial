@@ -35,7 +35,7 @@
         <p [class.reader-description-empty]="!description">{{ description || 'Sin descripción registrada.' }}</p>
       </section>
       <dl class="reader-metadata">
-        <div><dt><mat-icon aria-hidden="true">account_balance</mat-icon>{{ isAtlas ? 'Categoría' : 'Observatorio' }}</dt><dd>{{ data.departmentName || 'No especificado' }}</dd></div>
+        <div><dt><mat-icon aria-hidden="true">account_balance</mat-icon>{{ isAtlas ? 'Categoría' : data.context === 'barometro' ? 'Sección del Barómetro' : 'Observatorio' }}</dt><dd>{{ data.departmentName || 'No especificado' }}</dd></div>
         <div><dt><mat-icon aria-hidden="true">people_outline</mat-icon>Autores</dt><dd>{{ item.authors || 'No especificados' }}</dd></div>
         <div><dt><mat-icon aria-hidden="true">calendar_today</mat-icon>Fecha de publicación</dt><dd>{{ item.date ? (item.date | date:'dd/MM/yyyy') : 'Sin fecha registrada' }}</dd></div>
         <div><dt><mat-icon aria-hidden="true">business</mat-icon>Fuente</dt><dd>{{ item.source || 'No especificada' }}</dd></div>

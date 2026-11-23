@@ -1,0 +1,29 @@
+<form class="atlas-editor" [formGroup]="form" (ngSubmit)="save()">
+  <header class="atlas-editor-heading">
+    <div><span class="atlas-eyebrow">Barómetro</span><h2>{{data.item ? 'Editar publicación' : 'Nueva publicación'}}</h2></div>
+    <button type="button" class="atlas-button icon" aria-label="Cerrar formulario" [disabled]="saving()" (click)="close()"><mat-icon aria-hidden="true">close</mat-icon></button>
+  </header>
+  <mat-dialog-content class="atlas-editor-content">
+    @if (confirmDiscard()) {
+      <div class="discard-notice" role="alert">Hay cambios sin guardar.
+        <button type="button" class="atlas-button" (click)="confirmDiscard.set(false)">Seguir editando</button>
+        <button type="button" class="atlas-button danger" (click)="close(true)">Descartar</button>
+      </div>
+    }
+    <fieldset class="atlas-fields" [disabled]="saving()">
+      <div class="barometro-destination full"><span>Sección de destino</span><strong>{{data.section.name}}</strong><small>Reporte Power BI</small></div>
+      <label class="field full">Título *<input formControlName="titulo" maxlength="255" required></label>
+      <label class="field">Fecha de publicación *<input type="date" formControlName="fecha_publicacion" required></label>
+      <label class="field">Estado<select formControlName="estado">@for (state of states; track state.value) {<option [value]="state.value">{{state.label}}</option>}</select></label>
+      <label class="field full">Fuente (opcional)<input formControlName="fuente" maxlength="255"></label>
+      <label class="field full">Descripción (opcional)<textarea formControlName="descripcion" rows="3" maxlength="3000"></textarea></label>
+      <label class="field full">Enlace público de Power BI *<input type="url" formControlName="link_url" placeholder="https://app.powerbi.com/view?r=…" maxlength="2048" required aria-describedby="barometro-link-help"><small id="barometro-link-help">Usa el enlace público de visualización de Power BI.</small></label>
+      <div class="full"><button type="button" class="atlas-button manage" [disabled]="saving() || form.controls.link_url.invalid" (click)="preview()"><mat-icon aria-hidden="true">visibility</mat-icon>Vista previa</button></div>
+    </fieldset>
+    @if (error()) {<p class="field-error server-error" role="alert">{{error()}}</p>}
+  </mat-dialog-content>
+  <footer class="atlas-editor-footer">
+    <span>* Campos obligatorios</span>
+    <div class="atlas-actions"><button type="button" class="atlas-button" [disabled]="saving()" (click)="close()">Cancelar</button><button type="submit" class="atlas-button primary" [disabled]="saving()"><mat-icon aria-hidden="true">check</mat-icon>{{saving() ? 'Guardando…' : 'Guardar publicación'}}</button></div>
+  </footer>
+</form>

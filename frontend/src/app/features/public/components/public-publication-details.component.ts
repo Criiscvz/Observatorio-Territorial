@@ -3,7 +3,7 @@ import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { hasPublicPdf, PublicLibraryPublication } from './public-library-publication';
-import { PublicationViewerService, ReaderMode } from './publication-viewer.service';
+import { PublicationContext, PublicationViewerService, ReaderMode } from './publication-viewer.service';
 
 @Component({
   selector: 'app-public-publication-details',
@@ -13,7 +13,7 @@ import { PublicationViewerService, ReaderMode } from './publication-viewer.servi
   styleUrl: './public-publication-details.component.scss',
 })
 export class PublicPublicationDetailsComponent {
-  readonly data = inject<{item: PublicLibraryPublication; departmentName: string; context?: 'atlas'}>(MAT_DIALOG_DATA);
+  readonly data = inject<{item: PublicLibraryPublication; departmentName: string; context?: PublicationContext}>(MAT_DIALOG_DATA);
   private readonly viewer = inject(PublicationViewerService);
   readonly hasPdf = hasPublicPdf;
   readonly item = this.data.item;
