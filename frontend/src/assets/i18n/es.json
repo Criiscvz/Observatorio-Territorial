@@ -719,7 +719,7 @@
         },
         "barometer": {
           "title": "Barómetro ULEAM",
-          "description": "Consulta los conjuntos de datos disponibles en el barómetro universitario.",
+          "description": "Consulta los reportes e indicadores del barómetro universitario en Power BI.",
           "action": "Consultar el barómetro"
         }
       },

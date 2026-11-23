@@ -20,6 +20,9 @@ test('gestiona un reporte Power BI y lo publica solo en su sección del Barómet
   await expect(row).toContainText('En revisión');
 
   const portal = await session();
+  await portal.goto('/');
+  await portal.getByRole('link', {name: /Consultar el barómetro/i}).click();
+  await expect(portal.getByRole('heading', {name: 'Barómetro ULEAM', exact: true})).toBeVisible();
   const publicLibrary = '/publico/barometro/investigacion';
   await portal.goto(publicLibrary);
   const search = portal.getByRole('searchbox', {name: 'Buscar reportes del Barómetro'});
