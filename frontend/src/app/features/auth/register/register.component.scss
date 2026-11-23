@@ -42,9 +42,6 @@ fieldset:disabled .registration-skip { opacity: 0.6; cursor: default; }
 .skip-hint { text-align: center; margin: 0.5rem 0 0; }
 .registration-error { display: flex; align-items: flex-start; gap: 0.625rem; padding: 0.875rem; margin: 0 0 1.25rem; color: var(--error-color); background: var(--error-bg); border-radius: 9px; font-size: 0.875rem; }
 .registration-error mat-icon { flex-shrink: 0; color: inherit; }
-.auth-divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.25rem 0; color: var(--text-secondary); }
-.auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-top: 1px solid var(--border-color); }
-.google-button { width: 100%; min-height: 44px; }
 .auth-footer-text { margin: 1.5rem 0 0; padding-top: 1.25rem; border-top: 1px solid var(--border-color); color: var(--text-secondary); font-size: 0.875rem; line-height: 1.7; text-align: center; }
 .registration-card .auth-footer-text a { color: var(--register-accent); font-weight: 600; text-decoration: none; }
 .auth-footer-text a:hover { text-decoration: underline; }
