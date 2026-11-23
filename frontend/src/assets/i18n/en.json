@@ -719,7 +719,7 @@
         },
         "barometer": {
           "title": "ULEAM Barometer",
-          "description": "Browse the datasets available in the university barometer.",
+          "description": "Browse the university barometer’s reports and indicators in Power BI.",
           "action": "Explore the barometer"
         }
       },
