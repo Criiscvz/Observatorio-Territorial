@@ -39,6 +39,9 @@ export const PUBLIC_ROUTES: Routes = [
     pathMatch: 'full',
   },
   {
+    path: 'barometro', redirectTo: 'barometro/barometro', pathMatch: 'full',
+  },
+  {
     path: 'barometro/:codigo',
     loadComponent: () =>
       import('../features/public/barometer-view/barometer-view.component').then(

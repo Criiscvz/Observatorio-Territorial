@@ -1,0 +1,28 @@
+.barometro-section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 18px;
+}
+.barometro-section-row + .barometro-section-row { border-top: 1px solid var(--border-color); }
+.barometro-filter {
+  min-height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  font: inherit;
+  font-size: .85rem;
+}
+.barometro-destination {
+  display: grid;
+  gap: 4px;
+  padding: 12px 15px;
+  border-radius: 10px;
+  background: var(--hover-bg);
+}
+.barometro-destination strong { font-size: 1.15rem; }
+.barometro-destination span, .barometro-destination small { color: var(--text-secondary); font-size: .78rem; }

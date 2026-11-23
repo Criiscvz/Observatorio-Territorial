@@ -56,6 +56,8 @@ else
     # This adds no imported rows and never enables the disposable rehearsal.
     php artisan migrate --force --path=database/migrations/2026_10_29_000001_preserve_legacy_publication_access.php
     php artisan migrate --force --path=database/migrations/2026_10_29_000002_create_publication_origins.php
+    # Create the Barómetro library before enabling its API endpoints.
+    php artisan migrate --force --path=database/migrations/2026_11_23_000001_create_barometro_publicaciones.php
 fi
 
 php artisan route:cache

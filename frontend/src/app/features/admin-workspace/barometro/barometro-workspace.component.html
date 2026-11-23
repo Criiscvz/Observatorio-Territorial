@@ -1,0 +1,83 @@
+<section class="atlas-workspace" aria-label="Gestión del Barómetro">
+  @if (sectionCode() !== null) {
+    <a class="atlas-button atlas-back" routerLink="/admin/barometro"><mat-icon aria-hidden="true">arrow_back</mat-icon>Volver a secciones</a>
+  }
+  <header class="atlas-header">
+    <div>
+      <span class="atlas-eyebrow">Gestión del Barómetro</span>
+      <h1>{{section()?.name || (sectionCode() === null ? 'Barómetro' : 'Sección no disponible')}}</h1>
+      @if (section(); as current) {<p>{{current.description}}</p>}
+      @else if (sectionCode() === null) {<p>Selecciona la sección que quieres gestionar.</p>}
+    </div>
+    @if (section()) {
+      <button class="atlas-button primary" type="button" (click)="edit()"><mat-icon aria-hidden="true">add</mat-icon>Nueva publicación</button>
+    }
+  </header>
+
+  @if (failed()) {
+    <div class="atlas-alert" role="alert">
+      No se pudo cargar el Barómetro.
+      <button type="button" class="atlas-button" (click)="reload()">Reintentar</button>
+    </div>
+  }
+  @if (sectionCode() === null) {
+    <section class="atlas-panel" aria-label="Secciones del Barómetro" [attr.aria-busy]="loading()">
+      @for (item of sections; track item.code) {
+        <article class="barometro-section-row">
+          <div class="atlas-name">
+            <span class="atlas-symbol"><mat-icon aria-hidden="true">{{item.icon}}</mat-icon></span>
+            <div>
+              <strong>{{item.name}}</strong>
+              @if (!loading() && !failed()) {
+                <small>{{counts()[item.code] ?? 0}} {{counts()[item.code] === 1 ? 'publicación' : 'publicaciones'}}</small>
+              }
+            </div>
+          </div>
+          <a class="atlas-button manage" [routerLink]="['/admin/barometro', item.code]" [attr.aria-label]="'Gestionar ' + item.name">
+            <mat-icon aria-hidden="true">folder_open</mat-icon>Gestionar
+          </a>
+        </article>
+      }
+    </section>
+  } @else if (section()) {
+    <section class="atlas-panel" aria-label="Biblioteca de publicaciones" [attr.aria-busy]="loading()">
+      <header class="atlas-panel-heading"><div><h2>Biblioteca de publicaciones</h2><p>Reportes Power BI</p></div><span class="atlas-count" aria-live="polite">{{total()}} {{total() === 1 ? 'publicación' : 'publicaciones'}}</span></header>
+      <div class="atlas-toolbar">
+        <label class="atlas-search"><mat-icon aria-hidden="true">search</mat-icon><input type="search" maxlength="200" aria-label="Buscar reportes" placeholder="Título o fuente" [value]="query()" (input)="search($any($event.target).value)"></label>
+        <select class="barometro-filter" aria-label="Estado de la publicación" [value]="status()" (change)="filter($any($event.target).value)">
+          <option value="">Todos los estados</option>
+          @for (state of states; track state.value) {<option [value]="state.value">{{state.label}}</option>}
+        </select>
+      </div>
+      @if (loading()) {<p class="atlas-empty" role="status">Cargando publicaciones…</p>}
+      @else if (!failed()) {
+        <table class="atlas-table library">
+          <thead><tr><th scope="col">Publicación</th><th scope="col">Fecha</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+          <tbody>
+            @for (item of items(); track item.id) {
+              <tr>
+                <td><div class="atlas-name"><span class="atlas-symbol"><mat-icon aria-hidden="true">bar_chart</mat-icon></span><div><strong>{{item.titulo}}</strong><small>{{code(item.id)}} @if (item.fuente) { · {{item.fuente}}}</small></div></div></td>
+                <td>{{item.fecha_publicacion | date:'dd/MM/yyyy'}}</td>
+                <td><span class="atlas-badge" [class.live]="item.estado === 'PUBLICACION'" [class.neutral]="item.estado !== 'PUBLICACION'">{{statusLabel(item.estado)}}</span></td>
+                <td><div class="atlas-actions">
+                  <button type="button" class="atlas-button" [attr.aria-label]="'Vista previa de ' + item.titulo" (click)="view(item)"><mat-icon aria-hidden="true">visibility</mat-icon>Vista previa</button>
+                  <button type="button" class="atlas-button manage" [attr.aria-label]="'Editar ' + item.titulo" (click)="edit(item)"><mat-icon aria-hidden="true">edit</mat-icon>Editar</button>
+                </div></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4"><div class="atlas-empty">{{query() || status() ? 'No hay resultados para estos filtros.' : 'No hay reportes registrados en esta sección.'}}</div></td></tr>
+            }
+          </tbody>
+        </table>
+        @if (total()) {
+          <nav class="atlas-pagination" aria-label="Paginación de reportes">
+            <span>{{rangeStart()}}–{{rangeEnd()}} de {{total()}} · 20 por página</span>
+            <div><button type="button" class="atlas-button icon" aria-label="Página anterior" [disabled]="page() === 0" (click)="changePage(-1)"><mat-icon aria-hidden="true">chevron_left</mat-icon></button>
+            <span>{{page() + 1}} / {{pageCount()}}</span>
+            <button type="button" class="atlas-button icon" aria-label="Página siguiente" [disabled]="page() + 1 >= pageCount()" (click)="changePage(1)"><mat-icon aria-hidden="true">chevron_right</mat-icon></button></div>
+          </nav>
+        }
+      }
+    </section>
+  }
+</section>

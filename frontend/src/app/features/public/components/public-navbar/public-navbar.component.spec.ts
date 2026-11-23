@@ -63,7 +63,7 @@ describe('Navegación pública compartida', () => {
     element.querySelector<HTMLButtonElement>('.portal-barometer')!.click();fixture.detectChanges();
     await fixture.whenStable();
     const menu=document.querySelector('.portal-barometer-menu')!;
-    expect([...menu.querySelectorAll('a')].map(a=>a.getAttribute('href'))).toEqual(['/publico/barometro/investigacion','/publico/barometro/vinculacion','/publico/datasets']);
+    expect([...menu.querySelectorAll('a')].map(a=>a.getAttribute('href'))).toEqual(['/publico/barometro/investigacion','/publico/barometro/vinculacion','/publico/barometro/barometro']);
     expect(menu.textContent).toContain('Resultados Investigación ULEAM');
     expect(menu.textContent).toContain('Resultados Vinculación ULEAM');
     expect(menu.textContent).toContain('Barómetro ULEAM');
@@ -72,9 +72,9 @@ describe('Navegación pública compartida', () => {
     expect(element.querySelector('.portal-barometer')?.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('resalta Barómetro dentro de investigación, vinculación y datasets',()=>{
+  it('resalta Barómetro dentro de las tres bibliotecas',()=>{
     const {component}=setup(null);
-    for(const url of ['/publico/barometro/investigacion','/publico/barometro/vinculacion','/publico/datasets']){
+    for(const url of ['/publico/barometro/investigacion','/publico/barometro/vinculacion','/publico/barometro/barometro']){
       (TestBed.inject(Router).events as Subject<NavigationEnd>).next(new NavigationEnd(1,url,url));
       expect(component.barometerActive()).toBe(true);
     }

@@ -32,7 +32,7 @@ export class PublicNavbarComponent {
   constructor() {
     this.siteSettings.refreshPublic();
     const router = inject(Router);
-    const updateBarometer = (url:string) => this.barometerActive.set(/^\/publico\/(?:barometro|datasets)(?:[/?#]|$)/.test(url));
+    const updateBarometer = (url:string) => this.barometerActive.set(/^\/publico\/barometro(?:[/?#]|$)/.test(url));
     updateBarometer(router.url);
     router.events.pipe(filter(event => event instanceof NavigationEnd), takeUntilDestroyed())
       .subscribe(event => { this.menuOpen.set(false); updateBarometer(event.urlAfterRedirects); });

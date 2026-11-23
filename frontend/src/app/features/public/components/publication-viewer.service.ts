@@ -4,12 +4,13 @@ import { PublicLibraryPublication } from './public-library-publication';
 import { PublicationViewerComponent } from './publication-viewer.component';
 
 export type ReaderMode = 'pdf' | 'report';
-export interface PublicationViewerData { item: PublicLibraryPublication; departmentName: string; mode: ReaderMode; context?: 'atlas'; localPdf?: File; }
+export type PublicationContext = 'atlas' | 'barometro';
+export interface PublicationViewerData { item: PublicLibraryPublication; departmentName: string; mode: ReaderMode; context?: PublicationContext; localPdf?: File; }
 
 @Injectable({providedIn: 'root'})
 export class PublicationViewerService {
   private readonly dialog = inject(MatDialog);
-  open(item: PublicLibraryPublication, departmentName: string, mode: ReaderMode, context?: 'atlas', localPdf?: File): void {
+  open(item: PublicLibraryPublication, departmentName: string, mode: ReaderMode, context?: PublicationContext, localPdf?: File): void {
     if (item.locked) return;
     this.dialog.open(PublicationViewerComponent, {
       data: {item, departmentName, mode, ...(context ? {context} : {}), ...(localPdf ? {localPdf} : {})} satisfies PublicationViewerData,

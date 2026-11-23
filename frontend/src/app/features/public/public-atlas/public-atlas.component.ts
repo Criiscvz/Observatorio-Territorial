@@ -14,6 +14,8 @@ import { powerBiEmbedUrl } from '../components/publication-viewer.component';
 import { PublicationViewerService } from '../components/publication-viewer.service';
 import { PublicPublicationDetailsComponent } from '../components/public-publication-details.component';
 
+import { linkLibraryAuthors, linkLibraryCanRead, LinkLibraryEntry, PublicLinkLibraryComponent } from '../components/public-link-library.component';
+
 interface AtlasDirectoryEntry extends AtlasCategoria {
   total: number;
   available: boolean;
@@ -22,7 +24,7 @@ interface AtlasDirectoryEntry extends AtlasCategoria {
 @Component({
   selector: 'app-public-atlas',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [CommonModule, MatIconModule, MatProgressSpinnerModule, PublicLinkLibraryComponent],
   templateUrl: './public-atlas.component.html',
   styleUrl: './public-atlas.component.scss',
 })
@@ -64,12 +66,9 @@ export class PublicAtlasComponent implements OnInit {
   readonly rangeStart = computed(() => this.filtered().length ? this.currentPage() * this.pageSize + 1 : 0);
   readonly rangeEnd = computed(() => Math.min((this.currentPage() + 1) * this.pageSize, this.filtered().length));
   readonly selectedCategory = computed(() => this.entries().find(entry => entry.id === this.selectedCategoryId()));
-  readonly libraryItems = this.atlas;
   readonly libraryPageCount = computed(() => Math.max(1, Math.ceil(this.libraryTotal() / this.libraryPageSize)));
   readonly currentLibraryPage = computed(() => Math.min(this.libraryPage(), this.libraryPageCount()-1));
   readonly visibleLibrary = this.atlas;
-  readonly libraryStart = computed(() => this.libraryTotal() ? this.currentLibraryPage()*this.libraryPageSize+1 : 0);
-  readonly libraryEnd = computed(() => Math.min((this.currentLibraryPage()+1)*this.libraryPageSize,this.libraryTotal()));
 
   ngOnInit(): void {
     this.directoryRequests.pipe(switchMap(()=>{
@@ -113,26 +112,16 @@ export class PublicAtlasComponent implements OnInit {
   retryLibrary():void {this.libraryRequests.next(this.selectedCategoryId());}
   searchLibrary(value: string): void { this.libraryQuery.set(value);this.libraryPage.set(0);this.retryLibrary(); }
   changeLibraryPage(delta: number): void { this.libraryPage.set(Math.max(0,Math.min(this.currentLibraryPage()+delta,this.libraryPageCount()-1)));this.retryLibrary(); }
-  authors(item: ObservatorioPublicacion): string {
-    return Array.isArray(item.autores) ? item.autores.filter(Boolean).join(', ') : item.autores || '';
-  }
-  hasReport(item: ObservatorioPublicacion): boolean {
-    return !item.bloqueado && !!powerBiEmbedUrl(item.link_url ?? null);
-  }
-  hasSource(item: ObservatorioPublicacion): boolean { return !!item.fuente?.trim(); }
-  canRead(item: ObservatorioPublicacion): boolean {
-    return item.estado === 'PUBLICACION' && !item.bloqueado && !!(powerBiEmbedUrl(item.link_url ?? null) || item.download_url || item.sharepoint_url);
-  }
-  openAtlas(candidate: ObservatorioPublicacion): void {
+  openAtlas(candidate: LinkLibraryEntry): void {
     // Re-read current category membership and access after any refresh.
     const current = this.selectedCategory();
     const publication = this.atlas().find(item => item.id === candidate.id && (item.atlas_categoria_id || item.atlas_categoria?.id) === current?.id);
-    if (!current || !publication || !this.canRead(publication)) return;
+    if (!current || !publication || !linkLibraryCanRead(publication)) return;
     const reportUrl = powerBiEmbedUrl(publication.link_url ?? null);
     this.viewer.open(this.toLibraryItem(publication, current), current.nombre, reportUrl ? 'report' : 'pdf', 'atlas');
   }
 
-  openDetails(candidate: ObservatorioPublicacion): void {
+  openDetails(candidate: LinkLibraryEntry): void {
     const category = this.selectedCategory();
     const publication = this.atlas().find(item => item.id === candidate.id && (item.atlas_categoria_id || item.atlas_categoria?.id) === category?.id);
     if (!category || !publication || publication.bloqueado) return;
@@ -147,15 +136,11 @@ export class PublicAtlasComponent implements OnInit {
     return {
       id: publication.id, type: 'REPORTE', title: publication.titulo,
       code: publication.codigo || 'Atlas', date: publication.fecha_publicacion || null,
-      authors: this.authors(publication),
+      authors: linkLibraryAuthors(publication),
       description: publication.descripcion || category.descripcion || '', source: publication.fuente || '',
       sourceUrl: publicHttpUrl(publication.fuente), reportUrl: powerBiEmbedUrl(publication.link_url ?? null),
       download_url: publication.download_url || null, sharepoint_url: publication.sharepoint_url || null, locked: false,
     };
-  }
-
-  private normalize(value: string): string {
-    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es').trim();
   }
 
   private scrollToTop(): void {
