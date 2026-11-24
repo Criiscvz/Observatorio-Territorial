@@ -61,7 +61,7 @@
     "@angular/cli": "21.2.29",
     "@angular/compiler-cli": "21.2.26",
     "@eslint/js": "10.0.1",
-    "@playwright/test": "1.65.0",
+    "@playwright/test": "1.65.1",
     "@tailwindcss/postcss": "^4.3.5",
     "@types/express": "^5.0.1",
     "@types/node": "^20.17.19",
