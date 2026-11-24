@@ -131,7 +131,16 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "configurations": {
+            "coverage": {
+              "watch": false,
+              "coverage": true,
+              "coverageInclude": ["src/app/**/*.ts"],
+              "coverageExclude": ["**/*.spec.ts", "**/*.test.ts", "**/*.d.ts", "src/app/testing/**"],
+              "coverageReporters": ["text-summary", "json-summary", "html"]
+            }
+          }
         }
       }
     }
