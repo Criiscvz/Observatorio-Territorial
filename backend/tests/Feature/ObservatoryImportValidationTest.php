@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Domain\Dataset\Repositories\RegistroDatoRepositoryInterface;
 use App\Infrastructure\Persistence\Eloquent\Models\{DatasetModel, VariableMetadatoModel};
+use App\Infrastructure\Services\ExcelReaderService;
 use App\Models\{Departamento, User};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\{DB, Http, Storage};
 use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\TestCase;
 
 class ObservatoryImportValidationTest extends TestCase
@@ -147,6 +149,68 @@ class ObservatoryImportValidationTest extends TestCase
         $this->assertSame([2, 0, null, false], $variable->opciones);
         $this->assertSame('ValorRenombrado', $variable->nombre_columna);
         Http::assertNothingSent();
+    }
+
+    public function test_import_rolls_back_records_and_metadata_if_completion_cannot_be_saved(): void
+    {
+        $this->seedPreviousImport();
+        $datasetId = $this->dataset->id;
+        $preventCompletion = true;
+        DatasetModel::updated(function (DatasetModel $dataset) use ($datasetId, &$preventCompletion): void {
+            if ($preventCompletion && $dataset->id === $datasetId && $dataset->estado === 'COMPLETADO') {
+                throw new RuntimeException('Fallo simulado al guardar la finalización.');
+            }
+        });
+        $url = '/api/datasets/'.$datasetId.'/import';
+        $payload = ['columnas' => [$this->column()]];
+
+        $this->postJson($url, $payload)->assertInternalServerError();
+
+        $this->assertDatabaseHas('datasets', ['id' => $datasetId, 'estado' => 'PENDIENTE', 'total_registros' => 1]);
+        $this->assertSame(['anterior'], $this->dataset->variablesMetadatos()->pluck('nombre_columna')->all());
+        $this->assertSame(['anterior' => 'Valor previo'], $this->dataset->registrosDatos()->sole()->data);
+        Storage::assertExists('datasets/synthetic.csv');
+
+        $preventCompletion = false;
+        $this->postJson($url, $payload)->assertOk()
+            ->assertJsonPath('estado', 'COMPLETADO')->assertJsonPath('total_registros', 2)
+            ->assertJsonPath('variables_metadatos.0.nombre_columna', 'grupo');
+
+        $this->assertSame(['grupo'], $this->dataset->variablesMetadatos()->pluck('nombre_columna')->all());
+        $this->assertSame([['grupo' => 'Centro'], ['grupo' => 'Norte']],
+            $this->dataset->registrosDatos()->orderBy('id')->get()->pluck('data')->all());
+    }
+
+    public function test_import_leaves_data_intact_if_the_dataset_was_completed_during_file_read(): void
+    {
+        $this->seedPreviousImport();
+        $datasetId = $this->dataset->id;
+        $this->mock(ExcelReaderService::class)->shouldReceive('import')->once()->andReturnUsing(
+            static function () use ($datasetId): \Generator {
+                DatasetModel::whereKey($datasetId)->update(['estado' => 'COMPLETADO']);
+
+                yield ['grupo' => 'Reemplazo'];
+            },
+        );
+
+        $this->postJson('/api/datasets/'.$datasetId.'/import', ['columnas' => [$this->column()]])
+            ->assertBadRequest()->assertJsonPath('message', 'El dataset ya fue procesado');
+
+        $this->assertDatabaseHas('datasets', ['id' => $datasetId, 'estado' => 'COMPLETADO', 'total_registros' => 1]);
+        $this->assertSame(['anterior'], $this->dataset->variablesMetadatos()->pluck('nombre_columna')->all());
+        $this->assertSame(['anterior' => 'Valor previo'], $this->dataset->registrosDatos()->sole()->data);
+    }
+
+    private function seedPreviousImport(): void
+    {
+        $this->dataset->variablesMetadatos()->create([
+            'nombre_columna' => 'anterior',
+            'nombre_original' => 'Anterior',
+            'tipo_dato' => 'TEXTO',
+            'tipo_detectado' => 'TEXTO',
+        ]);
+        $this->dataset->registrosDatos()->create(['data' => ['anterior' => 'Valor previo']]);
+        $this->dataset->update(['total_registros' => 1]);
     }
 
     public function test_nonexistent_source_columns_and_colliding_headers_keep_existing_data(): void

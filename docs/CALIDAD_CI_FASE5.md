@@ -245,6 +245,23 @@ Los componentes se prueban con respuestas simuladas. Los recorridos E2E y las
 pruebas de Laravel siguen validando la publicación en la sección correcta,
 la visibilidad pública y el archivado con servicios de prueba.
 
+### Consistencia al confirmar una importación de datasets
+
+La confirmación persiste las filas, los metadatos y el estado del dataset en
+una sola transacción. Después de preparar el archivo, toma un bloqueo de fila
+en PostgreSQL y comprueba de nuevo que el dataset siga pendiente antes de
+reemplazar datos. La descarga y la validación de los encabezados preceden
+al bloqueo.
+
+Dos regresiones de `ObservatoryImportValidationTest` fallaban sobre
+`671819d`. Una simula un fallo al finalizar y comprueba que se recuperen el
+estado, las filas y los metadatos previos y que se pueda reintentar. La otra
+simula que el dataset se completa mientras se prepara el archivo y verifica
+que la segunda confirmación conserve los datos anteriores. Ambas forman parte
+de las suites de CI con SQLite y PostgreSQL 16. El subconjunto local de
+importación, contratos, repositorios y arquitectura aprobó 187 pruebas en
+SQLite, con 8 omisiones propias de PostgreSQL, y 195 en PostgreSQL 16.
+
 Referencias: [configuración de typescript-eslint](https://typescript-eslint.io/users/configs/),
 [herramientas oficiales angular-eslint](https://github.com/angular-eslint/angular-eslint),
 [niveles de PHPStan](https://phpstan.org/user-guide/rule-levels).

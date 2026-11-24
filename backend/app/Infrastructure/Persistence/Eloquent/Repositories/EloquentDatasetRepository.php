@@ -17,9 +17,13 @@ class EloquentDatasetRepository implements DatasetRepositoryInterface
         private readonly DatasetModel $model
     ) {}
 
-    public function findById(string $id): ?Dataset
+    public function findById(string $id, bool $lockForUpdate = false): ?Dataset
     {
-        $model = $this->model->with('variablesMetadatos')->find($id);
+        $query = $this->model->with('variablesMetadatos');
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+        $model = $query->find($id);
 
         return $model ? $this->toDomain($model) : null;
     }
