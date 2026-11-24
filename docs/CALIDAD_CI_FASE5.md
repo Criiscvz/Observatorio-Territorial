@@ -221,9 +221,29 @@ sin una copia almacenada.
 
 CI ejecuta estas pruebas con su suite habitual. El informe se genera bajo
 demanda y queda fuera de Git. Quedan por definir los umbrales de cobertura y por
-ampliar las pruebas de persistencia en infraestructura. El catálogo público
-y el editor del Barómetro tienen recorridos E2E y registran 0 de 48 y 0 de 102
-líneas, respectivamente, en la suite unitaria de Angular.
+ampliar las pruebas de persistencia en infraestructura. En esta medición,
+los componentes del Barómetro ya tenían recorridos E2E, con 0 de 48 líneas
+ejecutadas por pruebas unitarias en el catálogo público y 0 de 102 en el
+archivo que contiene la biblioteca administrativa y el editor.
+
+### Pruebas unitarias del Barómetro
+
+Sobre `56c344c`, se añadieron doce casos para las bibliotecas pública y
+administrativa y el editor. Cubren el cambio de sección durante una solicitud,
+la recuperación de errores de carga, los cambios de paginación, la apertura
+de reportes según su sección y estado, y la conservación del formulario tras
+un error al guardar.
+
+| Medición de Angular | Antes | Después |
+|---|---:|---:|
+| Pruebas aprobadas | 576 | 588 |
+| Líneas cubiertas en `src/app` | 3.420 de 5.160 (66,27 %) | 3.592 de 5.160 (69,61 %) |
+| Líneas del catálogo público del Barómetro | 0 de 48 | 48 de 48 |
+| Líneas de la biblioteca administrativa y el editor | 0 de 102 | 102 de 102 |
+
+Los componentes se prueban con respuestas simuladas. Los recorridos E2E y las
+pruebas de Laravel siguen validando la publicación en la sección correcta,
+la visibilidad pública y el archivado con servicios de prueba.
 
 Referencias: [configuración de typescript-eslint](https://typescript-eslint.io/users/configs/),
 [herramientas oficiales angular-eslint](https://github.com/angular-eslint/angular-eslint),
