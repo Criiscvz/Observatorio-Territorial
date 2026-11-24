@@ -7,6 +7,7 @@ namespace App\Application\Dataset\UseCases;
 use App\Application\Dataset\DTOs\ConfirmImportDTO;
 use App\Application\Dataset\DTOs\DatasetResponseDTO;
 use App\Domain\Departamento\Repositories\DepartamentoRepositoryInterface;
+use App\Domain\Dataset\Entities\Dataset;
 use App\Domain\Dataset\Repositories\DatasetRepositoryInterface;
 use App\Domain\Dataset\Repositories\RegistroDatoRepositoryInterface;
 use App\Domain\Dataset\Repositories\VariableMetadatoRepositoryInterface;
@@ -29,40 +30,21 @@ class ConfirmImportUseCase
 
     public function execute(ConfirmImportDTO $dto): DatasetResponseDTO
     {
-        $dataset = $this->datasetRepository->findById($dto->datasetId);
-
-        if (!$dataset) {
-            throw new HttpException(Response::HTTP_NOT_FOUND, 'Dataset no encontrado');
-        }
-
-        // Verificar acceso al departamento
-        if (!$this->departamentoRepository->existsForUser($dataset->departamentoId, $dto->userId)) {
-            throw new HttpException(Response::HTTP_FORBIDDEN, 'No tienes acceso a este dataset');
-        }
-
-        // Verificar que el dataset esté pendiente
-        if (!$dataset->isPendiente()) {
-            throw new HttpException(Response::HTTP_BAD_REQUEST, 'El dataset ya fue procesado');
-        }
-
+        $dataset = $this->findPendingDataset($dto);
         $filePath = $this->temporaryStorageFile->download('datasets/'.$dataset->nombreArchivo);
-        $totalRegistros = 0;
 
         try {
             // The generator reads and validates source headers before any old metadata/rows are removed.
             $records = $this->excelReader->import($filePath, $dto->columnas);
             $records->rewind();
-            DB::transaction(function () use ($dto, $records, &$totalRegistros) {
-                // Eliminar metadatos anteriores si existen
-                $this->variableRepository->deleteByDatasetId($dto->datasetId);
-            
-                // Guardar nuevos metadatos
-                $this->variableRepository->saveBatch($dto->datasetId, $dto->columnas);
 
-                // Eliminar registros anteriores si existen
+            return DB::transaction(function () use ($dto, $records): DatasetResponseDTO {
+                $dataset = $this->findPendingDataset($dto, lockForUpdate: true);
+                $this->variableRepository->deleteByDatasetId($dto->datasetId);
+                $this->variableRepository->saveBatch($dto->datasetId, $dto->columnas);
                 $this->registroRepository->deleteByDatasetId($dto->datasetId);
 
-                // Importar datos en lotes
+                $totalRegistros = 0;
                 $batch = [];
                 $batchSize = 500;
 
@@ -76,22 +58,35 @@ class ConfirmImportUseCase
                     }
                 }
 
-                // Insertar registros restantes
                 if (!empty($batch)) {
                     $this->registroRepository->insertBatch($dto->datasetId, $batch);
                 }
+
+                $this->datasetRepository->update($dataset->markAsCompletado($totalRegistros));
+
+                return DatasetResponseDTO::fromEntity($this->datasetRepository->findById($dto->datasetId));
             });
         } finally {
             @unlink($filePath);
         }
+    }
 
-        // Actualizar estado del dataset
-        $updatedDataset = $dataset->markAsCompletado($totalRegistros);
-        $this->datasetRepository->update($updatedDataset);
+    private function findPendingDataset(ConfirmImportDTO $dto, bool $lockForUpdate = false): Dataset
+    {
+        $dataset = $this->datasetRepository->findById($dto->datasetId, $lockForUpdate);
 
-        // Recargar dataset con variables
-        $finalDataset = $this->datasetRepository->findById($dto->datasetId);
+        if (!$dataset) {
+            throw new HttpException(Response::HTTP_NOT_FOUND, 'Dataset no encontrado');
+        }
 
-        return DatasetResponseDTO::fromEntity($finalDataset);
+        if (!$this->departamentoRepository->existsForUser($dataset->departamentoId, $dto->userId)) {
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'No tienes acceso a este dataset');
+        }
+
+        if (!$dataset->isPendiente()) {
+            throw new HttpException(Response::HTTP_BAD_REQUEST, 'El dataset ya fue procesado');
+        }
+
+        return $dataset;
     }
 }

@@ -10,7 +10,8 @@ use Illuminate\Support\Collection;
 
 interface DatasetRepositoryInterface
 {
-    public function findById(string $id): ?Dataset;
+    /** The optional write lock requires an active transaction. */
+    public function findById(string $id, bool $lockForUpdate = false): ?Dataset;
 
     public function findPublicById(string $id): ?Dataset;
 
