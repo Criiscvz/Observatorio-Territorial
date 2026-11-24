@@ -139,6 +139,92 @@ esta entrega queda en una rama local para su integración posterior mediante PR.
   [manual de operación](MANUAL_TECNICO_OPERACION.md) reúne los procedimientos.
 - Validar alojamiento y controles de publicación cuando DIIT confirme el host.
 
+## Línea base de cobertura A-03 · 19 de noviembre de 2026
+
+Medición local sobre `dacf6a0`, la revisión de `pruebas-rediseno` usada para
+iniciar A-03. La configuración de cobertura del frontend es opcional y usa
+el proveedor V8 de la misma versión de Vitest (`4.1.12`). El backend se midió
+con PHPUnit 11.5.53, PHP 8.4.27 y PCOV 1.0.12 en contenedores sin acceso a
+producción y con las dependencias exactas de `composer.lock`.
+
+| Suite | Líneas ejecutadas | Resultado |
+|---|---:|---|
+| Laravel, suite general con SQLite y MongoDB de prueba | 5.228 de 8.094 (64,59 %) | 743 aprobadas, 8 omitidas por requerir PostgreSQL, 8.236 aserciones |
+| Laravel, selección de CI con PostgreSQL 16 y MongoDB de prueba | 5.036 de 8.094 (62,22 %) | 581 aprobadas, 6.318 aserciones |
+| Angular, suite unitaria | 3.350 de 5.062 (66,17 %) | 564 aprobadas en 61 archivos |
+
+PHPUnit mide el árbol `backend/app` e incluye archivos sin ejecutar. PCOV mide
+líneas. La selección PostgreSQL de CI vuelve a ejecutar casos de la suite
+general, por lo que se reporta por separado. En Angular se verificó que el
+informe incluya los 249 archivos TypeScript elegibles de `src/app`. En ese
+alcance se ejecutaron 3.014 de 4.400 ramas (68,50 %). Los tests E2E, las
+plantillas HTML, el servidor SSR externo a `src/app` y el relay Node quedan
+fuera de este porcentaje.
+
+Para volver a medir el frontend, ejecutar `npm ci` y `npm run test:coverage`
+desde `frontend`. El HTML y el resumen JSON se generan en `frontend/coverage/frontend/`.
+Para PHP, usar una copia de pruebas aislada con PCOV disponible y ejecutar
+desde `backend`:
+
+```sh
+php -d "pcov.directory=$PWD/app" vendor/bin/phpunit --no-progress --coverage-text --coverage-clover=../output/backend-coverage.xml
+```
+
+Crear `output/` antes de ejecutar y usar las bases de prueba desechables y las
+variables `TEST_DB_*` y `TEST_MONGO_*` de CI para reproducir cada suite. El
+resumen por capa y los informes Clover de este ensayo se conservan localmente
+en `storage/codex-local/a03-20261119/`.
+
+La primera prioridad de esta medición fue el flujo de verificación de correo en
+Angular. Su pantalla tiene 0 de 39 líneas cubiertas por la suite unitaria,
+mientras que el servicio de verificación de Laravel alcanza 55 de 58 líneas.
+Cubrir el rechazo de un código, la recuperación del formulario y la espera de
+reenvío. Después, priorizar los casos de error en el cliente de publicaciones
+(11 de 81 líneas) y la pantalla de importación de datasets (0 de 31 líneas),
+que ya cuenta con pruebas separadas para su fachada (58 de 70 líneas).
+
+En Laravel, la suite general cubrió el 98,11 % de las líneas de `Policies`,
+el 77,81 % de `Application` y el 36,50 % de `Infrastructure`. La cobertura
+baja de infraestructura se concentra en estadísticas, repositorios MongoDB
+y SharePoint. Conviene confirmar los consumidores activos al elegir casos
+de persistencia y recuperación de errores para ese bloque.
+
+PHPStan (nivel 5, alcance actual), ESLint, los 32 controles de workflow e
+higiene y la auditoría del lockfile frontend pasaron en local. Dado que la
+medición es una referencia, la incorporación del informe a CI y el umbral
+quedan para un bloque posterior de A-03.
+
+[Cobertura de Angular](https://v21.angular.dev/cli/test) ·
+[Cobertura en PHPUnit 11.5](https://docs.phpunit.de/en/11.5/code-coverage.html) ·
+[PCOV 1.0.12](https://pecl.php.net/package/pcov/1.0.12)
+
+## Actualización de cobertura A-03 · 24 de noviembre de 2026
+
+La medición se repitió sobre `50cceb6`, con el Barómetro ya integrado. Los
+resultados de Angular comparan la misma revisión antes y después de incorporar
+nueve pruebas. El backend se midió con dependencias de `composer.lock` y bases
+desechables de MongoDB y PostgreSQL, además de SQLite en memoria.
+
+| Suite | Líneas ejecutadas | Pruebas |
+|---|---:|---|
+| Angular, antes | 3.371 de 5.160 (65,32 %) | 567 aprobadas |
+| Angular, después | 3.420 de 5.160 (66,27 %) | 576 aprobadas en 62 archivos |
+| Laravel, SQLite y MongoDB | 5.309 de 8.174 (64,95 %) | 751 aprobadas y 8 omitidas por requerir PostgreSQL |
+| Laravel, PostgreSQL 16 y MongoDB | 5.068 de 8.174 (62,00 %) | Selección del workflow de CI |
+
+La pantalla de verificación de correo pasó de 0 a 46 de 46 líneas. Las pruebas
+cubren el rechazo de un código, un nuevo intento, la espera y el fallo de
+reenvío, la redirección por rol y la respuesta cuando la verificación está
+en pausa. El servicio de publicaciones pasó de 11 a 15 de 81 líneas al
+comprobar la carga del PDF desde la API, la propagación de un `403` y el caso
+sin una copia almacenada.
+
+CI ejecuta estas pruebas con su suite habitual. El informe se genera bajo
+demanda y queda fuera de Git. Quedan por definir los umbrales de cobertura y por
+ampliar las pruebas de persistencia en infraestructura. El catálogo público
+y el editor del Barómetro tienen recorridos E2E y registran 0 de 48 y 0 de 102
+líneas, respectivamente, en la suite unitaria de Angular.
+
 Referencias: [configuración de typescript-eslint](https://typescript-eslint.io/users/configs/),
 [herramientas oficiales angular-eslint](https://github.com/angular-eslint/angular-eslint),
 [niveles de PHPStan](https://phpstan.org/user-guide/rule-levels).

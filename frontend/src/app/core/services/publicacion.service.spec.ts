@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { ApiService } from './api.service';
 import { PublicacionService } from './publicacion.service';
 
-describe('PublicacionService SharePoint imports', () => {
+describe('PublicacionService', () => {
   let service: PublicacionService;
   let httpMock: HttpTestingController;
 
@@ -76,5 +76,40 @@ describe('PublicacionService SharePoint imports', () => {
       data: { imported: [], duplicates: [], rejected: [], errors: [] },
       totals: { imported: 0, duplicates: 0, rejected: 0, errors: 0 },
     });
+  });
+
+  it('reads a stored PDF through the portal even when an original SharePoint link exists', () => {
+    const downloadUrl = '/api/departamentos/publicaciones/publicacion-1/download';
+    const document = new ArrayBuffer(5);
+    const received = vi.fn();
+    service.loadPdf({download_url: downloadUrl, sharepoint_url: 'https://example.test/documento.pdf'}).subscribe(received);
+
+    const request = httpMock.expectOne(`${environment.apiUrl.replace(/\/api\/?$/, '')}${downloadUrl}`);
+    expect(request.request.method).toBe('GET');
+    expect(request.request.responseType).toBe('arraybuffer');
+    request.flush(document);
+    expect(received).toHaveBeenCalledExactlyOnceWith(document);
+  });
+
+  it('returns a denied PDF request to the viewer without fetching the original link', () => {
+    const downloadUrl = '/api/departamentos/publicaciones/publicacion-1/download';
+    const original = 'https://example.test/documento.pdf';
+    const next = vi.fn();
+    const error = vi.fn();
+    service.loadPdf({download_url: downloadUrl, sharepoint_url: original}).subscribe({next, error});
+
+    httpMock.expectOne(`${environment.apiUrl.replace(/\/api\/?$/, '')}${downloadUrl}`)
+      .flush(null, {status: 403, statusText: 'Forbidden'});
+    httpMock.expectNone(original);
+    expect(next).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({status: 403}));
+  });
+
+  it('does not issue a PDF request if there is no stored copy', () => {
+    const error = vi.fn();
+    service.loadPdf({sharepoint_url: 'https://example.test/documento.pdf'}).subscribe({error});
+
+    httpMock.expectNone(() => true);
+    expect(error).toHaveBeenCalledExactlyOnceWith(new Error('PDF_NOT_STORED'));
   });
 });
